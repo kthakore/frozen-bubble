@@ -2928,6 +2928,7 @@ sub setup_mp_game() {
     $imgbin{back_netgame}->blit($apprects{main}, $app, $apprects{main});
 
     if (!fb_net::isconnected()) {
+        @smg_status_messages = ();
         if ($gameserver) {
             my ($host, $port) = $gameserver =~ /(\S+):(\S+)/;
             fb_net::connect($host, $port) or goto master_server;
@@ -2937,8 +2938,6 @@ sub setup_mp_game() {
             my @servers if 0;
             @servers = smg_servers() or return;
             
-            @smg_status_messages = ();
-
           choose_server:
             #- 2. let user choose server
             smg_choose_server(@servers) or return;
