@@ -326,6 +326,11 @@ void add_prio(int fd)
 {
         conns_prio = g_list_append(conns_prio, GINT_TO_POINTER(fd));
         new_conns = g_list_remove(new_conns, GINT_TO_POINTER(fd));
+        if (lan_game_mode && g_list_length(conns_prio) > 0 && udp_server_socket != -1) {
+                close(tcp_server_socket);
+                close(udp_server_socket);
+                tcp_server_socket = udp_server_socket = -1;
+        }
 }
 
 void help(void)
