@@ -449,6 +449,8 @@ int process_msg(int fd, char* msg)
                 } else {
                         if ((ptr = strchr(args, ' ')))
                                 *ptr = '\0';
+                        if (strlen(args) > 10)
+                                args[10] = '\0';
                         if (!nick_available(args)) {
                                 send_line_log(fd, wn_nick_in_use, msg_orig);
                         } else if (already_in_game(fd)) {
@@ -467,6 +469,8 @@ int process_msg(int fd, char* msg)
                         *ptr = '\0';
                         if ((ptr2 = strchr(ptr, ' ')))
                                 *ptr2 = '\0';
+                        if (strlen(nick) > 10)
+                                nick[10] = '\0';
                         if (!nick_available(nick)) {
                                 send_line_log(fd, wn_nick_in_use, msg_orig);
                         } else if (already_in_game(fd)) {
