@@ -1177,10 +1177,16 @@ sub lose {
     if (is_mp_game()) {
         $pdata{$player}{state} = 'lost';
         my @living = living_players();
-        @living > 1 and goto ret;
-        $pdata{state} = "won $living[0]";
-        win($living[0]);
-        fb_net::gsend("finished:");
+        if (@living == 1) {
+            #- tentatively suppose we've found the winner, but we need to confirm it by network
+            #- first, in rare case of two last players dying at the same time
+            my $winnernick = $pdata{$living[0]}{nick};
+            fb_net::gsend("finished:$winnernick");
+            $pdata{state} = "finished $living[0]:$winnernick";
+            iter_distant_players {
+                $pdata{$::p}{still_game_messages} = 1;
+            };
+        }
     } else {
         $pdata{state} = "lost $player";
         is_1p_game() or win($player eq 'p1' ? 'p2' : 'p1');
@@ -1226,6 +1232,8 @@ sub update_lost {
 
     return if odd($frame);
 
+    my $still_sticked;
+
     iter_players { #- need iter_players to get the small graphics change for free if we're in multiplayer
         if ($::p eq $player) {
             if (@{$sticked_bubbles{$player}}) {
@@ -1250,7 +1258,16 @@ sub update_lost {
                 }
             }
         }
+        $still_sticked += @{$sticked_bubbles{$::p}};
     };
+
+    if ($pdata{state} eq 'won ' && $still_sticked == 1) {
+        put_image($imgbin{void_panel}, $MENUPOS{xpos_panel}, $MENUPOS{ypos_panel});
+        my $message = "DRAW GAME!";
+        my $xpos = 320 - SDL_TEXTWIDTH($message)/2;
+        $app->print($xpos, $MENUPOS{ypos_panel} + 30, $message);
+        $app->flip;
+    }
 }
 
 sub update_won {
@@ -1272,6 +1289,25 @@ sub update_won {
             }
         }
     };
+}
+
+sub decode_postgame_message($) {
+    my ($msg) = @_;
+    my $player = $pdata{id2p}{$msg->{id}};
+    if ($msg->{msg} =~ /^\Qfinished:\E(.*)/) {
+        $pdata{$player}{still_game_messages} = 0;
+        print "$player is saying she's finished with winner $1\n";
+        return "$player finished $1";
+    } elsif ($pdata{$player}{still_game_messages}) {
+        print "dropping last game message from $player: $msg->{msg}\n";
+        return "$player gamemsg";
+    } else {
+        if ($msg->{msg} =~ /^\Qnewgame:\E/) {
+            return "$player newgame";
+        } else {
+            return "$player other";
+        }
+    }
 }
 
 
@@ -1466,25 +1502,54 @@ sub update_game() {
 	verify_if_end();
 
     } elsif ($pdata{state} =~ /lost (.*)/) {
+        #- 1p and 2p game only state
+
         my $loser = $1;
         update_lost($loser);
         is_2p_game() and update_won($loser eq 'p1' ? 'p2' : 'p1');
+        
+    } elsif ($pdata{state} =~ /finished (.*):(.*)/) {
+        #- mp game only state when we're trying to figure out if this is not a draw game
+
+        my $supposed_winner_player = $1;
+        my $supposed_winner_nick = $2;
+
+        my $msg = fb_net::grecv_get1msg();
+        my $result = decode_postgame_message($msg);
+        if ($result =~ /^(\S+) finished (\S+)/) {
+            my $remote_winner_nick = $2;
+            if ($remote_winner_nick ne $supposed_winner_nick) {
+                #- players don't agree with who won the game, this is a draw game
+                $pdata{state} = "won ";
+                lose($supposed_winner_player);
+            } else {
+                if (every { $pdata{$_}{still_game_messages} == 0 } @PLAYERS) {
+                    win($supposed_winner_player);
+                    $pdata{state} = "won $supposed_winner_player";
+                }
+            }
+        } elsif ($result !~ /^(\S+) gamemsg/) {
+            print "finished state, delaying $msg->{msg}\n";
+            fb_net::gdelay_messages($msg);
+        }
 
     } elsif ($pdata{state} =~ /won (.*)/) {
+        #- mp and 1p game only state
+
         my $winner = $1;
         if (is_mp_game()) {
-            update_won($winner);
+            $winner and update_won($winner);
             iter_players {
                 if ($::p ne $winner) {
                     update_lost($::p);
                 }
             };
         }
-	if (@{$exploding_bubble{$winner}} == 0) {
+	if (!$winner || @{$exploding_bubble{$winner}} == 0) {
             my $still_needwait = 0;
             #- still wait if some bubbles are not yet "frozen"
             iter_players {
-                @{$sticked_bubbles{$::p}} and $still_needwait = 1;
+                $still_needwait += @{$sticked_bubbles{$::p}};
             };
             if (!$still_needwait) {
                 $event->pump;
@@ -1498,9 +1563,6 @@ sub update_game() {
                         };
                         fb_net::gsend("newgame:");
                         my $waitingnum = scalar(@PLAYERS) - 1;
-                        iter_distant_players {
-                            $pdata{$::p}{still_game_messages} = 1;
-                        };
                         while (1) {
                             $event->pump;
                             if ($event->poll != 0) {
@@ -1510,24 +1572,15 @@ sub update_game() {
                                     }
                                 }
                             }
-                            my (@messages) = fb_net::grecv();
+                            my @messages = fb_net::grecv();
                             foreach my $msg (@messages) {
-                                if ($msg->{msg} =~ /^\Qfinished:\E/) {
-                                    $pdata{$pdata{id2p}{$msg->{id}}}{still_game_messages} = 0;
-                                    print "$pdata{id2p}{$msg->{id}} is saying she's finished\n";
-                                } elsif (any { $pdata{$_}{still_game_messages} } @PLAYERS) {
-                                #- drop last game messages, mostly "ping" stuff
-                                    print "dropping last game message from $pdata{id2p}{$msg->{id}}: $msg->{msg}\n";
-                                    next;
-                                } else {
-                                    print "$pdata{id2p}{$msg->{id}} sends post-finish $msg->{msg}\n";
-                                    if ($msg->{msg} =~ /^\Qnewgame:\E/) {
-                                        $waitingnum--;
-                                        print "\twaitingnum decreases to $waitingnum\n";
-                                    } else {
-                                        $msg->{msg} !~ /PARTED/ and print "received unusual message $msg->{msg}, quitting\n";
-                                        die 'quit';
-                                    }
+                                my $result = decode_postgame_message($msg);
+                                if ($result =~ /^(\S+) newgame/) {
+                                    $waitingnum--;
+                                    print "$1 confirmed newgame, waitingnum decreases to $waitingnum\n";
+                                } elsif ($result =~ /^(\S+) other/) {
+                                    print "$1 sends post-finish non-newgame $msg->{msg}\n";
+                                    die 'quit';
                                 }
                             }
                             #- need to do it here because we might have received two "newgame"
