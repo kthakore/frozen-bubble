@@ -43,7 +43,7 @@ static char ok_player_parted[] = "PARTED: %s";
 static char ok_talk[] = "TALK: %s> %s";
 static char ok_start[] = "START: %s";
 static char ok_stop[] = "STOP: %s";
-static char ok_can_start[] = "GAME_CAN_START";
+static char ok_can_start[] = "GAME_CAN_START: %s";
 static char ok_status_open[] = "STATUS_OPEN";
 
 static char wn_unknown_command[] = "UNKNOWN_COMMAND";
@@ -173,8 +173,21 @@ int find_player_number(struct game *g, int fd)
 static void real_start_game(struct game* g)
 {
         int i;
+        char mapping_str[10000] = "";
+        char can_start_msg[1000];
+        for (i = 0; i < g->players_number; i++) {
+                int len = strlen(mapping_str);
+                if (len >= sizeof(mapping_str)-1)
+                        return;
+                mapping_str[len] = g->players_conn[i];
+                mapping_str[len+1] = '\0';
+                strncat(mapping_str, g->players_nick[i], sizeof(mapping_str));
+                if (i < g->players_number - 1)
+                        strncat(mapping_str, ",", sizeof(mapping_str));
+        }
+        snprintf(can_start_msg, sizeof(can_start_msg), ok_can_start, mapping_str);
         for (i = 0; i < g->players_number; i++)
-                send_line_log_push(g->players_conn[i], ok_can_start);
+                send_line_log_push_binary(g->players_conn[i], can_start_msg, ok_can_start);
 
         g->status = GAME_STATUS_PLAYING;
         for (i = 0; i < g->players_number; i++)
@@ -454,15 +467,18 @@ int process_msg(int fd, char* msg)
 }
 
 
-void process_msg_prio(int fd, char* msg)
+void process_msg_prio(int fd, char* msg, ssize_t len)
 {
         struct game * g = find_game_by_fd(fd);
         if (g) {
+                char prefixed_msg[10000];
                 int i;
-                int j = find_player_number(g, fd);
+                prefixed_msg[0] = fd;
+                memcpy(prefixed_msg + 1, msg, len);
                 for (i = 0; i < g->players_number; i++) {
-                        if (i != j) {
-                                send(g->players_conn[i], msg, strlen(msg), 0);
+                        // '!' is synchro message, each client will want to receive it even sender
+                        if (g->players_conn[i] != fd || prefixed_msg[1] == '!') {
+                                send(g->players_conn[i], prefixed_msg, len + 1, 0);
                         }
                 }
         } else {

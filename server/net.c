@@ -69,6 +69,17 @@ ssize_t send_line_log_push(int fd, char* dest_msg)
         return b;
 }
 
+ssize_t send_line_log_push_binary(int fd, char* dest_msg, char* printable_msg)
+{
+        char * tmp = current_command;
+        ssize_t b;
+        current_command = "PUSH";
+        l2("[%d] PUSH (binary message) %s", fd, printable_msg);
+        b = send_line(fd, dest_msg);
+        current_command = tmp;
+        return b;
+}
+
 ssize_t send_ok(int fd, char* inco_msg)
 {
         return send_line_log(fd, ok_generic, inco_msg);
@@ -99,15 +110,15 @@ static void handle_incoming_data_generic(gpointer data, gpointer user_data, int 
                 } else {
                         /* string operations will need a NULL conn_terminated string */
                         buf[len] = '\0';
-                        
-                        if (!strchr(buf, '\n')) {
-                                send_line_log(fd, fl_missing_lf, buf);
-                                goto conn_terminated;
+
+                        if (prio) {
+                                // prio e.g. in game
+                                process_msg_prio(fd, buf, len + 1);
+                                prio_processed = 1;
                         } else {
-                                if (prio) {
-                                        // prio e.g. in game
-                                        process_msg_prio(fd, buf);
-                                        prio_processed = 1;
+                                if (!strchr(buf, '\n')) {
+                                        send_line_log(fd, fl_missing_lf, buf);
+                                        goto conn_terminated;
                                 } else {
                                         char * eol;
                                         char * line = buf;
