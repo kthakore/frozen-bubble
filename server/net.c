@@ -271,6 +271,11 @@ void connections_manager(void)
                 if (prio_processed)
                         continue;
 
+                new_conns = g_list_copy(conns);
+                g_list_foreach(conns, handle_incoming_data, &conns_set);
+                g_list_free(conns);
+                conns = new_conns;
+
                 if (FD_ISSET(tcp_server_socket, &conns_set)) {
                         if ((fd = accept(tcp_server_socket, (struct sockaddr *) &client_addr, (socklen_t *) &len)) == -1) {
                                 perror("accept");
@@ -298,11 +303,6 @@ void connections_manager(void)
                                 }
                         }
                 }
-
-                new_conns = g_list_copy(conns);
-                g_list_foreach(conns, handle_incoming_data, &conns_set);
-                g_list_free(conns);
-                conns = new_conns;
 
                 if (udp_server_socket != -1 && FD_ISSET(udp_server_socket, &conns_set))
                         handle_udp_request();
