@@ -38,7 +38,7 @@
 #include "game.h"
 #include "tools.h"
 #include "log.h"
-
+#include "net.h"
 
 /* this is set in game.c and used here for answering with
  * the requested command without passing this additional arg */
@@ -53,6 +53,15 @@ static char ok_generic[] = "OK";
 
 static char fl_missing_lf[] = "MISSING_LF";
 static char fl_server_full[] = "SERVER_IS_FULL";
+static char fl_server_overloaded[] = "SERVER_IS_OVERLOADED";
+
+static double date_amount_transmitted_reset;
+
+#define DEFAULT_PORT 1511  // a.k.a 0xF 0xB thx misc
+#define DEFAULT_MAX_USERS 200
+#define DEFAULT_MAX_TRANSMISSION_RATE 100000
+static int max_users = DEFAULT_MAX_USERS;
+static int max_transmission_rate = DEFAULT_MAX_TRANSMISSION_RATE;
 
 
 /* send line adding the protocol in front of the supplied msg */
@@ -177,6 +186,8 @@ void connections_manager(int sock)
         ssize_t len = sizeof(client_addr);
         struct timeval tv;
 
+        date_amount_transmitted_reset = get_current_time();
+
         while (1) {
                 int fd;
                 int retval;
@@ -216,14 +227,25 @@ void connections_manager(int sock)
                                 exit(-1);
                         }
                         l2("Accepted connection from %s: fd %d", inet_ntoa(client_addr.sin_addr), fd);
-                        if (fd > 255) {
+                        if (fd > 255 || conns_nb() >= max_users) {
                                 send_line_log_push(fd, fl_server_full);
+                                l1("[%d] Closing connection", fd);
                                 close(fd);
                         } else {
-                                send_line_log_push(fd, greets_msg);
-                                conns = g_list_append(conns, GINT_TO_POINTER(fd));
-                                player_connects(fd);
-                                calculate_list_games();
+                                double now = get_current_time();
+                                double rate = get_reset_amount_transmitted() / (now - date_amount_transmitted_reset);
+                                l1("Transmission rate: %.2f bytes/sec", rate);
+                                date_amount_transmitted_reset = now;
+                                if (rate > max_transmission_rate) {
+                                        send_line_log_push(fd, fl_server_overloaded);
+                                        l1("[%d] Closing connection", fd);
+                                        close(fd);
+                                } else {
+                                        send_line_log_push(fd, greets_msg);
+                                        conns = g_list_append(conns, GINT_TO_POINTER(fd));
+                                        player_connects(fd);
+                                        calculate_list_games();
+                                }
                         }
                 }
 
@@ -253,13 +275,69 @@ void add_prio(int fd)
         new_conns = g_list_remove(new_conns, GINT_TO_POINTER(fd));
 }
 
+void help(void)
+{
+        printf("[[ Frozen-Bubble server ]]\n");
+        printf(" \n");
+        printf("Copyright (c) Guillaume Cottenceau, 2004.\n");
+        printf("\n");
+        printf("This program is free software; you can redistribute it and/or modify\n");
+        printf("it under the terms of the GNU General Public License version 2, as\n");
+        printf("published by the Free Software Foundation.\n");
+        printf(" \n");
+        printf("Usage: fb-server [OPTION]...\n");
+        printf("\n");
+        printf("     -h                        display this help then exits\n");
+        printf("     -p port                   set the server port (defaults to %d)\n", DEFAULT_PORT);
+        printf("     -u max_users              set the maximum of connected users (defaults to %d, physical maximum 252)\n", DEFAULT_MAX_USERS);
+        printf("     -t max_transmission_rate  set the maximum transmission rate, in bytes per second (defaults to %d)\n", DEFAULT_MAX_TRANSMISSION_RATE);
+}
 
-int create_server(void)
+int create_server(int argc, char **argv)
 {
         int sock;
         struct sockaddr_in client_addr;
-        int port = 1511;  // a.k.a 0xf 0xb thx misc
+        int port = DEFAULT_PORT;
         int valone = 1;
+
+        while (1) {
+                int c = getopt(argc, argv, "hp:u:t:");
+                if (c == -1)
+                        break;
+                
+                switch (c) {
+                case 'h':
+                        help();
+                        exit(0);
+                case 'p':
+                        port = charstar_to_int(optarg);
+                        if (port != 0)
+                                l1("Commandline: setting port to %d", port);
+                        else {
+                                port = DEFAULT_PORT;
+                                l1("Commandline: %s not convertible to int, ignoring", optarg);
+                        }
+                        break;
+                case 'u':
+                        max_users = charstar_to_int(optarg);
+                        if (max_users != 0)
+                                l1("Commandline: setting maximum users to %d", max_users);
+                        else {
+                                max_users = DEFAULT_MAX_USERS;
+                                l1("Commandline: %s not convertible to int, ignoring", optarg);
+                        }
+                        break;
+                case 't':
+                        max_transmission_rate = charstar_to_int(optarg);
+                        if (max_transmission_rate != 0)
+                                l1("Commandline: setting maximum transmission rate to %d bytes/sec", max_transmission_rate);
+                        else {
+                                max_transmission_rate = DEFAULT_MAX_TRANSMISSION_RATE;
+                                l1("Commandline: %s not convertible to int, ignoring", optarg);
+                        }
+                        break;
+                }
+        }
 
         sock = socket(AF_INET, SOCK_STREAM, 0);
         if (sock < 0) {

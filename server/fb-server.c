@@ -21,7 +21,7 @@
 
 int main(int argc, char **argv)
 {
-        int sock = create_server();
+        int sock = create_server(argc, argv);
         connections_manager(sock);
 
         return 0;

@@ -37,7 +37,7 @@
 #include "log.h"
 #include "game.h"
 
-#define MAX_PLAYERS 5
+#define MAX_PLAYERS_PER_GAME 5
 
 enum game_status { GAME_STATUS_OPEN, GAME_STATUS_STARTING, GAME_STATUS_PLAYING };
 
@@ -45,13 +45,15 @@ struct game
 {
         enum game_status status;
         int players_number;
-        int players_conn[MAX_PLAYERS];
-        char* players_nick[MAX_PLAYERS];
-        int players_starting[MAX_PLAYERS];
+        int players_conn[MAX_PLAYERS_PER_GAME];
+        char* players_nick[MAX_PLAYERS_PER_GAME];
+        int players_starting[MAX_PLAYERS_PER_GAME];
 };
 
-GList * games = NULL;
-GList * open_players = NULL;
+static GList * games = NULL;
+static GList * open_players = NULL;
+
+static ssize_t amount_transmitted = 0;
 
 static char ok_pong[] = "PONG";
 static char ok_player_joined[] = "JOINED: %s";
@@ -157,7 +159,7 @@ static int add_player(struct game * g, int fd, char* nick)
 {
         char joined_msg[1000];
         int i;
-        if (g->players_number < MAX_PLAYERS) {
+        if (g->players_number < MAX_PLAYERS_PER_GAME) {
                 /* inform other players */
                 snprintf(joined_msg, sizeof(joined_msg), ok_player_joined, nick);
                 for (i = 0; i < g->players_number; i++)
@@ -547,6 +549,13 @@ int process_msg(int fd, char* msg)
 }
 
 
+ssize_t get_reset_amount_transmitted(void)
+{
+        ssize_t ret = amount_transmitted;
+        amount_transmitted = 0;
+        return ret;
+}
+
 static char prefixed_msg[4096] __attribute__((aligned(4096)));
 void process_msg_prio(int fd, char* msg, ssize_t len)
 {
@@ -560,6 +569,7 @@ void process_msg_prio(int fd, char* msg, ssize_t len)
                         // '!' is synchro message, each client will want to receive it even sender
                         if (g->players_conn[i] != fd || prefixed_msg[1] == '!') {
                                 send(g->players_conn[i], prefixed_msg, transmitted_len + 1, 0);
+                                amount_transmitted += transmitted_len + 1;
                         }
                 }
         } else {
