@@ -1175,7 +1175,7 @@ sub win {
 
 sub lose {
     my ($player) = @_;
-    print "lose($player)\n";
+    print "lose($player)\n".backtrace();
     $pdata{$player}{ping_right}{state} = 'lose';
     $pdata{$player}{ping_right}{img} = 0;
     foreach ($launched_bubble{$player}, $tobe_launched{$player}, @{$malus_bubble{$player}}) {
@@ -2179,8 +2179,8 @@ sub new_game() {
 	$apprects{$::p} = SDL::Rect->new('-x' => $POS{$::p}{left_limit}, '-y' => $POS{$::p}{top_limit},
 					 -width => $POS{$::p}{right_limit}-$POS{$::p}{left_limit}, -height => $POS{$::p}{'initial_bubble_y'}-$POS{$::p}{top_limit});
 
+        $pdata{$::p}{left} = 0;
         if (is_distant_player($::p)) {
-            $pdata{$::p}{left} = 0;
             $pdata{$::p}{still_game_messages} = 1;
         }
     };
@@ -3568,6 +3568,7 @@ while (1) {
 	if ($@ =~ /^new_game/) {
 	    new_game();
 	} elsif ($@ =~ /^quit/) {
+            print "quitted\n";
             if (is_mp_game() && fb_net::reconnect() && new_game_once()) {
                 new_game();
             } else {
