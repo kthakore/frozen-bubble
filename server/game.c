@@ -41,7 +41,9 @@ static char ok_player_joined[] = "JOINED: %s";
 static char ok_player_parted[] = "PARTED: %s";
 static char ok_talk[] = "TALK: %s> %s";
 static char ok_start[] = "START: %s";
+static char ok_stop[] = "STOP: %s";
 static char ok_can_start[] = "GAME_CAN_START";
+static char ok_status_open[] = "STATUS_OPEN";
 
 static char wn_unknown_command[] = "UNKNOWN_COMMAND";
 static char wn_missing_arguments[] = "MISSING_ARGUMENTS";
@@ -52,6 +54,7 @@ static char wn_already_in_game[] = "ALREADY_IN_GAME";
 static char wn_not_in_game[] = "NOT_IN_GAME";
 static char wn_alone_in_the_dark[] = "ALONE_IN_THE_DARK";
 static char wn_already_started[] = "ALREADY_STARTED";
+static char wn_not_started[] = "NOT_STARTED";
 
 static char fl_line_unrecognized[] = "MISSING_FB_PROTOCOL_TAG";
 static char fl_proto_mismatch[] = "INCOMPATIBLE_PROTOCOL";
@@ -150,6 +153,75 @@ int find_player_number(struct game *g, int fd)
         exit(1);
 }
 
+static void real_start_game(struct game* g)
+{
+        int i;
+        for (i = 0; i < g->players_number; i++)
+                send_line_log_push(g->players_conn[i], ok_can_start);
+}
+
+static void start_game(int fd)
+{
+        int i;
+        struct game * g = find_game_by_fd(fd);
+        if (g) {
+                char start_msg[1000];
+                int j = find_player_number(g, fd);
+                int still_waiting = 0;
+                if (g->players_number == 1) {
+                        send_line_log(fd, wn_alone_in_the_dark, "START");
+                        return;
+                }
+                if (g->status == GAME_STATUS_OPEN) {
+                        g->status = GAME_STATUS_STARTING;
+                        for (i = 0; i < g->players_number; i++)
+                                g->players_starting[i] = 0;
+                        calculate_list_games();
+                } else if (g->players_starting[j] == 1) {
+                        send_line_log(fd, wn_already_started, "START");
+                        return;
+                }
+                g->players_starting[j] = 1;
+                snprintf(start_msg, sizeof(start_msg), ok_start, g->players_nick[j]);
+                for (i = 0; i < g->players_number; i++) {
+                        if (i != j) {
+                                still_waiting |= !g->players_starting[i];
+                                send_line_log_push(g->players_conn[i], start_msg);
+                        }
+                }
+                send_ok(fd, "START");
+                if (!still_waiting)
+                        real_start_game(g);
+        } else {
+                l0("Internal error");
+                exit(1);
+        }
+}
+
+static void stop_game(int fd)
+{
+        int i;
+        struct game * g = find_game_by_fd(fd);
+        if (g) {
+                char stop_msg[1000];
+                int j = find_player_number(g, fd);
+                if (g->status == GAME_STATUS_OPEN) {
+                        send_line_log(fd, wn_not_started, "START");
+                        return;
+                }
+                g->status = GAME_STATUS_OPEN;
+                send_ok(fd, "STOP");
+                calculate_list_games();
+                snprintf(stop_msg, sizeof(stop_msg), ok_stop, g->players_nick[j]);
+                for (i = 0; i < g->players_number; i++)
+                        if (i != j)
+                                send_line_log_push(g->players_conn[i], stop_msg);
+        } else {
+                l0("Internal error");
+                exit(1);
+        }
+}
+
 void cleanup_player(int fd)
 {
         struct game * g = find_game_by_fd(fd);
@@ -173,6 +245,12 @@ void cleanup_player(int fd)
                 g->players_number--;
                 if (g->players_number == 0)
                         games = g_list_remove(games, g);
+
+                if (g->status == GAME_STATUS_STARTING) {
+                        g->status = GAME_STATUS_OPEN;
+                        for (j = 0; j < g->players_number; j++)
+                                send_line_log_push(g->players_conn[j], ok_status_open);
+                }
                 calculate_list_games();
         }
 }
@@ -189,46 +267,6 @@ static void talk(int fd, char* msg)
                         send_line_log_push(g->players_conn[i], talk_msg);
         } else {
                 send_line_log(fd, wn_alone_in_the_dark, msg);
-        }
-}
-
-static void start_game(int fd)
-{
-        int i;
-        struct game * g = find_game_by_fd(fd);
-        if (g) {
-                char start_msg[1000];
-                int j = find_player_number(g, fd);
-                int still_waiting = 0;
-                if (g->players_number == 1) {
-                        send_line_log(fd, wn_alone_in_the_dark, "START");
-                        return;
-                }
-                if (g->players_starting[j] == 1) {
-                        send_line_log(fd, wn_already_started, "START");
-                        return;
-                }
-                if (g->status == GAME_STATUS_OPEN) {
-                        g->status = GAME_STATUS_STARTING;
-                        for (i = 0; i < g->players_number; i++)
-                                g->players_starting[i] = 0;
-                        calculate_list_games();
-                }
-                g->players_starting[j] = 1;
-                snprintf(start_msg, sizeof(start_msg), ok_start, g->players_nick[j]);
-                for (i = 0; i < g->players_number; i++) {
-                        if (i != j) {
-                                still_waiting |= !g->players_starting[i];
-                                send_line_log_push(g->players_conn[i], start_msg);
-                        }
-                }
-                send_ok(fd, "START");
-                if (!still_waiting)
-                        for (i = 0; i < g->players_number; i++)
-                                send_line_log_push(g->players_conn[i], ok_can_start);
-        } else {
-                l0("Internal error");
-                exit(1);
         }
 }
 
@@ -358,6 +396,12 @@ int process_msg(int fd, char* msg)
                         send_line_log(fd, wn_not_in_game, msg_orig);
                 } else {
                         start_game(fd);
+                }
+        } else if (streq(current_command, "STOP")) {
+                if (!already_in_game(fd)) {
+                        send_line_log(fd, wn_not_in_game, msg_orig);
+                } else {
+                        stop_game(fd);
                 }
         } else {
                 send_line_log(fd, wn_unknown_command, msg);
