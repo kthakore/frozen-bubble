@@ -245,7 +245,8 @@ void connections_manager(void)
                 FD_ZERO(&conns_set);
                 g_list_foreach(conns, fill_conns_set, &conns_set);
                 g_list_foreach(conns_prio, fill_conns_set, &conns_set);
-                FD_SET(tcp_server_socket, &conns_set);
+                if (tcp_server_socket != -1)
+                        FD_SET(tcp_server_socket, &conns_set);
                 if (udp_server_socket != -1)
                         FD_SET(udp_server_socket, &conns_set);
                
@@ -276,7 +277,7 @@ void connections_manager(void)
                 g_list_free(conns);
                 conns = new_conns;
 
-                if (FD_ISSET(tcp_server_socket, &conns_set)) {
+                if (tcp_server_socket != -1 && FD_ISSET(tcp_server_socket, &conns_set)) {
                         if ((fd = accept(tcp_server_socket, (struct sockaddr *) &client_addr, (socklen_t *) &len)) == -1) {
                                 perror("accept");
                                 exit(-1);
