@@ -2867,7 +2867,13 @@ sub setup_mp_game() {
         smg_choose_server(@servers) or return;
 
     } else {
-        smg_add_status_msg('*** GAME FINISHED');
+        @PLAYERS = reverse ssort { $pdata{$_}{score} } @PLAYERS;
+        if ($pdata{$PLAYERS[0]}{score} > $pdata{$PLAYERS[1]}{score}) {
+            smg_add_status_msg("*** GAME FINISHED, WINNER: $pdata{$PLAYERS[0]}{nick}");
+        } else {
+            smg_add_status_msg('*** GAME FINISHED, DRAW GAME!');
+        }
+        smg_add_status_msg('*** ' . join(', ', map { "$pdata{$_}{nick}: $pdata{$_}{score}" } @PLAYERS));
     }
 
   choose_game:

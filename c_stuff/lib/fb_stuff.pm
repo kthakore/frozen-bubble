@@ -30,7 +30,7 @@ use vars qw(@ISA @EXPORT $FPATH $FBLEVELS $colourblind %POS_1P %POS_2P %POS_MP $
 @ISA = qw(Exporter);
 @EXPORT = qw($FPATH $colourblind $FBLEVELS %POS_1P %POS_2P %POS_MP $BUBBLE_SIZE $ROW_SIZE
              $PI cat_ member difference2 any every even odd sqr to_bool to_int if_ chomp_
-             fold_left output append_to_file min max backtrace basename cp_af all partition);
+             fold_left output append_to_file min max backtrace basename cp_af all partition ssort);
 
 $FPATH = '@DATADIR@/frozen-bubble';
 
@@ -234,5 +234,9 @@ sub partition(&@) {
     \@a, \@b;
 }
 sub chomp_ { my @l = map { my $l = $_; chomp $l; $l } @_; wantarray() ? @l : $l[0] }
+sub ssort(&@) {
+    my $f = shift;
+    sort { local $_ = $a; my $fa = $f->($a); local $_ = $b; $fa <=> $f->($b) } @_;
+}
 # -=-=---=-=---=-=---=-=---=-=---=-=---=-=---=-=---=-=---=-=---=-=---=-=---=-=---=-=---=-=--
 
