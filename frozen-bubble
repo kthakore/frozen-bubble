@@ -2121,11 +2121,11 @@ sub setup_mp_game() {
     my $starty = 30;
     my $starty_chat = 356;
     my $starty_players = $starty_chat + $lineheight;
-    my $starty_status = 408;
+    my $starty_status = 412;
 
     my $erase_line = sub {
         my ($pos) = @_;
-        my $drect = SDL::Rect->new(-width => 640, -height => $lineheight, -x => 0, '-y' => $pos + 5);
+        my $drect = SDL::Rect->new(-width => 640, -height => $lineheight, -x => 0, '-y' => $pos);
         $imgbin{back_netgame}->blit($drect, $app, $drect);
     };
 
@@ -2173,7 +2173,7 @@ sub setup_mp_game() {
         foreach my $server (@sorted_servers) {
             $erase_line->($y);
             if ($server->{selected}) {
-                put_image($malus_gfx{tomate}, 56, $y + (16 - $malus_gfx{tomate}->{height}) / 2);
+                put_image($malus_gfx{tomate}, 56, $y);
             }
             $app->print($startx, $y, uc($server->{host} . ':' . $server->{port}));
             $app->print(300, $y, $server->{ping} ? "AVAIL PLAYERS:$server->{players} PING:$server->{ping}"
@@ -2318,7 +2318,7 @@ sub setup_mp_game() {
         my $y = $starty;
         foreach my $action (@actions) {
             if ($action->{selected}) {
-                put_image($malus_gfx{tomate}, 56, $y + (16 - $malus_gfx{tomate}->{height}) / 2);
+                put_image($malus_gfx{tomate}, 56, $y);
             }
             $app->print($startx, $y, $action->{name});
             $y += $lineheight;
