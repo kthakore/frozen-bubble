@@ -1509,7 +1509,7 @@ sub update_game() {
         update_lost($loser);
         is_2p_game() and update_won($loser eq 'p1' ? 'p2' : 'p1');
         
-    } elsif ($pdata{state} =~ /^finished (.*):(.*)/) {
+    } elsif ($pdata{state} =~ /^finished (\S+):(\S+)/) {
         #- mp game only state when we're trying to figure out if this is not a draw game
 
         my $supposed_winner_player = $1;
@@ -1529,6 +1529,10 @@ sub update_game() {
                     $pdata{state} = "won $supposed_winner_player";
                 }
             }
+        } elsif ($result =~ /^(\S+) other/) {
+            print "finished state - $1 sends post-finish non-newgame $msg->{msg} - passing hand to won\n";
+            win($supposed_winner_player);
+            $pdata{state} = "won $supposed_winner_player";
         } elsif ($result !~ /^(\S+) gamemsg/) {
             print "finished state, delaying $msg->{msg}\n";
             fb_net::gdelay_messages($msg);
