@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 
+#include <glib.h>
 
 extern int proto_major;
 extern int proto_minor;
@@ -20,3 +21,4 @@ void connections_manager(int sock);
 int create_server(void);
 
 int conns_nb(void);
+void add_prio(int fd);

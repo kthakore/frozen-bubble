@@ -14,6 +14,7 @@
 #include <stdarg.h>
 #include <string.h>
 #include <ctype.h>
+#include <sys/socket.h>
 
 #include <glib.h>
 
@@ -23,7 +24,7 @@
 
 #define MAX_PLAYERS 5
 
-enum game_status { GAME_STATUS_OPEN, GAME_STATUS_STARTING };
+enum game_status { GAME_STATUS_OPEN, GAME_STATUS_STARTING, GAME_STATUS_PLAYING };
 
 struct game
 {
@@ -66,8 +67,10 @@ static void list_games_aux(gpointer data, gpointer user_data)
 {
         const struct game* g = data;
         int i;
-        if (g->status == GAME_STATUS_STARTING)
+        if (g->status != GAME_STATUS_OPEN) {
+                players_in_game += g->players_number;
                 return;
+        }
         if (list_games_str[0] != '\0')
                 strncat(list_games_str, ",", sizeof(list_games_str));
         strncat(list_games_str, "[", sizeof(list_games_str));
@@ -165,6 +168,10 @@ static void real_start_game(struct game* g)
         int i;
         for (i = 0; i < g->players_number; i++)
                 send_line_log_push(g->players_conn[i], ok_can_start);
+
+        g->status = GAME_STATUS_PLAYING;
+        for (i = 0; i < g->players_number; i++)
+                add_prio(g->players_conn[i]);
 }
 
 static void start_game(int fd)
@@ -418,4 +425,22 @@ int process_msg(int fd, char* msg)
         current_command = NULL;
 
         return 0;
+}
+
+
+void process_msg_prio(int fd, char* msg)
+{
+        struct game * g = find_game_by_fd(fd);
+        if (g) {
+                int i;
+                int j = find_player_number(g, fd);
+                for (i = 0; i < g->players_number; i++) {
+                        if (i != j) {
+                                send(g->players_conn[i], msg, strlen(msg), 0);
+                        }
+                }
+        } else {
+                l0("Internal error");
+                exit(1);
+        }
 }

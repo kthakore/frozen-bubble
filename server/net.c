@@ -79,7 +79,8 @@ static void fill_conns_set(gpointer data, gpointer user_data)
 }
 
 static GList * new_conns;
-static void handle_incoming_data(gpointer data, gpointer user_data)
+static int prio_processed;
+static void handle_incoming_data_generic(gpointer data, gpointer user_data, int prio)
 {
         int fd;
 
@@ -103,17 +104,23 @@ static void handle_incoming_data(gpointer data, gpointer user_data)
                                 send_line_log(fd, fl_missing_lf, buf);
                                 goto conn_terminated;
                         } else {
-                                char * eol;
-                                char * line = buf;
-                                /* loop (to handle case when network gives us several lines at once) */
-                                while (!conn_terminated && (eol = strchr(line, '\n'))) {
-                                        eol[0] = '\0';
-                                        if (strlen(line) > 0 && eol[-1] == '\r')
-                                                eol[-1] = '\0';
-                                        conn_terminated = process_msg(fd, line);
-                                        line = eol + 1;
+                                if (prio) {
+                                        // prio e.g. in game
+                                        process_msg_prio(fd, buf);
+                                        prio_processed = 1;
+                                } else {
+                                        char * eol;
+                                        char * line = buf;
+                                        /* loop (to handle case when network gives us several lines at once) */
+                                        while (!conn_terminated && (eol = strchr(line, '\n'))) {
+                                                eol[0] = '\0';
+                                                if (strlen(line) > 0 && eol[-1] == '\r')
+                                                        eol[-1] = '\0';
+                                                conn_terminated = process_msg(fd, line);
+                                                line = eol + 1;
+                                        }
                                 }
-                                
+
                                 if (conn_terminated) {
                                 conn_terminated:
                                         l1("[%d] Closing connection", fd);
@@ -126,8 +133,18 @@ static void handle_incoming_data(gpointer data, gpointer user_data)
         }
 }
 
+static void handle_incoming_data(gpointer data, gpointer user_data)
+{
+        handle_incoming_data_generic(data, user_data, 0);
+}
+static void handle_incoming_data_prio(gpointer data, gpointer user_data)
+{
+        handle_incoming_data_generic(data, user_data, 1);
+}
+
 
 static GList * conns = NULL;
+static GList * conns_prio = NULL;
 void connections_manager(int sock)
 {
         struct sockaddr_in client_addr;
@@ -141,6 +158,7 @@ void connections_manager(int sock)
 
                 FD_ZERO(&conns_set);
                 g_list_foreach(conns, fill_conns_set, &conns_set);
+                g_list_foreach(conns_prio, fill_conns_set, &conns_set);
                 FD_SET(sock, &conns_set);
                
                 tv.tv_sec = 30;
@@ -151,8 +169,18 @@ void connections_manager(int sock)
                         exit(-1);
                 }
 
-                /* timeout */
+                // timeout
                 if (!retval)
+                        continue;
+
+                prio_processed = 0;
+                new_conns = g_list_copy(conns_prio);
+                g_list_foreach(conns_prio, handle_incoming_data_prio, &conns_set);
+                g_list_free(conns_prio);
+                conns_prio = new_conns;
+
+                // prio has higher priority (astounding statement, eh?)
+                if (prio_processed)
                         continue;
 
                 if (FD_ISSET(sock, &conns_set)) {
@@ -177,7 +205,13 @@ void connections_manager(int sock)
 
 int conns_nb(void)
 {
-        return g_list_length(conns);
+        return g_list_length(conns_prio) + g_list_length(conns);
+}
+
+void add_prio(int fd)
+{
+        conns_prio = g_list_append(conns_prio, GINT_TO_POINTER(fd));
+        new_conns = g_list_remove(new_conns, GINT_TO_POINTER(fd));
 }
 
 

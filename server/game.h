@@ -9,3 +9,4 @@
 void calculate_list_games(void);
 void cleanup_player(int fd);
 int process_msg(int fd, char* msg);
+void process_msg_prio(int fd, char* msg);
