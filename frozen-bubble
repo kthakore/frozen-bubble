@@ -2420,7 +2420,7 @@ sub choose_1p_game_mode() {
 our $smg_lineheight = 22;
 our $smg_startx = 78;
 our $smg_starty = 30;
-our $smg_starty_chat = 356;
+our $smg_starty_chat = 316;
 our $smg_starty_players = $smg_starty_chat + $smg_lineheight;
 
 sub erase_line($$;$$) {
@@ -2430,13 +2430,12 @@ sub erase_line($$;$$) {
 }
 
 sub smg_printstatus {
-    my ($msg, $msg2) = @_;
-    my $starty_status = 412;
-    erase_line($starty_status, $imgbin{back_netgame});
-    erase_line($starty_status + $smg_lineheight, $imgbin{back_netgame});
-    $app->print($smg_startx, $starty_status, $msg);
-    if ($msg2) {
-        $app->print($smg_startx, $starty_status + $smg_lineheight, $msg2);
+    my (@messages) = @_;
+    my $y = 370;
+    foreach (0..3) {
+        erase_line($y, $imgbin{back_netgame});
+        $app->print($smg_startx, $y, $messages[$_]);
+        $y += $smg_lineheight;
     }
     $app->flip();
 }
@@ -2592,8 +2591,8 @@ sub smg_choose_server(@) {
 }
 
 sub smg_add_status_msg($) {
-    $smg_status_messages[0] = $smg_status_messages[1];
-    $smg_status_messages[1] = uc($_[0]);
+    push @smg_status_messages, uc($_[0]);
+    @smg_status_messages > 4 and shift @smg_status_messages;
 }
 
 sub smg_verify_command($) {
