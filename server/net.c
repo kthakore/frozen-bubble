@@ -64,8 +64,13 @@ static int port = DEFAULT_PORT;
 static int max_users = DEFAULT_MAX_USERS;
 static int max_transmission_rate = DEFAULT_MAX_TRANSMISSION_RATE;
 
+static int lan_game_mode = 0;
+
 static int tcp_server_socket;
 static int udp_server_socket = -1;
+
+static GList * conns = NULL;
+static GList * conns_prio = NULL;
 
 /* send line adding the protocol in front of the supplied msg */
 static ssize_t send_line(int fd, char* msg)
@@ -182,10 +187,10 @@ static void handle_incoming_data_prio(gpointer data, gpointer user_data)
 
 static void handle_udp_request(void)
 {
-        static char fl_unrecognized[] = "You don't exist, go away.\n";
         static char ok_input_base[] = "FB/%d.%d SERVER PROBE";
-        static char ok_answer_base[] = "FB/%d.%d SERVER HERE AT PORT %d";
         static char * ok_input = NULL;
+        static char fl_unrecognized[] = "FB/1.0 You don't exist, go away.\n";
+        static char ok_answer_base[] = "FB/%d.%d SERVER HERE AT PORT %d";
         static char * ok_answer = NULL;
         int n;
         char msg[128];
@@ -207,9 +212,9 @@ static void handle_udp_request(void)
         }
         
         l2("UDP server receives %d bytes from %s.", n, inet_ntoa(client_addr.sin_addr));
-        if (strcmp(msg, ok_input)) {
+        if (strcmp(msg, ok_input) || (lan_game_mode && g_list_length(conns_prio) > 0)) {
                 answer = fl_unrecognized;
-                l0("Unrecognized.");
+                l0("Unrecognized/full.");
         } else {
                 answer = ok_answer;
                 l0("Valid FB server probe, answering.");
@@ -220,8 +225,6 @@ static void handle_udp_request(void)
         }
 }
 
-static GList * conns = NULL;
-static GList * conns_prio = NULL;
 void connections_manager(void)
 {
         struct sockaddr_in client_addr;
@@ -270,7 +273,7 @@ void connections_manager(void)
                                 exit(-1);
                         }
                         l2("Accepted connection from %s: fd %d", inet_ntoa(client_addr.sin_addr), fd);
-                        if (fd > 255 || conns_nb() >= max_users) {
+                        if (fd > 255 || conns_nb() >= max_users || (lan_game_mode && g_list_length(conns_prio) > 0)) {
                                 send_line_log_push(fd, fl_server_full);
                                 l1("[%d] Closing connection", fd);
                                 close(fd);
@@ -335,6 +338,7 @@ void help(void)
         printf("\n");
         printf("     -h                        display this help then exits\n");
         printf("     -l                        LAN mode: create an UDP server (on port %d) to answer broadcasts of clients discovering where are the servers\n", DEFAULT_PORT);
+        printf("     -L                        LAN/game mode: create an UDP server as above, but limit number of games to 1 (this is for an FB client hosting a LAN server)\n");
         printf("     -p port                   set the server port (defaults to %d)\n", DEFAULT_PORT);
         printf("     -u max_users              set the maximum of connected users (defaults to %d, physical maximum 252)\n", DEFAULT_MAX_USERS);
         printf("     -t max_transmission_rate  set the maximum transmission rate, in bytes per second (defaults to %d)\n", DEFAULT_MAX_TRANSMISSION_RATE);
@@ -366,7 +370,7 @@ void create_server(int argc, char **argv)
         int valone = 1;
 
         while (1) {
-                int c = getopt(argc, argv, "hlp:u:t:");
+                int c = getopt(argc, argv, "hlLp:u:t:");
                 if (c == -1)
                         break;
                 
@@ -376,6 +380,10 @@ void create_server(int argc, char **argv)
                         exit(0);
                 case 'l':
                         create_udp_server();
+                        break;
+                case 'L':
+                        create_udp_server();
+                        lan_game_mode = 1;
                         break;
                 case 'p':
                         port = charstar_to_int(optarg);
