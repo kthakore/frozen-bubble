@@ -1096,7 +1096,7 @@ sub handle_game_events() {
                 };
             }
         }
-        fb_net::delay_messages(@keep_messages);
+        fb_net::gdelay_messages(@keep_messages);
         $frame % 10 == 0 and fb_net::gsend("ping:");
         iter_distant_players {
             if ($pdata{$::p}{state} ne 'lost' && $pdata{$::p}{ping} + 40 < $frame) {
