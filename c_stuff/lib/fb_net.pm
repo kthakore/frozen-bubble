@@ -332,6 +332,10 @@ sub grecv() {
     return @msg;
 }
 
+sub delay_messages(@) {
+    push @messages, @_;
+}
+
 sub grecv_get1msg() {
     if (!@messages) {
         @messages = grecv();
