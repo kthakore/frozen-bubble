@@ -10,6 +10,7 @@
 
 #include <stdlib.h>
 #include <unistd.h>
+#include <errno.h>
 #include <stdio.h>
 #include <stdarg.h>
 #include <string.h>
@@ -89,12 +90,10 @@ static void handle_incoming_data_generic(gpointer data, gpointer user_data, int 
                 char buf[100000];
 
                 ssize_t len = recv(fd, buf, sizeof(buf) - 1, 0);
-                if (len == -1) {
-                        perror("recv");
-                        exit(-1);
-                }
-                if (len == 0) {
+                if (len <= 0) {
                         l1("[%d] Unexpected peer shutdown", fd);
+                        if (len == -1)
+                                l2("[%d] This happened on a system error: %s", fd, strerror(errno));
                         goto conn_terminated;
                 } else {
                         /* string operations will need a NULL conn_terminated string */
@@ -219,7 +218,7 @@ int create_server(void)
 {
         int sock;
         struct sockaddr_in client_addr;
-        int port = 31337;  // 0xfbfb a.k.a 64507 ?
+        int port = 1511;  // a.k.a 0xf 0xb thx misc
         int valone = 1;
 
         sock = socket(AF_INET, SOCK_STREAM, 0);
