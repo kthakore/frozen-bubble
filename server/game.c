@@ -35,6 +35,7 @@ GList * games = NULL;
 
 static char ok_player_joined[] = "JOINED: %s";
 static char ok_player_parted[] = "PARTED: %s";
+static char ok_talk[] = "TALK: %s";
 
 static char wn_unknown_command[] = "UNKNOWN_COMMAND";
 static char wn_missing_arguments[] = "MISSING_ARGUMENTS";
@@ -43,6 +44,7 @@ static char wn_no_such_game[] = "NO_SUCH_GAME";
 static char wn_game_full[] = "GAME_FULL";
 static char wn_already_in_game[] = "ALREADY_IN_GAME";
 static char wn_not_in_game[] = "NOT_IN_GAME";
+static char wn_alone_in_the_dark[] = "ALONE_IN_THE_DARK";
 
 static char fl_line_unrecognized[] = "MISSING_FB_PROTOCOL_TAG";
 static char fl_proto_mismatch[] = "INCOMPATIBLE_PROTOCOL";
@@ -99,52 +101,71 @@ static int add_player(struct game * g, int fd, char* nick)
         }
 }
 
-static struct game * cleanup_game;
-static void cleanup_player_aux(gpointer data, gpointer user_data)
-{
-        struct game* g = data;
-        int fd = GPOINTER_TO_INT(user_data);
-        int i;
-        for (i = 0; i < g->players_number; i++)
-                if (g->players_conn[i] == fd) {
-                        int j;
-                        char parted_msg[1000];
-                        // inform other players
-                        snprintf(parted_msg, sizeof(parted_msg), ok_player_parted, g->players_nick[i]);
-                        for (j = 0; j < g->players_number; j++)
-                                if (j != i)
-                                        send_line_log_push(g->players_conn[j], parted_msg);
-                        // remove parting player from game
-                        free(g->players_nick[i]);
-                        for (j = g->players_number - 2; j >= i; j--) {
-                                g->players_conn[j] = g->players_conn[j + 1];
-                                g->players_nick[j] = g->players_nick[j + 1];
-                        }
-                        g->players_number--;
-                        if (g->players_number == 0)
-                                cleanup_game = g;
-                }
-
-}
-void cleanup_player(int fd)
-{
-        cleanup_game = NULL;
-        g_list_foreach(games, cleanup_player_aux, GINT_TO_POINTER(fd));
-        if (cleanup_game)
-                games = g_list_remove(games, cleanup_game);
-        calculate_list_games();
-}
-
-static int find_game_aux(gconstpointer game, gconstpointer nick)
+static int find_game_by_nick_aux(gconstpointer game, gconstpointer nick)
 {
         if (streq(((struct game *) game)->players_nick[0], (char *) nick))
                 return 0;
         else
                 return 1;
 }
-static struct game* find_game(char* nick)
+static struct game* find_game_by_nick(char* nick)
 {
-        return GListp2data(g_list_find_custom(games, nick, find_game_aux));
+        return GListp2data(g_list_find_custom(games, nick, find_game_by_nick_aux));
+}
+
+static int find_game_by_fd_aux(gconstpointer game, gconstpointer fd)
+{
+        const struct game* g = game;
+        int fd_ = GPOINTER_TO_INT(fd);
+        int i;
+        for (i = 0; i < g->players_number; i++)
+                if (g->players_conn[i] == fd_)
+                        return 0;
+        return 1;
+}
+static struct game* find_game_by_fd(int fd)
+{
+        return GListp2data(g_list_find_custom(games, GINT_TO_POINTER(fd), find_game_by_fd_aux));
+}
+
+void cleanup_player(int fd)
+{
+        struct game * g = find_game_by_fd(fd);
+        if (g) {
+                int i;
+                char parted_msg[1000];
+                // inform other players
+                snprintf(parted_msg, sizeof(parted_msg), ok_player_parted, g->players_nick[i]);
+                for (i = 0; i < g->players_number; i++)
+                        if (i != fd)
+                                send_line_log_push(g->players_conn[i], parted_msg);
+                // remove parting player from game
+                free(g->players_nick[fd]);
+                for (i = g->players_number - 2; i >= fd; i--) {
+                        g->players_conn[i] = g->players_conn[i + 1];
+                        g->players_nick[i] = g->players_nick[i + 1];
+                }
+                g->players_number--;
+                if (g->players_number == 0)
+                        games = g_list_remove(games, g);
+                calculate_list_games();
+        }
+}
+
+static void talk(int fd, char* msg)
+{
+        struct game * g = find_game_by_fd(fd);
+        if (g && g->players_number > 1) {
+                int i;
+                char talk_msg[1000];
+                snprintf(talk_msg, sizeof(talk_msg), ok_talk, msg);
+                for (i = 0; i < g->players_number; i++)
+                        if (g->players_conn[i] != fd)
+                                send_line_log_push(g->players_conn[i], talk_msg);
+                send_ok(fd, "TALK");
+        } else {
+                send_line_log(fd, wn_alone_in_the_dark, msg);
+        }
 }
 
 static gboolean nick_available_aux(gconstpointer data, gconstpointer user_data)
@@ -242,7 +263,7 @@ int process_msg(int fd, char* msg)
                                 send_line_log(fd, wn_nick_in_use, msg_orig);
                         } else if (already_in_game(fd)) {
                                 send_line_log(fd, wn_already_in_game, msg_orig);
-                        } else if (!(g = find_game(args))) {
+                        } else if (!(g = find_game_by_nick(args))) {
                                 send_line_log(fd, wn_no_such_game, msg_orig);
                         } else {
                                 if (add_player(g, fd, strdup(nick)))
@@ -261,7 +282,11 @@ int process_msg(int fd, char* msg)
         } else if (streq(current_command, "LIST")) {
                 send_line_log(fd, list_games_str, msg_orig);
         } else if (streq(current_command, "TALK")) {
-
+                if (!args) {
+                        send_line_log(fd, wn_missing_arguments, msg_orig);
+                } else {
+                        talk(fd, args);
+                }
         } else {
                 send_line_log(fd, wn_unknown_command, msg);
         }
