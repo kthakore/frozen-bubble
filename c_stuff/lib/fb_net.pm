@@ -211,8 +211,11 @@ sub join($$) {
     }
 }
 
+my ($current_host, $current_port);
 sub connect($$) {
     my ($host, $port) = @_;
+
+    $current_host = $current_port = undef;
 
     $sock = IO::Socket::INET->new(PeerAddr => $host, PeerPort => $port, Proto => 'tcp', Timeout => 5);
     if (!$sock) {
@@ -254,7 +257,16 @@ sub connect($$) {
     $ping = sprintf("%3.1f", ($t1-$t0)*1000);
 #    print "$host:$port is a protocol $remote_major.$remote_minor FB server with a ping of ${ping}ms.\n";
 
+    $current_host = $host;
+    $current_port = $port;
     return $ping;
+}
+
+sub reconnect() {
+    if (defined($current_host) && defined($current_port)) {
+        disconnect();
+        return fb_net::connect($current_host, $current_port);
+    }
 }
 
 sub http_download($) {
