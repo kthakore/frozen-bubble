@@ -517,6 +517,21 @@ sub create_bubble(;$) {
     return $b;
 }
 
+sub each_index(&@) {
+    my $f = shift;
+    local $::i = 0;
+    foreach (@_) {
+	$f->();
+	$::i++;
+    }
+}
+sub get_bubble_num {
+    my ($img) = @_;
+    my $num = -1;
+    each_index { $_ eq $img and $num = $::i } @bubbles_images;
+    return $num;
+}
+
 sub iter_rowscols(&$) {
     my ($f, $oddswap) = @_;
     local $::row; local $::col;
@@ -1253,7 +1268,8 @@ sub update_game() {
                 }
 
                 if ($actions{$::p}{mp_fire}
-                    || (($actions{$::p}{fire} || $pdata{$::p}{hurry} == $TIME_HURRY_MAX)
+                    || (is_local_player($::p)
+                        && ($actions{$::p}{fire} || $pdata{$::p}{hurry} == $TIME_HURRY_MAX)
                         && !$launched_bubble{$::p}
                         && !(any { exists $_->{chaindestx} } @{$falling_bubble{$::p}})
                         && !@{$malus_bubble{$::p}})) {
@@ -1266,7 +1282,7 @@ sub update_game() {
                     $pdata{$::p}{hurry} = 0;
                     remove_hurry($::p);
                     if (is_mp_game()) {
-                        if (!$actions{$::p}{mp_fire}) {
+                        if (is_local_player($::p)) {
                             $pdata{$::p}{nextcolor} = int(rand(@bubbles_images));
                             fb_net::gsend("fire:$angle{$::p}:$pdata{$::p}{nextcolor}");
                         }
