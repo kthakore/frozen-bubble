@@ -18,3 +18,5 @@ ssize_t send_ok(int fd, char* inco_msg);
 
 void connections_manager(int sock);
 int create_server(void);
+
+int conns_nb(void);

@@ -127,11 +127,11 @@ static void handle_incoming_data(gpointer data, gpointer user_data)
 }
 
 
+static GList * conns = NULL;
 void connections_manager(int sock)
 {
         struct sockaddr_in client_addr;
         ssize_t len = sizeof(client_addr);
-        GList * conns = NULL;
         struct timeval tv;
 
         while (1) {
@@ -164,6 +164,7 @@ void connections_manager(int sock)
                         l2("Accepted connection from %s: fd %d", inet_ntoa(client_addr.sin_addr), fd);
                         send_line_log_push(fd, greets_msg);
                         conns = g_list_append(conns, GINT_TO_POINTER(fd));
+                        calculate_list_games();
                 }
 
                 new_conns = g_list_copy(conns);
@@ -171,6 +172,12 @@ void connections_manager(int sock)
                 g_list_free(conns);
                 conns = new_conns;
         }
+}
+
+
+int conns_nb(void)
+{
+        return g_list_length(conns);
 }
 
 

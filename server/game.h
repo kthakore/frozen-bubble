@@ -6,5 +6,6 @@
 #include <stdlib.h>
 #include <stdarg.h>
 
+void calculate_list_games(void);
 void cleanup_player(int fd);
 int process_msg(int fd, char* msg);

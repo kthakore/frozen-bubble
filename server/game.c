@@ -61,6 +61,7 @@ static char fl_proto_mismatch[] = "INCOMPATIBLE_PROTOCOL";
 
 
 static char list_games_str[10000];
+static int players_in_game;
 static void list_games_aux(gpointer data, gpointer user_data)
 {
         const struct game* g = data;
@@ -74,13 +75,19 @@ static void list_games_aux(gpointer data, gpointer user_data)
                 strncat(list_games_str, g->players_nick[i], sizeof(list_games_str));
                 if (i < g->players_number - 1)
                         strncat(list_games_str, ",", sizeof(list_games_str));
+                players_in_game++;
         }
         strncat(list_games_str, "]", sizeof(list_games_str));
 }
-static void calculate_list_games(void)
+void calculate_list_games(void)
 {
+        char * free_players;
         list_games_str[0] = '\0';
+        players_in_game = 0;
         g_list_foreach(games, list_games_aux, NULL);
+        free_players = asprintf_(" free:%d", conns_nb() - players_in_game);
+        strncat(list_games_str, free_players, sizeof(list_games_str));
+        free(free_players);
 }
 
 static void create_game(int fd, char* nick)
