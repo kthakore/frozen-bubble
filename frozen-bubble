@@ -3,7 +3,7 @@
 #
 #                          Frozen-Bubble
 #
-# Copyright (c) 2000, 2001, 2002, 2003 Guillaume Cottenceau <guillaume.cottenceau at free.fr>
+# Copyright (c) 2000, 2001, 2002, 2003, 2004 Guillaume Cottenceau
 #
 # Sponsored by MandrakeSoft <http://www.mandrakesoft.com/>
 #
@@ -24,7 +24,8 @@
 #******************************************************************************
 #
 # Design & Programming by Guillaume Cottenceau between Oct 2001 and Jan 2002.
-# Level Editor parts by Kim Joham and David Joham between Oct 2002 and Jan 2003
+# Level Editor parts by Kim Joham and David Joham between Oct 2002 and Jan 2003.
+# Network game by Guillaume Cottenceau in 2004.
 #
 # Check official home: http://www.frozen-bubble.org/
 #
@@ -34,8 +35,8 @@
 # Yes it uses Perl, you non-believer :-).
 #
 
-#use diagnostics;
-#use strict;
+use diagnostics;
+use strict;
 
 use vars qw($TARGET_ANIM_SPEED $BUBBLE_SIZE $ROW_SIZE $LAUNCHER_SPEED $BUBBLE_SPEED $MALUS_BUBBLE_SPEED $TIME_APPEARS_NEW_ROOT
             %POS %POS_1P %POS_2P %MENUPOS $KEYS %actions %angle %pdata $app $font %apprects $event %rects %sticked_bubbles %root_bubbles
@@ -89,12 +90,12 @@ $version = '1.0.1';
 print "        [[ Frozen-Bubble-$version ]]\n\n";
 print '  http://www.frozen-bubble.org/
 
-  Copyright (c) 2000, 2001, 2002, 2003 Guillaume Cottenceau.
-  Artwork: Alexis Younes <73lab at free.fr>
-           Amaury Amblard-Ladurantie <amaury at linuxfr.org>
-  Soundtrack: Matthias Le Bidan <matthias.le_bidan at caramail.com>
-  Design & Programming: Guillaume Cottenceau <guillaume.cottenceau at free.fr>
-  Level Editor: Kim and David Joham <[k|d]joham at yahoo.com>
+  Copyright (c) 2000, 2001, 2002, 2003, 2004 Guillaume Cottenceau.
+  Artwork: Alexis Younes
+           Amaury Amblard-Ladurantie
+  Soundtrack: Matthias Le Bidan
+  Design & Programming: Guillaume Cottenceau
+  Level Editor: Kim and David Joham
 
   Sponsored by MandrakeSoft <http://www.mandrakesoft.com/>
 
