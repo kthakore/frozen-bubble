@@ -265,7 +265,7 @@ sub connect($$) {
 sub reconnect() {
     if (defined($current_host) && defined($current_port)) {
         disconnect();
-        return fb_net::connect($current_host, $current_port);
+        return fb_net::connect($current_host, $current_port) != 0;
     }
 }
 

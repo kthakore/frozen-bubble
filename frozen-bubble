@@ -3526,12 +3526,12 @@ while (1) {
 	if ($@ =~ /^new_game/) {
 	    new_game();
 	} elsif ($@ =~ /^quit/) {
-            if (is_mp_game()) {
-                fb_net::reconnect();
-                new_game_once() and new_game();
+            if (is_mp_game() && fb_net::reconnect() && new_game_once()) {
+                new_game();
+            } else {
+                do { menu() } while (!new_game_once());
+                new_game();
             }
-            do { menu() } while (!new_game_once());
-	    new_game();
 	} else {
 	    die;
 	}
