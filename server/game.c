@@ -23,11 +23,15 @@
 
 #define MAX_PLAYERS 5
 
+enum game_status { GAME_STATUS_OPEN, GAME_STATUS_STARTING };
+
 struct game
 {
+        enum game_status status;
         int players_number;
         int players_conn[MAX_PLAYERS];
         char* players_nick[MAX_PLAYERS];
+        int players_starting[MAX_PLAYERS];
 };
 
 GList * games = NULL;
@@ -36,6 +40,8 @@ static char ok_pong[] = "PONG";
 static char ok_player_joined[] = "JOINED: %s";
 static char ok_player_parted[] = "PARTED: %s";
 static char ok_talk[] = "TALK: %s> %s";
+static char ok_start[] = "START: %s";
+static char ok_can_start[] = "GAME_CAN_START";
 
 static char wn_unknown_command[] = "UNKNOWN_COMMAND";
 static char wn_missing_arguments[] = "MISSING_ARGUMENTS";
@@ -45,6 +51,7 @@ static char wn_game_full[] = "GAME_FULL";
 static char wn_already_in_game[] = "ALREADY_IN_GAME";
 static char wn_not_in_game[] = "NOT_IN_GAME";
 static char wn_alone_in_the_dark[] = "ALONE_IN_THE_DARK";
+static char wn_already_started[] = "ALREADY_STARTED";
 
 static char fl_line_unrecognized[] = "MISSING_FB_PROTOCOL_TAG";
 static char fl_proto_mismatch[] = "INCOMPATIBLE_PROTOCOL";
@@ -55,6 +62,8 @@ static void list_games_aux(gpointer data, gpointer user_data)
 {
         const struct game* g = data;
         int i;
+        if (g->status == GAME_STATUS_STARTING)
+                return;
         if (list_games_str[0] != '\0')
                 strncat(list_games_str, ",", sizeof(list_games_str));
         strncat(list_games_str, "[", sizeof(list_games_str));
@@ -77,6 +86,7 @@ static void create_game(int fd, char* nick)
         g->players_number = 1;
         g->players_conn[0] = fd;
         g->players_nick[0] = nick;
+        g->status = GAME_STATUS_OPEN;
         games = g_list_append(games, g);
         calculate_list_games();
 }
@@ -103,7 +113,9 @@ static int add_player(struct game * g, int fd, char* nick)
 
 static int find_game_by_nick_aux(gconstpointer game, gconstpointer nick)
 {
-        if (streq(((struct game *) game)->players_nick[0], (char *) nick))
+        const struct game * g = game;
+        if (g->status == GAME_STATUS_OPEN
+            && streq(g->players_nick[0], (char *) nick))
                 return 0;
         else
                 return 1;
@@ -177,6 +189,46 @@ static void talk(int fd, char* msg)
                         send_line_log_push(g->players_conn[i], talk_msg);
         } else {
                 send_line_log(fd, wn_alone_in_the_dark, msg);
+        }
+}
+
+static void start_game(int fd)
+{
+        int i;
+        struct game * g = find_game_by_fd(fd);
+        if (g) {
+                char start_msg[1000];
+                int j = find_player_number(g, fd);
+                int still_waiting = 0;
+                if (g->players_number == 1) {
+                        send_line_log(fd, wn_alone_in_the_dark, "START");
+                        return;
+                }
+                if (g->players_starting[j] == 1) {
+                        send_line_log(fd, wn_already_started, "START");
+                        return;
+                }
+                if (g->status == GAME_STATUS_OPEN) {
+                        g->status = GAME_STATUS_STARTING;
+                        for (i = 0; i < g->players_number; i++)
+                                g->players_starting[i] = 0;
+                        calculate_list_games();
+                }
+                g->players_starting[j] = 1;
+                snprintf(start_msg, sizeof(start_msg), ok_start, g->players_nick[j]);
+                for (i = 0; i < g->players_number; i++) {
+                        if (i != j) {
+                                still_waiting |= !g->players_starting[i];
+                                send_line_log_push(g->players_conn[i], start_msg);
+                        }
+                }
+                send_ok(fd, "START");
+                if (!still_waiting)
+                        for (i = 0; i < g->players_number; i++)
+                                send_line_log_push(g->players_conn[i], ok_can_start);
+        } else {
+                l0("Internal error");
+                exit(1);
         }
 }
 
@@ -300,6 +352,12 @@ int process_msg(int fd, char* msg)
                         send_line_log(fd, wn_missing_arguments, msg_orig);
                 } else {
                         talk(fd, args);
+                }
+        } else if (streq(current_command, "START")) {
+                if (!already_in_game(fd)) {
+                        send_line_log(fd, wn_not_in_game, msg_orig);
+                } else {
+                        start_game(fd);
                 }
         } else {
                 send_line_log(fd, wn_unknown_command, msg);
