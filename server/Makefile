@@ -22,6 +22,9 @@ fb-server: $(ALLOBJ)
 clean: 
 	rm -f fb-server *.o .depend
 
+install:
+	@echo Installed from main Makefile
+
 .depend:
 	$(CPP) $(CFLAGS) -M $(ALLSRC) > .depend
 

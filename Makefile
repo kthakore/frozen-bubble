@@ -1,4 +1,4 @@
-DIRS = c_stuff
+DIRS = c_stuff server
 
 PREFIX = /usr/local
 DATADIR = $(PREFIX)/share
@@ -29,6 +29,8 @@ install: $(ALL)
 	install -d $(DATADIR)/frozen-bubble
 	cp -a gfx snd data $(DATADIR)/frozen-bubble
 	rm -f $(DATADIR)/frozen-bubble/gfx/shoot/create.pl
+	install -d $(LIBDIR)/frozen-bubble
+	install server/fb-server $(LIBDIR)/frozen-bubble
 	install -d $(MANDIR)/man6
 	install doc/*.6 $(MANDIR)/man6
 
