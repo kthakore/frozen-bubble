@@ -25,14 +25,15 @@
 package fb_stuff;
 
 use fb_c_stuff;
-use vars qw(@ISA @EXPORT $FPATH $FBLEVELS $colourblind %POS_1P %POS_2P %POS_MP $BUBBLE_SIZE $ROW_SIZE
+use vars qw(@ISA @EXPORT $FPATH $FLPATH $FBLEVELS $colourblind %POS_1P %POS_2P %POS_MP $BUBBLE_SIZE $ROW_SIZE
             $PI);
 @ISA = qw(Exporter);
-@EXPORT = qw($FPATH $colourblind $FBLEVELS %POS_1P %POS_2P %POS_MP $BUBBLE_SIZE $ROW_SIZE
+@EXPORT = qw($FPATH $FLPATH $colourblind $FBLEVELS %POS_1P %POS_2P %POS_MP $BUBBLE_SIZE $ROW_SIZE
              $PI cat_ member difference2 any every even odd sqr to_bool to_int if_ chomp_
              fold_left output append_to_file min max backtrace basename cp_af all partition ssort sum);
 
 $FPATH = '@DATADIR@/frozen-bubble';
+$FLPATH = '@LIBDIR@/frozen-bubble';
 
 %POS_2P = ( p1 => { left_limit => 30, right_limit => 286, top_limit => 40, 'initial_bubble_y' => 390,
                     canon => { x => 108, 'y' => 356 },
@@ -58,7 +59,7 @@ $FPATH = '@DATADIR@/frozen-bubble';
 %POS_1P = ( p1 => { left_limit => 190, right_limit => 446, top_limit => 44, 'initial_bubble_y' => 390,
                     canon => { x => 268, 'y' => 356 },
                     simpleshooter => { x => 317, 'y' => 405, diameter => 60 },
-                    pinguin => { x => 168, 'y' => 437 },
+                    pinguin => { x => 168, 'y' => 417 },
                     next_bubble => { x => 112, 'y' => 440 },
                     on_top_next_relpos => { x => -4, 'y' => -3 },
                     hurry => { x => 10, 'y' => 265 },

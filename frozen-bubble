@@ -2490,6 +2490,16 @@ sub smg_add_status_msg($) {
     @smg_status_messages > 4 and shift @smg_status_messages;
 }
 
+sub clean_server {
+    if ($pdata{serverpid}) {
+        kill 15, $pdata{serverpid};
+        waitpid $pdata{serverpid}, 0;
+        $pdata{serverpid} = undef;
+    }
+}
+
+END { clean_server(); }
+
 sub smg_servers() {
 
     if ($pdata{gametype} eq 'lan') {
@@ -2499,18 +2509,29 @@ sub smg_servers() {
             smg_printstatus("UNABLE TO PROBE FOR AVAILABLE SERVERS ON THE LAN!",
                             "VERIFY YOUR NETWORK SETUP OR RETRY LATER.");
             grab_key(0);
+            return;
         } else {
             my @servers = @{$ret->{servers}};
             if (!@servers) {
-                if (my $pid = fork()) {
-                    $pdata{autochooseserver} = 1;
-                    smg_add_status_msg("CREATED SERVER FOR LAN GAME.");
-                    sleep 1;
-                    return ({ host => 'localhost', port => 1511 });
+                my $fb_server = "$FLPATH/fb-server";
+                if (!-x $fb_server) {
+                    print STDERR "$fb_server is missing or not executable!\n";
+                    smg_printstatus("NO SERVER FOUND, AND COULD NOT START SERVER.",
+                                    "VERIFY YOUR INSTALLATION OR CONTACT YOUR VENDOR.");
+                    grab_key(0);
+                    return;
                 } else {
-                    unless (exec 'fb-server', '-L', '-p', '1511') {
-                        print STDERR "Could not create server limited to lan game: $!\n";
-                        POSIX::_exit(1);
+                    if (my $pid = fork()) {
+                        $pdata{autochooseserver} = 1;
+                        $pdata{serverpid} = $pid;
+                        smg_add_status_msg("NO SERVER FOUND: CREATED SERVER FOR LAN GAME.");
+                        sleep 1;
+                        return ({ host => 'localhost', port => 1511 });
+                    } else {
+                        unless (exec $fb_server, '-L', '-p', '1511') {
+                            print STDERR "Could not create server limited to lan game: $!\n";
+                            POSIX::_exit(1);
+                        }
                     }
                 }
             } else {
@@ -3421,6 +3442,7 @@ sub menu {
 
     if (!$from_intro) {
         $music{current} ne 'intro' and play_music('intro', 8);
+        clean_server();
     }
 
     my $back_start;

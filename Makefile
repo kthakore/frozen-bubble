@@ -2,6 +2,7 @@ DIRS = c_stuff
 
 PREFIX = /usr/local
 DATADIR = $(PREFIX)/share
+LIBDIR = $(PREFIX)/lib
 BINDIR = $(PREFIX)/bin
 MANDIR = $(DATADIR)/man
 
@@ -16,6 +17,7 @@ dirs:
 	@if [ ! -d save_virgin ]; then mkdir save_virgin; cp c_stuff/lib/fb_stuff.pm save_virgin; fi
 	cp -f save_virgin/fb_stuff.pm c_stuff/lib/fb_stuff.pm
 	perl -pi -e 's|\@DATADIR\@|$(DATADIR)|' c_stuff/lib/fb_stuff.pm
+	perl -pi -e 's|\@LIBDIR\@|$(LIBDIR)|' c_stuff/lib/fb_stuff.pm
 
 
 install: $(ALL)
