@@ -178,7 +178,7 @@ int create_server(void)
 {
         int sock;
         struct sockaddr_in client_addr;
-        int port = 31337;
+        int port = 31337;  // 0xfbfb a.k.a 64507 ?
         int valone = 1;
 
         sock = socket(AF_INET, SOCK_STREAM, 0);
