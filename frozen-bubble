@@ -2569,6 +2569,19 @@ sub smg_choose_game() {
                     smg_add_status_msg("*** $1 STARTED THE GAME AND IS WAITING!");
                     $need4status = 1;
                     play_sound('newroot');
+                } elsif ($message =~ /^STOP: (.*)/) {
+                    smg_add_status_msg("*** $1 ABORTED STARTING, CANCELLING GAME...");
+                    fb_net::send_("PART");
+                    my $answer = smg_verify_command('PART');
+                    $redraw->();
+                    fb_c_stuff::fbdelay(2000);
+                    while (my $msg = fb_net::readline_ifdata()) {
+                        my ($command, $message) = fb_net::decode_msg($msg);
+                        if ($command ne 'PUSH' || $message !~ /^PARTED:/) {
+                            print "unexpected message received: $msg\n";
+                        }
+                    }
+                    return smg_choose_game();
                 } else {
                     print "unrecognized message received: $msg\n";
                 }
@@ -2622,6 +2635,9 @@ sub smg_start_game($) {
                     if ($answer) {
                         smg_add_status_msg("*** CAN'T STOP GAME: $answer");
                     } else {
+                        smg_add_status_msg("*** ABORTED STARTING GAME...");
+                        $redraw->();
+                        fb_c_stuff::fbdelay(2000);
                         return 0;
                     }
 
@@ -2641,6 +2657,12 @@ sub smg_start_game($) {
                 if ($message =~ /^START: (.*)/) {
                     smg_add_status_msg("*** $1 ALSO STARTED THE GAME...");
                     play_sound('newroot');
+
+                } elsif ($message =~ /^STOP: (.*)/ || $message =~ /^PARTED: (.*)/) {
+                    smg_add_status_msg("*** $1 ABORTED STARTING, CANCELLING GAME...");
+                    $redraw->();
+                    fb_c_stuff::fbdelay(2000);
+                    return 0;
 
                 } elsif ($message =~ /^GAME_CAN_START: (.*)/) {
                     my $msg = $1;
