@@ -45,7 +45,7 @@ use vars qw($TARGET_ANIM_SPEED $BUBBLE_SIZE $ROW_SIZE $LAUNCHER_SPEED $BUBBLE_SP
             $graphics_level @update_rects $CANON_ROTATIONS_NB %malus_bubble %falling_bubble %exploding_bubble %malus_gfx
             %sticking_bubble $version $time %imgbin $TIME_HURRY_WARN $TIME_HURRY_MAX $TIMEOUT_PINGUIN_SLEEP $FREE_FALL_CONSTANT
             $direct @PLAYERS %levels $display_on_app_disabled $total_time $time_1pgame $fullscreen $rcfile $hiscorefile $HISCORES
-            $lev_number $playermalus $loaded_levelset $direct_levelset $chainreaction %chains %history);
+            $lev_number $playermalus $loaded_levelset $direct_levelset $chainreaction %chains %history %img_mini $frame);
 
 use Data::Dumper;
 
@@ -143,7 +143,7 @@ local $_ = "@ARGV";
 /-pm\s*(-?[\d]+)/ || /-playermalus\s*(-?\d+)/ and $playermalus = $1;
 /-ls\s*(\S+)/ || /-levelset\s*(\S+)/ and $levels{current} = 1, $direct = 1, @PLAYERS = ('p1'), $direct_levelset = $1;
 /-l\s*(\d+)/ || /-level\s*(\d+)/ and $levels{current} = $1, $direct = 1, @PLAYERS = ('p1');
-
+/-mp/ and @PLAYERS = qw(p1 rp1 rp2 rp3 rp4);
 
 #- ------------------------------------------------------------------------
 
@@ -234,8 +234,17 @@ sub add_default_rect($) {
     $rects{$surface} = SDL::Rect->new(-width => $surface->width, -height => $surface->height);
 }
 
+sub translate_mini_image {
+    my ($image) = @_;
+    if ($::p_ =~ /rp/ || ($::p_ eq '' && $::p =~ /rp/)) {
+        $img_mini{$image} and return $img_mini{$image};
+    }
+    return $image;
+}
+
 sub put_image($$$) {
     my ($image, $x, $y) = @_;
+    $image = translate_mini_image($image);
     $rects{$image} or die "please don't call me with no rects\n".backtrace();
     my $drect = SDL::Rect->new(-width => $image->width, -height => $image->height, -x => $x, '-y' => $y);
     $image->blit($rects{$image}, $app, $drect);
@@ -244,6 +253,7 @@ sub put_image($$$) {
 
 sub erase_image_from($$$$) {
     my ($image, $x, $y, $img) = @_;
+    $image = translate_mini_image($image);
     my $drect = SDL::Rect->new(-width => $image->width, -height => $image->height, -x => $x, '-y' => $y);
     $img->blit($drect, $app, $drect);
     push @update_rects, $drect;
@@ -257,6 +267,7 @@ sub erase_image($$$) {
 sub put_image_to_background($$$) {
     my ($image, $x, $y) = @_;
     my $drect;
+    $image = translate_mini_image($image);
     ($x == 0 && $y == 0) and print "put_image_to_background: warning, X and Y are 0\n";
     if ($y > 0) {
 	$drect = SDL::Rect->new(-width => $image->width, -height => $image->height, -x => $x, '-y' => $y);
@@ -273,6 +284,7 @@ sub put_image_to_background($$$) {
 
 sub remove_image_from_background($$$) {
     my ($image, $x, $y) = @_;
+    $image = translate_mini_image($image);
     ($x == 0 && $y == 0) and print "remove_image_from_background: warning, X and Y are 0\n";
     my $drect = SDL::Rect->new(-width => $image->width, -height => $image->height, -x => $x, '-y' => $y);
     $background_orig->blit($drect, $background, $drect);
@@ -282,9 +294,10 @@ sub remove_image_from_background($$$) {
 
 sub remove_images_from_background {
     my ($player, @images) = @_;
-    foreach (@images) {
-	($_->{'x'} == 0 && $_->{'y'} == 0) and print "remove_images_from_background: warning, X and Y are 0\n";
-	my $drect = SDL::Rect->new(-width => $_->{img}->width, -height => $_->{img}->height, -x => $_->{'x'}, '-y' => $_->{'y'});
+    foreach my $image (@images) {
+	($image->{'x'} == 0 && $image->{'y'} == 0) and print "remove_images_from_background: warning, X and Y are 0\n";
+        my $img = translate_mini_image($image->{img});
+	my $drect = SDL::Rect->new(-width => $img->width, -height => $img->height, -x => $image->{'x'}, '-y' => $image->{'y'});
 	$background_orig->blit($drect, $background, $drect);
 	$background_orig->blit($drect, $app, $drect);
 	push @update_rects, $drect;
@@ -321,15 +334,23 @@ sub add_bubble_image($) {
     my ($file) = @_;
     my $bubble = add_image($file);
     push @bubbles_images, $bubble;
+    return $bubble;
 }
 
 
 #- ----------- generic game stuff -----------------------------------------
 
 sub iter_players(&) {
-    my ($f) = @_;
+    my ($f, @p) = @_;
+    @p == 0 and @p = @PLAYERS;
     local $::p;
-    foreach $::p (@PLAYERS) {
+    foreach $::p (@p) {
+        $::p !~ /rp/ and goto normal_sizes;  #- can't use an if block because of local
+        local $BUBBLE_SIZE = $BUBBLE_SIZE / 2;
+        local $BUBBLE_SPEED = $BUBBLE_SPEED / 2;
+        local $ROW_SIZE = $ROW_SIZE / 2;
+	local $FREE_FALL_CONSTANT = $FREE_FALL_CONSTANT / 2;
+      normal_sizes:
 	&$f;
     }
 }
@@ -340,16 +361,32 @@ sub iter_players_(&) {  #- so that I can do an iter_players_ from within an iter
 	&$f;
     }
 }
-sub is_1p_game() { @PLAYERS == 1 }
-sub is_2p_game() { @PLAYERS == 2 }
+sub iter_players_but_first(&) {
+    my ($f) = @_;
+    my (undef, @p) = @PLAYERS;
+    &iter_players($f, @p);
+}
 
+sub is_1p_game() { @PLAYERS == 1 }
+sub is_mp_game() { any { /rp/ } @PLAYERS }
+sub is_2p_game() { @PLAYERS == 2 && !is_mp_game() }
+
+sub living_players() {
+    my @living;
+    iter_players_ {
+        if ($pdata{$::p_}{state} ne 'lost') {
+            push @living, $::p_;
+        }
+    };
+    return @living;
+}
 
 #- ----------- bubble game stuff ------------------------------------------
 
 sub calc_real_pos_given_arraypos($$$) {
     my ($cx, $cy, $player) = @_;
     ($POS{$player}{left_limit} + $cx * $BUBBLE_SIZE + odd($cy+$pdata{$player}{oddswap}) * $BUBBLE_SIZE/2,
-     $POS{top_limit} + $cy * $ROW_SIZE);
+     $POS{$player}{top_limit} + $cy * $ROW_SIZE);
 }
 
 sub calc_real_pos($$) {
@@ -357,14 +394,14 @@ sub calc_real_pos($$) {
     ($b->{'x'}, $b->{'y'}) = calc_real_pos_given_arraypos($b->{cx}, $b->{cy}, $player);
 }
 
-sub get_array_yclosest($) {
-    my ($y) = @_;
-    return int(($y-$POS{top_limit}+$ROW_SIZE/2) / $ROW_SIZE);
+sub get_array_yclosest($$) {
+    my ($y, $player) = @_;
+    return int(($y-$POS{$player}{top_limit}+$ROW_SIZE/2) / $ROW_SIZE);
 }
 
 sub get_array_closest_pos($$$) { # roughly the opposite than previous function
     my ($x, $y, $player) = @_;
-    my $ny = get_array_yclosest($y);
+    my $ny = get_array_yclosest($y, $player);
     my $nx = int(($x-$POS{$player}{left_limit}+$BUBBLE_SIZE/2 - odd($ny+$pdata{$player}{oddswap})*$BUBBLE_SIZE/2)/$BUBBLE_SIZE);
     return ($nx, $ny);
 }
@@ -480,8 +517,8 @@ sub destroy_bubbles {
     my ($player, @bubz) = @_;
     $graphics_level == 1 and return;
     foreach (@bubz) {
-	$_->{speedx} = rand(3)-1.5;
-	$_->{speedy} = -rand(4)-2;
+	$_->{speedx} = (rand(3)-1.5) / ($player =~ /rp/ ? 2 : 1);
+	$_->{speedy} = (-rand(4)-2) / ($player =~ /rp/ ? 2 : 1);
     }
     push @{$exploding_bubble{$player}}, @bubz;
 }
@@ -671,17 +708,19 @@ sub stick_bubble($$$$$) {
 sub print_next_bubble($$;$) {
     my ($img, $player, $not_on_top_next) = @_;
     put_image_to_background($img, $next_bubble{$player}{'x'}, $next_bubble{$player}{'y'});
-    $not_on_top_next or put_image_to_background($bubbles_anim{on_top_next}, $POS{$player}{left_limit}+$POS{next_bubble}{x}-4, $POS{next_bubble}{'y'}-3);
+    $not_on_top_next or put_image_to_background($bubbles_anim{on_top_next},
+                                                $POS{$player}{left_limit} + $POS{$player}{next_bubble}{x} + $POS{$player}{on_top_next_relpos}{x},
+                                                $POS{$player}{next_bubble}{'y'} + $POS{$player}{on_top_next_relpos}{'y'});
 }
 
 sub generate_new_bubble {
     my ($player, $img) = @_;
     $tobe_launched{$player} = $next_bubble{$player};
     $tobe_launched{$player}{'x'} = ($POS{$player}{left_limit}+$POS{$player}{right_limit})/2 - $BUBBLE_SIZE/2;
-    $tobe_launched{$player}{'y'} = $POS{'initial_bubble_y'};
+    $tobe_launched{$player}{'y'} = $POS{$player}{'initial_bubble_y'};
     $next_bubble{$player} = $img ? create_bubble_given_img($img) : create_bubble($player);
-    $next_bubble{$player}{'x'} = $POS{$player}{left_limit}+$POS{next_bubble}{x}; #- necessary to keep coordinates, for verify_if_end
-    $next_bubble{$player}{'y'} = $POS{next_bubble}{'y'};
+    $next_bubble{$player}{'x'} = $POS{$player}{left_limit}+$POS{$player}{next_bubble}{x}; #- necessary to keep coordinates, for verify_if_end
+    $next_bubble{$player}{'y'} = $POS{$player}{next_bubble}{'y'};
     print_next_bubble($next_bubble{$player}{img}, $player);
 }
 
@@ -734,12 +773,12 @@ sub handle_graphics($) {
 	if ($graphics_level > 1) {
 	    my $num = int($angle{$::p}*$CANON_ROTATIONS_NB/($PI/2) + 0.5)-$CANON_ROTATIONS_NB;
 	    $fun->($canon{img}{$num},
-		   ($POS{$::p}{left_limit}+$POS{$::p}{right_limit})/2 - 50 + $canon{data}{$num}->[0],
-		   $POS{'initial_bubble_y'} + 16 - 50 + $canon{data}{$num}->[1] );  #- 50/50 stand for half width/height of gfx/shoot/base.png
+                   $POS{$::p}{canon}{x} + $canon{data}{$num}->[0] / ($::p =~ /rp/ ? 2 : 1),
+		   $POS{$::p}{canon}{'y'} + $canon{data}{$num}->[1] / ($::p =~ /rp/ ? 2 : 1));
 	} else {
 	    $fun->($shooter,
-		   ($POS{$::p}{left_limit}+$POS{$::p}{right_limit})/2 - 1 + 60*cos($angle{$::p}),  #- 1 for $shooter->width/2
-		   $POS{'initial_bubble_y'} + 16 - 1 - 60*sin($angle{$::p}));  #- 1/1 stand for half width/height of gfx/shoot/shooter.png
+		   $POS{$::p}{simpleshooter}{x} + $POS{$::p}{simpleshooter}{diameter}*cos($angle{$::p}),
+		   $POS{$::p}{simpleshooter}{'y'} - $POS{$::p}{simpleshooter}{diameter}*sin($angle{$::p}));
 	}
 	#- penguins
 	if ($graphics_level == 3) {
@@ -759,18 +798,16 @@ sub handle_graphics($) {
 sub malus_change($$) {
     my ($numb, $player) = @_;
     return if $numb == 0 || is_1p_game();
-    if ($numb >= 0) {
-	$player = ($player eq 'p1') ? 'p2' : 'p1';
-    }
     my $update_malus = sub($) {
-	my ($fun) = @_;
-	my $malus = $pdata{$player}{malus};
+	my ($fun, $p) = @_;
+	my $malus = $pdata{$p}{malus};
 	my $y_shift = 0;
 	while ($malus > 0) {
 	    my $print = sub($) {
 		my ($type) = @_;
-		$fun->($type, $POS{$player}{malus_x} - $type->width/2, $POS{'malus_y'} - $y_shift - $type->height);
-		$y_shift += $type->height - 1;
+                my $type_real = translate_mini_image($type);
+		$fun->($type, $POS{$p}{malus}{x} - $type_real->width/2, $POS{$p}{malus}{'y'} - $y_shift - $type_real->height);
+		$y_shift += $type_real->height - 1;
 	    };
 	    if ($malus >= 7) {
 		$print->($malus_gfx{tomate});
@@ -781,14 +818,26 @@ sub malus_change($$) {
 	    }
 	}
     };
-    $update_malus->(\&remove_image_from_background);
-    $pdata{$player}{malus} += $numb;
-    $update_malus->(\&put_image_to_background);
+    if ($numb > 0) {
+        my @living = living_players();
+        $numb = int($numb/(@living-1) + 0.99);
+        iter_players_ {
+            if ($::p_ ne $player && member($::p_, @living)) {
+                $update_malus->(\&remove_image_from_background, $::p_);
+                $pdata{$::p_}{malus} += $numb;
+                $update_malus->(\&put_image_to_background, $::p_);
+            }
+        };
+    } else {
+        $update_malus->(\&remove_image_from_background, $player);
+        $pdata{$player}{malus} += $numb;
+        $update_malus->(\&put_image_to_background, $player);
+    }
 }
 
 sub print_compressor() {
     my $x = $POS{compressor_xpos};
-    my $y = $POS{top_limit} + $pdata{$PLAYERS[0]}{newrootlevel} * $ROW_SIZE;
+    my $y = $POS{p1}{top_limit} + $pdata{$PLAYERS[0]}{newrootlevel} * $ROW_SIZE;
     my ($comp_main, $comp_ext) = ($imgbin{compressor_main}, $imgbin{compressor_ext});
 
     my $drect = SDL::Rect->new(-width => $comp_main->width, -height => $y,
@@ -887,43 +936,58 @@ sub print_scores($) {
     $background_orig->blit($drect, $surface, $drect);
     push @update_rects, $drect;
     iter_players_ {  #- sometimes called from within a iter_players so...
-	$surface->print($POS{$::p_}{scoresx}-SDL_TEXTWIDTH($pdata{$::p_}{score})/2, $POS{scoresy}, $pdata{$::p_}{score});
+	$surface->print($POS{$::p_}{scores}{x}-SDL_TEXTWIDTH($pdata{$::p_}{score})/2, $POS{$::p_}{scores}{'y'}, $pdata{$::p_}{score});
     };
 }
 
+sub cleanup_player_bubbles {
+    my ($player) = @_;
+    @{$malus_bubble{$player}} = ();
+    #- reverse sort for freezing effect and win effect
+    @{$sticked_bubbles{$player}} = sort { $b->{'cx'}+$b->{'cy'}*10 <=> $a->{'cx'}+$a->{'cy'}*10 } @{$sticked_bubbles{$player}};
+    remove_hurry($player);
+    @{$falling_bubble{$player}} = grep { !exists $_->{chaindestx} } @{$falling_bubble{$player}};
+    $sticking_bubble{$player} = undef;
+    $launched_bubble{$player} and destroy_bubbles($player, $launched_bubble{$player});
+    $launched_bubble{$player} = undef;
+    $pdata{$player}{newroot_prelight} = 0;
+}
+
+sub win {
+    my ($player) = @_;
+    play_sound('lose');
+    $pdata{$player}{score}++;
+    $pdata{$player}{ping_right}{state} = 'win';
+    $pdata{$player}{ping_right}{img} = 0;
+    print_scores($background);
+    print_scores($app);
+    cleanup_player_bubbles($player);
+}
+    
 sub verify_if_end {
     iter_players {
-	if (any { $_->{cy} > 11 } @{$sticked_bubbles{$::p}}) {
-	    $pdata{state} = "lost $::p";
-	    play_sound('lose');
+	if ($pdata{state} eq 'game' && any { $_->{cy} > 11 } @{$sticked_bubbles{$::p}}) {
 	    $pdata{$::p}{ping_right}{state} = 'lose';
 	    $pdata{$::p}{ping_right}{img} = 0;
-	    if (!is_1p_game()) {
-		my $won = $::p eq 'p1' ? 'p2' : 'p1';
-		$pdata{$won}{score}++;
-		$pdata{$won}{ping_right}{state} = 'win';
-		$pdata{$won}{ping_right}{img} = 0;
-		print_scores($background); print_scores($app);
-	    }
 	    foreach ($launched_bubble{$::p}, $tobe_launched{$::p}, @{$malus_bubble{$::p}}) {
 		$_ or next;
 		$_->{img} = $bubbles_anim{lose};
 		$_->{'x'}--;
 		$_->{'y'}--;
 	    }
-	    iter_players_ {
-		remove_hurry($::p_);
-		@{$falling_bubble{$::p_}} = grep { !exists $_->{chaindestx} } @{$falling_bubble{$::p_}};
-	    };
 	    print_next_bubble($bubbles_anim{lose}, $::p, 1);
-	    iter_players_ {
-		@{$sticked_bubbles{$::p_}} = sort { $b->{'cx'}+$b->{'cy'}*10 <=> $a->{'cx'}+$a->{'cy'}*10 } @{$sticked_bubbles{$::p_}};
-		$sticking_bubble{$::p_} = undef;
-		$launched_bubble{$::p_} and destroy_bubbles($::p_, $launched_bubble{$::p_});
-		$launched_bubble{$::p_} = undef;
-		$pdata{$::p_}{newroot_prelight} = 0;
-	    };
-	    @{$malus_bubble{$::p}} = ();
+            cleanup_player_bubbles($::p);
+
+            if (is_mp_game()) {
+                $pdata{$::p}{state} = 'lost';
+                my @living = living_players();
+                @living > 1 and goto ret;
+                $pdata{state} = "won $living[0]";
+                win($living[0]);
+            } else {
+                $pdata{state} = "lost $::p";
+                is_1p_game() or win($::p eq 'p1' ? 'p2' : 'p1');
+            }
 	}
     };
 
@@ -939,18 +1003,72 @@ sub verify_if_end {
 	    die 'quit';
 	}
     }
+  ret:
 }
 
 sub print_hurry($;$) {
     my ($player, $dont_save_background) = @_;
-    my $t = switch_image_on_background($imgbin{hurry}{$player}, $POS{$player}{left_limit} + $POS{hurry}{x}, $POS{hurry}{'y'}, 1);
+    my $t = switch_image_on_background($imgbin{hurry}{$player}, $POS{$player}{left_limit} + $POS{$player}{hurry}{x}, $POS{$player}{hurry}{'y'}, 1);
     $dont_save_background or $pdata{$player}{hurry_save_img} = $t;
 }
 sub remove_hurry($) {
     my ($player) = @_;
     $pdata{$player}{hurry_save_img} and
-      switch_image_on_background($pdata{$player}{hurry_save_img}, $POS{$player}{left_limit} + $POS{hurry}{x}, $POS{hurry}{'y'});
+      switch_image_on_background($pdata{$player}{hurry_save_img}, $POS{$player}{left_limit} + $POS{$player}{hurry}{x}, $POS{$player}{hurry}{'y'});
     $pdata{$player}{hurry_save_img} = undef;
+}
+
+sub update_lost {
+    my ($player) = @_;
+
+    return if odd($frame);
+
+    iter_players { #- need iter_players to get the small graphics change for free if we're in multiplayer
+        if ($::p eq $player) {
+            if (@{$sticked_bubbles{$player}}) {
+                my $b = shift @{$sticked_bubbles{$player}};
+                put_image_to_background($bubbles_anim{lose}, --$b->{'x'}, --$b->{'y'});
+                
+                if (@{$sticked_bubbles{$player}} == 0) {
+                    $graphics_level == 1 and put_image($imgbin{win}{$player eq 'p1' ? 'p2' : 'p1'}, $POS{centerpanel}{x}, $POS{centerpanel}{'y'});
+                    if (is_1p_game()) {
+                        put_image($imgbin{lose}, $POS{centerpanel}{'x'}, $POS{centerpanel}{'y'});
+                        play_sound('noh');
+                    }
+                }
+                
+                if (!@{$sticked_bubbles{$player}}) {
+                    $event->pump while $event->poll != 0;
+                }
+            } else {
+                if (!is_mp_game()) {
+                    $event->pump;
+                    die 'new_game' if $event->poll != 0 && $event->type == SDL_KEYDOWN;
+                }
+            }
+        }
+    };
+}
+
+sub update_won {
+    my ($player) = @_;
+
+    return if odd($frame);
+
+    iter_players { #- need iter_players to get the small graphics change for free if we're in multiplayer
+        if ($::p eq $player) {
+            if (@{$sticked_bubbles{$::p}} && $graphics_level > 1) {
+                my $b = shift @{$sticked_bubbles{$::p}};
+                destroy_bubbles($::p, $b);
+                remove_image_from_background($b->{img}, $b->{'x'}, $b->{'y'});
+                #- be sure to redraw at least upper line
+                foreach (@{$b->{neighbours}}) {
+                    next if !member($_, @{$sticked_bubbles{$::p}});
+                    put_image_to_background($_->{img}, $_->{'x'}, $_->{'y'});
+                }
+            }
+        }
+    };
 }
 
 
@@ -961,194 +1079,167 @@ sub update_game() {
     if ($pdata{state} eq 'game') {
 	handle_game_events();
 	iter_players {
-	    $actions{$::p}{left} and $angle{$::p} += $LAUNCHER_SPEED;
-	    $actions{$::p}{right} and $angle{$::p} -= $LAUNCHER_SPEED;
-	    if ($actions{$::p}{center}) {
-		if ($angle{$::p} >= $PI/2 - $LAUNCHER_SPEED
-		    && $angle{$::p} <= $PI/2 + $LAUNCHER_SPEED) {
-		    $angle{$::p} = $PI/2;
-		} else {
-		    $angle{$::p} += ($angle{$::p} < $PI/2) ? $LAUNCHER_SPEED : -$LAUNCHER_SPEED;
-		}
-	    }
-	    ($angle{$::p} < 0.1) and $angle{$::p} = 0.1;
-	    ($angle{$::p} > $PI-0.1) and $angle{$::p} = $PI-0.1;
-	    $pdata{$::p}{hurry}++;
-	    if ($pdata{$::p}{hurry} > $TIME_HURRY_WARN) {
-		my $oddness = odd(int(($pdata{$::p}{hurry}-$TIME_HURRY_WARN)/(500/$TARGET_ANIM_SPEED))+1);
-		if ($pdata{$::p}{hurry_oddness} xor $oddness) {
-		    if ($oddness) {
-			play_sound('hurry');
-			print_hurry($::p);
-		    } else {
-			remove_hurry($::p)
-		    }
-		}
-		$pdata{$::p}{hurry_oddness} = $oddness;
-	    }
+            if ($pdata{$::p}{state} eq 'lost') {
+                update_lost($::p);
 
-	    if (($actions{$::p}{fire} || $pdata{$::p}{hurry} == $TIME_HURRY_MAX)
-		&& !$launched_bubble{$::p}
-		&& !(any { exists $_->{chaindestx} } @{$falling_bubble{$::p}})
-		&& !@{$malus_bubble{$::p}}) {
-		play_sound('launch');
-		$launched_bubble{$::p} = $tobe_launched{$::p};
-		$launched_bubble{$::p}->{direction} = $angle{$::p};
-		$tobe_launched{$::p} = undef;
-		$actions{$::p}{fire} = 0;
-		$actions{$::p}{hadfire} = 1;
-		$pdata{$::p}{hurry} = 0;
-		remove_hurry($::p);
-	    }
+            } else {
+                $actions{$::p}{left} and $angle{$::p} += $LAUNCHER_SPEED;
+                $actions{$::p}{right} and $angle{$::p} -= $LAUNCHER_SPEED;
+                if ($actions{$::p}{center}) {
+                    if ($angle{$::p} >= $PI/2 - $LAUNCHER_SPEED
+                        && $angle{$::p} <= $PI/2 + $LAUNCHER_SPEED) {
+                        $angle{$::p} = $PI/2;
+                    } else {
+                        $angle{$::p} += ($angle{$::p} < $PI/2) ? $LAUNCHER_SPEED : -$LAUNCHER_SPEED;
+                    }
+                }
+                ($angle{$::p} < 0.1) and $angle{$::p} = 0.1;
+                ($angle{$::p} > $PI-0.1) and $angle{$::p} = $PI-0.1;
+                $pdata{$::p}{hurry}++;
+                if ($pdata{$::p}{hurry} > $TIME_HURRY_WARN) {
+                    my $oddness = odd(int(($pdata{$::p}{hurry}-$TIME_HURRY_WARN)/(500/$TARGET_ANIM_SPEED))+1);
+                    if ($pdata{$::p}{hurry_oddness} xor $oddness) {
+                        if ($oddness) {
+                            play_sound('hurry');
+                            print_hurry($::p);
+                        } else {
+                            remove_hurry($::p)
+                        }
+                    }
+                    $pdata{$::p}{hurry_oddness} = $oddness;
+                }
 
-	    if ($launched_bubble{$::p}) {
-		$launched_bubble{$::p}->{'x_old'} = $launched_bubble{$::p}->{'x'}; # save coordinates for potential collision
-		$launched_bubble{$::p}->{'y_old'} = $launched_bubble{$::p}->{'y'};
-		$launched_bubble{$::p}->{'x'} += $BUBBLE_SPEED * cos($launched_bubble{$::p}->{direction});
-		$launched_bubble{$::p}->{'y'} -= $BUBBLE_SPEED * sin($launched_bubble{$::p}->{direction});
-		if ($launched_bubble{$::p}->{x} < $POS{$::p}{left_limit}) {
-		    play_sound('rebound');
-		    $launched_bubble{$::p}->{x} = 2 * $POS{$::p}{left_limit} - $launched_bubble{$::p}->{x};
-		    $launched_bubble{$::p}->{direction} -= 2*($launched_bubble{$::p}->{direction}-$PI/2);
-		}
-		if ($launched_bubble{$::p}->{x} > $POS{$::p}{right_limit} - $BUBBLE_SIZE) {
-		    play_sound('rebound');
-		    $launched_bubble{$::p}->{x} = 2 * ($POS{$::p}{right_limit} - $BUBBLE_SIZE) - $launched_bubble{$::p}->{x};
-		    $launched_bubble{$::p}->{direction} += 2*($PI/2-$launched_bubble{$::p}->{direction});
-		}
-		if ($launched_bubble{$::p}->{'y'} <= $POS{top_limit} + $pdata{$::p}{newrootlevel} * $ROW_SIZE) {
-		    my ($cx, $cy) = get_array_closest_pos($launched_bubble{$::p}->{x}, $launched_bubble{$::p}->{'y'}, $::p);
-		    stick_bubble($launched_bubble{$::p}, $cx, $cy, $::p, 1);
-		    $launched_bubble{$::p} = undef;
-		} else {
-		    foreach (@{$sticked_bubbles{$::p}}) {
-			if (is_collision($launched_bubble{$::p}, $_->{'x'}, $_->{'y'})) {
-			    my ($cx, $cy) = get_array_closest_pos(($launched_bubble{$::p}->{'x_old'}+$launched_bubble{$::p}->{'x'})/2,
-								  ($launched_bubble{$::p}->{'y_old'}+$launched_bubble{$::p}->{'y'})/2,
-								  $::p);
-			    stick_bubble($launched_bubble{$::p}, $cx, $cy, $::p, 1);
-			    $launched_bubble{$::p} = undef;
+                if (($actions{$::p}{fire} || $pdata{$::p}{hurry} == $TIME_HURRY_MAX)
+                    && !$launched_bubble{$::p}
+                    && !(any { exists $_->{chaindestx} } @{$falling_bubble{$::p}})
+                    && !@{$malus_bubble{$::p}}) {
+                    play_sound('launch');
+                    $launched_bubble{$::p} = $tobe_launched{$::p};
+                    $launched_bubble{$::p}->{direction} = $angle{$::p};
+                    $tobe_launched{$::p} = undef;
+                    $actions{$::p}{fire} = 0;
+                    $actions{$::p}{hadfire} = 1;
+                    $pdata{$::p}{hurry} = 0;
+                    remove_hurry($::p);
+                }
 
-			    #- malus generation
-			    if (!any { $_->{chaindestx} } @{$falling_bubble{$::p}}) {
-				$pdata{$::p}{malus} > 0 and play_sound('malus');
-				while ($pdata{$::p}{malus} > 0 && @{$malus_bubble{$::p}} < 7) {
-				    my $b = create_bubble($::p);
-				    do {
-					$b->{'cx'} = int(rand(7));
-				    } while (member($b->{'cx'}, map { $_->{'cx'} } @{$malus_bubble{$::p}}));
-				    $b->{'cy'} = 12;
-				    $b->{'stick_y'} = 0;
-				    foreach (@{$sticked_bubbles{$::p}}) {
-					if ($_->{'cy'} > $b->{'stick_y'}) {
-					    if ($_->{'cx'} == $b->{'cx'}
-						|| odd($_->{'cy'}+$pdata{$::p}{oddswap}) && ($_->{'cx'}+1) == $b->{'cx'}) {
-						$b->{'stick_y'} = $_->{'cy'};
-					    }
-					}
-				    }
-				    $b->{'stick_y'}++;
-				    calc_real_pos($b, $::p);
-				    push @{$malus_bubble{$::p}}, $b;
-				    malus_change(-1, $::p);
-				}
+                if ($launched_bubble{$::p}) {
+                    $launched_bubble{$::p}->{'x_old'} = $launched_bubble{$::p}->{'x'}; # save coordinates for potential collision
+                    $launched_bubble{$::p}->{'y_old'} = $launched_bubble{$::p}->{'y'};
+                    $launched_bubble{$::p}->{'x'} += $BUBBLE_SPEED * cos($launched_bubble{$::p}->{direction});
+                    $launched_bubble{$::p}->{'y'} -= $BUBBLE_SPEED * sin($launched_bubble{$::p}->{direction});
+                    if ($launched_bubble{$::p}->{x} < $POS{$::p}{left_limit}) {
+                        play_sound('rebound');
+                        $launched_bubble{$::p}->{x} = 2 * $POS{$::p}{left_limit} - $launched_bubble{$::p}->{x};
+                        $launched_bubble{$::p}->{direction} -= 2*($launched_bubble{$::p}->{direction}-$PI/2);
+                    }
+                    if ($launched_bubble{$::p}->{x} > $POS{$::p}{right_limit} - $BUBBLE_SIZE) {
+                        play_sound('rebound');
+                        $launched_bubble{$::p}->{x} = 2 * ($POS{$::p}{right_limit} - $BUBBLE_SIZE) - $launched_bubble{$::p}->{x};
+                        $launched_bubble{$::p}->{direction} += 2*($PI/2-$launched_bubble{$::p}->{direction});
+                    }
+                    if ($launched_bubble{$::p}->{'y'} <= $POS{$::p}{top_limit} + $pdata{$::p}{newrootlevel} * $ROW_SIZE) {
+                        my ($cx, $cy) = get_array_closest_pos($launched_bubble{$::p}->{x}, $launched_bubble{$::p}->{'y'}, $::p);
+                        stick_bubble($launched_bubble{$::p}, $cx, $cy, $::p, 1);
+                        $launched_bubble{$::p} = undef;
+                    } else {
+                        foreach (@{$sticked_bubbles{$::p}}) {
+                            if (is_collision($launched_bubble{$::p}, $_->{'x'}, $_->{'y'})) {
+                                my ($cx, $cy) = get_array_closest_pos(($launched_bubble{$::p}->{'x_old'}+$launched_bubble{$::p}->{'x'})/2,
+                                                                      ($launched_bubble{$::p}->{'y_old'}+$launched_bubble{$::p}->{'y'})/2,
+                                                                      $::p);
+                                stick_bubble($launched_bubble{$::p}, $cx, $cy, $::p, 1);
+                                $launched_bubble{$::p} = undef;
+
+                                #- malus generation
+                                if (!any { $_->{chaindestx} } @{$falling_bubble{$::p}}) {
+                                    $pdata{$::p}{malus} > 0 and play_sound('malus');
+                                    while ($pdata{$::p}{malus} > 0 && @{$malus_bubble{$::p}} < 7) {
+                                        my $b = create_bubble($::p);
+                                        do {
+                                            $b->{'cx'} = int(rand(7));
+                                        } while (member($b->{'cx'}, map { $_->{'cx'} } @{$malus_bubble{$::p}}));
+                                        $b->{'cy'} = 12;
+                                        $b->{'stick_y'} = 0;
+                                        foreach (@{$sticked_bubbles{$::p}}) {
+                                            if ($_->{'cy'} > $b->{'stick_y'}) {
+                                                if ($_->{'cx'} == $b->{'cx'}
+                                                    || odd($_->{'cy'}+$pdata{$::p}{oddswap}) && ($_->{'cx'}+1) == $b->{'cx'}) {
+                                                    $b->{'stick_y'} = $_->{'cy'};
+                                                }
+                                            }
+                                        }
+                                        $b->{'stick_y'}++;
+                                        calc_real_pos($b, $::p);
+                                        push @{$malus_bubble{$::p}}, $b;
+                                        malus_change(-1, $::p);
+                                    }
 				#- sort them and shift them
-				@{$malus_bubble{$::p}} = sort { $a->{'cx'} <=> $b->{'cx'} } @{$malus_bubble{$::p}};
-				my $shifting = 0;
-				$_->{'y'} += ($shifting+=7)+int(rand(20)) foreach @{$malus_bubble{$::p}};
-			    }
+                                    @{$malus_bubble{$::p}} = sort { $a->{'cx'} <=> $b->{'cx'} } @{$malus_bubble{$::p}};
+                                    my $shifting = 0;
+                                    $_->{'y'} += ($shifting+=7)+int(rand(20)) foreach @{$malus_bubble{$::p}};
+                                }
 
-			    last;
-			}
-		    }
-		}
-	    }
+                                last;
+                            }
+                        }
+                    }
+                }
 
-	    !$tobe_launched{$::p} and generate_new_bubble($::p);
+                !$tobe_launched{$::p} and generate_new_bubble($::p);
 
-	    if (!$actions{$::p}{left} && !$actions{$::p}{right} && !$actions{$::p}{hadfire}) {
-		$pdata{$::p}{sleeping}++;
-	    } else {
-		$pdata{$::p}{sleeping} = 0;
-		$pdata{$::p}{ping_right}{movelatency} = -20;
-	    }
-	    if ($pdata{$::p}{sleeping} > $TIMEOUT_PINGUIN_SLEEP) {
-		$pdata{$::p}{ping_right}{state} = 'sleep';
-	    } elsif ($pdata{$::p}{ping_right}{state} eq 'sleep') {
-		$pdata{$::p}{ping_right}{state} = 'normal';
-	    }
-	    if ($pdata{$::p}{ping_right}{state} eq 'right' && !($actions{$::p}{right})
-		|| $pdata{$::p}{ping_right}{state} eq 'left' && !($actions{$::p}{left})
-		|| $pdata{$::p}{ping_right}{state} eq 'action' && ($pdata{$::p}{ping_right}{actionlatency}++ > 5)) {
-		$pdata{$::p}{ping_right}{state} = 'normal';
-	    }
-	    $actions{$::p}{right} and $pdata{$::p}{ping_right}{state} = 'right';
-	    $actions{$::p}{left} and $pdata{$::p}{ping_right}{state} = 'left';
-	    if ($actions{$::p}{hadfire}) {
-		$pdata{$::p}{ping_right}{state} = 'action';
-		$actions{$::p}{hadfire} = 0;
-		$pdata{$::p}{ping_right}{actionlatency} = 0;
-	    }
-	    if ($pdata{$::p}{ping_right}{state} eq 'normal' && ($pdata{$::p}{ping_right}{movelatency}++ > 10)) {
-		$pdata{$::p}{ping_right}{movelatency} = 0;
-		rand() < 0.4 and $pdata{$::p}{ping_right}{img} = int(rand(@{$pinguin{$::p}{normal}}));
-	    }
+                if (!$actions{$::p}{left} && !$actions{$::p}{right} && !$actions{$::p}{hadfire}) {
+                    $pdata{$::p}{sleeping}++;
+                } else {
+                    $pdata{$::p}{sleeping} = 0;
+                    $pdata{$::p}{ping_right}{movelatency} = -20;
+                }
+                if ($pdata{$::p}{sleeping} > $TIMEOUT_PINGUIN_SLEEP) {
+                    $pdata{$::p}{ping_right}{state} = 'sleep';
+                } elsif ($pdata{$::p}{ping_right}{state} eq 'sleep') {
+                    $pdata{$::p}{ping_right}{state} = 'normal';
+                }
+                if ($pdata{$::p}{ping_right}{state} eq 'right' && !($actions{$::p}{right})
+                    || $pdata{$::p}{ping_right}{state} eq 'left' && !($actions{$::p}{left})
+                    || $pdata{$::p}{ping_right}{state} eq 'action' && ($pdata{$::p}{ping_right}{actionlatency}++ > 5)) {
+                    $pdata{$::p}{ping_right}{state} = 'normal';
+                }
+                $actions{$::p}{right} and $pdata{$::p}{ping_right}{state} = 'right';
+                $actions{$::p}{left} and $pdata{$::p}{ping_right}{state} = 'left';
+                if ($actions{$::p}{hadfire}) {
+                    $pdata{$::p}{ping_right}{state} = 'action';
+                    $actions{$::p}{hadfire} = 0;
+                    $pdata{$::p}{ping_right}{actionlatency} = 0;
+                }
+                if ($pdata{$::p}{ping_right}{state} eq 'normal' && ($pdata{$::p}{ping_right}{movelatency}++ > 10)) {
+                    $pdata{$::p}{ping_right}{movelatency} = 0;
+                    rand() < 0.4 and $pdata{$::p}{ping_right}{img} = int(rand(@{$pinguin{$::p}{normal}}));
+                }
 
-	    if ($pdata{$::p}{ping_right}{img} >= @{$pinguin{$::p}{$pdata{$::p}{ping_right}{state}}}) {
-		$pdata{$::p}{ping_right}{img} = 0;
-	    }
-	};
+                if ($pdata{$::p}{ping_right}{img} >= @{$pinguin{$::p}{$pdata{$::p}{ping_right}{state}}}) {
+                    $pdata{$::p}{ping_right}{img} = 0;
+                }
+            }
+        };
 
 	verify_if_end();
 
     } elsif ($pdata{state} =~ /lost (.*)/) {
-	my $lost_slowdown if 0;  #- ``if 0'' is Perl's way of doing what C calls ``static local variables''
-	if ($lost_slowdown++ > 1) {
-	    $lost_slowdown = 0;
-	    iter_players {
-		if ($::p eq $1) {
-		    if (@{$sticked_bubbles{$::p}}) {
-			my $b = shift @{$sticked_bubbles{$::p}};
-			put_image_to_background($bubbles_anim{lose}, --$b->{'x'}, --$b->{'y'});
-	#		my $line = $b->{'cy'};
-	#		while (@{$sticked_bubbles{$::p}} && ${$sticked_bubbles{$::p}}[0]->{'cy'} == $line) {
-	#		    my $b = shift @{$sticked_bubbles{$::p}};
-	#		    put_image_to_background($bubbles_anim{lose}, --$b->{'x'}, --$b->{'y'});
-	#		}
-
-			if (@{$sticked_bubbles{$::p}} == 0) {
-			    $graphics_level == 1 and put_image($imgbin{win}{$::p eq 'p1' ? 'p2' : 'p1'}, $POS{centerpanel}{x}, $POS{centerpanel}{'y'});
-			    if (is_1p_game()) {
-				put_image($imgbin{lose}, $POS{centerpanel}{'x'}, $POS{centerpanel}{'y'});
-				play_sound('noh');
-			    }
-			}
-
-			if (!@{$sticked_bubbles{$::p}}) {
-			    $event->pump while $event->poll != 0;
-			}
-		    } else {
-			$event->pump;
-			die 'new_game' if $event->poll != 0 && $event->type == SDL_KEYDOWN;
-		    }
-		} else {
-		    if (@{$sticked_bubbles{$::p}} && $graphics_level > 1) {
-			my $b = shift @{$sticked_bubbles{$::p}};
-			destroy_bubbles($::p, $b);
-			remove_image_from_background($b->{img}, $b->{'x'}, $b->{'y'});
-			#- be sure to redraw at least upper line
-			foreach (@{$b->{neighbours}}) {
-			    next if !member($_, @{$sticked_bubbles{$::p}});
-			    put_image_to_background($_->{img}, $_->{'x'}, $_->{'y'});
-			}
-		    }
-		}
-	    };
-
-	}
+        my $loser = $1;
+        update_lost($loser);
+        is_2p_game() and update_won($loser eq 'p1' ? 'p2' : 'p1');
 
     } elsif ($pdata{state} =~ /won (.*)/) {
-	if (@{$exploding_bubble{$1}} == 0) {
+        my $winner = $1;
+        if (is_mp_game()) {
+            update_won($winner);
+            iter_players {
+                if ($::p ne $winner) {
+                    update_lost($::p);
+                }
+            };
+        }
+	if (@{$exploding_bubble{$winner}} == 0) {
 	    $event->pump;
 	    die 'new_game' if $event->poll != 0 && $event->type == SDL_KEYDOWN;
 	}
@@ -1163,7 +1254,7 @@ sub update_game() {
 	my $malus_end = [];
 	foreach my $b (@{$malus_bubble{$::p}}) {
 	    $b->{'y'} -= $MALUS_BUBBLE_SPEED;
-	    if (get_array_yclosest($b->{'y'}) <= $b->{'stick_y'}) {
+	    if (get_array_yclosest($b->{'y'}, $::p) <= $b->{'stick_y'}) {
 		real_stick_bubble($b, $b->{'cx'}, $b->{'stick_y'}, $::p, 0);
 		push @$malus_end, $b;
 	    }
@@ -1303,25 +1394,40 @@ sub init_game() {
     print_step('[Graphics');
     $imgbin{back_2p} = SDL::Surface->new(-name => "$FPATH/gfx/backgrnd.png");
     $imgbin{back_1p} = SDL::Surface->new(-name => "$FPATH/gfx/back_one_player.png");
+    $imgbin{back_mp} = SDL::Surface->new(-name => "$FPATH/gfx/back_multiplayer.png");
     $background = SDL::Surface->new(-width => $app->width, -height => $app->height, -depth => 32, -Amask => '0 but true');
     $background_orig = SDL::Surface->new(-width => $app->width, -height => $app->height, -depth => 32, -Amask => '0 but true');
     $imgbin{backstartfull} = SDL::Surface->new(-name => "$FPATH/gfx/menu/back_start.png");
 
     print_step('.'); 
-    add_bubble_image('balls/bubble-'.($colourblind && 'colourblind-')."$_.gif") foreach (1..8);
+    foreach my $ball (1..8) {
+        my $img = add_bubble_image('balls/bubble-'.($colourblind && 'colourblind-')."$ball.gif");
+        $img_mini{$img} = add_image('balls/bubble-'.($colourblind && 'colourblind-')."${ball}-mini.png");
+    }
     $bubbles_anim{white} = add_image("balls/bubble_prelight.png");
+    $img_mini{$bubbles_anim{white}} = add_image("balls/bubble_prelight-mini.png");
     $bubbles_anim{lose} = add_image("balls/bubble_lose.png");
+    $img_mini{$bubbles_anim{lose}} = add_image("balls/bubble_lose-mini.png");
     $bubbles_anim{on_top_next} = add_image("on_top_next.png");
-    push @{$bubbles_anim{stick}}, add_image("balls/stick_effect_$_.png") foreach (0..6);
+    $img_mini{$bubbles_anim{on_top_next}} = add_image("on_top_next-mini.png");
+    foreach my $step (0..6) {
+        push @{$bubbles_anim{stick}}, my $img = add_image("balls/stick_effect_$step.png");
+        $img_mini{$img} = add_image("balls/stick_effect_${step}-mini.png")
+    }
 
     $shooter = add_image("shoot/shooter.png");
-    $canon{img}{$_} = add_image("shoot/base_$_.png") foreach (-$CANON_ROTATIONS_NB..$CANON_ROTATIONS_NB);
+    foreach my $number (-$CANON_ROTATIONS_NB..$CANON_ROTATIONS_NB) {
+        $canon{img}{$number} = add_image("shoot/base_$number.png");
+        $img_mini{$canon{img}{$number}} = add_image("shoot/base_${number}-mini.png") ;
+    }
 
     #- quantity of shifting needed (because of crop reduction)
     /(\S+) (\S+) (\S+)/ and $canon{data}{$1} = [ $2, $3 ] foreach cat_("$FPATH/gfx/shoot/data");
 
     $malus_gfx{banane} = add_image('banane.png');
+    $img_mini{$malus_gfx{banane}} = add_image('banane-mini.png');
     $malus_gfx{tomate} = add_image('tomate.png');
+    $img_mini{$malus_gfx{tomate}} = add_image('tomate-mini.png');
 
     print_step('.'); 
     push @{$imgbin{paused}}, add_image("pause_$_.png") foreach 1..5;
@@ -1384,7 +1490,7 @@ sub init_game() {
     #- $imgbin{bubble} = add_image('intro/txt_bubble.png');
     #- $imgbin{intro_penguin_imgs}->{$_} = add_image("intro/intro_$_.png") foreach 1..19;
 
-    local @PLAYERS = qw(p1 p2);  #- load all images even if -so commandline option was passed
+    local @PLAYERS = qw(p1 p2 rp1 rp2 rp3 rp4);  #- load all images even if -so commandline option was passed
     iter_players {
 	$imgbin{hurry}{$::p} = add_image("hurry_$::p.png");
 	$pinguin{$::p}{normal} = [ map { add_image($_) } ("pinguins/base_$::p.png", map { "pinguins/base_$::p"."_extra_0$_.png" } (1..3)) ];
@@ -1459,12 +1565,11 @@ sub display_highscores() {
     $display_on_app_disabled = 1;
     @PLAYERS = ('p1');
     %POS = %POS_1P;
-    $POS{top_limit} = $POS{init_top_limit};
 
     my $initial_high_posx = 90;
     my ($high_posx, $high_posy) = ($initial_high_posx, 68);
-    my $high_rect = SDL::Rect->new('-x' => $POS{p1}{left_limit} & 0xFFFFFFFC, '-y' => $POS{top_limit} & 0xFFFFFFFC,
-				   '-width' => ($POS{p1}{right_limit}-$POS{p1}{left_limit}) & 0xFFFFFFFC, -height => ($POS{'initial_bubble_y'}-$POS{top_limit}-10) & 0xFFFFFFFC);
+    my $high_rect = SDL::Rect->new('-x' => $POS{p1}{left_limit} & 0xFFFFFFFC, '-y' => $POS{p1}{top_limit} & 0xFFFFFFFC,
+				   '-width' => ($POS{p1}{right_limit}-$POS{p1}{left_limit}) & 0xFFFFFFFC, -height => ($POS{p1}{'initial_bubble_y'}-$POS{p1}{top_limit}-10) & 0xFFFFFFFC);
 
     $font = SDL::Font->new("$FPATH/gfx/font-hi.png");
     my $centered_print = sub($$$) {
@@ -1617,20 +1722,23 @@ sub new_game() {
 
     $display_on_app_disabled = 1;
 
+    $TIME_APPEARS_NEW_ROOT = 11;
+    $TIME_HURRY_WARN = 250;
+    $TIME_HURRY_MAX = 375;
+
     my $backgr;
-    if (is_2p_game()) {
+    if (is_mp_game()) {
+	$backgr = $imgbin{back_mp};
+	%POS = %POS_MP;
+    } elsif (is_2p_game()) {
 	$backgr = $imgbin{back_2p};
 	%POS = %POS_2P;
-	$TIME_APPEARS_NEW_ROOT = 11;
-	$TIME_HURRY_WARN = 250;
-	$TIME_HURRY_MAX = 375;
     } elsif (is_1p_game()) {
 	$backgr = $imgbin{back_1p};
 	%POS = %POS_1P;
 	$TIME_APPEARS_NEW_ROOT = 8;
 	$TIME_HURRY_WARN = 400;
 	$TIME_HURRY_MAX = 525;
-	$POS{top_limit} = $POS{init_top_limit};
 	$pdata{$PLAYERS[0]}{score} = $levels{current} || "RANDOM";
     } else {
 	die "oops";
@@ -1651,11 +1759,11 @@ sub new_game() {
 	%{$chains{$::p}{chained_bubbles}} = ();
 	$launched_bubble{$::p} = undef;
 	$sticking_bubble{$::p} = undef;
-	$pdata{$::p}{$_} = 0 foreach qw(newroot newroot_prelight oddswap malus hurry newrootlevel);
+	$pdata{$::p}{$_} = 0 foreach qw(newroot newroot_prelight oddswap malus hurry newrootlevel state);
 	$pdata{$::p}{ping_right}{img} = 0;
 	$pdata{$::p}{ping_right}{state} = 'normal';
-	$apprects{$::p} = SDL::Rect->new('-x' => $POS{$::p}{left_limit}, '-y' => $POS{top_limit},
-					 -width => $POS{$::p}{right_limit}-$POS{$::p}{left_limit}, -height => $POS{'initial_bubble_y'}-$POS{top_limit});
+	$apprects{$::p} = SDL::Rect->new('-x' => $POS{$::p}{left_limit}, '-y' => $POS{$::p}{top_limit},
+					 -width => $POS{$::p}{right_limit}-$POS{$::p}{left_limit}, -height => $POS{$::p}{'initial_bubble_y'}-$POS{$::p}{top_limit});
     };
     print_scores($background);
 
@@ -1667,18 +1775,23 @@ sub new_game() {
 	foreach my $cy (0 .. 4) {
 	    foreach my $cx (0 .. (6 + even($cy))) {
 		my $b = create_bubble();
-		real_stick_bubble($b, $cx, $cy, $PLAYERS[0], 0);  #- this doesn't map well to the 'iter_players' subroutine..
-		is_2p_game() and real_stick_bubble(create_bubble_given_img($b->{img}), $cx, $cy, $PLAYERS[1], 0);
+		real_stick_bubble($b, $cx, $cy, $PLAYERS[0], 0);
+                if (!is_1p_game()) {
+                    iter_players_but_first {
+                        real_stick_bubble(create_bubble_given_img($b->{img}), $cx, $cy, $::p, 0);
+                    };
+                }
 	    }
 	}
     }
 
     $next_bubble{$PLAYERS[0]} = create_bubble($PLAYERS[0]);
-#    $next_bubble{$PLAYERS[0]} = create_bubble_given_img($bubbles_images[5]);
     generate_new_bubble($PLAYERS[0]);
-    if (is_2p_game()) {
-	$next_bubble{$PLAYERS[1]} = create_bubble_given_img($tobe_launched{$PLAYERS[0]}->{img});
-	generate_new_bubble($PLAYERS[1], $next_bubble{$PLAYERS[0]}->{img});
+    if (!is_1p_game()) {
+        iter_players_but_first {
+            $next_bubble{$::p} = create_bubble_given_img($tobe_launched{$PLAYERS[0]}->{img});
+            generate_new_bubble($::p, $next_bubble{$PLAYERS[0]}->{img});
+        };
     }
 
     if ($graphics_level == 1) {
@@ -1888,6 +2001,7 @@ sub maingame() {
     handle_graphics(\&erase_image);
     update_game();
     handle_graphics(\&put_image);
+    $frame++;
 
     $app->update(@update_rects);
     @update_rects = ();

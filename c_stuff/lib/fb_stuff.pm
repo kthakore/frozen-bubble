@@ -25,36 +25,95 @@
 package fb_stuff;
 
 use fb_c_stuff;
-use vars qw(@ISA @EXPORT $FPATH $FBLEVELS $colourblind %POS_1P %POS_2P $BUBBLE_SIZE $ROW_SIZE
+use vars qw(@ISA @EXPORT $FPATH $FBLEVELS $colourblind %POS_1P %POS_2P %POS_MP $BUBBLE_SIZE $ROW_SIZE
             $PI);
 @ISA = qw(Exporter);
-@EXPORT = qw($FPATH $colourblind $FBLEVELS %POS_1P %POS_2P $BUBBLE_SIZE $ROW_SIZE
+@EXPORT = qw($FPATH $colourblind $FBLEVELS %POS_1P %POS_2P %POS_MP $BUBBLE_SIZE $ROW_SIZE
              $PI cat_ member difference2 any even odd sqr to_bool to_int if_ chomp_
              fold_left output append_to_file min max backtrace basename cp_af all);
 
 $FPATH = '@DATADIR@/frozen-bubble';
 
-%POS_2P = ( p1 => { left_limit => 30,  right_limit => 286, pinguin => { x => 168, 'y' => 437 }, malus_x => 308, scoresx => 293 },
-	    p2 => { left_limit => 354, right_limit => 610, pinguin => { x => 32,  'y' => 437 }, malus_x => 331, scoresx => 341 },
-	    top_limit => 40,
-	    'initial_bubble_y' => 390,
-	    next_bubble => { x => 112, 'y' => 440 },
-	    'malus_y' => 408,
-	    hurry => { x => 10, 'y' => 265 },
+%POS_2P = ( p1 => { left_limit => 30, right_limit => 286, top_limit => 40, 'initial_bubble_y' => 390,
+                    canon => { x => 108, 'y' => 356 },
+                    simpleshooter => { x => 157, 'y' => 405, diameter => 60 },
+                    pinguin => { x => 168, 'y' => 437 },
+                    next_bubble => { x => 112, 'y' => 440 },
+                    on_top_next_relpos => { x => -4, 'y' => -3 },
+                    hurry => { x => 10, 'y' => 265 },
+                    malus => { x => 308, 'y' => 408 },
+                    scores => { x => 293, 'y' => 428 } },
+	    p2 => { left_limit => 354, right_limit => 610, top_limit => 40, 'initial_bubble_y' => 390,
+                    canon => { x => 432, 'y' => 356 },
+                    simpleshooter => { x => 481, 'y' => 405, diameter => 60 },
+                    pinguin => { x => 32,  'y' => 437 },
+                    next_bubble => { x => 112, 'y' => 440 },
+                    on_top_next_relpos => { x => -4, 'y' => -3 },
+                    hurry => { x => 10, 'y' => 265 },
+                    malus => { x => 331, 'y' => 408 },
+                    scores => { x => 341, 'y' => 428 } },
 	    centerpanel => { x => 153, 'y' => 190 },
-	    scoresy => 428,
 	  );
 
-%POS_1P = ( p1 => { left_limit => 190, right_limit => 446, pinguin => { x => 168, 'y' => 437 }, scoresx => 180 },
-	    init_top_limit => 44,
-	    'initial_bubble_y' => 390,
-	    next_bubble => { x => 112, 'y' => 440 },
-	    'malus_y' => 408,
-	    hurry => { x => 10, 'y' => 265 },
+%POS_1P = ( p1 => { left_limit => 190, right_limit => 446, top_limit => 44, 'initial_bubble_y' => 390,
+                    canon => { x => 268, 'y' => 356 },
+                    simpleshooter => { x => 317, 'y' => 405, diameter => 60 },
+                    pinguin => { x => 168, 'y' => 437 },
+                    next_bubble => { x => 112, 'y' => 440 },
+                    on_top_next_relpos => { x => -4, 'y' => -3 },
+                    hurry => { x => 10, 'y' => 265 },
+                    scores => { x => 180, 'y' => 432 } },
 	    centerpanel => { x => 149, 'y' => 190 },
 	    pause_clip => { x => 263, 'y' => 212 },
-	    scoresy => 432,
-	    compressor_xpos => 321,
+            compressor_xpos => 321,
+	  );
+
+%POS_MP = ( p1 => { left_limit => 190, right_limit => 446, top_limit => 44, 'initial_bubble_y' => 390,
+                    canon => { x => 268, 'y' => 356 },   #- (left_limit + right_limit) / 2 - 50  |  initial_bubble_y + 16 - 50  (50x50 is half dimensions of gfx/shoot/base)
+                    simpleshooter => { x => 317, 'y' => 405, diameter => 60 },
+                    pinguin => { x => 168, 'y' => 437 },
+                    next_bubble => { x => 112, 'y' => 440 },
+                    on_top_next_relpos => { x => -4, 'y' => -3 },
+                    hurry => { x => 10, 'y' => 265 },
+                    malus => { x => 450, 'y' => 408 },
+                    scores => { x => 180, 'y' => 300 } },
+            rp1 => { left_limit => 20, right_limit => 148, top_limit => 18, 'initial_bubble_y' => 190,
+                     canon => { x => 59, 'y' => 174 },
+                     simpleshooter => { x => 83, 'y' => 197, diameter => 30 },
+                     pinguin => { x => 18, 'y' => 211 },
+                     next_bubble => { x => 56, 'y' => 216 },
+                     on_top_next_relpos => { x => -2, 'y' => -1 },
+                     hurry => { x => 5, 'y' => 128 },
+                     malus => { x => 180, 'y' => 180 },
+                     scores => { x => 180, 'y' => 200 } },
+            rp2 => { left_limit => 492, right_limit => 620, top_limit => 18, 'initial_bubble_y' => 190,
+                     canon => { x => 531, 'y' => 174 },
+                     simpleshooter => { x => 555, 'y' => 197, diameter => 30 },
+                     pinguin => { x => 18, 'y' => 211 },
+                     next_bubble => { x => 56, 'y' => 216 },
+                     on_top_next_relpos => { x => -2, 'y' => -1 },
+                     hurry => { x => 5, 'y' => 128 },
+                     malus => { x => 515, 'y' => 208 },
+                     scores => { x => 480, 'y' => 200 } },
+            rp3 => { left_limit => 20, right_limit => 148, top_limit => 235, 'initial_bubble_y' => 408,
+                     canon => { x => 59, 'y' => 392 },
+                     simpleshooter => { x => 83, 'y' => 415, diameter => 30 },
+                     pinguin => { x => 18, 'y' => 429 },
+                     next_bubble => { x => 56, 'y' => 433 },
+                     on_top_next_relpos => { x => -2, 'y' => -1 },
+                     hurry => { x => 5, 'y' => 345 },
+                     malus => { x => 315, 'y' => 508 },
+                     scores => { x => 180, 'y' => 400 } },
+            rp4 => { left_limit => 492, right_limit => 620, top_limit => 235, 'initial_bubble_y' => 408,
+                     canon => { x => 531, 'y' => 392 },
+                     simpleshooter => { x => 555, 'y' => 415, diameter => 30 },
+                     pinguin => { x => 18, 'y' => 429 },
+                     next_bubble => { x => 56, 'y' => 433 },
+                     on_top_next_relpos => { x => -2, 'y' => -1 },
+                     hurry => { x => 5, 'y' => 345 },
+                     malus => { x => 515, 'y' => 508 },
+                     scores => { x => 480, 'y' => 400 } },
+	    centerpanel => { x => 149, 'y' => 190 },
 	  );
 
 $FBLEVELS = "$ENV{HOME}/.fblevels";
