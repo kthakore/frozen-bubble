@@ -1372,8 +1372,6 @@ sub display_levelset_screenshot {
     my @levelsets = get_levelset_list();
     my $name = $levelsets[$list_browser_highlight_offset];
 
-    print "--> display_levelset_screenshot($name, $start_level)\n";
-
     $rect{middle} = get_dialog_rect();
     $rect{screenshot} = SDL::Rect->new(-x => $POS_1P{p1}{left_limit} - 40, '-y' => 0, 
 				       -width => $POS_1P{p1}{right_limit} - $POS_1P{p1}{left_limit} + 80,
@@ -1424,10 +1422,6 @@ sub display_levelset_screenshot {
         }
     }
 
-    print  "    display_levelset_screenshot($name, $current_nb)\n";
-    printf "    shrink_exists<%d>\n", exists $shrinks{$name}{$current_nb};
-    printf "    shrink_is<$shrinks{$name}{$current_nb}>\n";
-    printf "    shrink_surface<$shrinks{$name}{$current_nb}{-surface}>\n";
     my $image = $shrinks{$name}{$current_nb};
     my $rect = SDL::Rect->new(-width => $image->width, -height => $image->height, '-x' => $x, '-y' => $y);
     $image->blit(SDL::Rect->new(-width => $image->width, -height => $image->height), $app, $rect);
