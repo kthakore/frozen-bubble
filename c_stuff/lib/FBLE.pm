@@ -58,7 +58,7 @@ our ($NUM_ROWS, $NUM_BUBBLES_AVAIL,
 
 
 $NUM_ROWS = 10;
-$POS_1P{bottom_limit} = $POS_1P{init_top_limit} + $NUM_ROWS * $ROW_SIZE;
+$POS_1P{bottom_limit} = $POS_1P{p1}{top_limit} + $NUM_ROWS * $ROW_SIZE;
 $NUM_BUBBLES_AVAIL = 8;
 $BUBBLES_PER_ROW = 3;
 $BUBBLE_OPTION_SEPARATION = 8;
@@ -115,7 +115,7 @@ sub get_col {
 # subroutine to get the row
 sub get_row {
     my ($y) = @_;
-    return floor(($y-$POS_1P{init_top_limit})/$ROW_SIZE);
+    return floor(($y-$POS_1P{p1}{top_limit})/$ROW_SIZE);
 }
 
 # subroutine to draw bubbles
@@ -156,7 +156,7 @@ sub place_bubble {
     my ($x, $y, $alpha, $button) = @_;
     my $col = get_col($x, $y);
     my $row = get_row($y);
-    $y = $row * $ROW_SIZE + $POS_1P{init_top_limit};
+    $y = $row * $ROW_SIZE + $POS_1P{p1}{top_limit};
     if ($col != -1) {
         if (even($row)) {
             $x = get_col($x, $y) * $BUBBLE_SIZE + $POS_1P{p1}{left_limit};
@@ -215,8 +215,8 @@ sub change_color {
     $action = 'add';
 
     draw_bubble($color,
-		$POS_1P{next_bubble}{x} + $POS_1P{p1}{left_limit},
-		$POS_1P{next_bubble}{y},$ALPHA_BUBBLE_NO);    #- }}})
+		$POS_1P{p1}{next_bubble}{x} + $POS_1P{p1}{left_limit},
+		$POS_1P{p1}{next_bubble}{y}, $ALPHA_BUBBLE_NO);    #- }}})
 }
 
 sub highlight_option {
@@ -286,7 +286,7 @@ sub choose_action {
     my ($x, $y, $caller, $button) = @_;
 
     # are we over the drawing area?
-    if ($POS_1P{p1}{left_limit} <= $x && $x < $POS_1P{p1}{right_limit} && $POS_1P{init_top_limit} <= $y && $y < $POS_1P{bottom_limit}) {
+    if ($POS_1P{p1}{left_limit} <= $x && $x < $POS_1P{p1}{right_limit} && $POS_1P{p1}{top_limit} <= $y && $y < $POS_1P{bottom_limit}) {
         if ($caller eq 'motion' && $button_hold == 0) {
             place_bubble($x, $y, $ALPHA_BUBBLE_YES, $button);
         } elsif ($button_hold == 1) {
@@ -1377,7 +1377,7 @@ sub display_levelset_screenshot {
     $rect{middle} = get_dialog_rect();
     $rect{screenshot} = SDL::Rect->new(-x => $POS_1P{p1}{left_limit} - 40, '-y' => 0, 
 				       -width => $POS_1P{p1}{right_limit} - $POS_1P{p1}{left_limit} + 80,
-				       -height => $POS_1P{bottom_limit} - $POS_1P{init_top_limit} + 190);
+				       -height => $POS_1P{bottom_limit} - $POS_1P{p1}{top_limit} + 190);
     # if the user is choosing the start level, we need to move things up a little bit to make
     # room for the choose level widget
     my $widgetMove = 0;
@@ -1454,7 +1454,7 @@ sub load_level {
 	if ($$bub ne '-') {
 	    draw_bubble($$bub + 1,
 			$::col * $BUBBLE_SIZE + $POS_1P{p1}{left_limit} + odd($::row)*$BUBBLE_SIZE/2,
-			$::row * $ROW_SIZE + $POS_1P{init_top_limit},
+			$::row * $ROW_SIZE + $POS_1P{p1}{top_limit},
 			$ALPHA_BUBBLE_NO, $surface_tmp, undef, 1);
 	}
     };
@@ -1465,9 +1465,9 @@ sub load_level {
 # subroutine to clear level off the screen
 sub clear_level {
     $rect{clear} = SDL::Rect->new(-width => $POS_1P{p1}{right_limit} - $POS_1P{p1}{left_limit},
-				  -height => $POS_1P{bottom_limit} - $POS_1P{init_top_limit} + $BUBBLE_SIZE,
+				  -height => $POS_1P{bottom_limit} - $POS_1P{p1}{top_limit} + $BUBBLE_SIZE,
 				  -x => $POS_1P{p1}{left_limit},
-				  '-y' => $POS_1P{init_top_limit});
+				  '-y' => $POS_1P{p1}{top_limit});
     
     $background->blit($rect{clear}, $app, $rect{clear});
     $app->update;
@@ -2009,7 +2009,7 @@ sub print_ok_text {
 }
 
 sub print_level_nb {
-    my $level_sign_rect = SDL::Rect->new(-x => $POS_1P{p1}{scoresx} - 50, '-y' => $POS_1P{scoresy},
+    my $level_sign_rect = SDL::Rect->new(-x => $POS_1P{p1}{scores}{x} - 50, '-y' => $POS_1P{p1}{scores}{y},
 					 -width => 100, -height => 25);
 
     $background->blit($level_sign_rect, $app, $level_sign_rect);
@@ -2017,7 +2017,7 @@ sub print_level_nb {
 
     my $text = "$curr_level/" . keys %bubble_hash;
 
-    $app->print($POS_1P{p1}{scoresx} - 12 * length($text)/2, $POS_1P{scoresy}, $text);
+    $app->print($POS_1P{p1}{scores}{x} - 12 * length($text)/2, $POS_1P{p1}{scores}{y}, $text);
 
 }
 
