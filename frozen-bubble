@@ -45,7 +45,7 @@ use vars qw($TARGET_ANIM_SPEED $BUBBLE_SIZE $ROW_SIZE $LAUNCHER_SPEED $BUBBLE_SP
             $graphics_level @update_rects $CANON_ROTATIONS_NB %malus_bubble %falling_bubble %exploding_bubble %malus_gfx
             %sticking_bubble $version $time %imgbin $TIME_HURRY_WARN $TIME_HURRY_MAX $TIMEOUT_PINGUIN_SLEEP $FREE_FALL_CONSTANT
             $direct @PLAYERS %levels $display_on_app_disabled $total_time $time_1pgame $fullscreen $rcfile $hiscorefile $HISCORES
-            $lev_number $playermalus $loaded_levelset $direct_levelset $chainreaction %chains %history %img_mini $frame);
+            $lev_number $playermalus $loaded_levelset $direct_levelset $chainreaction %chains %history %img_mini $frame $sock);
 
 use Data::Dumper;
 
@@ -58,6 +58,7 @@ use SDL::Font;
 use SDL::Mixer;
 
 use fb_stuff;
+use fb_net;
 use fbsyms;
 use FBLE;
 
@@ -143,7 +144,49 @@ local $_ = "@ARGV";
 /-pm\s*(-?[\d]+)/ || /-playermalus\s*(-?\d+)/ and $playermalus = $1;
 /-ls\s*(\S+)/ || /-levelset\s*(\S+)/ and $levels{current} = 1, $direct = 1, @PLAYERS = ('p1'), $direct_levelset = $1;
 /-l\s*(\d+)/ || /-level\s*(\d+)/ and $levels{current} = $1, $direct = 1, @PLAYERS = ('p1');
-/-mp/ and @PLAYERS = qw(p1 rp1 rp2 rp3 rp4);
+/-mp(\S+),(\S+)/ and do {
+    my $mynick = $$;
+    my $nb = $2;
+    my $ping = fb_net::connect($1, 1511);
+    if (!$ping) {
+        die "can't proceed then\n";
+    }
+    my ($free, @games) = fb_net::list();
+    my $ok;
+    if (@games) {
+        $ok = fb_net::join($games[0][0], $mynick);
+    } else {
+        $ok = fb_net::create($mynick);
+    }
+    while (1) {
+        print "Waiting for $nb players before starting...\n";
+        sleep 1;
+        fb_net::send_('STATUS');
+        my @players = split /,/, fb_net::readline_();
+        last if @players == $nb;
+    }
+
+    fb_net::send_('START');
+
+    @PLAYERS = qw(p1);
+    my @mappings = fb_net::wait4start();
+    foreach my $m (@mappings) {
+        my $player;
+        if ($m->{nick} eq $mynick) {
+            $player = 'p1';
+        } else {
+            foreach my $p (qw(rp1 rp2 rp3 rp4)) {
+                exists $pdata{$p}{id} or $player ||= $p;
+            }
+            push @PLAYERS, $player;
+        }
+        $pdata{$player}{id} = $m->{id};
+        $pdata{$player}{nick} = $m->{nick};
+        $pdata{id2p}{$m->{id}} = $player;
+        print "$player is: $m->{nick}\n";
+    }
+    
+};
 
 #- ------------------------------------------------------------------------
 
@@ -366,10 +409,49 @@ sub iter_players_but_first(&) {
     my (undef, @p) = @PLAYERS;
     &iter_players($f, @p);
 }
+sub iter_local_players(&) {
+    my ($f) = @_;
+    my @p = grep { !/rp/ } @PLAYERS;
+    &iter_players($f, @p);
+}
+sub iter_distant_players(&) {
+    my ($f) = @_;
+    my @p = grep { /rp/ } @PLAYERS;
+    &iter_players($f, @p);
+}
 
 sub is_1p_game() { @PLAYERS == 1 }
 sub is_mp_game() { any { /rp/ } @PLAYERS }
 sub is_2p_game() { @PLAYERS == 2 && !is_mp_game() }
+
+sub is_leader() {
+    my $mynick = $pdata{p1}{nick};
+    my $is_leader = 1;
+    iter_players_but_first {
+        $is_leader &&= $pdata{$::p}{nick} gt $mynick;
+    };
+    return $is_leader;
+}
+sub is_local_player($) {
+    my ($player) = @_;
+    $player !~ /rp/;
+}
+
+sub mp_propagate($$) {
+    my ($key, $value) = @_;
+    if (is_leader()) {
+        fb_net::gsend("$key:$value");
+        return $value;
+    } else {
+        my $m = fb_net::grecv_get1msg();
+        if ($m->{msg} !~ /^\Q$key:\E(.+)/) {
+            print "Network protocol error.\n";
+            return;
+        } else {
+            return $1;
+        }
+    }
+}
 
 sub living_players() {
     my @living;
@@ -422,9 +504,14 @@ sub create_bubble_given_img($) {
     return \%bubble;
 }
 
+sub create_bubble_given_img_num($) {
+    my ($num) = @_;
+    return create_bubble_given_img($bubbles_images[$num]);
+}
+
 sub create_bubble(;$) {
     my ($p) = @_;
-    my $b = create_bubble_given_img($bubbles_images[rand(@bubbles_images)]);
+    my $b = create_bubble_given_img_num(rand(@bubbles_images));
     is_1p_game() && $p && !member($b->{img}, map { $_->{img} } @{$sticked_bubbles{$p}})
       and return &create_bubble($p);  #- prototype checking pb w/ recursion
     return $b;
@@ -687,7 +774,8 @@ sub stick_bubble($$$$$) {
 		print_compressor();
 	    } else {
 		@{$root_bubbles{$player}} = ();
-		real_stick_bubble(create_bubble($player), $_, 0, $player, 0) foreach (0..(7-$pdata{$player}{oddswap}));
+		real_stick_bubble(create_bubble_given_img_num($pdata{$player}{nextcolors}[$_]), $_, 0, $player, 0) foreach (0..(7-$pdata{$player}{oddswap}));
+                delete $pdata{$player}{nextcolors};
 	    }
 	}
     }
@@ -714,11 +802,11 @@ sub print_next_bubble($$;$) {
 }
 
 sub generate_new_bubble {
-    my ($player, $img) = @_;
+    my ($player, $num) = @_;
     $tobe_launched{$player} = $next_bubble{$player};
     $tobe_launched{$player}{'x'} = ($POS{$player}{left_limit}+$POS{$player}{right_limit})/2 - $BUBBLE_SIZE/2;
     $tobe_launched{$player}{'y'} = $POS{$player}{'initial_bubble_y'};
-    $next_bubble{$player} = $img ? create_bubble_given_img($img) : create_bubble($player);
+    $next_bubble{$player} = defined $num ? create_bubble_given_img_num($num) : create_bubble($player);
     $next_bubble{$player}{'x'} = $POS{$player}{left_limit}+$POS{$player}{next_bubble}{x}; #- necessary to keep coordinates, for verify_if_end
     $next_bubble{$player}{'y'} = $POS{$player}{next_bubble}{'y'};
     print_next_bubble($next_bubble{$player}{img}, $player);
@@ -862,7 +950,7 @@ sub handle_game_events() {
 	if ($event->type == SDL_KEYDOWN) {
 	    my $keypressed = $event->key_sym;
 
-	    iter_players {
+	    iter_local_players {
 		my $pkey = is_1p_game() ? 'p2' : $::p;
 		foreach (qw(left right fire center)) {
 		    $keypressed == $KEYS->{$pkey}{$_} and $actions{$::p}{$_} = 1, last;
@@ -902,7 +990,7 @@ sub handle_game_events() {
 		    }
 		}
 		switch_image_on_background($back_saved, 0, 0);
-		iter_players { $actions{$::p}{left} = 0; $actions{$::p}{right} = 0; };
+		iter_local_players { $actions{$::p}{left} = 0; $actions{$::p}{right} = 0; };
 		$mixer_enabled && $mixer and $mixer->resume_music;
 		$event->pump while $event->poll != 0;
 		$app->flip;
@@ -913,7 +1001,7 @@ sub handle_game_events() {
 	if ($event->type == SDL_KEYUP) {
 	    my $keypressed = $event->key_sym;
 
-	    iter_players {
+	    iter_local_players {
 		my $pkey = is_1p_game() ? 'p2' : $::p;
 		foreach (qw(left right fire center)) {
 		    $keypressed == $KEYS->{$pkey}{$_} and $actions{$::p}{$_} = 0, last;
@@ -922,11 +1010,58 @@ sub handle_game_events() {
 	}
 
 	if ($event->type == SDL_KEYDOWN && $event->key_sym == SDLK_ESCAPE) {
+            is_mp_game() and fb_net::gsend("leave:");
 	    die 'quit';
 	}
         if ($event->type == SDL_QUIT) {
+            is_mp_game() and fb_net::gsend("leave:");
             exit 0;
         }
+    }
+
+    if (is_mp_game()) {
+        foreach my $m (fb_net::grecv()) {
+            my $player = $pdata{id2p}{$m->{id}};
+            my ($command, $params) = $m->{msg} =~ /(\w+):(.*)/;
+            if ($command eq 'ping') {
+                $pdata{$player}{ping} = $frame;
+            } elsif ($command eq 'leave') {
+                iter_players { #- need iter_players to get the small graphics change for free if we're in multiplayer
+                    $::p eq $player and lose($::p);
+                };
+            } elsif ($command eq 'fire') {
+                $actions{$player}{mp_fire} = 1;
+                ($angle{$player}, $pdata{$player}{nextcolor}) = $params =~ /(.+):(.+)/;
+            } elsif ($command eq 'angle') {
+                $angle{$player} = $params;
+            } elsif ($command eq 'stick') {
+                #- we can't rely on locally animated launched bubble, to ensure game
+                #- consistency we transmit stick positions
+                $actions{$player}{mp_stick} = 1;
+                ($pdata{$player}{stickcx}, $pdata{$player}{stickcy}, my $newrootcols) = $params =~ /(.+):(.+):(.*)/;
+                @{$pdata{$player}{nextcolors}} = split / /, $newrootcols;
+            } elsif ($command eq 'malus') {
+                my ($num, $cx, $cy, $sticky) = $params =~ /(.+):(.+):(.+):(.+)/;
+                my $b = create_bubble_given_img_num($num);
+                $b->{cx} = $cx;
+                $b->{cy} = $cy;
+                $b->{'stick_y'} = $sticky;
+                iter_players { #- need iter_players to get the small graphics change for free if we're in multiplayer
+                    if ($::p eq $player) {
+                        calc_real_pos($b, $::p);
+                    }
+                };
+                push @{$malus_bubble{$player}}, $b;
+                malus_change(-1, $player);
+            }
+        }
+        $frame % 10 == 0 and fb_net::gsend("ping:");
+        iter_distant_players {
+            if ($pdata{$::p}{state} ne 'lost' && $pdata{$::p}{ping} + 40 < $frame) {
+                print STDERR "Dropping player $::p, doesn't ping us anymore for ages.\n";
+                lose($::p);
+            }
+        };
     }
 }
 
@@ -963,31 +1098,37 @@ sub win {
     print_scores($app);
     cleanup_player_bubbles($player);
 }
+
+sub lose {
+    my ($player) = @_;
+    $pdata{$player}{ping_right}{state} = 'lose';
+    $pdata{$player}{ping_right}{img} = 0;
+    foreach ($launched_bubble{$player}, $tobe_launched{$player}, @{$malus_bubble{$player}}) {
+        $_ or next;
+        $_->{img} = $bubbles_anim{lose};
+        $_->{'x'}--;
+        $_->{'y'}--;
+    }
+    print_next_bubble($bubbles_anim{lose}, $player, 1);
+    cleanup_player_bubbles($player);
     
+    if (is_mp_game()) {
+        $pdata{$player}{state} = 'lost';
+        my @living = living_players();
+        @living > 1 and goto ret;
+        $pdata{state} = "won $living[0]";
+        win($living[0]);
+    } else {
+        $pdata{state} = "lost $player";
+        is_1p_game() or win($player eq 'p1' ? 'p2' : 'p1');
+    }
+  ret:
+}
+
 sub verify_if_end {
     iter_players {
 	if ($pdata{state} eq 'game' && any { $_->{cy} > 11 } @{$sticked_bubbles{$::p}}) {
-	    $pdata{$::p}{ping_right}{state} = 'lose';
-	    $pdata{$::p}{ping_right}{img} = 0;
-	    foreach ($launched_bubble{$::p}, $tobe_launched{$::p}, @{$malus_bubble{$::p}}) {
-		$_ or next;
-		$_->{img} = $bubbles_anim{lose};
-		$_->{'x'}--;
-		$_->{'y'}--;
-	    }
-	    print_next_bubble($bubbles_anim{lose}, $::p, 1);
-            cleanup_player_bubbles($::p);
-
-            if (is_mp_game()) {
-                $pdata{$::p}{state} = 'lost';
-                my @living = living_players();
-                @living > 1 and goto ret;
-                $pdata{state} = "won $living[0]";
-                win($living[0]);
-            } else {
-                $pdata{state} = "lost $::p";
-                is_1p_game() or win($::p eq 'p1' ? 'p2' : 'p1');
-            }
+            lose($::p);
 	}
     };
 
@@ -1003,7 +1144,6 @@ sub verify_if_end {
 	    die 'quit';
 	}
     }
-  ret:
 }
 
 sub print_hurry($;$) {
@@ -1095,6 +1235,9 @@ sub update_game() {
                 }
                 ($angle{$::p} < 0.1) and $angle{$::p} = 0.1;
                 ($angle{$::p} > $PI-0.1) and $angle{$::p} = $PI-0.1;
+                if (is_mp_game() && ($actions{$::p}{left} || $actions{$::p}{right} || $actions{$::p}{center})) {
+                    fb_net::gsend("angle:$angle{$::p}");
+                }
                 $pdata{$::p}{hurry}++;
                 if ($pdata{$::p}{hurry} > $TIME_HURRY_WARN) {
                     my $oddness = odd(int(($pdata{$::p}{hurry}-$TIME_HURRY_WARN)/(500/$TARGET_ANIM_SPEED))+1);
@@ -1109,10 +1252,11 @@ sub update_game() {
                     $pdata{$::p}{hurry_oddness} = $oddness;
                 }
 
-                if (($actions{$::p}{fire} || $pdata{$::p}{hurry} == $TIME_HURRY_MAX)
-                    && !$launched_bubble{$::p}
-                    && !(any { exists $_->{chaindestx} } @{$falling_bubble{$::p}})
-                    && !@{$malus_bubble{$::p}}) {
+                if ($actions{$::p}{mp_fire}
+                    || (($actions{$::p}{fire} || $pdata{$::p}{hurry} == $TIME_HURRY_MAX)
+                        && !$launched_bubble{$::p}
+                        && !(any { exists $_->{chaindestx} } @{$falling_bubble{$::p}})
+                        && !@{$malus_bubble{$::p}})) {
                     play_sound('launch');
                     $launched_bubble{$::p} = $tobe_launched{$::p};
                     $launched_bubble{$::p}->{direction} = $angle{$::p};
@@ -1121,6 +1265,15 @@ sub update_game() {
                     $actions{$::p}{hadfire} = 1;
                     $pdata{$::p}{hurry} = 0;
                     remove_hurry($::p);
+                    if (is_mp_game()) {
+                        if (!$actions{$::p}{mp_fire}) {
+                            $pdata{$::p}{nextcolor} = int(rand(@bubbles_images));
+                            fb_net::gsend("fire:$angle{$::p}:$pdata{$::p}{nextcolor}");
+                        }
+                        $actions{$::p}{mp_fire} = 0;
+                    } else {
+                        $pdata{$::p}{nextcolor} = int(rand(@bubbles_images));
+                    }
                 }
 
                 if ($launched_bubble{$::p}) {
@@ -1138,55 +1291,72 @@ sub update_game() {
                         $launched_bubble{$::p}->{x} = 2 * ($POS{$::p}{right_limit} - $BUBBLE_SIZE) - $launched_bubble{$::p}->{x};
                         $launched_bubble{$::p}->{direction} += 2*($PI/2-$launched_bubble{$::p}->{direction});
                     }
-                    if ($launched_bubble{$::p}->{'y'} <= $POS{$::p}{top_limit} + $pdata{$::p}{newrootlevel} * $ROW_SIZE) {
-                        my ($cx, $cy) = get_array_closest_pos($launched_bubble{$::p}->{x}, $launched_bubble{$::p}->{'y'}, $::p);
-                        stick_bubble($launched_bubble{$::p}, $cx, $cy, $::p, 1);
+                    if (!exists $pdata{$::p}{nextcolors}) {
+                        @{$pdata{$::p}{nextcolors}} = map { int(rand(@bubbles_images)) } 0..7;
+                    }
+                    if ($actions{$::p}{mp_stick}) {
+                        $actions{$::p}{mp_stick} = 0;
+                        stick_bubble($launched_bubble{$::p}, $pdata{$::p}{stickcx}, $pdata{$::p}{stickcy}, $::p, 1);
                         $launched_bubble{$::p} = undef;
-                    } else {
-                        foreach (@{$sticked_bubbles{$::p}}) {
-                            if (is_collision($launched_bubble{$::p}, $_->{'x'}, $_->{'y'})) {
-                                my ($cx, $cy) = get_array_closest_pos(($launched_bubble{$::p}->{'x_old'}+$launched_bubble{$::p}->{'x'})/2,
-                                                                      ($launched_bubble{$::p}->{'y_old'}+$launched_bubble{$::p}->{'y'})/2,
-                                                                      $::p);
-                                stick_bubble($launched_bubble{$::p}, $cx, $cy, $::p, 1);
-                                $launched_bubble{$::p} = undef;
-
-                                #- malus generation
-                                if (!any { $_->{chaindestx} } @{$falling_bubble{$::p}}) {
-                                    $pdata{$::p}{malus} > 0 and play_sound('malus');
-                                    while ($pdata{$::p}{malus} > 0 && @{$malus_bubble{$::p}} < 7) {
-                                        my $b = create_bubble($::p);
-                                        do {
-                                            $b->{'cx'} = int(rand(7));
-                                        } while (member($b->{'cx'}, map { $_->{'cx'} } @{$malus_bubble{$::p}}));
-                                        $b->{'cy'} = 12;
-                                        $b->{'stick_y'} = 0;
-                                        foreach (@{$sticked_bubbles{$::p}}) {
-                                            if ($_->{'cy'} > $b->{'stick_y'}) {
-                                                if ($_->{'cx'} == $b->{'cx'}
-                                                    || odd($_->{'cy'}+$pdata{$::p}{oddswap}) && ($_->{'cx'}+1) == $b->{'cx'}) {
-                                                    $b->{'stick_y'} = $_->{'cy'};
+                    }
+                    if (is_local_player($::p)) {
+                        if ($launched_bubble{$::p}->{'y'} <= $POS{$::p}{top_limit} + $pdata{$::p}{newrootlevel} * $ROW_SIZE) {
+                            my ($cx, $cy) = get_array_closest_pos($launched_bubble{$::p}->{x}, $launched_bubble{$::p}->{'y'}, $::p);
+                            is_mp_game() and fb_net::gsend("stick:$cx:$cy:@{$pdata{$::p}{nextcolors}}");
+                            stick_bubble($launched_bubble{$::p}, $cx, $cy, $::p, 1);
+                            $launched_bubble{$::p} = undef;
+                        } else {
+                            foreach (@{$sticked_bubbles{$::p}}) {
+                                if (is_collision($launched_bubble{$::p}, $_->{'x'}, $_->{'y'})) {
+                                    my ($cx, $cy) = get_array_closest_pos(($launched_bubble{$::p}->{'x_old'}+$launched_bubble{$::p}->{'x'})/2,
+                                                                          ($launched_bubble{$::p}->{'y_old'}+$launched_bubble{$::p}->{'y'})/2,
+                                                                          $::p);
+                                    is_mp_game() and fb_net::gsend("stick:$cx:$cy:@{$pdata{$::p}{nextcolors}}");
+                                    stick_bubble($launched_bubble{$::p}, $cx, $cy, $::p, 1);
+                                    $launched_bubble{$::p} = undef;
+                                    
+                                    #- malus generation
+                                    if (!any { $_->{chaindestx} } @{$falling_bubble{$::p}}) {
+                                        $pdata{$::p}{malus} > 0 and play_sound('malus');
+                                        while ($pdata{$::p}{malus} > 0 && @{$malus_bubble{$::p}} < 7) {
+                                            my $num = int(rand(@bubbles_images));
+                                            my $b = create_bubble_given_img_num($num);
+                                            $b->{num} = $num;
+                                            do {
+                                                $b->{'cx'} = int(rand(7));
+                                            } while (member($b->{'cx'}, map { $_->{'cx'} } @{$malus_bubble{$::p}}));
+                                            $b->{'cy'} = 12;
+                                            $b->{'stick_y'} = 0;
+                                            foreach (@{$sticked_bubbles{$::p}}) {
+                                                if ($_->{'cy'} > $b->{'stick_y'}) {
+                                                    if ($_->{'cx'} == $b->{'cx'}
+                                                        || odd($_->{'cy'}+$pdata{$::p}{oddswap}) && ($_->{'cx'}+1) == $b->{'cx'}) {
+                                                        $b->{'stick_y'} = $_->{'cy'};
+                                                    }
                                                 }
                                             }
+                                            $b->{'stick_y'}++;
+                                            calc_real_pos($b, $::p);
+                                            push @{$malus_bubble{$::p}}, $b;
+                                            malus_change(-1, $::p);
                                         }
-                                        $b->{'stick_y'}++;
-                                        calc_real_pos($b, $::p);
-                                        push @{$malus_bubble{$::p}}, $b;
-                                        malus_change(-1, $::p);
+                                        #- sort them and shift them
+                                        @{$malus_bubble{$::p}} = sort { $a->{'cx'} <=> $b->{'cx'} } @{$malus_bubble{$::p}};
+                                        my $shifting = 0;
+                                        $_->{'y'} += ($shifting+=7)+int(rand(20)) foreach @{$malus_bubble{$::p}};
+                                        if (is_mp_game()) {
+                                            fb_net::gsend("malus:$_->{num}:$_->{cx}:$_->{cy}:$_->{stick_y}") foreach @{$malus_bubble{$::p}};
+                                        }
                                     }
-				#- sort them and shift them
-                                    @{$malus_bubble{$::p}} = sort { $a->{'cx'} <=> $b->{'cx'} } @{$malus_bubble{$::p}};
-                                    my $shifting = 0;
-                                    $_->{'y'} += ($shifting+=7)+int(rand(20)) foreach @{$malus_bubble{$::p}};
+                                    
+                                    last;
                                 }
-
-                                last;
                             }
                         }
                     }
                 }
 
-                !$tobe_launched{$::p} and generate_new_bubble($::p);
+                !$tobe_launched{$::p} and generate_new_bubble($::p, $pdata{$::p}{nextcolor});
 
                 if (!$actions{$::p}{left} && !$actions{$::p}{right} && !$actions{$::p}{hadfire}) {
                     $pdata{$::p}{sleeping}++;
@@ -1379,6 +1549,7 @@ sub init_game() {
 
     print '[SDL Init] ';
     restart_app();
+    $frame = 0;
     $font = SDL::Font->new("$FPATH/gfx/font.png");
     $apprects{main} = SDL::Rect->new(-width => $app->width, -height => $app->height);
     $event = SDL::Event->new;
@@ -1614,15 +1785,7 @@ sub display_highscores() {
 	my $tmp = SDL::Surface->new(-width => $high_rect->width/4, -height => $high_rect->height/4,
                                     -depth => 32, -Amask => "0 but true")->display_format;
 	fb_c_stuff::shrink($tmp->{-surface}, $background->display_format->{-surface}, 0, 0, $high_rect->{-rect}, 4);
-        if (rand() < 1) {
-            fb_c_stuff::tv($app->{-surface}, $tmp->{-surface}, $high_posx, $high_posy,
-                           SDL::Rect->new('-x' => 0, '-y' => 0, -width => $high_rect->width/4, -height => $high_rect->height/4)->{-rect});
-        } else {
-            $tmp->blit(undef, $app, SDL::Rect->new(-x => $high_posx, '-y' => $high_posy));
-        }
-        my $m if 0;
-#        $m or fb_c_stuff::tv($app->{-surface}, $background->display_format->{-surface}, $high_posx, $high_posy, $high_rect->{-rect});
-        $m = 1;
+        $tmp->blit(undef, $app, SDL::Rect->new(-x => $high_posx, '-y' => $high_posy));
 	$centered_print->($high_posx, $high_posy,    $high->{name});
 	$centered_print->($high_posx, $high_posy+20, $high->{level} eq 'WON' ? "WON!" : "LVL-".$high->{level});
 	my $min = int($high->{time}/60);
@@ -1721,6 +1884,9 @@ sub ask_from($) {
 
 sub new_game() {
 
+    if (is_mp_game()) {
+    }
+
     $display_on_app_disabled = 1;
 
     $TIME_APPEARS_NEW_ROOT = 11;
@@ -1775,8 +1941,12 @@ sub new_game() {
     } else {
 	foreach my $cy (0 .. 4) {
 	    foreach my $cx (0 .. (6 + even($cy))) {
-		my $b = create_bubble();
-		real_stick_bubble($b, $cx, $cy, $PLAYERS[0], 0);
+                my $num = int(rand(@bubbles_images));
+                if (is_mp_game()) {
+                    $num = mp_propagate("bubble|$cx|$cy", $num);
+                }
+                my $b = create_bubble_given_img_num($num);
+                real_stick_bubble($b, $cx, $cy, $PLAYERS[0], 0);
                 if (!is_1p_game()) {
                     iter_players_but_first {
                         real_stick_bubble(create_bubble_given_img($b->{img}), $cx, $cy, $::p, 0);
@@ -1786,12 +1956,18 @@ sub new_game() {
 	}
     }
 
-    $next_bubble{$PLAYERS[0]} = create_bubble($PLAYERS[0]);
-    generate_new_bubble($PLAYERS[0]);
+    my $next_num = int(rand(@bubbles_images));
+    my $tobe_num = int(rand(@bubbles_images));
+    if (is_mp_game()) {
+        $next_num = mp_propagate("nextbubble", $next_num);
+        $tobe_num = mp_propagate("tobe_launchedbubble", $tobe_num);
+    }
+    $next_bubble{$PLAYERS[0]} = create_bubble_given_img_num($next_num);
+    generate_new_bubble($PLAYERS[0], $tobe_num);
     if (!is_1p_game()) {
         iter_players_but_first {
-            $next_bubble{$::p} = create_bubble_given_img($tobe_launched{$PLAYERS[0]}->{img});
-            generate_new_bubble($::p, $next_bubble{$PLAYERS[0]}->{img});
+            $next_bubble{$::p} = create_bubble_given_img_num($next_num);
+            generate_new_bubble($::p, $tobe_num);
         };
     }
 
@@ -1808,6 +1984,20 @@ sub new_game() {
     $pdata{state} = 'game';
 
     $direct = undef;
+
+    if (is_mp_game()) {
+        if (is_leader()) {
+            fb_net::gsend('!synchro');
+        }
+        my $m = fb_net::grecv_get1msg();
+        if ($m->{msg} ne '!synchro') {
+            print "Network protocol error.\n";
+            return;
+        }
+        iter_distant_players {
+            $pdata{$::p}{ping} = $frame;
+        };
+    }
 }
 
 sub choose_1p_game_mode() {
@@ -2531,6 +2721,7 @@ while (1) {
     eval { maingame() };
     if ($@) {
 	if ($@ =~ /^new_game/) {
+            die;
 	    new_game();
 	} elsif ($@ =~ /^quit/) {
             do { menu() } while (!new_game_once());
