@@ -59,16 +59,18 @@ sub isconnected() {
     return defined($sock);
 }
 
+my $buffered_line;
 sub readline_() {
     if (!defined($sock)) {
         return undef;
     }
 
-    my $results = '';
+    my $results = $buffered_line;
+    $buffered_line = undef;
     eval {
         local $SIG{ALRM} = sub { die "alarm\n" };
         alarm $timeout;
-        do {
+        while ($results !~ /\n/) {
             my $buf;
             my $bytes = sysread($sock, $buf, 1);
             if (!defined($bytes)) {
@@ -87,8 +89,9 @@ sub readline_() {
             } else {
                 $results .= $buf;
             }
-        } while ($results !~ /\n/);
+        }
         alarm 0;
+        ($results, $buffered_line) = $results =~ /([^\n]+\n)(.*)?/s;
     };
     if ($@) {
         return "$results\n";
@@ -98,6 +101,8 @@ sub readline_() {
 }
 
 sub readline_ifdata() {
+    $buffered_line and return readline_();
+
     if (!defined($sock)) {
         return undef;
     }
@@ -126,11 +131,6 @@ sub readline_ifdata() {
     }
 }
 
-sub decode_msg($) {
-    my ($msg) = @_;
-    my ($command, $message) = $msg =~ m|^FB/\d+\.\d+ (\w+): (.*)|;
-    return ($command, $message);
-}
 
 sub wait4($) {
     my ($regex) = @_;
@@ -170,10 +170,35 @@ sub wait4start() {
     return @mappings;
 }
 
+sub decode_msg($) {
+    my ($msg) = @_;
+    my ($command, $message) = $msg =~ m|^FB/\d+\.\d+ (\w+): (.*)|;
+    return ($command, $message);
+}
+
+sub send_and_receive($;$) {
+    my ($command, $rest) = @_;
+    send_("$command $rest");
+    my $answer = undef;
+    my $to_buffer;
+    while (!defined($answer)) {
+        my $msg = readline_();
+        !defined($msg) and $answer = '';
+        my ($rcv_command, $rcv_message) = fb_net::decode_msg($msg);
+        if ($rcv_command eq $command) {
+            $answer = $rcv_message;
+        } else {
+            #- this is not the answer we're waiting. keep that.
+            $to_buffer .= $msg;
+        }
+    }
+    $buffered_line = $to_buffer;
+    return $answer;
+}
+
 sub list() {
-    send_('LIST');
-    my $msg = readline_();
-    if ($msg =~ /LIST: (.*) free:(\d+)/) {
+    my $msg = send_and_receive('LIST');
+    if ($msg =~ /(.*) free:(\d+)/) {
         my $games = $1;
         my $free = $2;
         my @games;
@@ -182,7 +207,6 @@ sub list() {
         }
         return ($free, @games);
     } else {
-        $msg and print STDERR "Answer to LIST was not recognized. Server said:\n\t$msg\n";
         return;
     }
 }

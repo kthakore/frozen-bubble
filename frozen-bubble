@@ -459,7 +459,7 @@ sub mp_propagate($$) {
         my $m = fb_net::grecv_get1msg();
         if ($m->{msg} !~ /^\Q$key:\E(.+)/) {
             print "Network protocol error.\n";
-            return;
+            die 'quit';
         } else {
             return $1;
         }
@@ -2362,7 +2362,7 @@ sub new_game() {
         my $m = fb_net::grecv_get1msg();
         if ($m->{msg} ne '!synchro') {
             print "Network protocol error.\n";
-            return;
+            die 'quit';
         }
         iter_distant_players {
             $pdata{$::p}{ping} = $frame;
@@ -2631,16 +2631,11 @@ sub smg_add_status_msg($) {
     @smg_status_messages > 4 and shift @smg_status_messages;
 }
 
-sub smg_verify_command($) {
-    my ($sent_command) = @_;
-    my ($command, $message);
-    do {
-        my $msg = fb_net::readline_();
-        ($command, $message) = fb_net::decode_msg($msg);
-        # FIXME: should not drop PUSH messages
-    } while ($command eq 'PUSH');
-    if ($command ne $sent_command || $message ne 'OK') {
-        return $message;
+sub smg_verify_command($;$) {
+    my ($command, $rest) = @_;
+    my $answer = fb_net::send_and_receive($command, $rest);
+    if ($answer ne 'OK') {
+        return $answer;
     } else {
         return;
     }
@@ -2786,10 +2781,9 @@ sub smg_choose_game() {
                         my $suffix = 1;
                         my $answer;
                         while (1) {
-                            my $message = $curaction->()->{action} eq 'CREATE' ? "CREATE $mynick"
-                                                                               : "JOIN ".$curaction->()->{join}." $mynick";
-                            fb_net::send_($message);
-                            $answer = smg_verify_command($curaction->()->{action});
+                            my $message = $curaction->()->{action} eq 'CREATE' ? $mynick
+                                                                               : $curaction->()->{join}." $mynick";
+                            $answer = smg_verify_command($curaction->()->{action}, $message);
                             if ($answer eq 'NICK_IN_USE') {
                                 $suffix++;
                                 $mynick = "$ENV{USER}$suffix";
@@ -2810,7 +2804,6 @@ sub smg_choose_game() {
                     }
                             
                     if ($curaction->()->{action} eq 'START') {
-                        fb_net::send_('START');
                         my $answer = smg_verify_command('START');
                         if ($answer) {
                             smg_add_status_msg("*** CAN'T START GAME: $answer");
@@ -2853,8 +2846,7 @@ sub smg_choose_game() {
                     play_sound('newroot');
                 } elsif ($message =~ /^STOP: (.*)/) {
                     smg_add_status_msg("*** $1 ABORTED STARTING, CANCELLING GAME...");
-                    fb_net::send_("PART");
-                    my $answer = smg_verify_command('PART');
+                    smg_verify_command('PART');
                     $redraw->();
                     play_sound('cancel');
                     fb_c_stuff::fbdelay(2000);
@@ -2885,8 +2877,7 @@ sub smg_choose_game() {
 
         if ($need4update) {
             if ($state ne 'game_select') {
-                fb_net::send_('STATUS');
-                my $answer = smg_verify_command('STATUS');
+                my $answer = fb_net::send_and_receive('STATUS');
                 erase_line($smg_starty_players, $imgbin{back_netgame});
                 $app->print($smg_startx, $smg_starty_players, "PLAYERS IN GAME: ".uc($answer));
             }
@@ -2922,7 +2913,6 @@ sub smg_start_game($) {
                 my $k = $event->key_sym;
 
                 if ($k == SDLK_ESCAPE()) {
-                    fb_net::send_('STOP');
                     my $answer = smg_verify_command('STOP');
                     if ($answer) {
                         smg_add_status_msg("*** CAN'T STOP GAME: $answer");
