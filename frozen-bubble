@@ -2512,7 +2512,8 @@ sub smg_servers() {
         my $ret = fb_net::discover_lan_servers();
         if ($ret->{failure}) {
             smg_printstatus("UNABLE TO PROBE FOR AVAILABLE SERVERS ON THE LAN!",
-                            "VERIFY YOUR NETWORK SETUP OR RETRY LATER.");
+                            uc($ret->{failure}),
+                            "VERIFY YOUR NETWORK SETUP.");
             grab_key(0);
             return;
         } else {
@@ -2529,7 +2530,7 @@ sub smg_servers() {
                     if (my $pid = fork()) {
                         $pdata{autochooseserver} = 1;
                         $pdata{serverpid} = $pid;
-                        smg_add_status_msg("NO SERVER FOUND: CREATED SERVER FOR LAN GAME.");
+                        smg_add_status_msg("NO SERVER FOUND, CREATED SERVER FOR LAN GAME.");
                         sleep 1;
                         return ({ host => 'localhost', port => 1511 });
                     } else {
