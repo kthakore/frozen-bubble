@@ -38,6 +38,7 @@ static char greets_msg[] = "SERVER_READY";
 static char ok_generic[] = "OK";
 
 static char fl_missing_lf[] = "MISSING_LF";
+static char fl_server_full[] = "SERVER_IS_FULL";
 
 
 /* send line adding the protocol in front of the supplied msg */
@@ -189,9 +190,14 @@ void connections_manager(int sock)
                                 exit(-1);
                         }
                         l2("Accepted connection from %s: fd %d", inet_ntoa(client_addr.sin_addr), fd);
-                        send_line_log_push(fd, greets_msg);
-                        conns = g_list_append(conns, GINT_TO_POINTER(fd));
-                        calculate_list_games();
+                        if (fd > 255) {
+                                send_line_log_push(fd, fl_server_full);
+                                close(fd);
+                        } else {
+                                send_line_log_push(fd, greets_msg);
+                                conns = g_list_append(conns, GINT_TO_POINTER(fd));
+                                calculate_list_games();
+                        }
                 }
 
                 new_conns = g_list_copy(conns);
