@@ -37,6 +37,9 @@ my $proto_minor = '0';
 my $sock;
 my $ping = 50;
 
+our $timeout = 5;   #- in seconds
+
+
 sub send_($) {
     my ($msg) = @_;
     if (defined($sock)) {
@@ -62,27 +65,36 @@ sub readline_() {
     }
 
     my $results = '';
-    do {
-        my $buf;
-        my $bytes = sysread($sock, $buf, 1);
-        if (!defined($bytes)) {
-            if ($! == EAGAIN) {
-                sleep($ping/1000/3);
-            } elsif ($! == ECONNRESET) {
+    eval {
+        local $SIG{ALRM} = sub { die "alarm\n" };
+        alarm $timeout;
+        do {
+            my $buf;
+            my $bytes = sysread($sock, $buf, 1);
+            if (!defined($bytes)) {
+                if ($! == EAGAIN) {
+                    sleep($ping/1000/3);
+                } elsif ($! == ECONNRESET) {
+                    disconnect();
+                    return $results;
+                } else {
+                    print STDERR "Oops, system error: $!\n";
+                    return undef;
+                }
+            } elsif ($bytes == 0) {
                 disconnect();
                 return $results;
             } else {
-                print STDERR "Oops, system error: $!\n";
-                return undef;
+                $results .= $buf;
             }
-        } elsif ($bytes == 0) {
-            disconnect();
-            return $results;
-        } else {
-            $results .= $buf;
-        }
-    } while ($results !~ /\n/);
-    return $results;
+        } while ($results !~ /\n/);
+        alarm 0;
+    };
+    if ($@) {
+        return "$results\n";
+    } else {
+        return $results;
+    }
 }
 
 sub readline_ifdata() {
@@ -375,12 +387,24 @@ sub gdelay_messages(@) {
     push @messages, @_;
 }
 
+sub grecv_get1msg_ifdata() {
+    my ($msg, @rest) = grecv();
+    push @messages, @rest;
+    return $msg;
+}
+
 sub grecv_get1msg() {
-    if (!@messages) {
-        @messages = grecv();
-#        print "Waiting...\n";
-        sleep($ping/1000/3);
-        return grecv_get1msg();
+    eval {
+        local $SIG{ALRM} = sub { die "alarm\n" };
+        alarm $timeout;
+        while (!@messages) {
+            sleep($ping/1000/3);
+            @messages = grecv();
+        }
+        alarm 0;
+    };
+    if ($@) {
+        return { id => 'NONE', msg => 'fake:timeout' };
     } else {
         return shift @messages;
     }

@@ -1114,7 +1114,7 @@ sub handle_game_events() {
             }
         }
         fb_net::gdelay_messages(@keep_messages);
-        $frame % 10 == 0 and fb_net::gsend("ping:");
+        $frame % 25 == 0 and fb_net::gsend('ping:');
         iter_distant_players {
             if ($pdata{$::p}{state} ne 'lost' && $pdata{$::p}{ping} + 200 < $frame) {
                 print STDERR "Dropping player $::p, doesn't ping us anymore for ages.\n";
@@ -1178,11 +1178,16 @@ sub lose {
         $pdata{$player}{state} = 'lost';
         my @living = living_players();
         if (@living == 1) {
-            #- tentatively suppose we've found the winner, but we need to confirm it by network
-            #- first, in rare case of two last players dying at the same time
             my $winnernick = $pdata{$living[0]}{nick};
             fb_net::gsend("finished:$winnernick");
-            $pdata{state} = "finished $living[0]:$winnernick";
+            if (any { $pdata{$_}{left} } @PLAYERS) {
+                #- if some players have left, directly go to won state
+                $pdata{state} = "won $living[0]";
+            } else {
+                #- tentatively suppose we've found the winner, but we need to confirm it by network
+                #- first, in rare case of two last players dying at the same time
+                $pdata{state} = "finished $living[0]:$winnernick 0";
+            }
             iter_distant_players {
                 $pdata{$::p}{still_game_messages} = 1;
             };
@@ -1509,33 +1514,42 @@ sub update_game() {
         update_lost($loser);
         is_2p_game() and update_won($loser eq 'p1' ? 'p2' : 'p1');
         
-    } elsif ($pdata{state} =~ /^finished (\S+):(\S+)/) {
+    } elsif ($pdata{state} =~ /^finished (\S+):(\S+) (\S+)/) {
         #- mp game only state when we're trying to figure out if this is not a draw game
 
         my $supposed_winner_player = $1;
         my $supposed_winner_nick = $2;
+        my $timeout_counter = $3;
 
-        my $msg = fb_net::grecv_get1msg();
-        my $result = decode_postgame_message($msg);
-        if ($result =~ /^(\S+) finished (\S+)/) {
-            my $remote_winner_nick = $2;
-            if ($remote_winner_nick ne $supposed_winner_nick) {
-                #- players don't agree with who won the game, this is a draw game
-                $pdata{state} = "won ";
-                lose($supposed_winner_player);
-            } else {
-                if (every { $pdata{$_}{still_game_messages} == 0 } @PLAYERS) {
-                    win($supposed_winner_player);
-                    $pdata{state} = "won $supposed_winner_player";
+        if (my $msg = fb_net::grecv_get1msg_ifdata()) {
+            my $result = decode_postgame_message($msg);
+            if ($result =~ /^(\S+) finished (\S+)/) {
+                my $remote_winner_nick = $2;
+                if ($remote_winner_nick ne $supposed_winner_nick) {
+                    #- players don't agree with who won the game, this is a draw game
+                    $pdata{state} = "won ";
+                    lose($supposed_winner_player);
+                } else {
+                    if (every { $pdata{$_}{still_game_messages} == 0 } @PLAYERS) {
+                        win($supposed_winner_player);
+                        $pdata{state} = "won $supposed_winner_player";
+                    }
                 }
+            } elsif ($result =~ /^(\S+) other/) {
+                print "finished state - $1 sends post-finish non-newgame $msg->{msg} - passing hand to won\n";
+                win($supposed_winner_player);
+                $pdata{state} = "won $supposed_winner_player";
+            } elsif ($result !~ /^(\S+) gamemsg/) {
+                print "finished state, delaying $msg->{msg}\n";
+                fb_net::gdelay_messages($msg);
             }
-        } elsif ($result =~ /^(\S+) other/) {
-            print "finished state - $1 sends post-finish non-newgame $msg->{msg} - passing hand to won\n";
-            win($supposed_winner_player);
-            $pdata{state} = "won $supposed_winner_player";
-        } elsif ($result !~ /^(\S+) gamemsg/) {
-            print "finished state, delaying $msg->{msg}\n";
-            fb_net::gdelay_messages($msg);
+        } else {
+            #- timeout for receiving the winners. it could happen when a client is badly killed.
+            $timeout_counter++;
+            if ($timeout_counter > $fb_net::timeout * (1000/$TARGET_ANIM_SPEED) ) {
+                win($supposed_winner_player);
+                $pdata{state} = "won $supposed_winner_player";
+            }
         }
 
     } elsif ($pdata{state} =~ /^won (.*)/) {
