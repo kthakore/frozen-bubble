@@ -1098,7 +1098,7 @@ sub handle_game_events() {
         fb_net::gdelay_messages(@keep_messages);
         $frame % 10 == 0 and fb_net::gsend("ping:");
         iter_distant_players {
-            if ($pdata{$::p}{state} ne 'lost' && $pdata{$::p}{ping} + 40 < $frame) {
+            if ($pdata{$::p}{state} ne 'lost' && $pdata{$::p}{ping} + 200 < $frame) {
                 print STDERR "Dropping player $::p, doesn't ping us anymore for ages.\n";
                 lose($::p);
             }
