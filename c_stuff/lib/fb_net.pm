@@ -290,6 +290,7 @@ sub connect($$) {
 
     $sock = IO::Socket::INET->new(PeerAddr => $host, PeerPort => $port, Proto => 'tcp', Timeout => 5);
     if (!$sock) {
+        print STDERR "Couldn't connect to $host:$port: $@\n";
         return { failure => 'Server is down' };
     }
     $sock->autoflush;
@@ -313,10 +314,13 @@ sub connect($$) {
     } else {
         disconnect();
         if ($isready eq 'PUSH: SERVER_IS_FULL') {
+            print STDERR "Dropping $host:$port: server is full\n";
             return { failure => 'Server is full' };
         } elsif ($isready eq 'PUSH: SERVER_IS_OVERLOADED') {
+            print STDERR "Dropping $host:$port: server is overloaded\n";
             return { failure => 'Server overloaded' };
         } else {
+            print STDERR "Dropping $host:$port: not a Frozen-Bubble server\n";
             return { failure => 'Not an FB server' };
         }
     }
@@ -328,6 +332,7 @@ sub connect($$) {
     my $t1 = gettimeofday;
     if ($msg =~ /INCOMPATIBLE_PROTOCOL/) {
         disconnect();
+        print STDERR "Dropping $host:$port: imcompatible Frozen-Bubble server\n";
         return { failure => 'Incompatible server' };
     } elsif ($msg !~ /PONG/) {
         print STDERR "$host:$port answer to PING was not recognized. Server said:\n\t$msg\n";
