@@ -299,12 +299,12 @@ void cleanup_player(int fd)
                 if (g->players_number == 0) {
                         games = g_list_remove(games, g);
                         free(g);
-                }
-
-                if (g->status == GAME_STATUS_STARTING) {
-                        g->status = GAME_STATUS_OPEN;
-                        for (j = 0; j < g->players_number; j++)
-                                send_line_log_push(g->players_conn[j], ok_status_open);
+                } else {
+                        if (g->status == GAME_STATUS_STARTING) {
+                                g->status = GAME_STATUS_OPEN;
+                                for (j = 0; j < g->players_number; j++)
+                                        send_line_log_push(g->players_conn[j], ok_status_open);
+                        }
                 }
                 calculate_list_games();
         }
