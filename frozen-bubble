@@ -2612,15 +2612,12 @@ sub smg_choose_game() {
                     play_sound('typewriter');
                 } elsif ($message =~ /^JOINED: (.*)/) {
                     smg_add_status_msg("*** $1 JOINED THE GAME!");
-                    $need4status = 1;
                     play_sound('newroot_solo');
                 } elsif ($message =~ /^PARTED: (.*)/) {
                     smg_add_status_msg("*** $1 LEFT THE GAME...");
-                    $need4status = 1;
                     play_sound('newroot_solo');
                 } elsif ($message =~ /^START: (.*)/) {
                     smg_add_status_msg("*** $1 STARTED THE GAME AND IS WAITING!");
-                    $need4status = 1;
                     play_sound('newroot');
                 } elsif ($message =~ /^STOP: (.*)/) {
                     smg_add_status_msg("*** $1 ABORTED STARTING, CANCELLING GAME...");
@@ -2638,6 +2635,7 @@ sub smg_choose_game() {
                 } else {
                     print "unrecognized message received: $msg\n";
                 }
+                $need4status = 1;
             } else {
                 print "non-push received!? $msg\n";
             }
@@ -2657,6 +2655,7 @@ sub smg_choose_game() {
             smg_erase_line($smg_starty_players);
             $app->print($smg_startx, $smg_starty_players, "PLAYERS IN GAME: ".uc($answer));
             $need4status = 0;
+            $redraw->();
         }
     }
 
