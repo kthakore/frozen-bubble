@@ -93,7 +93,7 @@ static char* list_game(const struct game * g)
         return memdup(list_game_str, strlen(list_game_str) + 1);
 }
 
-static char list_games_str[10000];
+static char list_games_str[8192] __attribute__((aligned(4096))) = "";
 static int players_in_game;
 static void list_games_aux(gpointer data, gpointer user_data)
 {
@@ -112,7 +112,7 @@ static void list_games_aux(gpointer data, gpointer user_data)
 void calculate_list_games(void)
 {
         char * free_players;
-        list_games_str[0] = '\0';
+        memset(list_games_str, 0, strlen(list_games_str));
         players_in_game = 0;
         g_list_foreach(games, list_games_aux, NULL);
         free_players = asprintf_(" free:%d", conns_nb() - players_in_game - 1);  // 1: don't count myself
