@@ -296,10 +296,13 @@ void cleanup_player(int fd)
                         g->players_nick[j] = g->players_nick[j + 1];
                 }
                 g->players_number--;
+
+                // completely remove game if empty
                 if (g->players_number == 0) {
                         games = g_list_remove(games, g);
                         free(g);
                 } else {
+                        // if non-empty, game status is backwarded
                         if (g->status == GAME_STATUS_STARTING) {
                                 g->status = GAME_STATUS_OPEN;
                                 for (j = 0; j < g->players_number; j++)
