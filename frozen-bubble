@@ -86,7 +86,7 @@ $chainreaction = 0;
 $rcfile = "$ENV{HOME}/.fbrc";
 eval(cat_($rcfile));
 eval(cat_($hiscorefile = "$ENV{HOME}/.fbhighscores"));
-$version = '1.0.1';
+$version = '2.0.0';
 
 print "        [[ Frozen-Bubble-$version ]]\n\n";
 print '  http://www.frozen-bubble.org/
