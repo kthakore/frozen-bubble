@@ -47,7 +47,8 @@ char* current_command;
 const int proto_major = 1;
 const int proto_minor = 0;
 
-static char greets_msg[] = "SERVER_READY";
+static char greets_msg_base[] = "SERVER_READY %s";
+static char* servername = NULL;
 
 static char ok_generic[] = "OK";
 
@@ -234,6 +235,9 @@ void connections_manager(void)
         struct sockaddr_in client_addr;
         ssize_t len = sizeof(client_addr);
         struct timeval tv;
+        static char * greets_msg = NULL;
+        if (!greets_msg)   // C sux
+                greets_msg = asprintf_(greets_msg_base, servername);
 
         date_amount_transmitted_reset = get_current_time();
 
@@ -347,6 +351,7 @@ void help(void)
         printf("Usage: fb-server [OPTION]...\n");
         printf("\n");
         printf("     -h                        display this help then exits\n");
+        printf("     -n name                   set the server name (mandatory)\n");
         printf("     -l                        LAN mode: create an UDP server (on port %d) to answer broadcasts of clients discovering where are the servers\n", DEFAULT_PORT);
         printf("     -L                        LAN/game mode: create an UDP server as above, but limit number of games to 1 (this is for an FB client hosting a LAN server)\n");
         printf("     -p port                   set the server port (defaults to %d)\n", DEFAULT_PORT);
@@ -381,7 +386,7 @@ void create_server(int argc, char **argv)
         int valone = 1;
 
         while (1) {
-                int c = getopt(argc, argv, "hlLp:u:t:");
+                int c = getopt(argc, argv, "hn:lLp:u:t:");
                 if (c == -1)
                         break;
                 
@@ -389,6 +394,23 @@ void create_server(int argc, char **argv)
                 case 'h':
                         help();
                         exit(0);
+                case 'n':
+                        if (strlen(optarg) > 12) {
+                                l0("Commandline: name is too long, maximum is 12 characters");
+                                exit(1);
+                        } else {
+                                int i;
+                                for (i = 0; i < strlen(optarg); i++) {
+                                        if (!((optarg[i] >= 'a' && optarg[i] <= 'z')
+                                              || (optarg[i] >= '0' && optarg[i] <= '9')
+                                              || optarg[i] == '.')) {
+                                                l0("Commandline: name must contain only chars in [a-z0-9.]");
+                                                exit(1);
+                                        }
+                                }
+                                servername = strdup(optarg);
+                        }
+                        break;
                 case 'l':
                         create_udp_server();
                         break;
@@ -424,6 +446,11 @@ void create_server(int argc, char **argv)
                         }
                         break;
                 }
+        }
+
+        if (!servername) {
+                l0("Must give a name to the server with -n <name>.");
+                exit(1);
         }
 
         l1("Creating TCP game server on port %d", port);
