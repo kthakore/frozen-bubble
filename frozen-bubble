@@ -1465,19 +1465,21 @@ sub update_game() {
                 }
 
                 if ($launched_bubble{$::p}) {
-                    $launched_bubble{$::p}->{'x_old'} = $launched_bubble{$::p}->{'x'}; # save coordinates for potential collision
-                    $launched_bubble{$::p}->{'y_old'} = $launched_bubble{$::p}->{'y'};
-                    $launched_bubble{$::p}->{'x'} += $BUBBLE_SPEED * cos($launched_bubble{$::p}->{direction});
-                    $launched_bubble{$::p}->{'y'} -= $BUBBLE_SPEED * sin($launched_bubble{$::p}->{direction});
-                    if ($launched_bubble{$::p}->{x} < $POS{$::p}{left_limit}) {
-                        play_sound('rebound');
-                        $launched_bubble{$::p}->{x} = 2 * $POS{$::p}{left_limit} - $launched_bubble{$::p}->{x};
-                        $launched_bubble{$::p}->{direction} -= 2*($launched_bubble{$::p}->{direction}-$PI/2);
-                    }
-                    if ($launched_bubble{$::p}->{x} > $POS{$::p}{right_limit} - $BUBBLE_SIZE) {
-                        play_sound('rebound');
-                        $launched_bubble{$::p}->{x} = 2 * ($POS{$::p}{right_limit} - $BUBBLE_SIZE) - $launched_bubble{$::p}->{x};
-                        $launched_bubble{$::p}->{direction} += 2*($PI/2-$launched_bubble{$::p}->{direction});
+                    if (!$pdata{$::p}{freezelaunchedbubble}) {
+                        $launched_bubble{$::p}->{'x_old'} = $launched_bubble{$::p}->{'x'}; # save coordinates for potential collision
+                        $launched_bubble{$::p}->{'y_old'} = $launched_bubble{$::p}->{'y'};
+                        $launched_bubble{$::p}->{'x'} += $BUBBLE_SPEED * cos($launched_bubble{$::p}->{direction});
+                        $launched_bubble{$::p}->{'y'} -= $BUBBLE_SPEED * sin($launched_bubble{$::p}->{direction});
+                        if ($launched_bubble{$::p}->{x} < $POS{$::p}{left_limit}) {
+                            play_sound('rebound');
+                            $launched_bubble{$::p}->{x} = 2 * $POS{$::p}{left_limit} - $launched_bubble{$::p}->{x};
+                            $launched_bubble{$::p}->{direction} -= 2*($launched_bubble{$::p}->{direction}-$PI/2);
+                        }
+                        if ($launched_bubble{$::p}->{x} > $POS{$::p}{right_limit} - $BUBBLE_SIZE) {
+                            play_sound('rebound');
+                            $launched_bubble{$::p}->{x} = 2 * ($POS{$::p}{right_limit} - $BUBBLE_SIZE) - $launched_bubble{$::p}->{x};
+                            $launched_bubble{$::p}->{direction} += 2*($PI/2-$launched_bubble{$::p}->{direction});
+                        }
                     }
                     if (!exists $pdata{$::p}{nextcolors}) {
                         @{$pdata{$::p}{nextcolors}} = map { int(rand(@bubbles_images)) } 0..7;
@@ -1496,6 +1498,7 @@ sub update_game() {
                         }
                         stick_bubble($launched_bubble{$::p}, $pdata{$::p}{stickcx}, $pdata{$::p}{stickcy}, $::p, 1);
                         $launched_bubble{$::p} = undef;
+                        $pdata{$::p}{freezelaunchedbubble} = 0;
                     } elsif ($launched_bubble{$::p}->{'y'} <= $POS{$::p}{top_limit} + $pdata{$::p}{newrootlevel} * $ROW_SIZE) {
                         my ($cx, $cy) = get_array_closest_pos($launched_bubble{$::p}->{x}, $launched_bubble{$::p}->{'y'}, $::p);
                         if (is_local_player($::p)) {
@@ -1508,7 +1511,7 @@ sub update_game() {
                                 print ">> local stick calc: $cx:$cy\n";
                                 $pdata{$::p}{localstickcx} = $cx;
                                 $pdata{$::p}{localstickcy} = $cy;
-
+                                $pdata{$::p}{freezelaunchedbubble} = 1;
                             }
                         }
                     } else {
@@ -1562,6 +1565,7 @@ sub update_game() {
                                         print ">> local stick calc: $cx:$cy\n";
                                         $pdata{$::p}{localstickcx} = $cx;
                                         $pdata{$::p}{localstickcy} = $cy;
+                                        $pdata{$::p}{freezelaunchedbubble} = 1;
                                     }
                                 }
                                 last;
