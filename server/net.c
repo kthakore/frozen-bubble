@@ -52,7 +52,7 @@ static char* servername = NULL;
 
 static char ok_generic[] = "OK";
 
-static char fl_client_nolf[] = "NO_LF_WITHIN_TOO_MUCH_DATA";
+static char fl_client_nolf[] = "NO_LF_WITHIN_TOO_MUCH_DATA (I bet you're not a regular FB client, hu?)";
 static char fl_server_full[] = "SERVER_IS_FULL";
 static char fl_server_overloaded[] = "SERVER_IS_OVERLOADED";
 
@@ -156,6 +156,7 @@ static void handle_incoming_data_generic(gpointer data, gpointer user_data, int 
                                         send_line_log_push(fd, fl_client_nolf);
                                         goto conn_terminated;
                                 }
+                                l2("[%d] ****** buffering %d bytes", fd, len);
                                 memcpy(incoming_data_buffers[fd], buf, len);
                                 incoming_data_buffers_count[fd] = len;
                                 return;
