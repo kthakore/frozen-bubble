@@ -2826,7 +2826,7 @@ sub smg_choose_game() {
         $redraw->();
     };
 
-    my $mynick = substr($ENV{USER}, 0, 8);
+    my $mynick = $ENV{USER} = substr($ENV{USER}, 0, 8);
     my $need4update;
     my $relist;
     $list->();
