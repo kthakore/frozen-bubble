@@ -1016,6 +1016,7 @@ sub handle_game_events() {
                     fb_net::gsend("talk:$message");
                     add_loserz_chat_msg($message);
                     $pdata{$::p}{typed_chat} = '';
+                    print "sent chat <$message>\n";
                 } else {
                     $pdata{$::p}{typed_chat} = update_typed_chat($pdata{$::p}{typed_chat}, $keypressed, 25);
                     my $y_typingchat = 325;
@@ -1026,6 +1027,7 @@ sub handle_game_events() {
                     }
                     $app->print($MENUPOS{xpos_panel} + 10, $y_typingchat, "SAY: $pdata{$::p}{typed_chat}");
                     push @update_rects, $apprects{main};
+                    print "updated chat\n";
                 }
 
             } else {
@@ -1658,15 +1660,19 @@ sub update_game() {
             };
             check_mp_connection();
         }
+        print "wonstate: winner=$winner explodingbubbles(winner)=".int(@{$exploding_bubble{$winner}})."\n";
 	if (!$winner || @{$exploding_bubble{$winner}} == 0) {
             my $still_needwait = 0;
             #- still wait if some bubbles are not yet "frozen"
             iter_players {
                 $still_needwait += @{$sticked_bubbles{$::p}};
             };
+            print "       - : still_needwait: $still_needwait\n";
             if (!$still_needwait) {
+                print "       - : pumping for event\n";
                 $event->pump;
                 if ($event->poll != 0 && $event->type == SDL_KEYDOWN) {
+                    print "key pressed in won state\n";
                     if ($event->key_sym == SDLK_ESCAPE()) {
                         die 'quit';
                     }
