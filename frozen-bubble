@@ -45,7 +45,7 @@ use vars qw($TARGET_ANIM_SPEED $BUBBLE_SIZE $ROW_SIZE $LAUNCHER_SPEED $BUBBLE_SP
             $graphics_level @update_rects $CANON_ROTATIONS_NB %malus_bubble %falling_bubble %exploding_bubble %malus_gfx
             %sticking_bubble $version $time %imgbin $TIME_HURRY_WARN $TIME_HURRY_MAX $TIMEOUT_PINGUIN_SLEEP $FREE_FALL_CONSTANT
             $direct @PLAYERS @ALL_PLAYERS %levels $display_on_app_disabled $total_time $time_1pgame $fullscreen $rcfile $hiscorefile $HISCORES
-            $lev_number $playermalus $loaded_levelset $direct_levelset $chainreaction %chains %history %img_mini $frame $sock);
+            $lev_number $playermalus $loaded_levelset $direct_levelset $chainreaction %chains %history %img_mini $frame $sock $gameserver);
 
 use Data::Dumper;
 
@@ -128,6 +128,7 @@ local $_ = "@ARGV";
  -pm<#n>, --playermalus<#n>  add a malus of n to the left player (can be negative)
  -ls<name>, --levelset<name> directly start with the specified levelset name
  -ms<url>, --masterserver<url> use the specified URL to fetch the serverlist from
+ -gs<host:port>, --gameserver<host:port> try to use the specified host and port as game server
 
 ";
 
@@ -147,6 +148,7 @@ local $_ = "@ARGV";
 /-ls\s*(\S+)/ || /-levelset\s*(\S+)/ and $levels{current} = 1, $direct = 1, @PLAYERS = ('p1'), $direct_levelset = $1;
 /-l\s*(\d+)/ || /-level\s*(\d+)/ and $levels{current} = $1, $direct = 1, @PLAYERS = ('p1');
 /-ms\s*(\S+)/ || /-masterserver\s*(\S+)/ and $fb_net::masterserver = $1;
+/-gs\s*(\S+):(\S+)/ || /-gameserver\s*(\S+):(\S+)/ and $gameserver = "$1:$2";
 /-mp(\S+),(\S+)/ and do {
     my $mynick = $$;
     my $nb = $2;
@@ -1213,6 +1215,7 @@ sub lose {
                                     $POS{$player}{left_limit},
                                     $POS{$player}{top_limit}); #- TOFIX
             @{$sticked_bubbles{$player}} = ();
+            play_sound('cancel');
         }
 
     } else {
@@ -2901,6 +2904,11 @@ sub setup_mp_game() {
     $font = SDL::Font->new("$FPATH/gfx/font2.png");
 
     $imgbin{back_netgame}->blit($apprects{main}, $app, $apprects{main});
+
+    if ($gameserver) {
+        my ($host, $port) = $gameserver =~ /(\S+):(\S+)/;
+        fb_net::connect($host, $port) and goto choose_game;
+    }
 
     if (!fb_net::isconnected()) {
         #- 1. contact master server
