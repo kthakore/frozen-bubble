@@ -277,8 +277,10 @@ void cleanup_player(int fd)
                         g->players_nick[j] = g->players_nick[j + 1];
                 }
                 g->players_number--;
-                if (g->players_number == 0)
+                if (g->players_number == 0) {
                         games = g_list_remove(games, g);
+                        free(g);
+                }
 
                 if (g->status == GAME_STATUS_STARTING) {
                         g->status = GAME_STATUS_OPEN;
