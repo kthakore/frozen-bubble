@@ -80,9 +80,9 @@ static void show_games_aux(gpointer data, gpointer user_data)
 {
         const struct game* g = data;
         int i;
-        printf("game:%p;status:%d;nbplayers:%d[", user_data, g->status, g->players_number);
+        printf("game:%p;status:%d;nbplayers:%d[", g, g->status, g->players_number);
         for (i = 0; i < g->players_number; i++) {
-                printf("%d-%s", g->players_conn[i], g->players_nick[i]);
+                printf("fd:%d-nick:%s-starting:%d", g->players_conn[i], g->players_nick[i], g->players_starting[i]);
                 if (i < g->players_number - 1)
                         printf(",");
         }
