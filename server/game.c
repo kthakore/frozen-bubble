@@ -61,25 +61,32 @@ static char fl_line_unrecognized[] = "MISSING_FB_PROTOCOL_TAG";
 static char fl_proto_mismatch[] = "INCOMPATIBLE_PROTOCOL";
 
 
+static char* list_game(const struct game * g)
+{
+        char list_game_str[10000] = "";
+        int i;
+        for (i = 0; i < g->players_number; i++) {
+                strncat(list_game_str, g->players_nick[i], sizeof(list_game_str));
+                if (i < g->players_number - 1)
+                        strncat(list_game_str, ",", sizeof(list_game_str));
+        }
+        return memdup(list_game_str, strlen(list_game_str) + 1);
+}
+
 static char list_games_str[10000];
 static int players_in_game;
 static void list_games_aux(gpointer data, gpointer user_data)
 {
         const struct game* g = data;
-        int i;
+        char* game;
         if (g->status != GAME_STATUS_OPEN) {
                 players_in_game += g->players_number;
                 return;
         }
-        if (list_games_str[0] != '\0')
-                strncat(list_games_str, ",", sizeof(list_games_str));
         strncat(list_games_str, "[", sizeof(list_games_str));
-        for (i = 0; i < g->players_number; i++) {
-                strncat(list_games_str, g->players_nick[i], sizeof(list_games_str));
-                if (i < g->players_number - 1)
-                        strncat(list_games_str, ",", sizeof(list_games_str));
-                players_in_game++;
-        }
+        game = list_game(g);
+        strncat(list_games_str, game, sizeof(list_games_str));
+        free(game);
         strncat(list_games_str, "]", sizeof(list_games_str));
 }
 void calculate_list_games(void)
@@ -284,6 +291,19 @@ static void talk(int fd, char* msg)
         }
 }
 
+static void status(int fd, char* msg)
+{
+        struct game * g = find_game_by_fd(fd);
+        if (g) {
+                char* game = list_game(g);
+                strncat(list_games_str, game, sizeof(list_games_str));
+                send_line_log(fd, game, msg);
+                free(game);
+        } else {
+                send_line_log(fd, wn_not_in_game, msg);
+        }
+}
+
 static gboolean nick_available_aux(gconstpointer data, gconstpointer user_data)
 {
         const struct game* g = data;
@@ -399,6 +419,12 @@ int process_msg(int fd, char* msg)
                 }
         } else if (streq(current_command, "LIST")) {
                 send_line_log(fd, list_games_str, msg_orig);
+        } else if (streq(current_command, "STATUS")) {
+                if (!already_in_game(fd)) {
+                        send_line_log(fd, wn_not_in_game, msg_orig);
+                } else {
+                        status(fd, msg_orig);
+                }
         } else if (streq(current_command, "TALK")) {
                 if (!args) {
                         send_line_log(fd, wn_missing_arguments, msg_orig);
