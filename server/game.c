@@ -104,6 +104,7 @@ void show_games(void)
 }
 #endif
 
+// calculate the list of players for a given game
 static char* list_game(const struct game * g)
 {
         char list_game_str[8192] = "";
@@ -135,16 +136,12 @@ static void list_games_aux(gpointer data, gpointer user_data)
 void calculate_list_games(void)
 {
         char * free_players;
-        l1("list_games_str1: %s", list_games_str);
         memset(list_games_str, 0, strlen(list_games_str));
-        l1("list_games_str2: %s", list_games_str);
         players_in_game = 0;
         g_list_foreach(games, list_games_aux, NULL);
-        l1("list_games_str3: %s", list_games_str);
         free_players = asprintf_(" free:%d", conns_nb() - players_in_game - 1);  // 1: don't count myself
         strncat(list_games_str, free_players, sizeof(list_games_str));
         free(free_players);
-        l1("list_games_str4: %s", list_games_str);
 }
 
 static void create_game(int fd, char* nick)
@@ -386,7 +383,6 @@ static void status(int fd, char* msg)
         struct game * g = find_game_by_fd(fd);
         if (g) {
                 char* game = list_game(g);
-                strncat(list_games_str, game, sizeof(list_games_str));
                 send_line_log(fd, game, msg);
                 free(game);
         } else {
