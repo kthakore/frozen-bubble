@@ -2853,8 +2853,16 @@ sub smg_choose_game() {
                                                                                : $curaction->()->{join}." $mynick";
                             $answer = smg_verify_command($curaction->()->{action}, $message);
                             if ($answer eq 'NICK_IN_USE') {
-                                $suffix++;
-                                $mynick = "$ENV{USER}$suffix";
+                                if ($suffix < 9) {
+                                    $suffix++;
+                                    $mynick = "$ENV{USER}$suffix";
+                                } else {
+                                    #- try to find something that will be accepted, even if it sux
+                                    $mynick = substr($ENV{USER}, 0, 4);
+                                    my @chars = 'a' .. 'z';
+                                    $mynick .= $chars[rand(@chars)] foreach 1..4;
+                                    $suffix = 1;
+                                }
                             } else {
                                 last;
                             }
