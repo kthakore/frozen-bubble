@@ -1370,6 +1370,8 @@ sub update_won {
                     next if !member($_, @{$sticked_bubbles{$::p}});
                     put_image_to_background($_->{img}, $_->{'x'}, $_->{'y'});
                 }
+            } else {
+                @{$sticked_bubbles{$::p}} = ();
             }
         }
     };
