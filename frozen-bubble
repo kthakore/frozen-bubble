@@ -773,8 +773,8 @@ sub handle_graphics($) {
 	if ($graphics_level > 1) {
 	    my $num = int($angle{$::p}*$CANON_ROTATIONS_NB/($PI/2) + 0.5)-$CANON_ROTATIONS_NB;
 	    $fun->($canon{img}{$num},
-                   $POS{$::p}{canon}{x} + $canon{data}{$num}->[0] / ($::p =~ /rp/ ? 2 : 1),
-		   $POS{$::p}{canon}{'y'} + $canon{data}{$num}->[1] / ($::p =~ /rp/ ? 2 : 1));
+                   $POS{$::p}{canon}{x} + $canon{$::p =~ /rp/ ? 'data_mini' : 'data'}{$num}->[0],
+		   $POS{$::p}{canon}{'y'} + $canon{$::p =~ /rp/ ? 'data_mini' : 'data'}{$num}->[1]);
 	} else {
 	    $fun->($shooter,
 		   $POS{$::p}{simpleshooter}{x} + $POS{$::p}{simpleshooter}{diameter}*cos($angle{$::p}),
@@ -1418,11 +1418,12 @@ sub init_game() {
     $shooter = add_image("shoot/shooter.png");
     foreach my $number (-$CANON_ROTATIONS_NB..$CANON_ROTATIONS_NB) {
         $canon{img}{$number} = add_image("shoot/base_$number.png");
-        $img_mini{$canon{img}{$number}} = add_image("shoot/base_${number}-mini.png") ;
+        $img_mini{$canon{img}{$number}} = add_image("shoot/mini/base_${number}.png") ;
     }
 
     #- quantity of shifting needed (because of crop reduction)
     /(\S+) (\S+) (\S+)/ and $canon{data}{$1} = [ $2, $3 ] foreach cat_("$FPATH/gfx/shoot/data");
+    /(\S+) (\S+) (\S+)/ and $canon{data_mini}{$1} = [ $2, $3 ] foreach cat_("$FPATH/gfx/shoot/mini/data");
 
     $malus_gfx{banane} = add_image('banane.png');
     $img_mini{$malus_gfx{banane}} = add_image('banane-mini.png');
