@@ -284,11 +284,11 @@ sub http_download($) {
             $now = $buf =~ /\012/;
         } until $now && $last;
         
-        if ($tmp =~ /^(.*\b(\d+)\b.*)/ && $2 == 200) {
+        if ($tmp =~ m|^HTTP/\d\.\d (.*\b(\d+)\b.*)| && $2 == 200) {
             $tmp = '';
             while (1) { &$read }
         } else {
-            die "HTTP error: $1\n";
+            die "HTTP error fetching http://$host:$port$path: $1\n";
         }
     };
 
@@ -305,7 +305,7 @@ sub get_server_list() {
                      http://frozen-bubble.sourceforge.net/serverlist
                      http://people.mandrakesoft.com/~gc/serverlist);
     foreach (@masters) {
-        my $serverlist = http_download($_);
+        my $serverlist = http_download("$_-$proto_major");
         $serverlist and return $serverlist;
     }
 }
