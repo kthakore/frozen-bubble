@@ -2315,6 +2315,7 @@ sub smg_choose_server(@) {
         }
         my ($down, $available) = partition { $_->{disabled} } @servers;
         @sorted_servers = ((sort { $a->{ping} <=> $b->{ping} } @$available), @$down);
+        $redraw->();
     };
 
     $ping->();
@@ -2328,11 +2329,11 @@ sub smg_choose_server(@) {
         $sorted_servers[0]->{selected} = 1;
     }
     smg_printstatus("PLEASE CHOOSE A SERVER");
+    $redraw->();
 
     while (1) {
         $reping++;
         $reping % (5*20) == 0 and $ping->();
-        $redraw->();
 
         $event->pump;
         if ($event->poll != 0) {
@@ -2377,6 +2378,7 @@ sub smg_choose_server(@) {
                     goto ok_smg_choose_server;
                 }
             }
+            $redraw->();
         } else {
             fb_c_stuff::fbdelay(50);
         }
@@ -2441,32 +2443,6 @@ sub smg_choose_game() {
 
     my $state = 'game_select';
 
-    my $list = sub {
-        $state eq 'game_select' or return;
-        my ($free, @games) = fb_net::list();
-        my ($join, $rest) = partition { $_->{name} =~ /^JOIN/ } @actions;
-        $_->{ok} = 0 foreach @$join;
-      listgames:
-        foreach my $players (@games) {
-            if (@$players < 5) {
-                my $name = 'JOIN: ' . uc(join(',', @$players));
-                foreach my $line (@$join) {
-                    if ($line->{name} eq $name) {
-                        $line->{ok} = 1;
-                        next listgames;
-                    }
-                }
-                push @$join, { name => $name, action => 'JOIN', join => $players->[0], ok => 1 };
-            }
-        }
-        @actions = (@$rest, grep { $_->{ok} } @$join);
-        if (!any { $_->{selected} } @actions) {
-            $actions[0]{selected} = 1;
-        }
-        smg_erase_line($smg_starty_players);
-        $app->print($smg_startx, $smg_starty_players, "AVAILABLE PLAYERS: $free");
-    };
-
     my $typed_chat;
     my $erase = sub {
         my $y = $smg_starty;
@@ -2493,6 +2469,33 @@ sub smg_choose_game() {
         $app->flip();
     };
 
+    my $list = sub {
+        $state eq 'game_select' or return;
+        my ($free, @games) = fb_net::list();
+        my ($join, $rest) = partition { $_->{name} =~ /^JOIN/ } @actions;
+        $_->{ok} = 0 foreach @$join;
+      listgames:
+        foreach my $players (@games) {
+            if (@$players < 5) {
+                my $name = 'JOIN: ' . uc(join(',', @$players));
+                foreach my $line (@$join) {
+                    if ($line->{name} eq $name) {
+                        $line->{ok} = 1;
+                        next listgames;
+                    }
+                }
+                push @$join, { name => $name, action => 'JOIN', join => $players->[0], ok => 1 };
+            }
+        }
+        @actions = (@$rest, grep { $_->{ok} } @$join);
+        if (!any { $_->{selected} } @actions) {
+            $actions[0]{selected} = 1;
+        }
+        smg_erase_line($smg_starty_players);
+        $app->print($smg_startx, $smg_starty_players, "AVAILABLE PLAYERS: $free");
+        $redraw->();
+    };
+
     my $mynick = $ENV{USER};
     my $need4status;
     my $relist;
@@ -2501,7 +2504,6 @@ sub smg_choose_game() {
     while (1) {
         $relist++;
         $relist % (3*20) == 0 and $list->();
-        $redraw->();
 
         $event->pump;
         if ($event->poll != 0) {
@@ -2597,6 +2599,7 @@ sub smg_choose_game() {
                 }
 
             }
+            $redraw->();
         } else {
             fb_c_stuff::fbdelay(50);
         }
@@ -2674,9 +2677,9 @@ sub smg_start_game($) {
         smg_printstatus(@smg_status_messages);
         $app->flip();
     };
+    $redraw->();
 
     while (1) {
-        $redraw->();
 
         $event->pump;
         if ($event->poll != 0) {
@@ -2700,7 +2703,7 @@ sub smg_start_game($) {
                     $app->fullscreen;
                 }
             }
-
+            $redraw->();
         } else {
             fb_c_stuff::fbdelay(50);
         }
