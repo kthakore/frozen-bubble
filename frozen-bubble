@@ -1000,7 +1000,7 @@ sub handle_game_events() {
 	if ($event->type == SDL_KEYDOWN) {
 	    my $keypressed = $event->key_sym;
 
-            if (is_mp_game() && $pdata{p1}{state} eq 'lost' && !@{$sticked_bubbles{p1}}) {
+            if (is_mp_game() && $pdata{p1}{state} eq 'lost' && living_players() <= @PLAYERS - 2 && !@{$sticked_bubbles{p1}}) {
                 $pdata{p1}{state} = 'chatting';
                 put_image_to_background($imgbin{void_panel}, $MENUPOS{xpos_panel}, $MENUPOS{ypos_panel});
                 $app->print($MENUPOS{xpos_panel} + 10, $MENUPOS{ypos_panel} + 15, "CHAT WITH OTHER LOSERZ");
