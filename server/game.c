@@ -83,7 +83,7 @@ void show_games(void)
 
 static char* list_game(const struct game * g)
 {
-        char list_game_str[10000] = "";
+        char list_game_str[8192] = "";
         int i;
         for (i = 0; i < g->players_number; i++) {
                 strncat(list_game_str, g->players_nick[i], sizeof(list_game_str));
@@ -195,7 +195,7 @@ int find_player_number(struct game *g, int fd)
 static void real_start_game(struct game* g)
 {
         int i;
-        char mapping_str[10000] = "";
+        char mapping_str[4096] = "";
         char can_start_msg[1000];
         for (i = 0; i < g->players_number; i++) {
                 int len = strlen(mapping_str);

@@ -37,7 +37,7 @@ char * trim_newline(char * s)
 
 char * vasprintf_(const char *msg, va_list args)
 {
-        char s[100000];
+        char s[8192];
         vsnprintf(s, sizeof(s), msg, args);
         return strdup(s);
 }
