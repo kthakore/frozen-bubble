@@ -1003,7 +1003,8 @@ sub handle_game_events() {
             if (is_mp_game() && $pdata{p1}{state} eq 'lost' && !@{$sticked_bubbles{p1}}) {
                 $pdata{p1}{state} = 'chatting';
                 put_image_to_background($imgbin{void_panel}, $MENUPOS{xpos_panel}, $MENUPOS{ypos_panel});
-                $app->print($MENUPOS{xpos_panel} + 10, $MENUPOS{ypos_panel} + 30, "CHAT WITH OTHER LOSERZ");
+                $app->print($MENUPOS{xpos_panel} + 10, $MENUPOS{ypos_panel} + 15, "CHAT WITH OTHER LOSERZ");
+                $app->print($MENUPOS{xpos_panel} + 10, $MENUPOS{ypos_panel} + 35, "TO PLAY NEXT GAME, DONT HIT ESC!");
                 $pdata{p1}{typed_chat} = '';
                 @{$pdata{loserz_chat_messages}} = ();
                 push @update_rects, $apprects{main};
@@ -1017,8 +1018,12 @@ sub handle_game_events() {
                     $pdata{$::p}{typed_chat} = '';
                 } else {
                     $pdata{$::p}{typed_chat} = update_typed_chat($pdata{$::p}{typed_chat}, $keypressed, 25);
-                    my $y_typingchat = 320;
+                    my $y_typingchat = 325;
                     erase_line($y_typingchat, $background, $MENUPOS{xpos_panel} + 10, $imgbin{void_panel}->width - 20);
+                    my $target_message = "($pdata{p1}{nick}) $pdata{$::p}{typed_chat}";
+                    if (SDL_TEXTWIDTH($target_message) > $imgbin{void_panel}->width - 20) {
+                        $pdata{$::p}{typed_chat} =~ s/.$//;
+                    }
                     $app->print($MENUPOS{xpos_panel} + 10, $y_typingchat, "SAY: $pdata{$::p}{typed_chat}");
                     push @update_rects, $apprects{main};
                 }
