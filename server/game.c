@@ -51,11 +51,16 @@ static char list_games_str[10000];
 static void list_games_aux(gpointer data, gpointer user_data)
 {
         const struct game* g = data;
-        char* s = asprintf_("%s[%d]", g->players_nick[0], g->players_number);
+        int i;
         if (list_games_str[0] != '\0')
                 strncat(list_games_str, ",", sizeof(list_games_str));
-        strncat(list_games_str, s, sizeof(list_games_str));
-        free(s);
+        strncat(list_games_str, "[", sizeof(list_games_str));
+        for (i = 0; i < g->players_number; i++) {
+                strncat(list_games_str, g->players_nick[i], sizeof(list_games_str));
+                if (i < g->players_number - 1)
+                        strncat(list_games_str, ",", sizeof(list_games_str));
+        }
+        strncat(list_games_str, "]", sizeof(list_games_str));
 }
 static void calculate_list_games(void)
 {
