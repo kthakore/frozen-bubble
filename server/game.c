@@ -537,6 +537,8 @@ int process_msg(int fd, char* msg)
         } else if (streq(current_command, "DEBUG")) {
                 show_games();
                 net_debug();
+        } else if (streq(current_command, "HALT")) {
+                exit(0);
 #endif
         } else {
                 send_line_log(fd, wn_unknown_command, msg);
