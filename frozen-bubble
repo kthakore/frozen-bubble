@@ -2352,8 +2352,9 @@ sub smg_choose_server(@) {
                 put_image($malus_gfx{tomate}, 56, $y);
             }
             $app->print($smg_startx, $y, uc($server->{host} . ':' . $server->{port}));
-            $app->print(300, $y, $server->{ping} ? "AVAIL PLAYERS:$server->{players}   PING:$server->{ping}"
-                                                 : '*** CURRENTLY DOWN ***');
+            $app->print(300, $y, $server->{ping} == -1 ? '*** INCOMPATIBLE SERVER ***'
+                               : $server->{ping} == 0  ? '*** CURRENTLY DOWN ***'
+                                                       : "AVAIL PLAYERS:$server->{players}   PING:$server->{ping}");
             $y += $smg_lineheight;
         }
         $app->flip();
@@ -2365,7 +2366,7 @@ sub smg_choose_server(@) {
             if (!$server->{disabled}) {
                 $reping or smg_printstatus('CONNECTING TO: ' . uc($server->{host} . ':' . $server->{port}));
                 my $ping = fb_net::connect($server->{host}, $server->{port});
-                if (!$ping) {
+                if ($ping <= 0) {
                     $server->{disabled} = 1;
                 } else {
                     ($server->{players}) = fb_net::list();

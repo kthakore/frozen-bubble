@@ -227,17 +227,14 @@ sub connect($$) {
         return;
     }
 
-    if ($remote_major != $proto_major || $remote_minor < $proto_minor) {
-        print STDERR "$host:$port an imcompatible FB server. Server said:\n\t$msg\n";
-        return;
-    }
-
     $ping = 1;
     my $t0 = gettimeofday;
     send_('PING');
     $msg = readline_();
     my $t1 = gettimeofday;
-    if ($msg !~ /PONG/) {
+    if ($msg =~ /INCOMPATIBLE_PROTOCOL/) {
+        return -1;
+    } elsif ($msg !~ /PONG/) {
         print STDERR "$host:$port answer to PING was not recognized. Server said:\n\t$msg\n";
         return;
     }
