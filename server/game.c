@@ -33,19 +33,18 @@ struct game
 
 GList * games = NULL;
 
-static char ok_player_joined[] = "Player joined: %s";
-static char ok_player_parted[] = "Player parted: %s";
-static char ok_creator_parted[] = "Creator parted";
+static char ok_player_joined[] = "JOINED: %s";
+static char ok_player_parted[] = "PARTED: %s";
 
-static char wn_unknown_command[] = "Unknown command";
-static char wn_missing_arguments[] = "Missing arguments";
-static char wn_nick_in_use[] = "Nick in use, please choose another one";
-static char wn_no_such_game[] = "No game created by supplied nick";
-static char wn_game_full[] = "Game is full";
-static char wn_already_in_game[] = "Already in a game";
+static char wn_unknown_command[] = "UNKNOWN_COMMAND";
+static char wn_missing_arguments[] = "MISSING_ARGUMENTS";
+static char wn_nick_in_use[] = "NICK_IN_USE";
+static char wn_no_such_game[] = "NO_SUCH_GAME";
+static char wn_game_full[] = "GAME_FULL";
+static char wn_already_in_game[] = "ALREADY_IN_GAME";
 
-static char fl_line_unrecognized[] = "Unrecognized line, should start with FB protocol tag (bye)";
-static char fl_proto_mismatch[] = "Sorry, incompatible protocol versions (bye)";
+static char fl_line_unrecognized[] = "MISSING_FB_PROTOCOL_TAG";
+static char fl_proto_mismatch[] = "INCOMPATIBLE_PROTOCOL";
 
 
 static char list_games_str[10000];
@@ -99,46 +98,35 @@ static void cleanup_player_aux(gpointer data, gpointer user_data)
 {
         struct game* g = data;
         int fd = GPOINTER_TO_INT(user_data);
-
-        if (g->players_conn[0] == fd) {
-                // creator of the game exited, remove it
-                cleanup_game = g;
-        } else {
-                int i;
-                for (i = 1; i < g->players_number; i++)
-                        if (g->players_conn[i] == fd) {
-                                int j;
-                                char parted_msg[1000];
-                                // inform other players
-                                snprintf(parted_msg, sizeof(parted_msg), ok_player_parted, g->players_nick[i]);
-                                for (j = 0; j < g->players_number; j++)
-                                        if (j != i)
-                                                send_line_log_push(g->players_conn[j], parted_msg);
-                                // remove parting player from game
-                                free(g->players_nick[i]);
-                                for (j = g->players_number - 2; j >= i; j--) {
-                                        g->players_conn[j] = g->players_conn[j + 1];
-                                        g->players_nick[j] = g->players_nick[j + 1];
-                                }
-                                g->players_number--;
-                                calculate_list_games();
+        int i;
+        for (i = 0; i < g->players_number; i++)
+                if (g->players_conn[i] == fd) {
+                        int j;
+                        char parted_msg[1000];
+                        // inform other players
+                        snprintf(parted_msg, sizeof(parted_msg), ok_player_parted, g->players_nick[i]);
+                        for (j = 0; j < g->players_number; j++)
+                                if (j != i)
+                                        send_line_log_push(g->players_conn[j], parted_msg);
+                        // remove parting player from game
+                        free(g->players_nick[i]);
+                        for (j = g->players_number - 2; j >= i; j--) {
+                                g->players_conn[j] = g->players_conn[j + 1];
+                                g->players_nick[j] = g->players_nick[j + 1];
                         }
-        }
+                        g->players_number--;
+                        if (g->players_number == 0)
+                                cleanup_game = g;
+                }
 
 }
 void cleanup_player(int fd)
 {
         cleanup_game = NULL;
         g_list_foreach(games, cleanup_player_aux, GINT_TO_POINTER(fd));
-        if (cleanup_game) {
-                int i;
-                for (i = 1; i < cleanup_game->players_number; i++) {
-                        send_line_log_push(cleanup_game->players_conn[i], ok_creator_parted);
-                        free(cleanup_game->players_nick[i]);
-                }
+        if (cleanup_game)
                 games = g_list_remove(games, cleanup_game);
-                calculate_list_games();
-        }
+        calculate_list_games();
 }
 
 static int find_game_aux(gconstpointer game, gconstpointer nick)

@@ -34,9 +34,9 @@ int proto_minor = 0;
 
 static char greets_msg[] = "SERVER_READY";
 
-static char ok_generic[] = "Accepted";
+static char ok_generic[] = "OK";
 
-static char fl_missing_lf[] = "Received data with missing LF (bye)";
+static char fl_missing_lf[] = "MISSING_LF";
 
 
 /* send line adding the protocol in front of the supplied msg */
