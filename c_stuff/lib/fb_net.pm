@@ -343,6 +343,7 @@ sub get_server_list() {
     }
 }
 
+
 #- in game operations
 
 sub gsend($) {
@@ -354,6 +355,7 @@ sub gsend($) {
 }
 
 my @messages;
+my $buffered_buf;
 sub grecv() {
     my @msg = @messages;
     @messages = ();
@@ -378,6 +380,8 @@ sub grecv() {
         disconnect();
         return;
     }
+    $buf = $buffered_buf . $buf;
+    $buffered_buf = undef;
 
     my $id;
     while ($buf) {
@@ -388,16 +392,22 @@ sub grecv() {
         }
         #- then loop for messages, each one ending with a newline; several can be
         #- sent at once: if the sender sent several messages before server reacted
-        my ($msg, $rest) = $buf =~ /([^\n]+)\n(.*)?/s;
-        $buf = $rest;
-        push @msg, { id => $id, msg => $msg };
-#        print "recv-msg:$msg\n";
-        #- look for a NULL: it terminates a frame sent by the server from a given
-        #- sender; but we might have some more data if we're reacting only after
-        #- the server sent more than one frame
-        if (substr($buf, 0, 1) eq "\0") {
-            $id = undef;
-            $buf = substr($buf, 1);
+        if (my ($msg, $rest) = $buf =~ /([^\n]+)\n(.*)?/s) {
+            $buf = $rest;
+            push @msg, { id => $id, msg => $msg };
+            #        print "recv-msg:$msg\n";
+            #- look for a NULL: it terminates a frame sent by the server from a given
+            #- sender; but we might have some more data if we're reacting only after
+            #- the server sent more than one frame
+            if (substr($buf, 0, 1) eq "\0") {
+                $id = undef;
+                $buf = substr($buf, 1);
+            }
+        } else {
+            #- no match means that we received a partial packet
+            print "*** partial receive! for <$buf>, buffering (theoretically harmless)\n";
+            $buffered_buf = $id . $buf;
+            $buf = undef;
         }
     }
 
