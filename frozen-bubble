@@ -1676,13 +1676,14 @@ sub update_game() {
                         fb_net::gsend("newgame:");
                         my $redraw_waiting = sub {
                             put_image($imgbin{void_panel}, $MENUPOS{xpos_panel}, $MENUPOS{ypos_panel});
-                            my $y = $MENUPOS{ypos_panel} + 30;
+                            $app->print($MENUPOS{xpos_panel} + 10, $MENUPOS{ypos_panel} + 15, "WAITING FOR OTHER PLAYERS:");
+                            my $y = $MENUPOS{ypos_panel} + 50;
                             iter_distant_players {
-                                my $message = $pdata{$::p}{ready4newgame} ? "$pdata{$::p}{nick} IS READY AND WAITING!"
+                                my $message = $pdata{$::p}{ready4newgame} ? "$pdata{$::p}{nick} IS READY!"
                                                                           : "WAITING FOR $pdata{$::p}{nick}...";
-                                $app->print(165, $y, $message);
+                                $app->print($MENUPOS{xpos_panel} + 10, $y, $message);
                                 put_image($imgbin{'mp_'.($pdata{$::p}{ready4newgame} ? 'ready' : 'waiting').'_newgame'},
-                                          165 + SDL_TEXTWIDTH($message) + 5, $y);
+                                          $MENUPOS{xpos_panel} + 10 + SDL_TEXTWIDTH($message) + 5, $y);
                                 $y += 25;
                             };
                             $app->flip;
