@@ -347,6 +347,9 @@ void help(void)
 void create_udp_server(void)
 {
         struct sockaddr_in server_addr;
+
+        l1("Creating UDP server for answering broadcast server discover, on default port %d", DEFAULT_PORT);
+
         udp_server_socket = socket(AF_INET, SOCK_DGRAM, 0);
         if (udp_server_socket < 0) {
                 perror("socket");
@@ -360,8 +363,6 @@ void create_udp_server(void)
                 perror("bind");
                 exit(1);
         }
-
-        l1("Opened UDP server for answering broadcast server discover, on default port %d", DEFAULT_PORT);
 }
 
 void create_server(int argc, char **argv)
@@ -415,6 +416,8 @@ void create_server(int argc, char **argv)
                 }
         }
 
+        l1("Creating TCP game server on port %d", port);
+
         tcp_server_socket = socket(AF_INET, SOCK_STREAM, 0);
         if (tcp_server_socket < 0) {
                 perror("socket");
@@ -435,6 +438,4 @@ void create_server(int argc, char **argv)
                 perror("listen");
                 exit(-1);
         }
-
-        l1("Opened TCP game server on port %d", port);
 }
