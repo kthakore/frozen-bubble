@@ -2887,13 +2887,12 @@ sub setup_mp_game() {
     #- 4. start game waiting for other players, and receiving id/nick bindings
     smg_start_game($mynick) or goto choose_game;
 
+    $pdata{$_}{score} = 0 foreach @PLAYERS;
+
     return 1;
 }
 
 sub new_game_once {
-
-    #- we don't really know how many net players can be.. so let's clear this up hardly
-    $pdata{$_}{score} = 0 foreach @ALL_PLAYERS;
 
     if (!$direct) {
         if (is_1p_game()) {
@@ -3475,6 +3474,9 @@ sub menu {
     $dump =~ s/'SDLK_(\w+)'/SDLK_$1/g;
     output($rcfile, $dump);
 
+    iter_players {
+       !is_1p_game() and $pdata{$::p}{score} = 0;
+    };
 }
 
 
