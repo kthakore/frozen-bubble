@@ -103,7 +103,7 @@ static void handle_incoming_data_generic(gpointer data, gpointer user_data, int 
 
                 ssize_t len = recv(fd, buf, sizeof(buf) - 1, 0);
                 if (len <= 0) {
-                        l1("[%d] Unexpected peer shutdown", fd);
+                        l1("[%d] Peer shutdown", fd);
                         if (len == -1)
                                 l2("[%d] This happened on a system error: %s", fd, strerror(errno));
                         goto conn_terminated;

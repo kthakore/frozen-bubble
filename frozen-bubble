@@ -2277,11 +2277,14 @@ sub smg_servers() {
     return @servers;
 }
 
+our @smg_status_messages;
+
 sub smg_choose_server(@) {
     my (@servers) = @_;
 
     smg_erase_line($smg_starty_chat);     #- if we return from choose_game
     smg_erase_line($smg_starty_players);  #-
+
     my @sorted_servers;
     my $redraw = sub {
         my $y = $smg_starty;
@@ -2325,7 +2328,7 @@ sub smg_choose_server(@) {
         grab_key(0);
         return;
     }
-    if (@sorted_servers) {
+    if (@sorted_servers && every { !$_->{selected} } @sorted_servers) {
         $sorted_servers[0]->{selected} = 1;
     }
     smg_printstatus("PLEASE CHOOSE A SERVER");
@@ -2390,7 +2393,7 @@ sub smg_choose_server(@) {
         smg_erase_line($y);
         $y += $smg_lineheight;
     }
-    smg_printstatus('');
+    @smg_status_messages = ();
 
     foreach my $server (@servers) {
         if ($server->{selected}) {
@@ -2403,7 +2406,6 @@ sub smg_choose_server(@) {
     return 1;
 }
 
-our @smg_status_messages;
 sub smg_add_status_msg($) {
     $smg_status_messages[0] = $smg_status_messages[1];
     $smg_status_messages[1] = uc($_[0]);
@@ -2497,7 +2499,7 @@ sub smg_choose_game() {
     };
 
     my $mynick = $ENV{USER};
-    my $need4status;
+    my $need4update;
     my $relist;
     $list->();
 
@@ -2566,7 +2568,7 @@ sub smg_choose_game() {
                             @actions = ({ name => 'CHAT', action => 'CHAT', selected => 1 },
                                         { name => 'START GAME!', action => 'START' });
                             $state = 'wait_for_start';
-                            $need4status = 1;
+                            $need4update = 1;
                             @smg_status_messages = ();
                         }
                     }
@@ -2635,7 +2637,7 @@ sub smg_choose_game() {
                 } else {
                     print "unrecognized message received: $msg\n";
                 }
-                $need4status = 1;
+                $need4update = 1;
             } else {
                 print "non-push received!? $msg\n";
             }
@@ -2649,13 +2651,15 @@ sub smg_choose_game() {
             return 0;
         }
 
-        if ($need4status) {
-            fb_net::send_('STATUS');
-            my $answer = smg_verify_command('STATUS');
-            smg_erase_line($smg_starty_players);
-            $app->print($smg_startx, $smg_starty_players, "PLAYERS IN GAME: ".uc($answer));
-            $need4status = 0;
+        if ($need4update) {
+            if ($state ne 'game_select') {
+                fb_net::send_('STATUS');
+                my $answer = smg_verify_command('STATUS');
+                smg_erase_line($smg_starty_players);
+                $app->print($smg_startx, $smg_starty_players, "PLAYERS IN GAME: ".uc($answer));
+            }
             $redraw->();
+            $need4update = 0;
         }
     }
 
