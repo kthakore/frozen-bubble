@@ -2283,6 +2283,10 @@ sub smg_choose_server(@) {
                         } @sorted_servers;
                     }
 
+                } elsif ($k == $KEYS->{misc}{fs}) {
+                    $fullscreen = !$fullscreen;
+                    $app->fullscreen;
+
                 } elsif ($k == SDLK_RETURN() || $k == SDLK_KP_ENTER()) {
                     play_sound('menu_selected');
                     goto ok_smg_choose_server;
@@ -2495,6 +2499,10 @@ sub smg_choose_game() {
                         $k = $trivial_map{$k} || $k;
                         length($k) == 1 && length($typed_chat) < 32 and $typed_chat .= $k;
                         member($k, qw(BACKSPACE DELETE LEFT)) and $typed_chat =~ s/.$//;
+                    
+                    } elsif ($k == $KEYS->{misc}{fs}) {
+                        $fullscreen = !$fullscreen;
+                        $app->fullscreen;
                     }
                 }
 
