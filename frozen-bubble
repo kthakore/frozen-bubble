@@ -2567,6 +2567,7 @@ sub smg_servers() {
 
 sub smg_choose_server(@) {
     my (@servers) = @_;
+    my $max_lines = 14;
 
     erase_line($smg_starty_chat, $imgbin{back_netgame});     #- if we return from choose_game
     erase_line($smg_starty_players, $imgbin{back_netgame});  #-
@@ -2580,8 +2581,12 @@ sub smg_choose_server(@) {
     my @sorted_servers;
     my $redraw = sub {
         my $y = $smg_starty;
-        foreach my $server (@sorted_servers) {
+        foreach (1 .. $max_lines) {
             erase_line($y, $imgbin{back_netgame});
+            $y += $smg_lineheight;
+        }
+        $y = $smg_starty;
+        foreach my $server (@sorted_servers) {
             if ($server->{selected}) {
                 put_image($malus_gfx{tomate}, 56, $y);
             }
@@ -2610,9 +2615,15 @@ sub smg_choose_server(@) {
         }
         my ($down, $available) = partition { $_->{disabled} } @servers;
         @sorted_servers = sort { $a->{ping} <=> $b->{ping} } @$available;
-        if (@sorted_servers > 14) {
-            $#sorted_servers = 13;
+        if (@sorted_servers > $max_lines) {
+            $#sorted_servers = $max_lines - 1;
         }
+        #- handle case when currently selected server gets down or out per too high ping
+        if (!any { $_->{selected} } @sorted_servers) {
+            $_->{selected} = 0 foreach @servers;
+            $sorted_servers[0]->{selected} = 1;
+        }
+            
         $redraw->();
     };
 
