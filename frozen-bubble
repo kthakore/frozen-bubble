@@ -961,6 +961,20 @@ sub print_compressor() {
     }
 }
 
+sub check_mp_connection() {
+    if (!fb_net::isconnected()) {
+        put_image($imgbin{void_panel}, $MENUPOS{xpos_panel}, $MENUPOS{ypos_panel});
+        my $message = 'LOST CONNECTION TO SERVER!';
+        my $xpos = 320 - SDL_TEXTWIDTH($message)/2;
+        $app->print($xpos, $MENUPOS{ypos_panel} + 30, $message);
+        $app->flip;
+        fb_c_stuff::fbdelay(3000);
+        $event->pump while $event->poll != 0;
+        grab_key(0);
+        die 'quit';
+    }
+}
+
 sub handle_game_events() {
     $event->pump;
     if ($event->poll != 0) {
@@ -1041,17 +1055,7 @@ sub handle_game_events() {
     if (is_mp_game()) {
         my @messages = fb_net::grecv();
 
-        if (!fb_net::isconnected()) {
-            put_image($imgbin{void_panel}, $MENUPOS{xpos_panel}, $MENUPOS{ypos_panel});
-            my $message = 'LOST CONNECTION TO SERVER!';
-            my $xpos = 320 - SDL_TEXTWIDTH($message)/2;
-            $app->print($xpos, $MENUPOS{ypos_panel} + 30, $message);
-            $app->flip;
-            fb_c_stuff::fbdelay(3000);
-            $event->pump while $event->poll != 0;
-            grab_key(0);
-            die 'quit';
-        }
+        check_mp_connection();
 
         #- in order to keep ordering of actions executed in update_game, we must tolerate only one action at a time
         my @keep_messages;
@@ -1564,6 +1568,7 @@ sub update_game() {
             }
             print "\tstate: $pdata{state}\n";
         } else {
+            check_mp_connection();
             #- timeout for receiving the winners. it could happen when a client is badly killed.
             $timeout_counter++;
             if ($timeout_counter > $fb_net::timeout * (1000/$TARGET_ANIM_SPEED) ) {
@@ -1585,6 +1590,7 @@ sub update_game() {
                     update_lost($::p);
                 }
             };
+            check_mp_connection();
         }
 	if (!$winner || @{$exploding_bubble{$winner}} == 0) {
             my $still_needwait = 0;
@@ -1637,6 +1643,7 @@ sub update_game() {
                             $app->print($xpos, $MENUPOS{ypos_panel} + 30 + 20, $message2);
                             $app->flip;
                             fb_c_stuff::fbdelay(50);
+                            check_mp_connection();
                         }
                     } else {
                         die 'new_game';
@@ -2189,6 +2196,7 @@ sub new_game() {
 	    foreach my $cx (0 .. (6 + even($cy))) {
                 my $num = int(rand(@bubbles_images));
                 if (is_mp_game()) {
+                    check_mp_connection();
                     $num = mp_propagate("bubble|$cx|$cy", $num);
                 }
                 my $b = create_bubble_given_img_num($num);
@@ -2206,6 +2214,7 @@ sub new_game() {
     do { $next_num = int(rand(@bubbles_images)) } while (!validate_nextcolor($next_num, $PLAYERS[0]));
     do { $tobe_num = int(rand(@bubbles_images)) } while (!validate_nextcolor($tobe_num, $PLAYERS[0]));
     if (is_mp_game()) {
+        check_mp_connection();
         $next_num = mp_propagate("nextbubble", $next_num);
         $tobe_num = mp_propagate("tobe_launchedbubble", $tobe_num);
     }
@@ -2236,6 +2245,7 @@ sub new_game() {
         if (is_leader()) {
             fb_net::gsend('!synchro');
         }
+        check_mp_connection();
         my $m = fb_net::grecv_get1msg();
         if ($m->{msg} ne '!synchro') {
             print "Network protocol error.\n";
