@@ -254,30 +254,6 @@ static void start_game(int fd)
         }
 }
 
-static void stop_game(int fd)
-{
-        int i;
-        struct game * g = find_game_by_fd(fd);
-        if (g) {
-                char stop_msg[1000];
-                int j = find_player_number(g, fd);
-                if (g->status == GAME_STATUS_OPEN) {
-                        send_line_log(fd, wn_not_started, "STOP");
-                        return;
-                }
-                g->status = GAME_STATUS_OPEN;
-                send_ok(fd, "STOP");
-                calculate_list_games();
-                snprintf(stop_msg, sizeof(stop_msg), ok_stop, g->players_nick[j]);
-                for (i = 0; i < g->players_number; i++)
-                        if (i != j)
-                                send_line_log_push(g->players_conn[i], stop_msg);
-        } else {
-                l0("Internal error");
-                exit(1);
-        }
-}
-
 void player_part_game(int fd)
 {
         struct game * g = find_game_by_fd(fd);
@@ -315,6 +291,26 @@ void player_part_game(int fd)
                 calculate_list_games();
 
                 open_players = g_list_append(open_players, GINT_TO_POINTER(fd));
+        }
+}
+
+static void stop_game(int fd)
+{
+        struct game * g = find_game_by_fd(fd);
+        if (g) {
+                char stop_msg[1000];
+                int j = find_player_number(g, fd);
+                if (g->status == GAME_STATUS_OPEN) {
+                        send_line_log(fd, wn_not_started, "STOP");
+                        return;
+                }
+                g->status = GAME_STATUS_OPEN;
+                send_ok(fd, "STOP");
+                snprintf(stop_msg, sizeof(stop_msg), ok_stop, g->players_nick[j]);
+                player_part_game(fd);
+        } else {
+                l0("Internal error");
+                exit(1);
         }
 }
 
