@@ -227,6 +227,7 @@ sub connect($$) {
     my $flags = $sock->fcntl(F_GETFL, 0);
     if (!$flags) {
         print STDERR "Couldn't fcntl socket from $host:$port:\n\t$@\n";
+        disconnect();
         return;
     }
     $flags = $sock->fcntl(F_SETFL, $flags|O_NONBLOCK);
@@ -239,6 +240,7 @@ sub connect($$) {
     my ($remote_major, $remote_minor, $isready) = $msg =~ m|^FB/(\d+).(\d+) (.*)|;
     if ($isready !~ /SERVER_READY/) {
         print STDERR "$host:$port not an FB server. Server said:\n\t$msg\n";
+        disconnect();
         return;
     }
 
@@ -248,9 +250,11 @@ sub connect($$) {
     $msg = readline_();
     my $t1 = gettimeofday;
     if ($msg =~ /INCOMPATIBLE_PROTOCOL/) {
+        disconnect();
         return -1;
     } elsif ($msg !~ /PONG/) {
         print STDERR "$host:$port answer to PING was not recognized. Server said:\n\t$msg\n";
+        disconnect();
         return;
     }
 
@@ -287,7 +291,10 @@ sub http_download($) {
                                      "Host: $host:$port",
                                      "User-Agent: Frozen-Bubble/$proto_major.$proto_minor",
                                      "", ""));
-    !$bytes and return;
+    if (!$bytes) {
+        disconnect();
+        return;
+    }
 
     #- skip until empty line
     my ($now, $last, $buf, $tmp) = 0;
@@ -317,9 +324,11 @@ sub http_download($) {
     };
 
     if ($@ =~ /^eof/) {
+        disconnect();
         return $tmp;
     } else {
         print STDERR "http_download: $@\n";
+        disconnect();
         return;
     }
 }
