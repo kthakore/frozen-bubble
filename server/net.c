@@ -240,6 +240,13 @@ int conns_nb(void)
         return g_list_length(conns_prio) + g_list_length(conns);
 }
 
+#ifdef DEBUG
+void net_debug(void)
+{
+        printf("conns_prio:%d;conns:%d\n", g_list_length(conns_prio), g_list_length(conns));
+}
+#endif
+        
 void add_prio(int fd)
 {
         conns_prio = g_list_append(conns_prio, GINT_TO_POINTER(fd));

@@ -75,13 +75,12 @@ static char wn_not_started[] = "NOT_STARTED";
 static char fl_line_unrecognized[] = "MISSING_FB_PROTOCOL_TAG";
 static char fl_proto_mismatch[] = "INCOMPATIBLE_PROTOCOL";
 
-
-// debugging helper
+#ifdef DEBUG
 static void show_games_aux(gpointer data, gpointer user_data)
 {
         const struct game* g = data;
         int i;
-        printf("game:%p;status:%d;nbplayers:%d;[", user_data, g->status, g->players_number);
+        printf("game:%p;status:%d;nbplayers:%d[", user_data, g->status, g->players_number);
         for (i = 0; i < g->players_number; i++) {
                 printf("%d-%s", g->players_conn[i], g->players_nick[i]);
                 if (i < g->players_number - 1)
@@ -93,7 +92,7 @@ void show_games(void)
 {
         g_list_foreach(games, show_games_aux, games);
 }
-
+#endif
 
 static char* list_game(const struct game * g)
 {
@@ -514,6 +513,11 @@ int process_msg(int fd, char* msg)
                 } else {
                         stop_game(fd);
                 }
+#ifdef DEBUG
+        } else if (streq(current_command, "DEBUG")) {
+                show_games();
+                net_debug();
+#endif
         } else {
                 send_line_log(fd, wn_unknown_command, msg);
         }

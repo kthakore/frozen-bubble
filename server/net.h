@@ -37,3 +37,7 @@ int create_server(void);
 
 int conns_nb(void);
 void add_prio(int fd);
+
+#ifdef DEBUG
+void net_debug(void);
+#endif
