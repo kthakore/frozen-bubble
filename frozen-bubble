@@ -1041,7 +1041,7 @@ sub handle_game_events() {
                     $app->fullscreen;
                 }
                 
-                if ($keypressed == SDLK_PAUSE) {
+                if ($keypressed == SDLK_PAUSE && !is_mp_game()) {
                     play_sound('pause');
                     $mixer_enabled && $mixer and $mixer->pause_music;
                     my $back_saved = switch_image_on_background($imgbin{back_paused}, 0, 0, 1);
