@@ -1182,6 +1182,7 @@ sub lose {
             fb_net::gsend("finished:$winnernick");
             if (any { $pdata{$_}{left} } @PLAYERS) {
                 #- if some players have left, directly go to won state
+                win($living[0]);
                 $pdata{state} = "won $living[0]";
             } else {
                 #- tentatively suppose we've found the winner, but we need to confirm it by network
