@@ -226,7 +226,7 @@ sub http_download($) {
     my ($host, $port, $path) = $url =~ m,^http://([^/:]+)(?::(\d+))?(/\S*)?$,;
     $port ||= 80;
 
-    $sock = IO::Socket::INET->new(PeerAddr => $host, PeerPort => $port, Proto => 'tcp', Timeout => 10);
+    $sock = IO::Socket::INET->new(PeerAddr => $host, PeerPort => $port, Proto => 'tcp', Timeout => 5);
     if (!$sock) {
         print STDERR "Couldn't connect to $host:$port:\n\t$@\n";
         return;
