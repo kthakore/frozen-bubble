@@ -127,6 +127,7 @@ local $_ = "@ARGV";
  -cb, --colourblind          use bubbles for colourblind people
  -pm<#n>, --playermalus<#n>  add a malus of n to the left player (can be negative)
  -ls<name>, --levelset<name> directly start with the specified levelset name
+ -ms<url>, --masterserver<url> use the specified URL to fetch the serverlist from
 
 ";
 
@@ -145,6 +146,7 @@ local $_ = "@ARGV";
 /-pm\s*(-?[\d]+)/ || /-playermalus\s*(-?\d+)/ and $playermalus = $1;
 /-ls\s*(\S+)/ || /-levelset\s*(\S+)/ and $levels{current} = 1, $direct = 1, @PLAYERS = ('p1'), $direct_levelset = $1;
 /-l\s*(\d+)/ || /-level\s*(\d+)/ and $levels{current} = $1, $direct = 1, @PLAYERS = ('p1');
+/-ms\s*(\S+)/ || /-masterserver\s*(\S+)/ and $fb_net::masterserver = $1;
 /-mp(\S+),(\S+)/ and do {
     my $mynick = $$;
     my $nb = $2;

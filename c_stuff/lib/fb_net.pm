@@ -38,7 +38,7 @@ my $sock;
 my $ping = 50;
 
 our $timeout = 5;   #- in seconds
-
+our $masterserver;  #- for forcing the masterserver on commandline
 
 sub send_($) {
     my ($msg) = @_;
@@ -337,8 +337,8 @@ sub get_server_list() {
     my @masters = qw(http://www.frozen-bubble.org/serverlist
                      http://frozen-bubble.sourceforge.net/serverlist
                      http://people.mandrakesoft.com/~gc/serverlist);
-    foreach (@masters) {
-        my $serverlist = http_download("$_-$proto_major");
+    foreach ($masterserver || map { "$_-$proto_major" } @masters) {
+        my $serverlist = http_download($_);
         $serverlist and return $serverlist;
     }
 }
