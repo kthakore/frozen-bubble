@@ -357,7 +357,7 @@ void create_udp_server(void)
                 exit(1);
         }
 
-        l1("Opened UDP broadcast server discover on default port %d", DEFAULT_PORT);
+        l1("Opened UDP server for answering broadcast server discover, on default port %d", DEFAULT_PORT);
 }
 
 void create_server(int argc, char **argv)
