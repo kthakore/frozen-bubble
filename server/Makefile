@@ -4,7 +4,7 @@ LIBS ?= `glib-config --libs`
 
 all: fb-server
 
-fb-server: fb-server.o log.o tools.o
+fb-server: fb-server.o log.o tools.o game.o net.o
 	$(CC) $(LIBS) -o $@ $^
 
 .c.o:
