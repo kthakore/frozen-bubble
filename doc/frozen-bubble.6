@@ -1,0 +1,95 @@
+.\" This program is free software; you can redistribute it and/or modify
+.\" it under the terms of the GNU General Public License as published by
+.\" the Free Software Foundation; either version 2 of the License, or
+.\" (at your option) any later version.
+.\"
+.\" This program is distributed in the hope that it will be useful,
+.\" but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\" MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.\" GNU General Public License for more details.
+.\"
+.\" You should have received a copy of the GNU General Public License
+.\" along with this program; if not, write to the Free Software
+.\" Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+.\"
+
+.TH FROZEN-BUBBLE 6 "February 2, 2003" "FB" "The Frozen-Bubble game"
+
+.SH NAME
+frozen-bubble \- arcade/reflex game
+
+.SH SYNOPSIS
+.B frozen-bubble
+[\fIOPTION\fR]...
+
+.SH DESCRIPTION
+The
+.B Frozen-Bubble
+game is a free software implementation of a popular arcade/reflex game. The game
+mainly consists of firing randomly chosen bubbles across the board. If the
+shoot ends up having a clump of at least 3 bubbles of the same color, they all pop.
+If some bubbles were sticked only on the popping clump, they fall.
+In 1-player mode, the goal is to pop all the bubbles on the board as quickly as possible.
+In 2-player mode, you have to get your opponent to "die" before you.
+
+.SH OPTIONS
+.TP
+.BR -h , \ --help
+show command-line options summary
+.TP
+.BR -fs , \ --fullscreen
+start the game in fullscreen mode
+.TP
+.BR -ns , \ --nosound
+disable music and sound effects
+.TP
+.BR -nm , \ --nomusic
+disable music (but not sound effects)
+.TP
+.BR -nfx , \ --nosfx
+disable sound effects (but not music)
+.TP
+.BI --playlist DIRECTORY 
+use all files of the given directory as music files and play them
+.TP
+.BR -sl , \ --slow_machine
+use this option if
+.B frozen-bubble
+runs too slowly on your machine
+.TP
+.BR -vs , \ --very_slow_machine
+same as before, if it is not enough
+.TP
+.BR -so , \ --solo
+directly start solo (1p) game, with random levels
+.TP
+.BR -di , \ --direct
+directly start 2p game (don't display menu)
+.TP
+.BR -cr , \ --chain_reaction
+enable chain-reaction
+.TP
+\fB-l\fINUMB\fR, \fB--level\fINUMB\fR
+start directly the game, at level
+.IR NUMB
+.TP
+.BR -cb , \ --colourblind
+use special bubbles for colourblind people
+.TP
+\fB-pm\fINUMB\fR, \fB--playermalus\fINUMB\fR
+add the specified malus to the left player (can be negative)
+
+.SH AUTHOR
+Written by Guillaume Cottenceau <guillaume.cottenceau at free.fr>.
+This manual page was originally written by Josselin Mouette <josselin.mouette at ens-lyon.org>.
+.br
+Visit official homepage: http://www.frozen-bubble.org/
+
+.SH SEE ALSO
+.BR frozen-bubble-editor(6)
+
+.SH COPYRIGHT
+Copyright \(co 2000, 2001, 2002, 2003 Guillaume Cottenceau.
+.br
+This is Free Software; this software is licensed under the GPL version 2, as published by the Free Software Foundation.
+There is NO warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.

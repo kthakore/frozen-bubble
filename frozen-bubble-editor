@@ -1,0 +1,54 @@
+#!/usr/bin/perl
+# ****************************************************************************
+#
+#                          Frozen-Bubble Level Editor
+#
+# Copyright (c) 2002 - 2004 Kim Joham and David Joham <[k|d]joham@yahoo.com>
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License version 2, as
+# published by the Free Software Foundation.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+#
+#
+# *****************************************************************************
+#
+# Design & Programming by Kim Joham and David Joham, October 2002 to January 2003
+# Email - [k|d]joham at yahoo.com
+# 
+# *****************************************************************************
+
+use fb_stuff;
+use FBLE;
+
+# command line options modified from frozen-bubble code
+local $_ = "@ARGV";
+
+/-h/ and die 'Usage:  [OPTION]...
+-h, --help                      display this help screen
+-cb, --colourblind              use bubbles for colourblind people
+-ls<filename>, 
+        --levelset<filename>    directly start with the specified levelset name
+-l<#n>, --level<#n>             directly start the n-th level
+-fs, --fullscreen               start in fullscreen mode
+';
+
+/-cb/ || /-co/ and $colourblind = 1;
+$FBLE::levelset_name = /-ls\s*(\S+)/ || /-levelset\s*(\S+)/ ? $1 : 'default-levelset';
+$FBLE::curr_level = /-l\s*(\d+)/ || /-level\s*(\d+)/ ? $1 : 1;
+$FBLE::command_line_fullscreen = to_bool(/-fs/ || /-fullscreen/);
+
+my $app = SDL::App->new(-icon => "$FPATH/gfx/pinguins/window_icon_penguin.png",
+                        -title => 'frozen-bubble level editor',
+                        -width => 640, -height => 480);
+
+FBLE::init_setup('stand-alone', $app);
+FBLE::handle_events();

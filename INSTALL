@@ -1,0 +1,48 @@
+                   [[ Frozen-Bubble ]]
+
+
+                      Requirements
+
+
+SDL_mixer >= 1.2.2
+	http://www.libsdl.org/projects/SDL_mixer/
+
+SDL perl >= 1.19.0
+	http://sdlperl.org/
+***************************************************************************
+***                                                                     ***
+***    !! WARNING !! we are not compatible with SDL perl 2.x series.    ***
+***                                                                     ***
+***************************************************************************
+
+If you compile by hand, double-check you first compile SDL, then SDL_image
+and SDL_mixer, then SDL perl, otherwise you might get the error that
+NewFont.al is not found.
+
+
+                Installation instructions
+
+
+[*] First, build Frozen-Bubble and provide the prefix where the
+game will be installed (most probably /usr or /usr/local).
+
+make OPTIMIZE="my_arch_opt_flags" PREFIX="my_prefix"
+
+
+[*] Second, install the files on the system.
+
+   - if you're root (case when you build a Debian package, or
+     when you build it locally on your own machine), you will
+     choose the same prefix location than for previous step
+
+make install PREFIX="my_prefix"
+
+
+   - if you're not root (case when you build a RPM package), you
+     need to install to a temporary directory where you have
+     write access
+
+make install PREFIX="/home/my_home/tmp/my_buildroot"
+
+   Then an external program such as RPM will collect the
+   installed files and write the package.

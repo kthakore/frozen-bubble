@@ -1,0 +1,89 @@
+                   [[ Frozen-Bubble ]]
+
+
+Copyright (c) 2000, 2001, 2002, 2003 Guillaume Cottenceau.
+
+This program is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License
+version 2, as published by the Free Software Foundation.
+
+
+Artwork:
+	Alexis Younes <73lab at free.fr>
+		(everything but the bubbles)
+	Amaury Amblard-Ladurantie <amaury at linuxfr.org>
+		(the bubbles)
+
+Soundtrack:
+	Matthias Le Bidan <matthias.le_bidan at caramail.com>
+		(the three musics and all the sound effects)
+
+Design & Programming:
+	Guillaume Cottenceau <guillaume.cottenceau at free.fr>
+		(design and manage the project, whole sourcecode)
+	Kim and David Joham <[k|d]joham at yahoo.com>
+		(level editor)
+
+
+            [[ http://www.frozen-bubble.org/ ]]
+
+
+This game began when I, as a packager for Mandrakesoft[1] and
+amateur of the Perl language (which I discovered reading the
+source code of Mandrake's graphical installer, DrakX[2]),
+discovered that a crazy guy[3] had had the mysterious idea to
+bind the functions of the C low-level graphical library SDL[4]
+for the Perl language, `sdlpl'[5].
+
+What an amazing idea, try to make Perl, an interpreted
+'scripting' language, (e.g. something considered by most as
+inherently slow), talk to SDL, a C library considered as the
+leader gateway to fast multimedia under Linux (among others
+O.S.), and hope to keep good performance?
+
+Another time, Perl is here to surprise us by its (reasonably)
+good performance (compared to what it actually computes), and
+make us realize that what is time-consuming in most multimedia
+programs is, bingo, multimedia operations such as blitting images
+and so on.
+
+Of course, if you notice, you will see graphical effects in the
+game when a new level is displayed. That is CPU-intensive, and is
+performed through some C code, compiled to be called by Perl. Yet
+all the rest is done by Perl, and I can use higher-level lists
+operations, efficient functional-style programming, and other
+enjoyable things; I could program the whole thing in roughly 15
+to 30 days of work; and the whole program is only 1500 lines!
+And it never segfaults :-)...
+
+I'd like to thank a lot the great guys who made the artistic part
+of this game possible: Ayo the famous french pinguin designer[6],
+Amaury the bubbles designer, and Matthias our fine guitarist, who
+all managed to accept (and enjoy ;p) working under more strict
+conditions that what they're used to (because this was part of a
+bigger project, it logically restricted freedom in their art).
+All http://linuxfr.org/ readers knew that Ayo had a real talent,
+yet he showed he could do much more than banners and wallpapers.
+Regarding Matthias, as I'm a fan since 1997 I was confident he
+could write marvellous songs (I was not disappointed), and I
+discovered he could give me high quality sound effects as well!
+It's real great to see that together we could produce a game I'm
+very proud of.
+
+					gc,
+					Sun Jan 27 22:17:10 2002
+
+Footnotes:
+
+[1] http://mandrakesoft.com/
+
+[2] http://mandrakelinux.com/DrakX/
+
+[3] David J. Goehrig
+
+[4] http://libsdl.org/
+
+[5] http://sdlperl.org/
+
+[6] http://73lab.com/
+
