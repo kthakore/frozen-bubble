@@ -6,7 +6,7 @@ ALLSRC = fb-server.c log.c tools.c game.c net.c
 ALLOBJ = $(subst .c,.o,$(ALLSRC))
 
 ifeq (1, $(DEBUG))
-CFLAGS := $(CFLAGS) $(ADDCFLAGS) -DDEBUG
+CFLAGS := $(CFLAGS) $(ADDCFLAGS) -DDEBUG -g
 else
 CFLAGS := $(CFLAGS) $(ADDCFLAGS)
 endif
