@@ -30,14 +30,60 @@ use Time::HiRes qw(gettimeofday sleep);
 use fb_stuff;
 
 
+our $proto_major = '1';
+our $proto_minor = '0';
+our $timeout = 5;   #- in seconds
+
+my $udp_server_port = 1511;  #- a.k.a 0xF 0xB thx misc
+
+
+#- UDP discover LAN servers with broadcast
+
+sub discover_lan_servers {
+    my $socket = IO::Socket::INET->new(Proto => 'udp');
+    if (!$socket) {
+        print STDERR "Cannot create socket: $!";
+        return { failure => 'Cannot send broadcast' };
+    }
+    
+    if (!$socket->setsockopt(SOL_SOCKET, SO_BROADCAST, 1)) {
+        print STDERR "Cannot setsockopt: $!";
+        return { failure => 'Cannot send broadcast' };
+    }
+
+    my $destpaddr = sockaddr_in($udp_server_port, INADDR_BROADCAST());
+    if (!$socket->send("FB/$proto_major.$proto_minor SERVER PROBE", 0, $destpaddr)) {
+        print STDERR "Cannot send broadcast: $!";
+        return { failure => 'Cannot send broadcast' };
+    }
+
+    my $inmask = '';
+    vec($inmask, fileno($socket), 1) = 1;
+    my @servers;
+    while (select(my $outmask = $inmask, undef, undef, 2)) {
+        my ($srcpaddr, $rcvmsg);
+        if (!defined($srcpaddr = $socket->recv($rcvmsg, 128, 0))) {
+            print STDERR "Cannot receive from socket: $!";
+            return { failure => 'Cannot read from broadcast' };
+        }
+        my ($port, $ipaddr) = sockaddr_in($srcpaddr);
+        if ($rcvmsg =~ m|^FB/$proto_major.$proto_minor SERVER HERE AT PORT (\d+)|) {
+            push @servers, { host => inet_ntoa($ipaddr), port => $1 };
+        } else {
+            print STDERR "Receive weird/incompatible answer to UDP broadcast looking for LAN servers:\t$rcvmsg\n";
+        }
+    }
+
+    return { servers => \@servers };
+}
+
+
+
 #- before game operations
 
-my $proto_major = '1';
-my $proto_minor = '0';
-my $sock;
-my $ping = 50;
+our $sock;
+our $ping = 50;
 
-our $timeout = 5;   #- in seconds
 our $masterserver;  #- for forcing the masterserver on commandline
 
 sub send_($) {
