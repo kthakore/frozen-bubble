@@ -1337,6 +1337,7 @@ sub decode_postgame_message($) {
         return "$player gamemsg";
     } else {
         if ($msg->{msg} =~ /^\Qnewgame:\E/) {
+            $pdata{$player}{ready4newgame} = 1;
             return "$player newgame";
         } else {
             return "$player other";
@@ -1624,7 +1625,21 @@ sub update_game() {
                             $pdata{$::p}{left} and die 'quit';
                         };
                         fb_net::gsend("newgame:");
-                        my $waitingnum = scalar(@PLAYERS) - 1;
+                        my $redraw_waiting = sub {
+                            put_image($imgbin{void_panel}, $MENUPOS{xpos_panel}, $MENUPOS{ypos_panel});
+                            my $y = $MENUPOS{ypos_panel} + 30;
+                            iter_distant_players {
+                                my $message = $pdata{$::p}{ready4newgame} ? "$pdata{$::p}{nick} IS READY AND WAITING!"
+                                                                          : "WAITING FOR $pdata{$::p}{nick}...";
+                                $app->print(165, $y, $message);
+                                put_image($imgbin{'mp_'.($pdata{$::p}{ready4newgame} ? 'ready' : 'waiting').'_newgame'},
+                                          165 + SDL_TEXTWIDTH($message) + 5, $y);
+                                $y += 25;
+                            };
+                            $app->flip;
+                        };
+                        $redraw_waiting->();
+                        my $already_waited;
                         while (1) {
                             $event->pump;
                             if ($event->poll != 0) {
@@ -1638,8 +1653,8 @@ sub update_game() {
                                 my $result = decode_postgame_message($msg);
                                 if ($result =~ /^(\S+) newgame/) {
                                     print "$pdata{$pdata{id2p}{$msg->{id}}}{nick} newgame\n";
-                                    $waitingnum--;
-                                    play_sound('newroot');
+                                    $already_waited and play_sound('newroot');
+                                    $redraw_waiting->();
                                 } elsif ($result =~ /^(\S+) other/) {
                                     print "quitting this game: $1 sends post-finish non-newgame $msg->{msg}\n";
                                     die 'quit';
@@ -1648,18 +1663,15 @@ sub update_game() {
                             #- need to do it here because we might have received two "newgame"
                             #- in a 3-players game, but one of them might have quitted while
                             #- this player was still not sending his newgame message
-                            $waitingnum == 0 and die 'new_game';
+                            iter_distant_players {
+                                $pdata{$::p}{ready4newgame} == 0 and goto still_waiting;
+                            };
+                            die 'new_game';
+                          still_waiting:
 
-                            put_image($imgbin{void_panel}, $MENUPOS{xpos_panel}, $MENUPOS{ypos_panel});
-                            my $message = "WAITING FOR $waitingnum OTHER PLAYER(S)";
-                            my $message2 = "TO START A NEW GAME...";
-                            my $xpos = 320 - SDL_TEXTWIDTH($message)/2;
-                            $app->print($xpos, $MENUPOS{ypos_panel} + 30, $message);
-                            $xpos = 320 - SDL_TEXTWIDTH($message2)/2;
-                            $app->print($xpos, $MENUPOS{ypos_panel} + 30 + 20, $message2);
-                            $app->flip;
                             fb_c_stuff::fbdelay(50);
                             check_mp_connection();
+                            $already_waited = 1;
                         }
                     } else {
                         die 'new_game';
@@ -1897,6 +1909,8 @@ sub init_game() {
     $imgbin{version} = add_image('menu/version.png');
     $imgbin{blink} = add_image('menu/blink.png');
     $imgbin{left} = add_image('left.png');
+    $imgbin{mp_ready_newgame} = add_image('pinguins/mp_ready_newgame.png');
+    $imgbin{mp_waiting_newgame} = add_image('pinguins/mp_waiting_newgame.png');
 
     #- scrolling banner
     $imgbin{banner_artwork} = add_image('menu/banner_artwork.png');
@@ -2199,6 +2213,7 @@ sub new_game() {
         $pdata{$::p}{left} = 0;
         if (is_distant_player($::p)) {
             $pdata{$::p}{still_game_messages} = 1;
+            $pdata{$::p}{ready4newgame} = 0;
         }
     };
 
@@ -2711,13 +2726,17 @@ sub smg_choose_game() {
 
                 } else {
                     if ($curaction->()->{action} eq 'CHAT') {
-                        play_sound('typewriter');
                         $k = keysym_to_char($k);
                         my %trivial_map = ('SPACE' => ' ', 'PERIOD' => '.', 'COMMA' => ',',
                                            'QUOTE' => "'", 'SLASH' => '/', 'MINUS' => '-');
                         $k = $trivial_map{$k} || $k;
-                        length($k) == 1 && length($typed_chat) < 32 and $typed_chat .= $k;
-                        member($k, qw(BACKSPACE DELETE LEFT)) and $typed_chat =~ s/.$//;
+                        if (length($k) == 1 && length($typed_chat) < 32) {
+                            $typed_chat .= $k;
+                            play_sound('typewriter');
+                        } elsif (member($k, qw(BACKSPACE DELETE LEFT))) {
+                            $typed_chat =~ s/.$//;
+                            play_sound('typewriter');
+                        }
                     
                     } elsif ($k == $KEYS->{misc}{fs}) {
                         $fullscreen = !$fullscreen;
@@ -2908,22 +2927,23 @@ sub setup_mp_game() {
 
     $imgbin{back_netgame}->blit($apprects{main}, $app, $apprects{main});
 
-    if ($gameserver) {
-        my ($host, $port) = $gameserver =~ /(\S+):(\S+)/;
-        fb_net::connect($host, $port) and goto choose_game;
-    }
-
     if (!fb_net::isconnected()) {
-        #- 1. contact master server
-        my @servers if 0;
-        @servers = smg_servers() or return;
+        if ($gameserver) {
+            my ($host, $port) = $gameserver =~ /(\S+):(\S+)/;
+            fb_net::connect($host, $port) or goto master_server;
+        } else {
+          master_server:
+            #- 1. contact master server
+            my @servers if 0;
+            @servers = smg_servers() or return;
+            
+            @smg_status_messages = ();
 
-        @smg_status_messages = ();
-
-      choose_server:
-        #- 2. let user choose server
-        smg_choose_server(@servers) or return;
-
+          choose_server:
+            #- 2. let user choose server
+            smg_choose_server(@servers) or return;
+        }
+            
     } else {
         @PLAYERS = reverse ssort { $pdata{$_}{score} } @PLAYERS;
         if ($pdata{$PLAYERS[0]}{score} > $pdata{$PLAYERS[1]}{score}) {
