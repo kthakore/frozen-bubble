@@ -1272,6 +1272,11 @@ sub update_lost {
                 
                 if (!@{$sticked_bubbles{$player}}) {
                     $event->pump while $event->poll != 0;
+                    if ($pdata{$player}{left}) {
+                        put_image_to_background($imgbin{left},
+                                                $POS{$player}{left_limit} + $POS{$player}{next_bubble}{x} - 35,
+                                                $POS{$player}{'initial_bubble_y'} - 120); #- TOFIX
+                    }
                 }
             } else {
                 if (!is_mp_game()) {
@@ -1882,6 +1887,7 @@ sub init_game() {
     $imgbin{void_panel} = add_image('menu/void_panel.png');
     $imgbin{version} = add_image('menu/version.png');
     $imgbin{blink} = add_image('menu/blink.png');
+    $imgbin{left} = add_image('left.png');
 
     #- scrolling banner
     $imgbin{banner_artwork} = add_image('menu/banner_artwork.png');
