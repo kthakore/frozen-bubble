@@ -1040,7 +1040,7 @@ sub handle_game_events() {
             my $xpos = 320 - SDL_TEXTWIDTH($message)/2;
             $app->print($xpos, $MENUPOS{ypos_panel} + 30, $message);
             $app->flip;
-            fb_c_stuff::fbdelay(2000);
+            fb_c_stuff::fbdelay(3000);
             $event->pump while $event->poll != 0;
             grab_key(0);
             die 'quit';
@@ -2835,6 +2835,13 @@ sub smg_start_game($) {
                 print "non-push received!? $msg\n";
             }
             $redraw->();
+        }
+
+        if (!fb_net::isconnected()) {
+            smg_add_status_msg('*** LOST CONNECTION TO SERVER, ABANDONING...');
+            $redraw->();
+            fb_c_stuff::fbdelay(2000);
+            return 0;
         }
     }
 }
