@@ -978,19 +978,26 @@ sub print_compressor() {
     }
 }
 
-sub check_mp_connection() {
-    if (!fb_net::isconnected()) {
-        put_image($imgbin{void_panel}, $MENUPOS{xpos_panel}, $MENUPOS{ypos_panel});
-        my $message = 'LOST CONNECTION TO SERVER!';
-        my $xpos = 320 - SDL_TEXTWIDTH($message)/2;
-        $app->print($xpos, $MENUPOS{ypos_panel} + 30, $message);
-        $app->flip;
-        play_sound('cancel');
-        fb_c_stuff::fbdelay(3000);
-        $event->pump while $event->poll != 0;
-        grab_key(0);
-        die 'quit';
+our $smg_lineheight = 22;
+
+sub mp_disconnect_with_reason {
+    my (@messages) = @_;
+    put_image($imgbin{void_panel}, $MENUPOS{xpos_panel}, $MENUPOS{ypos_panel});
+    my $y = $MENUPOS{ypos_panel} + 30;
+    foreach (@messages) {
+        $app->print(320 - SDL_TEXTWIDTH($_)/2, $y, $_);
+        $y += $smg_lineheight;
     }
+    $app->flip;
+    play_sound('cancel');
+    fb_c_stuff::fbdelay(3000);
+    $event->pump while $event->poll != 0;
+    grab_key(0);
+    die 'quit';
+}
+
+sub check_mp_connection {
+    fb_net::isconnected() or mp_disconnect_with_reason('LOST CONNECTION TO SERVER!');
 }
 
 sub add_loserz_chat_msg($) {
@@ -1142,6 +1149,10 @@ sub handle_game_events() {
         };
         foreach my $m (@messages) {
             my $player = $pdata{id2p}{$m->{id}};
+            if ($pdata{$player}{left}) {
+                print STDERR "$pdata{$player}{nick}: you don't exist, go away!\n";
+                next;
+            }
             my ($command, $params) = $m->{msg} =~ /(\w+):(.*)/;
             if ($command eq 'ping') {
                 $pdata{$player}{ping} = $frame;
@@ -1189,6 +1200,11 @@ sub handle_game_events() {
                     #- chat for loserz
                     add_loserz_chat_msg($params);
                 }
+            } elsif ($command eq 'drop') {
+                if ($params eq $pdata{p1}{nick}) {
+                    #- ouch, someone dropped me. bad bad guy :(. but let's cooperate.
+                    mp_disconnect_with_reason('YOU WERE DROPPED!', '', 'YOUR LAG IS TOO HIGH OR', 'NETWORK WAS INTERRUPTED');
+                }
             } else {
                 print STDERR "Unrecognized command: $m->{msg}\n";
             }
@@ -1200,6 +1216,7 @@ sub handle_game_events() {
                 print STDERR "Dropping player $::p, doesn't ping us anymore for ages.\n";
                 $pdata{$::p}{left} = 1;
                 lose($::p);
+                fb_net::gsend("drop:$pdata{$::p}{nick}");
             }
         };
     }
@@ -2466,7 +2483,6 @@ sub choose_1p_game_mode() {
 }
 
 
-our $smg_lineheight = 22;
 our $smg_startx = 78;
 our $smg_starty = 30;
 our $smg_starty_chat = 316;
