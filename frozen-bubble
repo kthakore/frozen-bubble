@@ -2533,7 +2533,7 @@ sub smg_servers() {
                         sleep 1;
                         return ({ host => 'localhost', port => 1511 });
                     } else {
-                        unless (exec $fb_server, '-L', '-p', '1511') {
+                        unless (exec $fb_server, '-L', '-p', '1511', '-n', 'lan-' . substr($ENV{USER}, 0, 8)) {
                             print STDERR "Could not create server limited to lan game: $!\n";
                             POSIX::_exit(1);
                         }
