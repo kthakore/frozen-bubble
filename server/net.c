@@ -403,8 +403,8 @@ void create_server(int argc, char **argv)
                                 for (i = 0; i < strlen(optarg); i++) {
                                         if (!((optarg[i] >= 'a' && optarg[i] <= 'z')
                                               || (optarg[i] >= '0' && optarg[i] <= '9')
-                                              || optarg[i] == '.')) {
-                                                l0("Commandline: name must contain only chars in [a-z0-9.]");
+                                              || optarg[i] == '.' || optarg[i] == '-')) {
+                                                l0("Commandline: name must contain only chars in [a-z0-9.-]");
                                                 exit(1);
                                         }
                                 }
