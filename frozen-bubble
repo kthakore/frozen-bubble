@@ -2619,7 +2619,7 @@ sub smg_choose_server(@) {
             $#sorted_servers = $max_lines - 1;
         }
         #- handle case when currently selected server gets down or out per too high ping
-        if (!any { $_->{selected} } @sorted_servers) {
+        if (@sorted_servers && !any { $_->{selected} } @sorted_servers) {
             $_->{selected} = 0 foreach @servers;
             $sorted_servers[0]->{selected} = 1;
         }
