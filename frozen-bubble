@@ -1294,6 +1294,7 @@ sub update_won {
 sub decode_postgame_message($) {
     my ($msg) = @_;
     my $player = $pdata{id2p}{$msg->{id}};
+    $player ||= 'UNKNOWN';
     if ($msg->{msg} =~ /^\Qfinished:\E(.*)/) {
         $pdata{$player}{still_game_messages} = 0;
         print "$player is saying she's finished with winner $1\n";
