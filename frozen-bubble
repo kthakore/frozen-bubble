@@ -1188,10 +1188,11 @@ sub lose {
                 #- tentatively suppose we've found the winner, but we need to confirm it by network
                 #- first, in rare case of two last players dying at the same time
                 $pdata{state} = "finished $living[0]:$winnernick 0";
+                $pdata{$_}{still_game_messages} = 0 foreach @PLAYERS;
+                iter_distant_players {
+                    $pdata{$::p}{still_game_messages} = 1;
+                };
             }
-            iter_distant_players {
-                $pdata{$::p}{still_game_messages} = 1;
-            };
         }
     } else {
         $pdata{state} = "lost $player";
