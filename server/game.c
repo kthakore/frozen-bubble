@@ -42,6 +42,7 @@ static char wn_nick_in_use[] = "NICK_IN_USE";
 static char wn_no_such_game[] = "NO_SUCH_GAME";
 static char wn_game_full[] = "GAME_FULL";
 static char wn_already_in_game[] = "ALREADY_IN_GAME";
+static char wn_not_in_game[] = "NOT_IN_GAME";
 
 static char fl_line_unrecognized[] = "MISSING_FB_PROTOCOL_TAG";
 static char fl_proto_mismatch[] = "INCOMPATIBLE_PROTOCOL";
@@ -249,6 +250,13 @@ int process_msg(int fd, char* msg)
                                 else
                                         send_line_log(fd, wn_game_full, msg_orig);
                         }
+                }
+        } else if (streq(current_command, "PART")) {
+                if (!already_in_game(fd)) {
+                        send_line_log(fd, wn_not_in_game, msg_orig);
+                } else {
+                        cleanup_player(fd);
+                        send_ok(fd, msg_orig);
                 }
         } else if (streq(current_command, "LIST")) {
                 send_line_log(fd, list_games_str, msg_orig);
