@@ -332,7 +332,7 @@ sub grecv() {
     return @msg;
 }
 
-sub delay_messages(@) {
+sub gdelay_messages(@) {
     push @messages, @_;
 }
 

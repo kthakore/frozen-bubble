@@ -1035,7 +1035,6 @@ sub handle_game_events() {
     }
 
     if (is_mp_game()) {
-        # TODO stick and malustick must be serialized so we need to "lock" next ones while current one not executed
         my @messages = fb_net::grecv();
         #- in order to keep ordering of actions executed in update_game, we must tolerate only one action at a time
         my @keep_messages;
