@@ -3036,6 +3036,7 @@ sub smg_start_game($) {
 
                 } elsif ($message =~ /^STOP: (.*)/ || $message =~ /^PARTED: (.*)/) {
                     smg_add_status_msg("*** $1 ABORTED STARTING, CANCELLING GAME...");
+                    smg_verify_command('PART');
                     $redraw->();
                     fb_c_stuff::fbdelay(2000);
                     return 0;
