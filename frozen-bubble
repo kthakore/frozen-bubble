@@ -2121,39 +2121,33 @@ sub choose_1p_game_mode() {
     }
 }
 
-sub setup_mp_game() {
 
-    $font = SDL::Font->new("$FPATH/gfx/font2.png");
+our $smg_lineheight = 22;
+our $smg_startx = 78;
+our $smg_starty = 30;
+our $smg_starty_chat = 356;
+our $smg_starty_players = $smg_starty_chat + $smg_lineheight;
 
-    my $lineheight = 22;
-    my $startx = 78;
-    my $starty = 30;
-    my $starty_chat = 356;
-    my $starty_players = $starty_chat + $lineheight;
+sub smg_erase_line($) {
+    my ($pos) = @_;
+    my $drect = SDL::Rect->new(-width => 640, -height => $smg_lineheight, -x => 0, '-y' => $pos);
+    $imgbin{back_netgame}->blit($drect, $app, $drect);
+}
+
+sub smg_printstatus {
+    my ($msg, $msg2) = @_;
     my $starty_status = 412;
+    smg_erase_line($starty_status);
+    smg_erase_line($starty_status + $smg_lineheight);
+    $app->print($smg_startx, $starty_status, $msg);
+    if ($msg2) {
+        $app->print($smg_startx, $starty_status + $smg_lineheight, $msg2);
+    }
+    $app->flip();
+}
 
-    my $erase_line = sub {
-        my ($pos) = @_;
-        my $drect = SDL::Rect->new(-width => 640, -height => $lineheight, -x => 0, '-y' => $pos);
-        $imgbin{back_netgame}->blit($drect, $app, $drect);
-    };
-
-    my $print_status = sub {
-        my ($msg, $msg2) = @_;
-        $erase_line->($starty_status);
-        $erase_line->($starty_status + $lineheight);
-        $app->print($startx, $starty_status, $msg);
-        if ($msg2) {
-            $app->print($startx, $starty_status + $lineheight, $msg2);
-        }
-        $app->flip();
-    };
-
-    $imgbin{back_netgame}->blit($apprects{main}, $app, $apprects{main});
-
-
-    #- 1. contact master server
-    $print_status->("CONTACTING MASTER SERVER...");
+sub smg_servers() {
+    smg_printstatus("CONTACTING MASTER SERVER...");
     my $serverlist = fb_net::get_server_list();
     my @servers;
     if ($serverlist) {
@@ -2165,29 +2159,30 @@ sub setup_mp_game() {
             }
         }
     } else {
-        $print_status->("UNABLE TO DOWNLOAD SERVER LIST!",
+        smg_printstatus("UNABLE TO DOWNLOAD SERVER LIST!",
                         "VERIFY YOUR NETWORK SETUP OR RETRY LATER.");
         grab_key(0);
-        return;
     }
+    return @servers;
+}
 
+sub smg_choose_server(@) {
+    my (@servers) = @_;
 
-  choose_server:
-    #- 2. let user choose server
-    $erase_line->($starty_chat);     #- if we return from choose_game
-    $erase_line->($starty_players);  #-
+    smg_erase_line($smg_starty_chat);     #- if we return from choose_game
+    smg_erase_line($smg_starty_players);  #-
     my @sorted_servers;
     my $redraw = sub {
-        my $y = $starty;
+        my $y = $smg_starty;
         foreach my $server (@sorted_servers) {
-            $erase_line->($y);
+            smg_erase_line($y);
             if ($server->{selected}) {
                 put_image($malus_gfx{tomate}, 56, $y);
             }
-            $app->print($startx, $y, uc($server->{host} . ':' . $server->{port}));
+            $app->print($smg_startx, $y, uc($server->{host} . ':' . $server->{port}));
             $app->print(300, $y, $server->{ping} ? "AVAIL PLAYERS:$server->{players} PING:$server->{ping}"
                                                  : 'CURRENTLY DOWN!');
-            $y += $lineheight;
+            $y += $smg_lineheight;
         }
         $app->flip();
     };
@@ -2196,7 +2191,7 @@ sub setup_mp_game() {
     my $ping = sub {
         foreach my $server (@servers) {
             if (!$server->{disabled}) {
-                $reping or $print_status->('CONNECTING TO: ' . uc($server->{host} . ':' . $server->{port}));
+                $reping or smg_printstatus('CONNECTING TO: ' . uc($server->{host} . ':' . $server->{port}));
                 my $ping = fb_net::connect($server->{host}, $server->{port});
                 if (!$ping) {
                     $server->{disabled} = 1;
@@ -2213,7 +2208,7 @@ sub setup_mp_game() {
 
     $ping->();
     if (every { $_->{disabled} } @servers) {
-        $print_status->("ALL SERVERS CURRENTLY DOWN!",
+        smg_printstatus("ALL SERVERS CURRENTLY DOWN!",
                         "PLEASE RETRY LATER.");
         grab_key(0);
         return;
@@ -2221,7 +2216,7 @@ sub setup_mp_game() {
     if (@sorted_servers) {
         $sorted_servers[0]->{selected} = 1;
     }
-    $print_status->("PLEASE CHOOSE A SERVER");
+    smg_printstatus("PLEASE CHOOSE A SERVER");
 
     while (1) {
         $reping++;
@@ -2234,7 +2229,7 @@ sub setup_mp_game() {
                 my $k = $event->key_sym;
 
                 if ($k == SDLK_ESCAPE()) {
-                    return;
+                    return 0;
 
                 } elsif ($k == SDLK_DOWN()) {
                     if (@sorted_servers) {
@@ -2264,7 +2259,7 @@ sub setup_mp_game() {
 
                 } elsif ($k == SDLK_RETURN() || $k == SDLK_KP_ENTER()) {
                     play_sound('menu_selected');
-                    goto choose_game;
+                    goto ok_smg_choose_server;
                 }
             }
         } else {
@@ -2272,26 +2267,30 @@ sub setup_mp_game() {
         }
     }
 
-
-  choose_game:
-    my $y = $starty;
+  ok_smg_choose_server:
+    my $y = $smg_starty;
     foreach (@servers) {
-        $erase_line->($y);
-        $y += $lineheight;
+        smg_erase_line($y);
+        $y += $smg_lineheight;
     }
-    $print_status->('');
+    smg_printstatus('');
 
     foreach my $server (@servers) {
         if ($server->{selected}) {
             my $ping = fb_net::connect($server->{host}, $server->{port});
-            $ping or goto choose_server;
+            $ping or return smg_choose_server(@servers);
             last;
         }
     }
 
-    #- 3. let user choose/create game
+    return 1;
+}
+
+sub smg_choose_game() {
     my @actions = ({ name => 'CHAT', action => 'CHAT', selected => 1 },
                    { name => 'CREATE NEW GAME', action => 'CREATE' });
+    my $max_actions = 10;
+
     my $curaction = sub {
         my $cur;
         each_index {
@@ -2303,11 +2302,32 @@ sub setup_mp_game() {
       curaction_done:
         return $actions[$cur];
     };
-    my ($free, @games) = fb_net::list();
-    foreach (@games) {
-        @$_ < 5 and push @actions, { name => 'JOIN: ' . uc(join(',', @$_)), action => 'JOIN', join => $_->[0] };
-    }
 
+    my $state = 'game_select';
+
+    my $list = sub {
+        $state eq 'game_select' or return;
+        my ($free, @games) = fb_net::list();
+        my ($join, $rest) = partition { $_->{name} =~ /^JOIN/ } @actions;
+        $_->{ok} = 0 foreach @$join;
+      listgames:
+        foreach my $players (@games) {
+            if (@$players < 5) {
+                my $name = 'JOIN: ' . uc(join(',', @$players));
+                foreach my $line (@$join) {
+                    if ($line->{name} eq $name) {
+                        $line->{ok} = 1;
+                        next listgames;
+                    }
+                }
+                push @$join, { name => $name, action => 'JOIN', join => $players->[0], ok => 1 };
+            }
+        }
+        @actions = (@$rest, grep { $_->{ok} } @$join);
+        if (!any { $_->{selected} } @actions) {
+            $actions[0]{selected} = 1;
+        }
+    };
 
     my $typed_chat;
     my @displayed_messages;
@@ -2315,28 +2335,28 @@ sub setup_mp_game() {
         $displayed_messages[0] = $displayed_messages[1];
         $displayed_messages[1] = uc($_[0]);
     };
-    my $erase2 = sub {
-        my $y = $starty;
-        foreach my $action (@actions) {
-            $erase_line->($y);
-            $y += $lineheight;
+    my $erase = sub {
+        my $y = $smg_starty;
+        foreach (1 .. $max_actions) {
+            smg_erase_line($y);
+            $y += $smg_lineheight;
         }
     };
-    my $redraw2 = sub {
-        $erase2->();
-        my $y = $starty;
+    my $redraw = sub {
+        $erase->();
+        my $y = $smg_starty;
         foreach my $action (@actions) {
             if ($action->{selected}) {
                 put_image($malus_gfx{tomate}, 56, $y);
             }
-            $app->print($startx, $y, $action->{name});
-            $y += $lineheight;
+            $app->print($smg_startx, $y, $action->{name});
+            $y += $smg_lineheight;
         }
-        $erase_line->($starty_chat);
+        smg_erase_line($smg_starty_chat);
         if ($curaction->()->{name} eq 'CHAT') {
-            $app->print($startx, $starty_chat, "CHAT: $typed_chat");
+            $app->print($smg_startx, $smg_starty_chat, "CHAT: $typed_chat");
         }
-        $print_status->(@displayed_messages);
+        smg_printstatus(@displayed_messages);
         $app->flip();
     };
 
@@ -2355,11 +2375,14 @@ sub setup_mp_game() {
         }
     };
     my $mynick = $ENV{USER};
-    my $state = 'game_select';
     my $need4status;
+    my $relist;
+    $list->();
 
     while (1) {
-        $redraw2->();
+        $relist++;
+        $relist % (3*20) == 0 and $list->();
+        $redraw->();
 
         $event->pump;
         if ($event->poll != 0) {
@@ -2367,7 +2390,7 @@ sub setup_mp_game() {
                 my $k = $event->key_sym;
 
                 if ($k == SDLK_ESCAPE()) {
-                    goto choose_server;
+                    return 0;
 
                 } elsif ($k == SDLK_DOWN()) {
                     each_index {
@@ -2417,7 +2440,7 @@ sub setup_mp_game() {
                         if ($answer) {
                             $add_status_msg->("ERROR in ".$curaction->()->{join}.": $answer");
                         } else {
-                            $erase2->();
+                            $erase->();
                             @actions = ({ name => 'CHAT', action => 'CHAT', selected => 1 },
                                         { name => 'START GAME!', action => 'START' });
                             $state = 'wait_for_start';
@@ -2479,20 +2502,19 @@ sub setup_mp_game() {
         if ($need4status) {
             fb_net::send_('STATUS');
             my $answer = $verify_command->('STATUS');
-            $erase_line->($starty_players);
-            $app->print($startx, $starty_players, "PLAYERS: ".uc($answer));
+            smg_erase_line($smg_starty_players);
+            $app->print($smg_startx, $smg_starty_players, "PLAYERS: ".uc($answer));
             $need4status = 0;
         }
     }
 
-
   start_game:
-    my $y = $starty;
-    foreach (@servers) {
-        $erase_line->($y);
-        $y += $lineheight;
+    my $y = $smg_starty;
+    foreach (1 .. $max_actions) {
+        smg_erase_line($y);
+        $y += $smg_lineheight;
     }
-    $print_status->('WAITING FOR OTHER PLAYERS...');
+    smg_printstatus('WAITING FOR OTHER PLAYERS...');
 
     @PLAYERS = qw(p1);
     my @mappings = fb_net::wait4start();
@@ -2512,6 +2534,26 @@ sub setup_mp_game() {
         $pdata{id2p}{$m->{id}} = $player;
         print "$player is: $m->{nick}\n";
     }
+
+    return 1;
+}
+
+
+sub setup_mp_game() {
+
+    $font = SDL::Font->new("$FPATH/gfx/font2.png");
+
+    $imgbin{back_netgame}->blit($apprects{main}, $app, $apprects{main});
+
+    #- 1. contact master server
+    my @servers = smg_servers() or return;
+
+  choose_server:
+    #- 2. let user choose server
+    smg_choose_server(@servers) or return;
+
+    #- 3. let user choose/create game
+    smg_choose_game() or goto choose_server;
 
     return 1;
 }
