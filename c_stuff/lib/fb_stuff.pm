@@ -30,7 +30,8 @@ use vars qw(@ISA @EXPORT $FPATH $FLPATH $FBLEVELS $colourblind %POS_1P %POS_2P %
 @ISA = qw(Exporter);
 @EXPORT = qw($FPATH $FLPATH $colourblind $FBLEVELS %POS_1P %POS_2P %POS_MP $BUBBLE_SIZE $ROW_SIZE
              $PI cat_ member difference2 any every even odd sqr to_bool to_int if_ chomp_
-             fold_left output append_to_file min max backtrace basename cp_af all partition ssort sum);
+             fold_left output append_to_file min max backtrace basename cp_af all partition ssort
+             sum put_in_hash);
 
 $FPATH = '@DATADIR@/frozen-bubble';
 $FLPATH = '@LIBDIR@/frozen-bubble';
@@ -59,7 +60,7 @@ $FLPATH = '@LIBDIR@/frozen-bubble';
 %POS_1P = ( p1 => { left_limit => 190, right_limit => 446, top_limit => 44, 'initial_bubble_y' => 390,
                     canon => { x => 268, 'y' => 356 },
                     simpleshooter => { x => 317, 'y' => 405, diameter => 60 },
-                    pinguin => { x => 168, 'y' => 417 },
+                    pinguin => { x => 168, 'y' => 437 },
                     next_bubble => { x => 112, 'y' => 440 },
                     on_top_next_relpos => { x => -4, 'y' => -3 },
                     hurry => { x => 10, 'y' => 265 },
@@ -240,5 +241,6 @@ sub ssort(&@) {
     sort { local $_ = $a; my $fa = $f->($a); local $_ = $b; $fa <=> $f->($b) } @_;
 }
 sub sum { my $n = 0; $n += $_ foreach @_; $n }
+sub put_in_hash { my ($a, $b) = @_; while (my ($k, $v) = each %{$b || {}}) { $a->{$k} = $v } $a }
 # -=-=---=-=---=-=---=-=---=-=---=-=---=-=---=-=---=-=---=-=---=-=---=-=---=-=---=-=---=-=--
 
