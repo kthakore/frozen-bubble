@@ -2316,6 +2316,27 @@ sub smg_choose_server(@) {
     return 1;
 }
 
+our @smg_status_messages;
+sub smg_add_status_msg($) {
+    $smg_status_messages[0] = $smg_status_messages[1];
+    $smg_status_messages[1] = uc($_[0]);
+}
+
+sub smg_verify_command($) {
+    my ($sent_command) = @_;
+    my ($command, $message);
+    do {
+        my $msg = fb_net::readline_();
+        ($command, $message) = fb_net::decode_msg($msg);
+        # FIXME: should not drop PUSH messages
+    } while ($command eq 'PUSH');
+    if ($command ne $sent_command || $message ne 'OK') {
+        return $message;
+    } else {
+        return;
+    }
+}
+
 sub smg_choose_game() {
     my @actions = ({ name => 'CHAT', action => 'CHAT', selected => 1 },
                    { name => 'CREATE NEW GAME', action => 'CREATE' });
@@ -2360,11 +2381,6 @@ sub smg_choose_game() {
     };
 
     my $typed_chat;
-    my @displayed_messages;
-    my $add_status_msg = sub {
-        $displayed_messages[0] = $displayed_messages[1];
-        $displayed_messages[1] = uc($_[0]);
-    };
     my $erase = sub {
         my $y = $smg_starty;
         foreach (1 .. $max_actions) {
@@ -2386,24 +2402,10 @@ sub smg_choose_game() {
         if ($curaction->()->{name} eq 'CHAT') {
             $app->print($smg_startx, $smg_starty_chat, "CHAT: $typed_chat");
         }
-        smg_printstatus(@displayed_messages);
+        smg_printstatus(@smg_status_messages);
         $app->flip();
     };
 
-    my $verify_command = sub {
-        my ($sent_command) = @_;
-        my ($command, $message);
-        do {
-            my $msg = fb_net::readline_();
-            ($command, $message) = fb_net::decode_msg($msg);
-            # FIXME: should not drop PUSH messages
-        } while ($command eq 'PUSH');
-        if ($command ne $sent_command || $message ne 'OK') {
-            return $message;
-        } else {
-            return;
-        }
-    };
     my $mynick = $ENV{USER};
     my $need4status;
     my $relist;
@@ -2459,7 +2461,7 @@ sub smg_choose_game() {
                             my $message = $curaction->()->{action} eq 'CREATE' ? "CREATE $mynick"
                                                                                : "JOIN ".$curaction->()->{join}." $mynick";
                             fb_net::send_($message);
-                            $answer = $verify_command->($curaction->()->{action});
+                            $answer = smg_verify_command($curaction->()->{action});
                             if ($answer eq 'NICK_IN_USE') {
                                 $suffix++;
                                 $mynick = "$ENV{USER}$suffix";
@@ -2468,22 +2470,22 @@ sub smg_choose_game() {
                             }
                         }
                         if ($answer) {
-                            $add_status_msg->("ERROR in ".$curaction->()->{join}.": $answer");
+                            smg_add_status_msg("ERROR in ".$curaction->()->{join}.": $answer");
                         } else {
                             $erase->();
                             @actions = ({ name => 'CHAT', action => 'CHAT', selected => 1 },
                                         { name => 'START GAME!', action => 'START' });
                             $state = 'wait_for_start';
                             $need4status = 1;
-                            @displayed_messages = ();
+                            @smg_status_messages = ();
                         }
                     }
                             
                     if ($curaction->()->{action} eq 'START') {
                         fb_net::send_('START');
-                        my $answer = $verify_command->('START');
+                        my $answer = smg_verify_command('START');
                         if ($answer) {
-                            $add_status_msg->("CAN'T START GAME: $answer");
+                            smg_add_status_msg("CAN'T START GAME: $answer");
                         } else {
                             goto start_game;
                         }
@@ -2515,18 +2517,18 @@ sub smg_choose_game() {
             my ($command, $message) = fb_net::decode_msg($msg);
             if ($command eq 'PUSH') {
                 if ($message =~ /^TALK: (.*)/) {
-                    $add_status_msg->($1);
+                    smg_add_status_msg($1);
                     play_sound('typewriter');
                 } elsif ($message =~ /^JOINED: (.*)/) {
-                    $add_status_msg->("*** $1 JOINED THE GAME!");
+                    smg_add_status_msg("*** $1 JOINED THE GAME!");
                     $need4status = 1;
                     play_sound('newroot_solo');
                 } elsif ($message =~ /^PARTED: (.*)/) {
-                    $add_status_msg->("*** $1 LEFT THE GAME...");
+                    smg_add_status_msg("*** $1 LEFT THE GAME...");
                     $need4status = 1;
                     play_sound('newroot_solo');
                 } elsif ($message =~ /^START: (.*)/) {
-                    $add_status_msg->("*** $1 STARTED THE GAME AND IS WAITING!");
+                    smg_add_status_msg("*** $1 STARTED THE GAME AND IS WAITING!");
                     $need4status = 1;
                     play_sound('newroot');
                 } else {
@@ -2539,7 +2541,7 @@ sub smg_choose_game() {
 
         if ($need4status) {
             fb_net::send_('STATUS');
-            my $answer = $verify_command->('STATUS');
+            my $answer = smg_verify_command('STATUS');
             smg_erase_line($smg_starty_players);
             $app->print($smg_startx, $smg_starty_players, "PLAYERS: ".uc($answer));
             $need4status = 0;
@@ -2552,30 +2554,92 @@ sub smg_choose_game() {
         smg_erase_line($y);
         $y += $smg_lineheight;
     }
-    smg_printstatus('WAITING FOR OTHER PLAYERS...');
 
-    @PLAYERS = qw(p1);
-    my @mappings = fb_net::wait4start();
-    delete $pdata{$_}{id} foreach qw(rp1 rp2 rp3 rp4);
-    foreach my $m (@mappings) {
-        my $player;
-        if ($m->{nick} eq $mynick) {
-            $player = 'p1';
-        } else {
-            foreach my $p (qw(rp1 rp2 rp3 rp4)) {
-                exists $pdata{$p}{id} or $player ||= $p;
-            }
-            push @PLAYERS, $player;
-        }
-        $pdata{$player}{id} = $m->{id};
-        $pdata{$player}{nick} = $m->{nick};
-        $pdata{id2p}{$m->{id}} = $player;
-        print "$player is: $m->{nick}\n";
-    }
-
-    return 1;
+    return $mynick;
 }
 
+sub smg_start_game($) {
+    my ($mynick) = @_;
+
+    smg_add_status_msg('WAITING FOR OTHER PLAYERS...');
+
+    @PLAYERS = qw(p1);
+
+    my $redraw = sub {
+        smg_printstatus(@smg_status_messages);
+        $app->flip();
+    };
+
+    while (1) {
+        $redraw->();
+
+        $event->pump;
+        if ($event->poll != 0) {
+            if ($event->type == SDL_KEYDOWN) {
+                my $k = $event->key_sym;
+
+                if ($k == SDLK_ESCAPE()) {
+                    fb_net::send_('STOP');
+                    my $answer = smg_verify_command('STOP');
+                    if ($answer) {
+                        smg_add_status_msg("CAN'T STOP GAME: $answer");
+                    } else {
+                        return 0;
+                    }
+
+                } elsif ($k == $KEYS->{misc}{fs}) {
+                    $fullscreen = !$fullscreen;
+                    $app->fullscreen;
+                }
+            }
+
+        } else {
+            fb_c_stuff::fbdelay(50);
+        }
+
+        while (my $msg = fb_net::readline_ifdata()) {
+            my ($command, $message) = fb_net::decode_msg($msg);
+            if ($command eq 'PUSH') {
+                if ($message =~ /^START: (.*)/) {
+                    smg_add_status_msg("*** $1 ALSO STARTED THE GAME...");
+                    play_sound('newroot');
+
+                } elsif ($message =~ /^GAME_CAN_START: (.*)/) {
+                    my $msg = $1;
+                    my @mappings;
+                    while ($msg) {
+                        my $id = substr($msg, 0, 1);
+                        $msg = substr($msg, 1);
+                        my ($nick, undef, $rest) = $msg =~ /([^,]+)(,(.*))?/;
+                        $msg = $rest;
+                        push @mappings, { id => $id, nick => $nick };
+                    }
+                    delete $pdata{$_}{id} foreach qw(rp1 rp2 rp3 rp4);
+                    foreach my $m (@mappings) {
+                        my $player;
+                        if ($m->{nick} eq $mynick) {
+                            $player = 'p1';
+                        } else {
+                            foreach my $p (qw(rp1 rp2 rp3 rp4)) {
+                                exists $pdata{$p}{id} or $player ||= $p;
+                            }
+                            push @PLAYERS, $player;
+                        }
+                        $pdata{$player}{id} = $m->{id};
+                        $pdata{$player}{nick} = $m->{nick};
+                        $pdata{id2p}{$m->{id}} = $player;
+                    }
+                    return 1;
+                    
+                } else {
+                    print "unrecognized message received: $msg\n";
+                }
+            } else {
+                print "non-push received!? $msg\n";
+            }
+        }
+    }
+}
 
 sub setup_mp_game() {
 
@@ -2586,12 +2650,18 @@ sub setup_mp_game() {
     #- 1. contact master server
     my @servers = smg_servers() or return;
 
+    @smg_status_messages = ();
+
   choose_server:
     #- 2. let user choose server
     smg_choose_server(@servers) or return;
 
+  choose_game:
     #- 3. let user choose/create game
-    smg_choose_game() or goto choose_server;
+    my $mynick = smg_choose_game() or goto choose_server;
+
+    #- 4. start game waiting for other players, and receiving id/nick bindings
+    smg_start_game($mynick) or goto choose_game;
 
     return 1;
 }
