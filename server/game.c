@@ -35,7 +35,7 @@ GList * games = NULL;
 static char ok_pong[] = "PONG";
 static char ok_player_joined[] = "JOINED: %s";
 static char ok_player_parted[] = "PARTED: %s";
-static char ok_talk[] = "TALK: %s";
+static char ok_talk[] = "TALK: %s> %s";
 
 static char wn_unknown_command[] = "UNKNOWN_COMMAND";
 static char wn_missing_arguments[] = "MISSING_ARGUMENTS";
@@ -128,16 +128,23 @@ static struct game* find_game_by_fd(int fd)
         return GListp2data(g_list_find_custom(games, GINT_TO_POINTER(fd), find_game_by_fd_aux));
 }
 
+int find_player_number(struct game *g, int fd)
+{
+        int i;
+        for (i = 0; i < g->players_number; i++)
+                if (g->players_conn[i] == fd)
+                        return i;
+        l0("Internal error");
+        exit(1);
+}
+
 void cleanup_player(int fd)
 {
         struct game * g = find_game_by_fd(fd);
         if (g) {
-                int i, j;
+                int j;
+                int i = find_player_number(g, fd);
                 char parted_msg[1000];
-
-                for (i = 0; i < g->players_number; i++)
-                        if (g->players_conn[i] == fd)
-                                break;
 
                 // inform other players
                 snprintf(parted_msg, sizeof(parted_msg), ok_player_parted, g->players_nick[i]);
@@ -161,14 +168,13 @@ void cleanup_player(int fd)
 static void talk(int fd, char* msg)
 {
         struct game * g = find_game_by_fd(fd);
-        if (g && g->players_number > 1) {
+        if (g) {
                 int i;
+                int j = find_player_number(g, fd);
                 char talk_msg[1000];
-                snprintf(talk_msg, sizeof(talk_msg), ok_talk, msg);
+                snprintf(talk_msg, sizeof(talk_msg), ok_talk, g->players_nick[j], msg);
                 for (i = 0; i < g->players_number; i++)
-                        if (g->players_conn[i] != fd)
-                                send_line_log_push(g->players_conn[i], talk_msg);
-                send_ok(fd, "TALK");
+                        send_line_log_push(g->players_conn[i], talk_msg);
         } else {
                 send_line_log(fd, wn_alone_in_the_dark, msg);
         }
