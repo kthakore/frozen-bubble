@@ -1041,7 +1041,7 @@ sub handle_game_events() {
             if ($command eq 'ping') {
                 $pdata{$player}{ping} = $frame;
             } elsif ($command eq 'leave') {
-                iter_players { #- need iter_players to get the small graphics change for free if we're in multiplayer
+                iter_players { #- need iter_players to get the small graphics change for free
                     $::p eq $player and lose($::p);
                 };
             } elsif ($command eq 'fire') {
@@ -1061,7 +1061,7 @@ sub handle_game_events() {
                 $b->{cx} = $cx;
                 $b->{cy} = $cy;
                 $b->{'stick_y'} = $sticky;
-                iter_players { #- need iter_players to get the small graphics change for free if we're in multiplayer
+                iter_players { #- need iter_players to get the small graphics change for free
                     if ($::p eq $player) {
                         calc_real_pos($b, $::p);
                     }
@@ -1427,7 +1427,14 @@ sub update_game() {
         }
 	if (@{$exploding_bubble{$winner}} == 0) {
 	    $event->pump;
-	    die 'new_game' if $event->poll != 0 && $event->type == SDL_KEYDOWN;
+	    if ($event->poll != 0 && $event->type == SDL_KEYDOWN) {
+                #- FIXME: for the moment, go to the menu, will do better later
+                if (is_mp_game()) {
+                    die 'quit';
+                } else {
+                    die 'new_game';
+                }
+            }
 	}
 
     } else {
@@ -1629,6 +1636,8 @@ sub init_game() {
     $imgbin{txt_1pgame_over} = add_image('menu/txt_1pgame_over.png');
     $imgbin{txt_2pgame_off}  = add_image('menu/txt_2pgame_off.png');
     $imgbin{txt_2pgame_over} = add_image('menu/txt_2pgame_over.png');
+    $imgbin{txt_netgame_off}  = add_image('menu/txt_netgame_off.png');
+    $imgbin{txt_netgame_over} = add_image('menu/txt_netgame_over.png');
     $imgbin{txt_editor_off}  = add_image('menu/txt_editor_off.png');
     $imgbin{txt_editor_over} = add_image('menu/txt_editor_over.png');
     $imgbin{txt_fullscreen_off}  = add_image('menu/txt_fullscreen_off.png');
@@ -1653,6 +1662,12 @@ sub init_game() {
     $imgbin{version} = add_image('menu/version.png');
     $imgbin{blink} = add_image('menu/blink.png');
 
+    #- scrolling banner
+    $imgbin{banner_artwork} = add_image('menu/banner_artwork.png');
+    $imgbin{banner_soundtrack} = add_image('menu/banner_soundtrack.png');
+    $imgbin{banner_cpucontrol} = add_image('menu/banner_cpucontrol.png');
+    $imgbin{banner_leveleditor} = add_image('menu/banner_leveleditor.png');
+
     $MENUPOS{xpos_panel} = (640 - $imgbin{void_panel}->width) / 2;
     $MENUPOS{ypos_panel} = (480 - $imgbin{void_panel}->height) / 2;
 
@@ -1664,13 +1679,12 @@ sub init_game() {
     $imgbin{txt_1pmenu_play_random_levels_off} = add_image('menu/txt_play_random_levels_off.png');
     $imgbin{txt_1pmenu_play_random_levels_over} = add_image('menu/txt_play_random_levels_over.png');
 
+    #- net game setup images
+    $imgbin{back_netgame} = add_image('back_netgame.png');
+
+    #- hiscore
     $imgbin{back_hiscores} = add_image('back_hiscores.png');
     $imgbin{hiscore_frame} = add_image('hiscore_frame.png');
-
-    $imgbin{banner_artwork} = add_image('menu/banner_artwork.png');
-    $imgbin{banner_soundtrack} = add_image('menu/banner_soundtrack.png');
-    $imgbin{banner_cpucontrol} = add_image('menu/banner_cpucontrol.png');
-    $imgbin{banner_leveleditor} = add_image('menu/banner_leveleditor.png');
     
     print_step('.'); 
     #- temporarily desactivate the intro storyboard because it's not finished yet
@@ -1739,11 +1753,11 @@ sub grab_key($) {
     } while ($event->type != SDL_KEYDOWN);
 
     #- so that using "capital" letter should work
-    if ($keyp != SDLK_LSHIFT() && $keyp != SDLK_RSHIFT()) {
-        do { $event->wait } while ($event->type != SDL_KEYUP );
+    if (member($keyp, SDLK_LSHIFT(), SDLK_RSHIFT())) {
+        return grab_key($unicode);
+    } else {
+        return $keyp;
     }
-
-    return $keyp;
 }
 
 sub display_highscores() {
@@ -2098,6 +2112,400 @@ sub choose_1p_game_mode() {
     }
 }
 
+sub setup_mp_game() {
+
+    $font = SDL::Font->new("$FPATH/gfx/font2.png");
+
+    my $lineheight = 22;
+    my $startx = 78;
+    my $starty = 30;
+    my $starty_chat = 356;
+    my $starty_players = $starty_chat + $lineheight;
+    my $starty_status = 408;
+
+    my $erase_line = sub {
+        my ($pos) = @_;
+        my $drect = SDL::Rect->new(-width => 640, -height => $lineheight, -x => 0, '-y' => $pos + 5);
+        $imgbin{back_netgame}->blit($drect, $app, $drect);
+    };
+
+    my $print_status = sub {
+        my ($msg, $msg2) = @_;
+        $erase_line->($starty_status);
+        $erase_line->($starty_status + $lineheight);
+        $app->print($startx, $starty_status, $msg);
+        if ($msg2) {
+            $app->print($startx, $starty_status + $lineheight, $msg2);
+        }
+        $app->flip();
+    };
+
+    $imgbin{back_netgame}->blit($apprects{main}, $app, $apprects{main});
+
+
+    #- 1. contact master server
+    $print_status->("CONTACTING MASTER SERVER...");
+    my $serverlist = fb_net::get_server_list();
+    my @servers;
+    if ($serverlist) {
+        foreach my $line (split /\n/, $serverlist) {
+            if ($line =~ /^(\S+) (\S+)$/) {
+                push @servers, { host => $1, port => $2 };
+            } else {
+                print STDERR "Unrecognized line in serverlist:\n\t$line\n";
+            }
+        }
+    } else {
+        $print_status->("UNABLE TO DOWNLOAD SERVER LIST!",
+                        "VERIFY YOUR NETWORK SETUP OR RETRY LATER.");
+        grab_key(0);
+        return;
+    }
+
+
+  choose_server:
+    #- 2. let user choose server
+    $erase_line->($starty_chat);     #- if we return from choose_game
+    $erase_line->($starty_players);  #-
+    my @sorted_servers;
+    my $redraw = sub {
+        my $y = $starty;
+        foreach my $server (@sorted_servers) {
+            $erase_line->($y);
+            if ($server->{selected}) {
+                put_image($malus_gfx{tomate}, 56, $y + (16 - $malus_gfx{tomate}->{height}) / 2);
+            }
+            $app->print($startx, $y, uc($server->{host} . ':' . $server->{port}));
+            $app->print(300, $y, $server->{ping} ? "AVAIL PLAYERS:$server->{players} PING:$server->{ping}"
+                                                 : 'CURRENTLY DOWN!');
+            $y += $lineheight;
+        }
+        $app->flip();
+    };
+
+    my $reping;
+    my $ping = sub {
+        foreach my $server (@servers) {
+            if (!$server->{disabled}) {
+                $reping or $print_status->('CONNECTING TO: ' . uc($server->{host} . ':' . $server->{port}));
+                my $ping = fb_net::connect($server->{host}, $server->{port});
+                if (!$ping) {
+                    $server->{disabled} = 1;
+                } else {
+                    ($server->{players}) = fb_net::list();
+                }
+                $server->{ping} = $ping;
+                fb_net::disconnect();
+            }
+        }
+        my ($down, $available) = partition { $_->{disabled} } @servers;
+        @sorted_servers = ((sort { $a->{ping} <=> $b->{ping} } @$available), @$down);
+    };
+
+    $ping->();
+    if (every { $_->{disabled} } @servers) {
+        $print_status->("ALL SERVERS CURRENTLY DOWN!",
+                        "PLEASE RETRY LATER.");
+        grab_key(0);
+        return;
+    }
+    if (@sorted_servers) {
+        $sorted_servers[0]->{selected} = 1;
+    }
+    $print_status->("PLEASE CHOOSE A SERVER");
+
+    while (1) {
+        $reping++;
+        $reping % (5*20) == 0 and $ping->();
+        $redraw->();
+
+        $event->pump;
+        if ($event->poll != 0) {
+            if ($event->type == SDL_KEYDOWN) {
+                my $k = $event->key_sym;
+
+                if ($k == SDLK_ESCAPE()) {
+                    return;
+
+                } elsif ($k == SDLK_DOWN()) {
+                    if (@sorted_servers) {
+                        each_index {
+                            if ($sorted_servers[$::i]->{selected}
+                                && $::i < @sorted_servers - 1
+                                && !$sorted_servers[$::i+1]->{disabled}) {
+                                $sorted_servers[$::i]->{selected} = 0;
+                                $sorted_servers[$::i+1]->{selected} = 1;
+                                play_sound('menu_change');
+                                goto done;
+                            }
+                        } @sorted_servers;
+                      done:
+                    }
+
+                } elsif ($k == SDLK_UP()) {
+                    if (@sorted_servers && !$sorted_servers[0]->{selected}) {
+                        each_index {
+                            if ($sorted_servers[$::i]->{selected}) {
+                                $sorted_servers[$::i]->{selected} = 0;
+                                $sorted_servers[$::i-1]->{selected} = 1;
+                                play_sound('menu_change');
+                            }
+                        } @sorted_servers;
+                    }
+
+                } elsif ($k == SDLK_RETURN() || $k == SDLK_KP_ENTER()) {
+                    play_sound('menu_selected');
+                    goto choose_game;
+                }
+            }
+        } else {
+            fb_c_stuff::fbdelay(50);
+        }
+    }
+
+
+  choose_game:
+    my $y = $starty;
+    foreach (@servers) {
+        $erase_line->($y);
+        $y += $lineheight;
+    }
+    $print_status->('');
+
+    foreach my $server (@servers) {
+        if ($server->{selected}) {
+            my $ping = fb_net::connect($server->{host}, $server->{port});
+            $ping or goto choose_server;
+            last;
+        }
+    }
+
+    #- 3. let user choose/create game
+    my @actions = ({ name => 'CHAT', action => 'CHAT', selected => 1 },
+                   { name => 'CREATE NEW GAME', action => 'CREATE' });
+    my $curaction = sub {
+        my $cur;
+        each_index {
+            if ($actions[$::i]->{selected}) {
+                $cur = $::i;
+                goto curaction_done;
+            }
+        } @actions;
+      curaction_done:
+        return $actions[$cur];
+    };
+    my ($free, @games) = fb_net::list();
+    foreach (@games) {
+        @$_ < 5 and push @actions, { name => 'JOIN: ' . uc(join(',', @$_)), action => 'JOIN', join => $_->[0] };
+    }
+
+
+    my $typed_chat;
+    my @displayed_messages;
+    my $add_status_msg = sub {
+        $displayed_messages[0] = $displayed_messages[1];
+        $displayed_messages[1] = uc($_[0]);
+    };
+    my $erase2 = sub {
+        my $y = $starty;
+        foreach my $action (@actions) {
+            $erase_line->($y);
+            $y += $lineheight;
+        }
+    };
+    my $redraw2 = sub {
+        $erase2->();
+        my $y = $starty;
+        foreach my $action (@actions) {
+            if ($action->{selected}) {
+                put_image($malus_gfx{tomate}, 56, $y + (16 - $malus_gfx{tomate}->{height}) / 2);
+            }
+            $app->print($startx, $y, $action->{name});
+            $y += $lineheight;
+        }
+        $erase_line->($starty_chat);
+        if ($curaction->()->{name} eq 'CHAT') {
+            $app->print($startx, $starty_chat, "CHAT: $typed_chat");
+        }
+        $print_status->(@displayed_messages);
+        $app->flip();
+    };
+
+    my $verify_command = sub {
+        my ($sent_command) = @_;
+        my ($command, $message);
+        do {
+            my $msg = fb_net::readline_();
+            ($command, $message) = fb_net::decode_msg($msg);
+            # FIXME: should not drop PUSH messages
+        } while ($command eq 'PUSH');
+        if ($command ne $sent_command || $message ne 'OK') {
+            return $message;
+        } else {
+            return;
+        }
+    };
+    my $mynick = $ENV{USER};
+    my $state = 'game_select';
+    my $need4status;
+
+    while (1) {
+        $redraw2->();
+
+        $event->pump;
+        if ($event->poll != 0) {
+            if ($event->type == SDL_KEYDOWN) {
+                my $k = $event->key_sym;
+
+                if ($k == SDLK_ESCAPE()) {
+                    goto choose_server;
+
+                } elsif ($k == SDLK_DOWN()) {
+                    each_index {
+                        if ($actions[$::i]->{selected}
+                            && $::i < @actions - 1) {
+                            $actions[$::i]->{selected} = 0;
+                            $actions[$::i+1]->{selected} = 1;
+                            play_sound('menu_change');
+                            goto done2;
+                        }
+                    } @actions;
+                  done2:
+
+                } elsif ($k == SDLK_UP()) {
+                    if (!$actions[0]->{selected}) {
+                        each_index {
+                            if ($actions[$::i]->{selected}) {
+                                $actions[$::i]->{selected} = 0;
+                                $actions[$::i-1]->{selected} = 1;
+                                play_sound('menu_change');
+                            }
+                        } @actions;
+                    }
+
+                } elsif ($k == SDLK_RETURN() || $k == SDLK_KP_ENTER()) {
+                    if ($curaction->()->{action} eq 'CHAT') {
+                        play_sound('menu_selected');
+                        fb_net::send_("TALK ($mynick) $typed_chat");
+                        $typed_chat = '';
+                    }
+
+                    if (member($curaction->()->{action}, 'CREATE', 'JOIN')) {
+                        my $suffix = 1;
+                        my $answer;
+                        while (1) {
+                            my $message = $curaction->()->{action} eq 'CREATE' ? "CREATE $mynick"
+                                                                               : "JOIN ".$curaction->()->{join}." $mynick";
+                            fb_net::send_($message);
+                            $answer = $verify_command->($curaction->()->{action});
+                            if ($answer eq 'NICK_IN_USE') {
+                                $suffix++;
+                                $mynick = "$ENV{USER}$suffix";
+                            } else {
+                                last;
+                            }
+                        }
+                        if ($answer) {
+                            $add_status_msg->("ERROR in ".$curaction->()->{join}.": $answer");
+                        } else {
+                            $erase2->();
+                            @actions = ({ name => 'CHAT', action => 'CHAT', selected => 1 },
+                                        { name => 'START GAME!', action => 'START' });
+                            $state = 'wait_for_start';
+                            $need4status = 1;
+                            @displayed_messages = ();
+                        }
+                    }
+                            
+                    if ($curaction->()->{action} eq 'START') {
+                        fb_net::send_('START');
+                        my $answer = $verify_command->('START');
+                        if ($answer) {
+                            $add_status_msg->("CAN'T START GAME: $answer");
+                        } else {
+                            goto start_game;
+                        }
+                    }
+                    
+
+                } else {
+                    if ($curaction->()->{action} eq 'CHAT') {
+                        play_sound('typewriter');
+                        $k = keysym_to_char($k);
+                        my %trivial_map = ('SPACE' => ' ', 'PERIOD' => '.', 'COMMA' => ',',
+                                           'QUOTE' => "'", 'SLASH' => '/', 'MINUS' => '-');
+                        $k = $trivial_map{$k} || $k;
+                        length($k) == 1 && length($typed_chat) < 32 and $typed_chat .= $k;
+                        member($k, qw(BACKSPACE DELETE LEFT)) and $typed_chat =~ s/.$//;
+                    }
+                }
+
+            }
+        } else {
+            fb_c_stuff::fbdelay(50);
+        }
+
+        while (my $msg = fb_net::readline_ifdata()) {
+            my ($command, $message) = fb_net::decode_msg($msg);
+            if ($command eq 'PUSH') {
+                if ($message =~ /^TALK: (.*)/) {
+                    $add_status_msg->($1);
+                } elsif ($message =~ /^JOINED: (.*)/) {
+                    $add_status_msg->("*** $1 JOINED THE GAME!");
+                    $need4status = 1;
+                } elsif ($message =~ /^PARTED: (.*)/) {
+                    $add_status_msg->("*** $1 LEFT THE GAME...");
+                    $need4status = 1;
+                } elsif ($message =~ /^START: (.*)/) {
+                    $add_status_msg->("*** $1 STARTED THE GAME AND IS WAITING!");
+                    $need4status = 1;
+                } else {
+                    print "unrecognized message received: $msg\n";
+                }
+            } else {
+                print "non-push received!? $msg\n";
+            }
+        }
+
+        if ($need4status) {
+            fb_net::send_('STATUS');
+            my $answer = $verify_command->('STATUS');
+            $erase_line->($starty_players);
+            $app->print($startx, $starty_players, "PLAYERS: ".uc($answer));
+            $need4status = 0;
+        }
+    }
+
+
+  start_game:
+    my $y = $starty;
+    foreach (@servers) {
+        $erase_line->($y);
+        $y += $lineheight;
+    }
+    $print_status->('WAITING FOR OTHER PLAYERS...');
+
+    @PLAYERS = qw(p1);
+    my @mappings = fb_net::wait4start();
+    foreach my $m (@mappings) {
+        my $player;
+        if ($m->{nick} eq $mynick) {
+            $player = 'p1';
+        } else {
+            foreach my $p (qw(rp1 rp2 rp3 rp4)) {
+                exists $pdata{$p}{id} or $player ||= $p;
+            }
+            push @PLAYERS, $player;
+        }
+        $pdata{$player}{id} = $m->{id};
+        $pdata{$player}{nick} = $m->{nick};
+        $pdata{id2p}{$m->{id}} = $player;
+        print "$player is: $m->{nick}\n";
+    }
+
+    return 1;
+}
+
 sub new_game_once {
 
     if (!$direct) {
@@ -2110,6 +2518,9 @@ sub new_game_once {
                        entries => [ { 'q' => 'Y OR N?', 'a' => \$answ, f => 'ONE_CHAR' } ],
                        outro => 'ENJOY THE GAME!' }) or return;
             $chainreaction = $answ == SDLK_y; #;;
+        }
+        if (is_mp_game()) {
+            setup_mp_game() or return;
         }
     }
     play_music(is_1p_game() ? 'main1p' : 'main2p');
@@ -2502,8 +2913,9 @@ sub menu {
     my ($MENU_XPOS, $MENU_FIRSTY, $SPACING) = (56, 30, 51);
     my %menu_ypos = ( '1pgame' =>      $MENU_FIRSTY,
 		      '2pgame' =>      $MENU_FIRSTY +     $SPACING,
-		      'editor' =>      $MENU_FIRSTY + 2 * $SPACING,
-		      'fullscreen' =>  $MENU_FIRSTY + 3 * $SPACING,
+		      'netgame'=>      $MENU_FIRSTY + 2 * $SPACING,
+		      'editor' =>      $MENU_FIRSTY + 3 * $SPACING,
+#		      'fullscreen' =>  $MENU_FIRSTY + 3 * $SPACING,
 		      'graphics' =>    $MENU_FIRSTY + 4 * $SPACING,
 		      'sound' =>       $MENU_FIRSTY + 5 * $SPACING,
 		      'keys' =>        $MENU_FIRSTY + 6 * $SPACING,
@@ -2513,11 +2925,13 @@ sub menu {
 				       run => sub { @PLAYERS = ('p1'); $levels{current} = 1; $chainreaction = 0; $time_1pgame = $app->ticks } },
 			 '2pgame' => { pos => 2, type => 'rungame',
 				       run => sub { @PLAYERS = qw(p1 p2); $levels{current} = undef; } },
-			 'editor' => { pos => 3, type => 'run', run => sub { $launch_editor->(); } },
-			 'fullscreen' => { pos => 4, type => 'toggle',
-					   act => sub { $fullscreen = 1; $app->fullscreen },
-					   unact => sub { $fullscreen = 0; $app->fullscreen },
-					   value => $fullscreen },
+			 'netgame'=> { pos => 3, type => 'rungame',
+				       run => sub { @PLAYERS = qw(p1 rp1); $levels{current} = undef; } },
+			 'editor' => { pos => 4, type => 'run', run => sub { $launch_editor->(); } },
+#			 'fullscreen' => { pos => 4, type => 'toggle',
+#					   act => sub { $fullscreen = 1; $app->fullscreen },
+#					   unact => sub { $fullscreen = 0; $app->fullscreen },
+#					   value => $fullscreen },
 			 'graphics' => { pos => 5, type => 'range', valuemin => 1, valuemax => 3,
 					 change => sub { $graphics_level = $_[0] }, value => $graphics_level },
 			 'sound' => { pos => 6, type => 'toggle',
@@ -2737,7 +3151,6 @@ while (1) {
     eval { maingame() };
     if ($@) {
 	if ($@ =~ /^new_game/) {
-            die;
 	    new_game();
 	} elsif ($@ =~ /^quit/) {
             do { menu() } while (!new_game_once());

@@ -82,6 +82,12 @@ sub readline_ifdata() {
     }
 }
 
+sub decode_msg($) {
+    my ($msg) = @_;
+    my ($command, $message) = $msg =~ m|^FB/\d+\.\d+ (\w+): (.*)|;
+    return ($command, $message);
+}
+
 sub wait4($) {
     my ($regex) = @_;
 
@@ -94,7 +100,12 @@ sub wait4($) {
             if ($msg =~ /$regex/) {
                 return $msg;
             } else {
-                print "Server said:\n\t$msg";
+                my ($command, $message) = fb_net::decode_msg($msg);
+                if ($command eq 'PUSH') {
+                    print "$message\n";
+                } else {
+                    print "Unexpected message from server: $msg";
+                }
             }
         }
     }
@@ -159,7 +170,7 @@ sub join($$) {
 sub connect($$) {
     my ($host, $port) = @_;
 
-    $sock = IO::Socket::INET->new(PeerAddr => $host, PeerPort => $port, Proto => 'tcp', Timeout => 10);
+    $sock = IO::Socket::INET->new(PeerAddr => $host, PeerPort => $port, Proto => 'tcp', Timeout => 5);
     if (!$sock) {
         print STDERR "Couldn't connect to $host:$port:\n\t$@\n";
         return;
@@ -200,12 +211,78 @@ sub connect($$) {
     }
 
     $ping = sprintf("%3.1f", ($t1-$t0)*1000);
-    print "$host:$port is a protocol $remote_major.$remote_minor FB server with a ping of ${ping}ms.\n";
+#    print "$host:$port is a protocol $remote_major.$remote_minor FB server with a ping of ${ping}ms.\n";
 
     return $ping;
 }
 
+sub disconnect() {
+    $sock and close $sock;
+}
 
+sub http_download($) {
+    my ($url) = @_;
+
+    my ($host, $port, $path) = $url =~ m,^http://([^/:]+)(?::(\d+))?(/\S*)?$,;
+    $port ||= 80;
+
+    $sock = IO::Socket::INET->new(PeerAddr => $host, PeerPort => $port, Proto => 'tcp', Timeout => 10);
+    if (!$sock) {
+        print STDERR "Couldn't connect to $host:$port:\n\t$@\n";
+        return;
+    }
+    $sock->autoflush;
+
+    print $sock join("\015\012" =>
+                     "GET $path HTTP/1.0",
+		     "Host: $host:$port",
+		     "User-Agent: Frozen-Bubble/$proto_major.$proto_minor",
+		     "", "");
+
+    #- skip until empty line
+    my ($now, $last, $buf, $tmp) = 0;
+    my $read = sub {
+        my $got = sysread($sock, $buf, 1);
+        if ($got == 0) {
+            die 'eof';
+        } elsif (!defined($got)) {
+            die "sys error: $!";
+        } else {
+            $tmp .= $buf;
+        };
+    };
+    eval {
+        do {
+            $last = $now;
+            &$read; &$read if $buf =~ /\015/;
+            $now = $buf =~ /\012/;
+        } until $now && $last;
+        
+        if ($tmp =~ /^(.*\b(\d+)\b.*)/ && $2 == 200) {
+            $tmp = '';
+            while (1) { &$read }
+        } else {
+            die "HTTP error: $1\n";
+        }
+    };
+
+    if ($@ =~ /^eof/) {
+        return $tmp;
+    } else {
+        print STDERR "http_download: $@\n";
+        return;
+    }
+}
+
+sub get_server_list() {
+    my @masters = qw(http://www.frozen-bubble.org/serverlist
+                     http://frozen-bubble.sourceforge.net/serverlist
+                     http://people.mandrakesoft.com/~gc/serverlist);
+    foreach (@masters) {
+        my $serverlist = http_download($_);
+        $serverlist and return $serverlist;
+    }
+}
 
 #- in game operations
 

@@ -2,7 +2,7 @@
 #
 #                          Frozen-Bubble
 #
-# Copyright (c) 2000, 2001, 2002, 2003 Guillaume Cottenceau <guillaume.cottenceau at free.fr>
+# Copyright (c) 2000, 2001, 2002, 2003, 2004 The Frozen-Bubble Team
 #
 # Sponsored by MandrakeSoft <http://www.mandrakesoft.com/>
 #
@@ -29,8 +29,8 @@ use vars qw(@ISA @EXPORT $FPATH $FBLEVELS $colourblind %POS_1P %POS_2P %POS_MP $
             $PI);
 @ISA = qw(Exporter);
 @EXPORT = qw($FPATH $colourblind $FBLEVELS %POS_1P %POS_2P %POS_MP $BUBBLE_SIZE $ROW_SIZE
-             $PI cat_ member difference2 any even odd sqr to_bool to_int if_ chomp_
-             fold_left output append_to_file min max backtrace basename cp_af all);
+             $PI cat_ member difference2 any every even odd sqr to_bool to_int if_ chomp_
+             fold_left output append_to_file min max backtrace basename cp_af all partition);
 
 $FPATH = '@DATADIR@/frozen-bubble';
 
@@ -147,6 +147,11 @@ sub any(&@) {
     $f->($_) and return 1 foreach @_;
     0;
 }
+sub every(&@) {
+    my $f = shift;
+    $f->($_) or return 0 foreach @_;
+    1;
+}
 sub even { $_[0] % 2 == 0 }
 sub odd  { $_[0] % 2 == 1 }
 sub sqr  { $_[0] * $_[0] }
@@ -215,6 +220,14 @@ sub all {
     closedir F;
 
     @l;
+}
+sub partition(&@) {
+    my $f = shift;
+    my (@a, @b);
+    foreach (@_) {
+	$f->($_) ? push(@a, $_) : push(@b, $_);
+    }
+    \@a, \@b;
 }
 sub chomp_ { my @l = map { my $l = $_; chomp $l; $l } @_; wantarray() ? @l : $l[0] }
 # -=-=---=-=---=-=---=-=---=-=---=-=---=-=---=-=---=-=---=-=---=-=---=-=---=-=---=-=---=-=--
