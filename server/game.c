@@ -484,7 +484,7 @@ void process_msg_prio(int fd, char* msg, ssize_t len)
                         }
                 }
         } else {
-                l0("Internal error");
+                l1("Internal error: could not find game by fd: %d", fd);
                 exit(1);
         }
 }
