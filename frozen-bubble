@@ -1169,7 +1169,6 @@ sub cleanup_player_bubbles {
 
 sub win {
     my ($player) = @_;
-    play_sound('lose');
     $pdata{$player}{score}++;
     $pdata{$player}{ping_right}{state} = 'win';
     $pdata{$player}{ping_right}{img} = 0;
@@ -1216,9 +1215,12 @@ sub lose {
                                     $POS{$player}{top_limit}); #- TOFIX
             @{$sticked_bubbles{$player}} = ();
             play_sound('cancel');
+        } else {
+            play_sound('lose');
         }
 
     } else {
+        play_sound('lose');
         $pdata{state} = "lost $player";
         is_2p_game() and win($player eq 'p1' ? 'p2' : 'p1');
     }
@@ -1637,6 +1639,7 @@ sub update_game() {
                                 if ($result =~ /^(\S+) newgame/) {
                                     print "$pdata{$pdata{id2p}{$msg->{id}}}{nick} newgame\n";
                                     $waitingnum--;
+                                    play_sound('newroot');
                                 } elsif ($result =~ /^(\S+) other/) {
                                     print "quitting this game: $1 sends post-finish non-newgame $msg->{msg}\n";
                                     die 'quit';
