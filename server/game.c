@@ -307,6 +307,9 @@ static void stop_game(int fd)
                 g->status = GAME_STATUS_OPEN;
                 send_ok(fd, "STOP");
                 snprintf(stop_msg, sizeof(stop_msg), ok_stop, g->players_nick[j]);
+                for (j = 0; j < g->players_number; j++)
+                        if (g->players_conn[j] != fd)
+                                send_line_log_push(g->players_conn[j], stop_msg);
                 player_part_game(fd);
         } else {
                 l0("Internal error");
