@@ -170,6 +170,10 @@ static void handle_incoming_data_generic(gpointer data, gpointer user_data, int 
                                         player_part_game(fd);
                                         new_conns = g_list_remove(new_conns, data);
                                         player_disconnects(fd);
+                                        if (lan_game_mode && g_list_length(new_conns) == 0) {
+                                                l0("LAN game mode server exiting on last client exit.");
+                                                exit(0);
+                                        }
                                 }
                         }
                 }
