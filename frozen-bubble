@@ -1090,10 +1090,10 @@ sub handle_game_events() {
                 iter_players { #- need iter_players to get the small graphics change for free
                     if ($::p eq $player) {
                         calc_real_pos($b, $::p);
+                        push @{$malus_bubble{$player}}, $b;
+                        malus_change(-1, $player);
                     }
                 };
-                push @{$malus_bubble{$player}}, $b;
-                malus_change(-1, $player);
             }
         }
         fb_net::delay_messages(@keep_messages);
