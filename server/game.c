@@ -330,7 +330,7 @@ void player_disconnects(int fd)
 
 static void talk_serverwide_aux(gpointer data, gpointer user_data)
 {
-        send_line_log(GPOINTER_TO_INT(data), user_data, "TALK");
+        send_line_log_push(GPOINTER_TO_INT(data), user_data);
 }
 
 static void talk(int fd, char* msg)
