@@ -137,7 +137,7 @@ void cleanup_player(int fd)
                 // inform other players
                 snprintf(parted_msg, sizeof(parted_msg), ok_player_parted, g->players_nick[i]);
                 for (i = 0; i < g->players_number; i++)
-                        if (i != fd)
+                        if (g->players_conn[i] != fd)
                                 send_line_log_push(g->players_conn[i], parted_msg);
                 // remove parting player from game
                 free(g->players_nick[fd]);
