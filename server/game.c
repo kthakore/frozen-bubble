@@ -61,6 +61,25 @@ static char fl_line_unrecognized[] = "MISSING_FB_PROTOCOL_TAG";
 static char fl_proto_mismatch[] = "INCOMPATIBLE_PROTOCOL";
 
 
+// debugging helper
+static void show_games_aux(gpointer data, gpointer user_data)
+{
+        const struct game* g = data;
+        int i;
+        printf("game:%p;status:%d;nbplayers:%d;[", user_data, g->status, g->players_number);
+        for (i = 0; i < g->players_number; i++) {
+                printf("%d-%s", g->players_conn[i], g->players_nick[i]);
+                if (i < g->players_number - 1)
+                        printf(",");
+        }
+        printf("]\n");
+}
+void show_games(void)
+{
+        g_list_foreach(games, show_games_aux, games);
+}
+
+
 static char* list_game(const struct game * g)
 {
         char list_game_str[10000] = "";
@@ -272,7 +291,7 @@ void cleanup_player(int fd)
 
                 // remove parting player from game
                 free(g->players_nick[i]);
-                for (j = g->players_number - 2; j >= i; j--) {
+                for (j = i; j < g->players_number - 1; j++) {
                         g->players_conn[j] = g->players_conn[j + 1];
                         g->players_nick[j] = g->players_nick[j + 1];
                 }
