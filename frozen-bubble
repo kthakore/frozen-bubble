@@ -2241,8 +2241,8 @@ sub smg_choose_server(@) {
                 put_image($malus_gfx{tomate}, 56, $y);
             }
             $app->print($smg_startx, $y, uc($server->{host} . ':' . $server->{port}));
-            $app->print(300, $y, $server->{ping} ? "AVAIL PLAYERS:$server->{players} PING:$server->{ping}"
-                                                 : 'CURRENTLY DOWN!');
+            $app->print(300, $y, $server->{ping} ? "AVAIL PLAYERS:$server->{players}   PING:$server->{ping}"
+                                                 : '*** CURRENTLY DOWN ***');
             $y += $smg_lineheight;
         }
         $app->flip();
@@ -2435,7 +2435,7 @@ sub smg_choose_game() {
         }
         smg_erase_line($smg_starty_chat);
         if ($curaction->()->{name} eq 'CHAT') {
-            $app->print($smg_startx, $smg_starty_chat, "CHAT: $typed_chat");
+            $app->print($smg_startx, $smg_starty_chat, "SAY: $typed_chat");
         }
         smg_printstatus(@smg_status_messages);
         $app->flip();
@@ -2505,7 +2505,7 @@ sub smg_choose_game() {
                             }
                         }
                         if ($answer) {
-                            smg_add_status_msg("ERROR in ".$curaction->()->{join}.": $answer");
+                            smg_add_status_msg("*** ERROR in ".$curaction->()->{join}.": $answer");
                         } else {
                             $erase->();
                             @actions = ({ name => 'CHAT', action => 'CHAT', selected => 1 },
@@ -2520,7 +2520,7 @@ sub smg_choose_game() {
                         fb_net::send_('START');
                         my $answer = smg_verify_command('START');
                         if ($answer) {
-                            smg_add_status_msg("CAN'T START GAME: $answer");
+                            smg_add_status_msg("*** CAN'T START GAME: $answer");
                         } else {
                             goto start_game;
                         }
@@ -2578,7 +2578,7 @@ sub smg_choose_game() {
             fb_net::send_('STATUS');
             my $answer = smg_verify_command('STATUS');
             smg_erase_line($smg_starty_players);
-            $app->print($smg_startx, $smg_starty_players, "PLAYERS: ".uc($answer));
+            $app->print($smg_startx, $smg_starty_players, "PLAYERS IN GAME: ".uc($answer));
             $need4status = 0;
         }
     }
@@ -2617,7 +2617,7 @@ sub smg_start_game($) {
                     fb_net::send_('STOP');
                     my $answer = smg_verify_command('STOP');
                     if ($answer) {
-                        smg_add_status_msg("CAN'T STOP GAME: $answer");
+                        smg_add_status_msg("*** CAN'T STOP GAME: $answer");
                     } else {
                         return 0;
                     }
