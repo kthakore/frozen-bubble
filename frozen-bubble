@@ -65,7 +65,7 @@ use FBLE;
 $| = 1;
 
 $TARGET_ANIM_SPEED = 20;        # number of milliseconds that should last between two animation frames
-$LAUNCHER_SPEED = 0.03;		# speed of rotation of launchers
+$LAUNCHER_SPEED = 0.03;	        # speed of rotation of launchers
 $BUBBLE_SPEED = 10;		# speed of movement of launched bubbles
 $MALUS_BUBBLE_SPEED = 30;	# speed of movement of "malus" launched bubbles
 $CANON_ROTATIONS_NB = 40;       # number of rotations of images for canon (should be consistent with gfx/shoot/Makefile)
@@ -149,12 +149,12 @@ local $_ = "@ARGV";
 /-l\s*(\d+)/ || /-level\s*(\d+)/ and $levels{current} = $1, $direct = 1, @PLAYERS = ('p1');
 /-ms\s*(\S+)/ || /-masterserver\s*(\S+)/ and $fb_net::masterserver = $1;
 /-gs\s*(\S+):(\S+)/ || /-gameserver\s*(\S+):(\S+)/ and $gameserver = "$1:$2";
-/-mp(\S+),(\S+)/ and do {
+/-mp\s*(\S+)\s+(\S+)\s+(\S+)/ and do {
     my $mynick = $$;
-    my $nb = $2;
-    my $ping = fb_net::connect($1, 1511);
-    if (!$ping) {
-        die "can't proceed then\n";
+    my $nb = $3;
+    my $ret = fb_net::connect($1, $2);
+    if (!$ret->{ping}) {
+        die "Can't proceed: $ret->{failure}\n";
     }
     my ($free, @games) = fb_net::list();
     my $ok;
@@ -370,12 +370,20 @@ sub switch_image_on_background($$$;$) {
     return $save;
 }
 
-sub add_image($) {
-    my $file = "$FPATH/gfx/$_[0]";
+sub add_image_file($) {
+    my ($file) = @_;
     my $img = SDL::Surface->new(-name => $file);
     $img->{-surface} or die "FATAL: Couldn't load `$file' into a SDL::Surface.\n";
     add_default_rect($img);
     return $img;
+}
+
+sub add_image($) {
+    return add_image_file("$FPATH/gfx/$_[0]");
+}
+
+sub add_images {
+    return map { add_image_file($_) } glob("$FPATH/gfx/$_[0]");
 }
 
 sub add_bubble_image($) {
@@ -1421,7 +1429,7 @@ sub update_game() {
                 ($angle{$::p} < 0.1) and $angle{$::p} = 0.1;
                 ($angle{$::p} > $PI-0.1) and $angle{$::p} = $PI-0.1;
                 if (is_mp_game() && ($actions{$::p}{left} || $actions{$::p}{right} || $actions{$::p}{center})) {
-                    fb_net::gsend("angle:$angle{$::p}");
+                    fb_net::gsend(sprintf("angle:%.2f", $angle{$::p}));
                 }
                 $pdata{$::p}{hurry}++;
                 if ($pdata{$::p}{hurry} > $TIME_HURRY_WARN) {
@@ -1454,7 +1462,7 @@ sub update_game() {
                     if (is_mp_game()) {
                         if (is_local_player($::p)) {
                             $pdata{$::p}{nextcolor} = int(rand(@bubbles_images));
-                            fb_net::gsend("fire:$angle{$::p}:$pdata{$::p}{nextcolor}");
+                            fb_net::gsend(sprintf("fire:%.3f:$pdata{$::p}{nextcolor}", $angle{$::p}));
                         }
                         $actions{$::p}{mp_fire} = 0;
                     } else {
@@ -1588,16 +1596,15 @@ sub update_game() {
                     $pdata{$::p}{ping_right}{state} = 'normal';
                 }
                 if ($pdata{$::p}{ping_right}{state} eq 'right' && !($actions{$::p}{right})
-                    || $pdata{$::p}{ping_right}{state} eq 'left' && !($actions{$::p}{left})
-                    || $pdata{$::p}{ping_right}{state} eq 'action' && ($pdata{$::p}{ping_right}{actionlatency}++ > 5)) {
+                    || $pdata{$::p}{ping_right}{state} eq 'left' && !($actions{$::p}{left})) {
                     $pdata{$::p}{ping_right}{state} = 'normal';
                 }
                 $actions{$::p}{right} and $pdata{$::p}{ping_right}{state} = 'right';
                 $actions{$::p}{left} and $pdata{$::p}{ping_right}{state} = 'left';
                 if ($actions{$::p}{hadfire}) {
                     $pdata{$::p}{ping_right}{state} = 'action';
+                    $pdata{$::p}{ping_right}{img} = 0;
                     $actions{$::p}{hadfire} = 0;
-                    $pdata{$::p}{ping_right}{actionlatency} = 0;
                 }
                 if ($pdata{$::p}{ping_right}{state} eq 'normal' && ($pdata{$::p}{ping_right}{movelatency}++ > 10)) {
                     $pdata{$::p}{ping_right}{movelatency} = 0;
@@ -1840,6 +1847,14 @@ sub update_game() {
 	    $pdata{$::p}{ping_right}{img} == @{$pinguin{$::p}{$state}}
 	      and $pdata{$::p}{ping_right}{img} = $pinguin{$::p}{"$state".'_roll_back_index'};
 	}
+	if (member($pdata{$::p}{ping_right}{state}, qw(action))) {
+	    my $state = $pdata{$::p}{ping_right}{state};
+	    $pdata{$::p}{ping_right}{img}++;
+	    if ($pdata{$::p}{ping_right}{img} == @{$pinguin{$::p}{$state}}) {
+                $pdata{$::p}{ping_right}{state} = 'normal';
+                $pdata{$::p}{ping_right}{img} = 0;
+            }
+        }
 
     };
 
@@ -2029,7 +2044,7 @@ sub init_game() {
 	$pinguin{$::p}{sleep} = [ add_image("pinguins/sleep_$::p.png") ];
 	$pinguin{$::p}{left} = [ add_image("pinguins/move_left_$::p.png") ];
 	$pinguin{$::p}{right} = [ add_image("pinguins/move_right_$::p.png") ];
-	$pinguin{$::p}{action} = [ add_image("pinguins/action_$::p.png") ];
+	$pinguin{$::p}{action} = [ add_images("pinguins/action_$::p*.png") ];
 	$pinguin{$::p}{win} = [ map { add_image("pinguins/$::p"."_win_$_.png") } qw(1 2 3 4 5 6 7 8 6) ];
 	$pinguin{$::p}{win_roll_back_index} = 4;
 	$pinguin{$::p}{lose} = [ map { add_image("pinguins/$::p"."_loose_$_.png") } qw(1 2 3 4 5 6 7 8 9) ];
@@ -2513,9 +2528,9 @@ sub smg_choose_server(@) {
                 put_image($malus_gfx{tomate}, 56, $y);
             }
             $app->print($smg_startx, $y, uc($server->{host} . ':' . $server->{port}));
-            $app->print(300, $y, $server->{ping} == -1 ? '*** INCOMPATIBLE SERVER ***'
-                               : $server->{ping} == 0  ? '*** CURRENTLY DOWN ***'
-                                                       : "AVAIL PLAYERS:$server->{players}   PING:$server->{ping}");
+            $app->print(300, $y, $server->{disabled} ? '*** '.uc($server->{disabled}).' ***'
+                                                     : "AVAIL PLAYERS:$server->{players}  PING:$server->{ping}");
+                                                     
             $y += $smg_lineheight;
         }
         $app->flip();
@@ -2526,13 +2541,13 @@ sub smg_choose_server(@) {
         foreach my $server (@servers) {
             if (!$server->{disabled}) {
                 $reping or smg_printstatus('CONNECTING TO: ' . uc($server->{host} . ':' . $server->{port}));
-                my $ping = fb_net::connect($server->{host}, $server->{port});
-                if ($ping <= 0) {
-                    $server->{disabled} = 1;
+                my $ret = fb_net::connect($server->{host}, $server->{port});
+                if (!$ret->{ping}) {
+                    $server->{disabled} = $ret->{failure};
                 } else {
                     ($server->{players}) = fb_net::list();
                 }
-                $server->{ping} = $ping;
+                $server->{ping} = $ret->{ping};
                 fb_net::disconnect();
             }
         }
@@ -2543,7 +2558,7 @@ sub smg_choose_server(@) {
 
     $ping->();
     if (every { $_->{disabled} } @servers) {
-        smg_printstatus("ALL SERVERS CURRENTLY DOWN!",
+        smg_printstatus("NO AVAILABLE SERVER.",
                         "PLEASE RETRY LATER.");
         grab_key(0);
         return;
@@ -2617,8 +2632,8 @@ sub smg_choose_server(@) {
 
     foreach my $server (@servers) {
         if ($server->{selected}) {
-            my $ping = fb_net::connect($server->{host}, $server->{port});
-            $ping or return smg_choose_server(@servers);
+            fb_net::connect($server->{host}, $server->{port});
+            fb_net::isconnected() or return smg_choose_server(@servers);
             last;
         }
     }
@@ -3007,7 +3022,8 @@ sub setup_mp_game() {
         @smg_status_messages = ();
         if ($gameserver) {
             my ($host, $port) = $gameserver =~ /(\S+):(\S+)/;
-            fb_net::connect($host, $port) or goto master_server;
+            fb_net::connect($host, $port);
+            fb_net::isconnected() or goto master_server;
         } else {
           master_server:
             #- 1. contact master server
@@ -3159,6 +3175,8 @@ sub maingame() {
     handle_graphics(\&put_image);
     $frame++;
 
+#    print "rects:\n";
+#    printf "\t%d:%d %d:%d %s\n", $_->x, $_->y, $_->width, $_->height, $_->{from} foreach @update_rects;
     $app->update(@update_rects);
     @update_rects = ();
 
@@ -3703,3 +3721,6 @@ while (1) {
 	}
     }
 }
+
+
+#$lag pour billes malus

@@ -243,29 +243,32 @@ sub connect($$) {
 
     $sock = IO::Socket::INET->new(PeerAddr => $host, PeerPort => $port, Proto => 'tcp', Timeout => 5);
     if (!$sock) {
-        print STDERR "Couldn't connect to $host:$port:\n\t$@\n";
-        return;
+        return { failure => 'Server is down' };
     }
     $sock->autoflush;
 
     my $flags = $sock->fcntl(F_GETFL, 0);
     if (!$flags) {
-        print STDERR "Couldn't fcntl socket from $host:$port:\n\t$@\n";
         disconnect();
-        return;
+        return { failure => 'Server is mad' };
     }
     $flags = $sock->fcntl(F_SETFL, $flags|O_NONBLOCK);
     if (!$flags) {
-        print STDERR "Couldn't fcntl socket from $host:$port:\n\t$@\n";
-        return;
+        disconnect();
+        return { failure => 'Server is crazy' };
     }
 
     my $msg = readline_();
     my ($remote_major, $remote_minor, $isready) = $msg =~ m|^FB/(\d+).(\d+) (.*)|;
-    if ($isready !~ /SERVER_READY/) {
-        print STDERR "$host:$port not an FB server. Server said:\n\t$msg\n";
+    if ($isready ne 'PUSH: SERVER_READY') {
         disconnect();
-        return;
+        if ($isready eq 'PUSH: SERVER_IS_FULL') {
+            return { failure => 'Server is full' };
+        } elsif ($isready eq 'PUSH: SERVER_IS_OVERLOADED') {
+            return { failure => 'Server overloaded' };
+        } else {
+            return { failure => 'Not an FB server' };
+        }
     }
 
     $ping = 1;
@@ -275,25 +278,25 @@ sub connect($$) {
     my $t1 = gettimeofday;
     if ($msg =~ /INCOMPATIBLE_PROTOCOL/) {
         disconnect();
-        return -1;
+        return { failure => 'Incompatible server' };
     } elsif ($msg !~ /PONG/) {
         print STDERR "$host:$port answer to PING was not recognized. Server said:\n\t$msg\n";
         disconnect();
-        return;
+        return { failure => 'Incompatible server' };
     }
 
-    $ping = sprintf("%3.1f", ($t1-$t0)*1000);
-#    print "$host:$port is a protocol $remote_major.$remote_minor FB server with a ping of ${ping}ms.\n";
+    $ping = sprintf("%.1f", ($t1-$t0)*1000);
 
     $current_host = $host;
     $current_port = $port;
-    return $ping;
+    return { ping => $ping };
 }
 
 sub reconnect() {
     if (defined($current_host) && defined($current_port)) {
         disconnect();
-        return fb_net::connect($current_host, $current_port) != 0;
+        my $ret = fb_net::connect($current_host, $current_port);
+        return exists $ret->{ping};
     }
 }
 
