@@ -81,9 +81,16 @@ static void show_games_aux(gpointer data, gpointer user_data)
 {
         const struct game* g = data;
         int i;
-        printf("game:%p;status:%d;nbplayers:%d[", g, g->status, g->players_number);
+        printf("game:%p;status:%s;nbplayers:%d[",
+               g,
+               g->status == GAME_STATUS_OPEN ? "open" : g->status == GAME_STATUS_PLAYING ? "playing" : g->status == GAME_STATUS_STARTING ? "starting" : "???",
+               g->players_number);
         for (i = 0; i < g->players_number; i++) {
-                printf("fd:%d-nick:%s-starting:%d", g->players_conn[i], g->players_nick[i], g->players_starting[i]);
+                if (g->status == GAME_STATUS_STARTING) {
+                        printf("%d-%s-%s", g->players_conn[i], g->players_nick[i], g->players_starting[i] ? "starting" : "chatting");
+                } else {
+                        printf("%d-%s", g->players_conn[i], g->players_nick[i]);
+                }
                 if (i < g->players_number - 1)
                         printf(",");
         }
