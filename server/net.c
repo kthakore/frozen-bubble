@@ -52,7 +52,7 @@ static char* servername = NULL;
 
 static char ok_generic[] = "OK";
 
-static char fl_missing_lf[] = "MISSING_LF";
+static char fl_client_nolf[] = "NO_LF_WITHIN_TOO_MUCH_DATA";
 static char fl_server_full[] = "SERVER_IS_FULL";
 static char fl_server_overloaded[] = "SERVER_IS_OVERLOADED";
 
@@ -72,6 +72,10 @@ static int udp_server_socket = -1;
 
 static GList * conns = NULL;
 static GList * conns_prio = NULL;
+
+#define INCOMING_DATA_BUFSIZE 4096
+static char incoming_data_buffers[256][INCOMING_DATA_BUFSIZE] __attribute__((aligned(INCOMING_DATA_BUFSIZE)));
+static int incoming_data_buffers_count[256];
 
 /* send line adding the protocol in front of the supplied msg */
 static ssize_t send_line(int fd, char* msg)
@@ -131,15 +135,31 @@ static void handle_incoming_data_generic(gpointer data, gpointer user_data, int 
 
         if (FD_ISSET((fd = GPOINTER_TO_INT(data)), (fd_set *) user_data)) {
                 int conn_terminated = 0;
-                char buf[100000];
-
-                ssize_t len = recv(fd, buf, sizeof(buf) - 1, 0);
+                char buf[INCOMING_DATA_BUFSIZE];
+                ssize_t len;
+                ssize_t offset = incoming_data_buffers_count[fd];
+                incoming_data_buffers_count[fd] = 0;
+                memcpy(buf, incoming_data_buffers[fd], offset);
+                len = recv(fd, buf + offset, INCOMING_DATA_BUFSIZE - 1 - offset, 0);
                 if (len <= 0) {
                         l1("[%d] Peer shutdown", fd);
                         if (len == -1)
                                 l2("[%d] This happened on a system error: %s", fd, strerror(errno));
                         goto conn_terminated;
                 } else {
+                        len += offset;
+                        // If we don't have a newline, it means we are seeing a partial send. Buffer
+                        // them, since we can't synchronously wait for newline now or else we'd offer a
+                        // nice easy shot for DOS (and beside, this would slow down the whole rest).
+                        if (buf[len-1] != '\n') {
+                                if (len == INCOMING_DATA_BUFSIZE - 1) {
+                                        send_line_log_push(fd, fl_client_nolf);
+                                        goto conn_terminated;
+                                }
+                                memcpy(incoming_data_buffers[fd], buf, len);
+                                incoming_data_buffers_count[fd] = len;
+                                return;
+                        }
                         /* string operations will need a NULL conn_terminated string */
                         buf[len] = '\0';
 
@@ -148,20 +168,15 @@ static void handle_incoming_data_generic(gpointer data, gpointer user_data, int 
                                 process_msg_prio(fd, buf, len + 1);
                                 prio_processed = 1;
                         } else {
-                                if (!strchr(buf, '\n')) {
-                                        send_line_log(fd, fl_missing_lf, buf);
-                                        goto conn_terminated;
-                                } else {
-                                        char * eol;
-                                        char * line = buf;
-                                        /* loop (to handle case when network gives us several lines at once) */
-                                        while (!conn_terminated && (eol = strchr(line, '\n'))) {
-                                                eol[0] = '\0';
-                                                if (strlen(line) > 0 && eol[-1] == '\r')
-                                                        eol[-1] = '\0';
-                                                conn_terminated = process_msg(fd, line);
-                                                line = eol + 1;
-                                        }
+                                char * eol;
+                                char * line = buf;
+                                /* loop (to handle case when network gives us several lines at once) */
+                                while (!conn_terminated && (eol = strchr(line, '\n'))) {
+                                        eol[0] = '\0';
+                                        if (strlen(line) > 0 && eol[-1] == '\r')
+                                                eol[-1] = '\0';
+                                        conn_terminated = process_msg(fd, line);
+                                        line = eol + 1;
                                 }
 
                                 if (conn_terminated) {
@@ -304,6 +319,8 @@ void connections_manager(void)
                                         send_line_log_push(fd, greets_msg);
                                         conns = g_list_append(conns, GINT_TO_POINTER(fd));
                                         player_connects(fd);
+                                        memset(incoming_data_buffers[fd], 0, sizeof(incoming_data_buffers[fd]));  // force Linux to allocate now
+                                        incoming_data_buffers_count[fd] = 0;
                                         calculate_list_games();
                                 }
                         }
