@@ -1116,12 +1116,13 @@ sub handle_game_events() {
 }
 
 sub print_scores($) {
-    my ($surface) = @_;  #- TODO all this function has hardcoded coordinates
-    my $drect = SDL::Rect->new(-width => 120, -height => 30, -x => 260, '-y' => 428);
-    $background_orig->blit($drect, $surface, $drect);
-    push @update_rects, $drect;
+    my ($surface) = @_;  
     iter_players_ {  #- sometimes called from within a iter_players so...
-	$surface->print($POS{$::p_}{scores}{x}-SDL_TEXTWIDTH($pdata{$::p_}{score})/2, $POS{$::p_}{scores}{'y'}, $pdata{$::p_}{score});
+        my $xpos = $POS{$::p_}{scores}{x}-SDL_TEXTWIDTH($pdata{$::p_}{score})/2;
+        my $drect = SDL::Rect->new(-width => 30, -height => 30, -x => $xpos - 5, '-y' => $POS{$::p_}{scores}{'y'});
+        $background_orig->blit($drect, $surface, $drect);
+        push @update_rects, $drect;
+	$surface->print($xpos, $POS{$::p_}{scores}{'y'}, $pdata{$::p_}{score});
 	!is_local_player($::p_) and $surface->print($POS{$::p_}{nick}{x}-SDL_TEXTWIDTH($pdata{$::p_}{nick})/2, $POS{$::p_}{nick}{'y'}, $pdata{$::p_}{nick});
     };
 }
