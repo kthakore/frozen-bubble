@@ -390,6 +390,8 @@ sub add_bubble_image($) {
 
 sub iter_players(&) {
     my ($f, @p) = @_;
+    my $bt = backtrace();
+    $bt =~ /\nmain::iter_players\b/ and die "iter_players: assert failed -- iter_players can't be called recursively sorry\n$bt";
     @p == 0 and @p = @PLAYERS;
     local $::p;
     foreach $::p (@p) {
@@ -404,6 +406,8 @@ sub iter_players(&) {
 }
 sub iter_players_(&) {  #- so that I can do an iter_players_ from within an iter_players
     my ($f) = @_;
+    my $bt = backtrace();
+    $bt =~ /\nmain::iter_players_\b/ and die "iter_players_: assert failed -- iter_players_ can't be called recursively sorry\n$bt";
     local $::p_;
     foreach $::p_ (@PLAYERS) {
 	&$f;
@@ -1316,37 +1320,31 @@ sub update_lost {
 
     return if odd($frame);
 
-    my $still_sticked;
-
-    iter_players { #- need iter_players to get the small graphics change for free if we're in multiplayer
-        if ($::p eq $player) {
-            if (@{$sticked_bubbles{$player}}) {
-                my $b = shift @{$sticked_bubbles{$player}};
-                put_image_to_background($bubbles_anim{lose}, --$b->{'x'}, --$b->{'y'});
-                
-                if (@{$sticked_bubbles{$player}} == 0) {
-                    if ($graphics_level == 1 && $pdata{state} =~ /^lost (.*)/ && !is_1p_game()) {
-                        put_image($imgbin{win}{$player eq 'p1' ? 'p2' : 'p1'}, $POS{centerpanel}{x}, $POS{centerpanel}{'y'});
-                    }
-                    if (is_1p_game()) {
-                        put_image($imgbin{lose}, $POS{centerpanel}{'x'}, $POS{centerpanel}{'y'});
-                        play_sound('noh');
-                    }
-                }
-                
-                if (!@{$sticked_bubbles{$player}}) {
-                    $event->pump while $event->poll != 0;
-                }
-            } else {
-                if (!is_mp_game()) {
-                    $event->pump;
-                    die 'new_game' if $event->poll != 0 && $event->type == SDL_KEYDOWN;
-                }
+    if (@{$sticked_bubbles{$player}}) {
+        my $b = shift @{$sticked_bubbles{$player}};
+        put_image_to_background($bubbles_anim{lose}, --$b->{'x'}, --$b->{'y'});
+        
+        if (@{$sticked_bubbles{$player}} == 0) {
+            if ($graphics_level == 1 && $pdata{state} =~ /^lost (.*)/ && !is_1p_game()) {
+                put_image($imgbin{win}{$player eq 'p1' ? 'p2' : 'p1'}, $POS{centerpanel}{x}, $POS{centerpanel}{'y'});
+            }
+            if (is_1p_game()) {
+                put_image($imgbin{lose}, $POS{centerpanel}{'x'}, $POS{centerpanel}{'y'});
+                play_sound('noh');
             }
         }
-        $still_sticked += @{$sticked_bubbles{$::p}};
-    };
+        
+        if (!@{$sticked_bubbles{$player}}) {
+            $event->pump while $event->poll != 0;
+        }
+    } else {
+        if (!is_mp_game()) {
+            $event->pump;
+            die 'new_game' if $event->poll != 0 && $event->type == SDL_KEYDOWN;
+        }
+    }
 
+    my $still_sticked = sum(map { @{$sticked_bubbles{$_}} } @PLAYERS);
     if ($pdata{state} eq 'won ' && $still_sticked == 1) {
         put_image($imgbin{void_panel}, $MENUPOS{xpos_panel}, $MENUPOS{ypos_panel});
         my $message = "DRAW GAME!";
