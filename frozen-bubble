@@ -639,7 +639,6 @@ sub find_bubble_group($) {
 
 sub stick_bubble($$$$$) {
     my ($bubble, $xpos, $ypos, $player, $count_for_root) = @_;
-    print "[stick_bubble] $player $xpos:$ypos\n";
     my @falling;
     my $need_redraw = 0;
     @{$bubble->{neighbours}} = grep { bubble_next_to($_->{cx}, $_->{cy}, $xpos, $ypos, $player) } @{$sticked_bubbles{$player}};
@@ -1036,7 +1035,20 @@ sub handle_game_events() {
     }
 
     if (is_mp_game()) {
-        foreach my $m (fb_net::grecv()) {
+        # TODO stick and malustick must be serialized so we need to "lock" next ones while current one not executed
+        my @messages = fb_net::grecv();
+        #- in order to keep ordering of actions executed in update_game, we must tolerate only one action at a time
+        my @keep_messages;
+        my $check_action_possible = sub {
+            my ($m, $player) = @_;
+            if ($actions{$player}{mp_fire} || $actions{$player}{mp_stick} || any { $_->{mp_stick} } @{$malus_bubble{$player}}) {
+                push @keep_messages, $m;
+                return 0;
+            } else {
+                return 1;
+            }
+        };
+        foreach my $m (@messages) {
             my $player = $pdata{id2p}{$m->{id}};
             my ($command, $params) = $m->{msg} =~ /(\w+):(.*)/;
             if ($command eq 'ping') {
@@ -1046,17 +1058,29 @@ sub handle_game_events() {
                     $::p eq $player and lose($::p);
                 };
             } elsif ($command eq 'fire') {
-                $actions{$player}{mp_fire} = 1;
-                ($angle{$player}, $pdata{$player}{nextcolor}) = $params =~ /(.+):(.+)/;
+                if ($check_action_possible->($m, $player)) {
+                    $actions{$player}{mp_fire} = 1;
+                    ($angle{$player}, $pdata{$player}{nextcolor}) = $params =~ /(.+):(.+)/;
+                }
             } elsif ($command eq 'angle') {
                 $angle{$player} = $params;
             } elsif ($command eq 'stick') {
-                #- we can't rely on locally animated launched bubble, to ensure game
-                #- consistency we transmit stick positions
-                $actions{$player}{mp_stick} = 1;
-                print "receive stick command for $player: $params\n";
-                ($pdata{$player}{stickcx}, $pdata{$player}{stickcy}, my $newrootcols) = $params =~ /(.+):(.+):(.*)/;
-                @{$pdata{$player}{nextcolors}} = split / /, $newrootcols;
+                if ($check_action_possible->($m, $player)) {
+                    #- we can't rely on locally animated launched bubble, to ensure game
+                    #- consistency we transmit stick positions
+                    $actions{$player}{mp_stick} = 1;
+                    ($pdata{$player}{stickcx}, $pdata{$player}{stickcy}, $pdata{$player}{stickcol}, my $newrootcols) = $params =~ /(.+):(.+):(.+):(.*)/;
+                    @{$pdata{$player}{nextcolors}} = split / /, $newrootcols;
+                }
+            } elsif ($command eq 'malustick') {
+                if ($check_action_possible->($m, $player)) {
+                    my ($cx, $cy) = $params =~ /(.+):(.+)/;
+                    foreach my $b (@{$malus_bubble{$player}}) {
+                        if ($b->{'cx'} == $cx && $b->{'stick_y'} == $cy) {
+                            $b->{mp_stick} = 1;
+                        }
+                    }
+                }
             } elsif ($command eq 'malus') {
                 my ($num, $cx, $cy, $sticky) = $params =~ /(.+):(.+):(.+):(.+)/;
                 my $b = create_bubble_given_img_num($num);
@@ -1072,6 +1096,7 @@ sub handle_game_events() {
                 malus_change(-1, $player);
             }
         }
+        fb_net::delay_messages(@keep_messages);
         $frame % 10 == 0 and fb_net::gsend("ping:");
         iter_distant_players {
             if ($pdata{$::p}{state} ne 'lost' && $pdata{$::p}{ping} + 40 < $frame) {
@@ -1314,17 +1339,17 @@ sub update_game() {
                     }
                     if ($actions{$::p}{mp_stick}) {
                         $actions{$::p}{mp_stick} = 0;
-                        print "executing remote stick command for $::p: $pdata{$::p}{stickcx}:$pdata{$::p}{stickcy}\n";
+                        if (get_bubble_num($launched_bubble{$::p}{img}) ne $pdata{$::p}{stickcol}) {
+                            print ">>>>>>>>>>>>>>>>> color inconsistency, I bet I will backtrace soon!\n";
+                        }
                         stick_bubble($launched_bubble{$::p}, $pdata{$::p}{stickcx}, $pdata{$::p}{stickcy}, $::p, 1);
                         $launched_bubble{$::p} = undef;
                     }
                     if (is_local_player($::p)) {
                         if ($launched_bubble{$::p}->{'y'} <= $POS{$::p}{top_limit} + $pdata{$::p}{newrootlevel} * $ROW_SIZE) {
                             my ($cx, $cy) = get_array_closest_pos($launched_bubble{$::p}->{x}, $launched_bubble{$::p}->{'y'}, $::p);
-                            if (is_mp_game()) {
-                                print "\tsend stick command top-limit: $cx:$cy\n";
-                                fb_net::gsend("stick:$cx:$cy:@{$pdata{$::p}{nextcolors}}");
-                            }
+                            my $col = get_bubble_num($launched_bubble{$::p}->{img});
+                            is_mp_game() and fb_net::gsend("stick:$cx:$cy:$col:@{$pdata{$::p}{nextcolors}}");
                             stick_bubble($launched_bubble{$::p}, $cx, $cy, $::p, 1);
                             $launched_bubble{$::p} = undef;
                         } else {
@@ -1333,10 +1358,8 @@ sub update_game() {
                                     my ($cx, $cy) = get_array_closest_pos(($launched_bubble{$::p}->{'x_old'}+$launched_bubble{$::p}->{'x'})/2,
                                                                           ($launched_bubble{$::p}->{'y_old'}+$launched_bubble{$::p}->{'y'})/2,
                                                                           $::p);
-                                    if (is_mp_game()) {
-                                        print "\tsend stick command collision: $cx:$cy\n";
-                                        fb_net::gsend("stick:$cx:$cy:@{$pdata{$::p}{nextcolors}}");
-                                    }
+                                    my $col = get_bubble_num($launched_bubble{$::p}->{img});
+                                    is_mp_game() and fb_net::gsend("stick:$cx:$cy:$col:@{$pdata{$::p}{nextcolors}}");
                                     stick_bubble($launched_bubble{$::p}, $cx, $cy, $::p, 1);
                                     $launched_bubble{$::p} = undef;
                                     
@@ -1456,9 +1479,13 @@ sub update_game() {
 	my $malus_end = [];
 	foreach my $b (@{$malus_bubble{$::p}}) {
 	    $b->{'y'} -= $MALUS_BUBBLE_SPEED;
-	    if (get_array_yclosest($b->{'y'}, $::p) <= $b->{'stick_y'}) {
+	    if ($b->{mp_stick}
+                || is_local_player($::p) && get_array_yclosest($b->{'y'}, $::p) <= $b->{'stick_y'}) {
 		real_stick_bubble($b, $b->{'cx'}, $b->{'stick_y'}, $::p, 0);
 		push @$malus_end, $b;
+                if (is_mp_game() && is_local_player($::p)) {
+                    fb_net::gsend("malustick:$b->{cx}:$b->{stick_y}");
+                }
 	    }
 	}
 	@$malus_end and @{$malus_bubble{$::p}} = difference2($malus_bubble{$::p}, $malus_end);
@@ -2482,15 +2509,19 @@ sub smg_choose_game() {
             if ($command eq 'PUSH') {
                 if ($message =~ /^TALK: (.*)/) {
                     $add_status_msg->($1);
+                    play_sound('typewriter');
                 } elsif ($message =~ /^JOINED: (.*)/) {
                     $add_status_msg->("*** $1 JOINED THE GAME!");
                     $need4status = 1;
+                    play_sound('newroot_solo');
                 } elsif ($message =~ /^PARTED: (.*)/) {
                     $add_status_msg->("*** $1 LEFT THE GAME...");
                     $need4status = 1;
+                    play_sound('newroot_solo');
                 } elsif ($message =~ /^START: (.*)/) {
                     $add_status_msg->("*** $1 STARTED THE GAME AND IS WAITING!");
                     $need4status = 1;
+                    play_sound('newroot');
                 } else {
                     print "unrecognized message received: $msg\n";
                 }
