@@ -1356,7 +1356,8 @@ sub display_levelset_list_browser {
 	    }
         }
         $list_browser_highlight_offset = $file_highlight_offset;
-        display_levelset_screenshot();
+        $start_level = 1;
+        show_selected_level();
     } else {
         $list_browser_highlight_offset = $file_highlight_offset;
     }
