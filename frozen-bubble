@@ -1487,22 +1487,37 @@ sub update_game() {
                         if (get_bubble_num($launched_bubble{$::p}) ne $pdata{$::p}{stickcol}) {
                             print ">>>>>>>>>>>>>>>>> color inconsistency, I bet I will backtrace soon!\n";
                         }
+                        if (defined($pdata{$::p}{localstickcx})) {
+                            print "<<< mp_stick: $pdata{$::p}{stickcx}:$pdata{$::p}{stickcy} <-> $pdata{$::p}{localstickcx}:$pdata{$::p}{localstickcy}\n";
+                            if ($pdata{$::p}{stickcx} != $pdata{$::p}{localstickcx} || $pdata{$::p}{stickcy} != $pdata{$::p}{localstickcy}) {
+                                print ">>>>>>>>>>>>>>>>> stick inconsistency!\n";
+                            }
+                            $pdata{$::p}{localstickcx} = $pdata{$::p}{localstickcy} = undef;
+                        }
                         stick_bubble($launched_bubble{$::p}, $pdata{$::p}{stickcx}, $pdata{$::p}{stickcy}, $::p, 1);
                         $launched_bubble{$::p} = undef;
-                    }
-                    if (is_local_player($::p)) {
-                        if ($launched_bubble{$::p}->{'y'} <= $POS{$::p}{top_limit} + $pdata{$::p}{newrootlevel} * $ROW_SIZE) {
-                            my ($cx, $cy) = get_array_closest_pos($launched_bubble{$::p}->{x}, $launched_bubble{$::p}->{'y'}, $::p);
+                    } elsif ($launched_bubble{$::p}->{'y'} <= $POS{$::p}{top_limit} + $pdata{$::p}{newrootlevel} * $ROW_SIZE) {
+                        my ($cx, $cy) = get_array_closest_pos($launched_bubble{$::p}->{x}, $launched_bubble{$::p}->{'y'}, $::p);
+                        if (is_local_player($::p)) {
                             my $col = get_bubble_num($launched_bubble{$::p});
                             is_mp_game() and fb_net::gsend("stick:$cx:$cy:$col:@{$pdata{$::p}{nextcolors}}");
                             stick_bubble($launched_bubble{$::p}, $cx, $cy, $::p, 1);
                             $launched_bubble{$::p} = undef;
                         } else {
-                            foreach (@{$sticked_bubbles{$::p}}) {
-                                if (is_collision($launched_bubble{$::p}, $_->{'x'}, $_->{'y'})) {
-                                    my ($cx, $cy) = get_array_closest_pos(($launched_bubble{$::p}->{'x_old'}+$launched_bubble{$::p}->{'x'})/2,
-                                                                          ($launched_bubble{$::p}->{'y_old'}+$launched_bubble{$::p}->{'y'})/2,
-                                                                          $::p);
+                            if (!defined($pdata{$::p}{localstickcx})) {
+                                print ">> local stick calc: $cx:$cy\n";
+                                $pdata{$::p}{localstickcx} = $cx;
+                                $pdata{$::p}{localstickcy} = $cy;
+
+                            }
+                        }
+                    } else {
+                        foreach (@{$sticked_bubbles{$::p}}) {
+                            if (is_collision($launched_bubble{$::p}, $_->{'x'}, $_->{'y'})) {
+                                my ($cx, $cy) = get_array_closest_pos(($launched_bubble{$::p}->{'x_old'}+$launched_bubble{$::p}->{'x'})/2,
+                                                                      ($launched_bubble{$::p}->{'y_old'}+$launched_bubble{$::p}->{'y'})/2,
+                                                                      $::p);
+                                if (is_local_player($::p)) {
                                     my $col = get_bubble_num($launched_bubble{$::p});
                                     is_mp_game() and fb_net::gsend("stick:$cx:$cy:$col:@{$pdata{$::p}{nextcolors}}");
                                     stick_bubble($launched_bubble{$::p}, $cx, $cy, $::p, 1);
@@ -1542,8 +1557,14 @@ sub update_game() {
                                         }
                                     }
                                     
-                                    last;
+                                } else {
+                                    if (!defined($pdata{$::p}{localstickcx})) {
+                                        print ">> local stick calc: $cx:$cy\n";
+                                        $pdata{$::p}{localstickcx} = $cx;
+                                        $pdata{$::p}{localstickcy} = $cy;
+                                    }
                                 }
+                                last;
                             }
                         }
                     }
@@ -1666,9 +1687,7 @@ sub update_game() {
             iter_players {
                 $still_needwait += @{$sticked_bubbles{$::p}};
             };
-            print "       - : still_needwait: $still_needwait\n";
             if (!$still_needwait) {
-                print "       - : pumping for event\n";
                 $event->pump;
                 if ($event->poll != 0 && $event->type == SDL_KEYDOWN) {
                     print "key pressed in won state\n";
