@@ -1113,6 +1113,7 @@ sub print_scores($) {
     push @update_rects, $drect;
     iter_players_ {  #- sometimes called from within a iter_players so...
 	$surface->print($POS{$::p_}{scores}{x}-SDL_TEXTWIDTH($pdata{$::p_}{score})/2, $POS{$::p_}{scores}{'y'}, $pdata{$::p_}{score});
+	!is_local_player($::p_) and $surface->print($POS{$::p_}{nick}{x}-SDL_TEXTWIDTH($pdata{$::p_}{nick})/2, $POS{$::p_}{nick}{'y'}, $pdata{$::p_}{nick});
     };
 }
 
@@ -2626,7 +2627,7 @@ sub smg_start_game($) {
                             push @PLAYERS, $player;
                         }
                         $pdata{$player}{id} = $m->{id};
-                        $pdata{$player}{nick} = $m->{nick};
+                        $pdata{$player}{nick} = uc($m->{nick});
                         $pdata{id2p}{$m->{id}} = $player;
                     }
                     return 1;
