@@ -2585,9 +2585,8 @@ sub smg_choose_server(@) {
             if ($server->{selected}) {
                 put_image($malus_gfx{tomate}, 56, $y);
             }
-            $app->print($smg_startx, $y, uc($server->{host} . ':' . $server->{port}));
-            $app->print(300, $y, $server->{disabled} ? '*** '.uc($server->{disabled}).' ***'
-                                                     : "AVAIL PLAYERS:$server->{players}  PING:$server->{ping}");
+            $app->print($smg_startx, $y, uc($server->{name}));
+            $app->print(320, $y, "AVAIL PLAYERS:$server->{players}  PING:$server->{ping}");
                                                      
             $y += $smg_lineheight;
         }
@@ -2605,12 +2604,15 @@ sub smg_choose_server(@) {
                 } else {
                     ($server->{players}) = fb_net::list();
                 }
-                $server->{ping} = $ret->{ping};
+                put_in_hash($server, $ret);
                 fb_net::disconnect();
             }
         }
         my ($down, $available) = partition { $_->{disabled} } @servers;
-        @sorted_servers = ((sort { $a->{ping} <=> $b->{ping} } @$available), @$down);
+        @sorted_servers = sort { $a->{ping} <=> $b->{ping} } @$available;
+        if (@sorted_servers > 14) {
+            $#sorted_servers = 13;
+        }
         $redraw->();
     };
 
