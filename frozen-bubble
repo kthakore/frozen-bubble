@@ -1658,7 +1658,6 @@ sub update_game() {
             };
             check_mp_connection();
         }
-        print "wonstate: winner=$winner explodingbubbles(winner)=".int(@{$exploding_bubble{$winner}})."\n";
 	if (!$winner || @{$exploding_bubble{$winner}} == 0) {
             my $still_needwait = 0;
             #- still wait if some bubbles are not yet "frozen"
