@@ -1625,6 +1625,7 @@ sub update_game() {
                 }
             } elsif ($result =~ /^(\S+) other/) {
                 print "finished state - $1 sends post-finish non-newgame $msg->{msg} - passing hand to won\n";
+                $pdata{$pdata{id2p}{$msg->{id}}}{left} = 1;
                 win($supposed_winner_player);
                 $pdata{state} = "won $supposed_winner_player";
             } elsif ($result !~ /^(\S+) gamemsg/) {
@@ -1707,6 +1708,7 @@ sub update_game() {
                                     $redraw_waiting->();
                                 } elsif ($result =~ /^(\S+) other/) {
                                     print "quitting this game: $1 sends post-finish non-newgame $msg->{msg}\n";
+                                    $pdata{$pdata{id2p}{$msg->{id}}}{left} = 1;
                                     die 'quit';
                                 }
                             }
@@ -3000,11 +3002,14 @@ sub setup_mp_game() {
         }
             
     } else {
+        if (any { $pdata{$_}{left} } @PLAYERS) {
+            smg_add_status_msg('*** GAME FINISHED, LEAVER(S): ' . join(', ', map { if_($pdata{$_}{left}, $pdata{$_}{nick}) } @PLAYERS));
+        }
         @PLAYERS = reverse ssort { $pdata{$_}{score} } @PLAYERS;
         if ($pdata{$PLAYERS[0]}{score} > $pdata{$PLAYERS[1]}{score}) {
-            smg_add_status_msg("*** GAME FINISHED, WINNER: $pdata{$PLAYERS[0]}{nick}");
+            smg_add_status_msg("*** WINNER: $pdata{$PLAYERS[0]}{nick}");
         } else {
-            smg_add_status_msg('*** GAME FINISHED, DRAW GAME!');
+            smg_add_status_msg('*** DRAW GAME!');
         }
         smg_add_status_msg('*** ' . join(', ', map { "$pdata{$_}{nick}: $pdata{$_}{score}" } @PLAYERS));
     }
