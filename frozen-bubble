@@ -1023,23 +1023,28 @@ sub handle_game_events() {
                 push @update_rects, $apprects{main};
                 
             } elsif (is_mp_game() && $pdata{p1}{state} eq 'chatting') {
-                        
-                if ($keypressed == SDLK_RETURN() || $keypressed == SDLK_KP_ENTER()) {
+
+                my $update_say = sub {
+                    my $y_typingchat = 325;
+                    erase_line($y_typingchat, $background, $MENUPOS{xpos_panel} + 10, $imgbin{void_panel}->width - 20);
+                    $app->print($MENUPOS{xpos_panel} + 10, $y_typingchat, "SAY: $pdata{$::p}{typed_chat}");
+                    push @update_rects, $apprects{main};
+                };
+
+                if (($keypressed == SDLK_RETURN() || $keypressed == SDLK_KP_ENTER()) && $pdata{$::p}{typed_chat}) {
                     my $message = "($pdata{p1}{nick}) $pdata{$::p}{typed_chat}";
                     fb_net::gsend("talk:$message");
                     add_loserz_chat_msg($message);
                     $pdata{$::p}{typed_chat} = '';
+                    $update_say->();
                     print "sent chat <$message>\n";
                 } else {
                     $pdata{$::p}{typed_chat} = update_typed_chat($pdata{$::p}{typed_chat}, $keypressed, 25);
-                    my $y_typingchat = 325;
-                    erase_line($y_typingchat, $background, $MENUPOS{xpos_panel} + 10, $imgbin{void_panel}->width - 20);
                     my $target_message = "($pdata{p1}{nick}) $pdata{$::p}{typed_chat}";
                     if (SDL_TEXTWIDTH($target_message) > $imgbin{void_panel}->width - 20) {
                         $pdata{$::p}{typed_chat} =~ s/.$//;
                     }
-                    $app->print($MENUPOS{xpos_panel} + 10, $y_typingchat, "SAY: $pdata{$::p}{typed_chat}");
-                    push @update_rects, $apprects{main};
+                    $update_say->();
                     print "updated chat\n";
                 }
 
