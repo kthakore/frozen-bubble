@@ -44,7 +44,7 @@ use vars qw($TARGET_ANIM_SPEED $BUBBLE_SIZE $ROW_SIZE $LAUNCHER_SPEED $BUBBLE_SP
             $shooter $sdl_flags $mixer $mixer_enabled $music_disabled $sfx_disabled @playlist %sound %music %pinguin %canon
             $graphics_level @update_rects $CANON_ROTATIONS_NB %malus_bubble %falling_bubble %exploding_bubble %malus_gfx
             %sticking_bubble $version $time %imgbin $TIME_HURRY_WARN $TIME_HURRY_MAX $TIMEOUT_PINGUIN_SLEEP $FREE_FALL_CONSTANT
-            $direct @PLAYERS %levels $display_on_app_disabled $total_time $time_1pgame $fullscreen $rcfile $hiscorefile $HISCORES
+            $direct @PLAYERS @ALL_PLAYERS %levels $display_on_app_disabled $total_time $time_1pgame $fullscreen $rcfile $hiscorefile $HISCORES
             $lev_number $playermalus $loaded_levelset $direct_levelset $chainreaction %chains %history %img_mini $frame $sock);
 
 use Data::Dumper;
@@ -80,6 +80,7 @@ $sdl_flags = SDL_ANYFORMAT | SDL_HWSURFACE | SDL_DOUBLEBUF | SDL_HWACCEL | SDL_A
 $mixer = 0;
 $graphics_level = 3;
 @PLAYERS = qw(p1 p2);
+@ALL_PLAYERS = qw(p1 p2 rp1 rp2 rp3 rp4);
 $playermalus = 0;
 $chainreaction = 0;
 
@@ -435,6 +436,10 @@ sub is_leader() {
 sub is_local_player($) {
     my ($player) = @_;
     $player !~ /rp/;
+}
+sub is_distant_player($) {
+    my ($player) = @_;
+    $player =~ /rp/;
 }
 
 sub mp_propagate($$) {
@@ -1022,11 +1027,9 @@ sub handle_game_events() {
 	}
 
 	if ($event->type == SDL_KEYDOWN && $event->key_sym == SDLK_ESCAPE) {
-            is_mp_game() and fb_net::gsend("leave:");
 	    die 'quit';
 	}
         if ($event->type == SDL_QUIT) {
-            is_mp_game() and fb_net::gsend("leave:");
             exit 0;
         }
     }
@@ -1065,8 +1068,8 @@ sub handle_game_events() {
             } elsif ($command eq 'leave') {
                 iter_players { #- need iter_players to get the small graphics change for free
                     if ($::p eq $player) {
-                        lose($::p);
                         $pdata{$::p}{left} = 1;
+                        lose($::p);
                     }
                 };
             } elsif ($command eq 'fire') {
@@ -1178,8 +1181,6 @@ sub lose {
         $pdata{$player}{state} = 'lost';
         my @living = living_players();
         if (@living == 1) {
-            my $winnernick = $pdata{$living[0]}{nick};
-            fb_net::gsend("finished:$winnernick");
             if (any { $pdata{$_}{left} } @PLAYERS) {
                 #- if some players have left, directly go to won state
                 win($living[0]);
@@ -1187,11 +1188,9 @@ sub lose {
             } else {
                 #- tentatively suppose we've found the winner, but we need to confirm it by network
                 #- first, in rare case of two last players dying at the same time
+                my $winnernick = $pdata{$living[0]}{nick};
+                fb_net::gsend("finished:$winnernick");
                 $pdata{state} = "finished $living[0]:$winnernick 0";
-                $pdata{$_}{still_game_messages} = 0 foreach @PLAYERS;
-                iter_distant_players {
-                    $pdata{$::p}{still_game_messages} = 1;
-                };
             }
         }
     } else {
@@ -1887,7 +1886,7 @@ sub init_game() {
     #- $imgbin{bubble} = add_image('intro/txt_bubble.png');
     #- $imgbin{intro_penguin_imgs}->{$_} = add_image("intro/intro_$_.png") foreach 1..19;
 
-    local @PLAYERS = qw(p1 p2 rp1 rp2 rp3 rp4);  #- load all images even if -so commandline option was passed
+    local @PLAYERS = @ALL_PLAYERS;  #- load all images even if -so commandline option was passed
     iter_players {
 	$imgbin{hurry}{$::p} = add_image("hurry_$::p.png");
 	$pinguin{$::p}{normal} = [ map { add_image($_) } ("pinguins/base_$::p.png", map { "pinguins/base_$::p"."_extra_0$_.png" } (1..3)) ];
@@ -2109,9 +2108,6 @@ sub ask_from($) {
 
 sub new_game() {
 
-    if (is_mp_game()) {
-    }
-
     $display_on_app_disabled = 1;
 
     $TIME_APPEARS_NEW_ROOT = 11;
@@ -2156,7 +2152,13 @@ sub new_game() {
 	$pdata{$::p}{ping_right}{state} = 'normal';
 	$apprects{$::p} = SDL::Rect->new('-x' => $POS{$::p}{left_limit}, '-y' => $POS{$::p}{top_limit},
 					 -width => $POS{$::p}{right_limit}-$POS{$::p}{left_limit}, -height => $POS{$::p}{'initial_bubble_y'}-$POS{$::p}{top_limit});
+
+        if (is_distant_player($::p)) {
+            $pdata{$::p}{left} = 0;
+            $pdata{$::p}{still_game_messages} = 1;
+        }
     };
+
     print_scores($background);
 
     is_1p_game() and print_compressor();
@@ -2815,14 +2817,15 @@ sub smg_start_game($) {
                         $msg = $rest;
                         push @mappings, { id => $id, nick => $nick };
                     }
-                    delete $pdata{$_}{id} foreach qw(rp1 rp2 rp3 rp4);
+                    delete $pdata{$_}{id} foreach @ALL_PLAYERS;
                     foreach my $m (@mappings) {
                         my $player;
                         if ($m->{nick} eq $mynick) {
                             $player = 'p1';
                         } else {
-                            foreach my $p (qw(rp1 rp2 rp3 rp4)) {
-                                exists $pdata{$p}{id} or $player ||= $p;
+                            foreach (@ALL_PLAYERS) {
+                                /rp/ or next;
+                                exists $pdata{$_}{id} or $player ||= $_;
                             }
                             push @PLAYERS, $player;
                         }
@@ -2890,7 +2893,7 @@ sub setup_mp_game() {
 sub new_game_once {
 
     #- we don't really know how many net players can be.. so let's clear this up hardly
-    $pdata{$_}{score} = 0 foreach qw(p1 p2 rp1 rp2 rp3 rp4);
+    $pdata{$_}{score} = 0 foreach @ALL_PLAYERS;
 
     if (!$direct) {
         if (is_1p_game()) {
