@@ -639,6 +639,7 @@ sub find_bubble_group($) {
 
 sub stick_bubble($$$$$) {
     my ($bubble, $xpos, $ypos, $player, $count_for_root) = @_;
+    print "[stick_bubble] $player $xpos:$ypos\n";
     my @falling;
     my $need_redraw = 0;
     @{$bubble->{neighbours}} = grep { bubble_next_to($_->{cx}, $_->{cy}, $xpos, $ypos, $player) } @{$sticked_bubbles{$player}};
@@ -1053,6 +1054,7 @@ sub handle_game_events() {
                 #- we can't rely on locally animated launched bubble, to ensure game
                 #- consistency we transmit stick positions
                 $actions{$player}{mp_stick} = 1;
+                print "receive stick command for $player: $params\n";
                 ($pdata{$player}{stickcx}, $pdata{$player}{stickcy}, my $newrootcols) = $params =~ /(.+):(.+):(.*)/;
                 @{$pdata{$player}{nextcolors}} = split / /, $newrootcols;
             } elsif ($command eq 'malus') {
@@ -1312,13 +1314,17 @@ sub update_game() {
                     }
                     if ($actions{$::p}{mp_stick}) {
                         $actions{$::p}{mp_stick} = 0;
+                        print "executing remote stick command for $::p: $pdata{$::p}{stickcx}:$pdata{$::p}{stickcy}\n";
                         stick_bubble($launched_bubble{$::p}, $pdata{$::p}{stickcx}, $pdata{$::p}{stickcy}, $::p, 1);
                         $launched_bubble{$::p} = undef;
                     }
                     if (is_local_player($::p)) {
                         if ($launched_bubble{$::p}->{'y'} <= $POS{$::p}{top_limit} + $pdata{$::p}{newrootlevel} * $ROW_SIZE) {
                             my ($cx, $cy) = get_array_closest_pos($launched_bubble{$::p}->{x}, $launched_bubble{$::p}->{'y'}, $::p);
-                            is_mp_game() and fb_net::gsend("stick:$cx:$cy:@{$pdata{$::p}{nextcolors}}");
+                            if (is_mp_game()) {
+                                print "\tsend stick command top-limit: $cx:$cy\n";
+                                fb_net::gsend("stick:$cx:$cy:@{$pdata{$::p}{nextcolors}}");
+                            }
                             stick_bubble($launched_bubble{$::p}, $cx, $cy, $::p, 1);
                             $launched_bubble{$::p} = undef;
                         } else {
@@ -1327,7 +1333,10 @@ sub update_game() {
                                     my ($cx, $cy) = get_array_closest_pos(($launched_bubble{$::p}->{'x_old'}+$launched_bubble{$::p}->{'x'})/2,
                                                                           ($launched_bubble{$::p}->{'y_old'}+$launched_bubble{$::p}->{'y'})/2,
                                                                           $::p);
-                                    is_mp_game() and fb_net::gsend("stick:$cx:$cy:@{$pdata{$::p}{nextcolors}}");
+                                    if (is_mp_game()) {
+                                        print "\tsend stick command collision: $cx:$cy\n";
+                                        fb_net::gsend("stick:$cx:$cy:@{$pdata{$::p}{nextcolors}}");
+                                    }
                                     stick_bubble($launched_bubble{$::p}, $cx, $cy, $::p, 1);
                                     $launched_bubble{$::p} = undef;
                                     
@@ -2487,6 +2496,7 @@ sub setup_mp_game() {
 
     @PLAYERS = qw(p1);
     my @mappings = fb_net::wait4start();
+    delete $pdata{$_}{id} foreach qw(rp1 rp2 rp3 rp4);
     foreach my $m (@mappings) {
         my $player;
         if ($m->{nick} eq $mynick) {
