@@ -2506,7 +2506,7 @@ sub smg_choose_game() {
                     }
 
                 } elsif ($k == SDLK_RETURN() || $k == SDLK_KP_ENTER()) {
-                    if ($curaction->()->{action} eq 'CHAT') {
+                    if ($curaction->()->{action} eq 'CHAT' && length($typed_chat) > 0) {
                         play_sound('menu_selected');
                         fb_net::send_("TALK ($mynick) $typed_chat");
                         $typed_chat = '';
