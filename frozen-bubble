@@ -48,6 +48,7 @@ use vars qw($TARGET_ANIM_SPEED $BUBBLE_SIZE $ROW_SIZE $LAUNCHER_SPEED $BUBBLE_SP
             $lev_number $playermalus $loaded_levelset $direct_levelset $chainreaction %chains %history %img_mini $frame $sock $gameserver);
 
 use Data::Dumper;
+use POSIX;
 
 use SDL;
 use SDL::App;
@@ -1970,6 +1971,8 @@ sub init_game() {
     $imgbin{txt_2pgame_over} = add_image('menu/txt_2pgame_over.png');
     $imgbin{txt_netgame_off}  = add_image('menu/txt_netgame_off.png');
     $imgbin{txt_netgame_over} = add_image('menu/txt_netgame_over.png');
+    $imgbin{txt_langame_off}  = add_image('menu/txt_langame_off.png');
+    $imgbin{txt_langame_over} = add_image('menu/txt_langame_over.png');
     $imgbin{txt_editor_off}  = add_image('menu/txt_editor_off.png');
     $imgbin{txt_editor_over} = add_image('menu/txt_editor_over.png');
     $imgbin{txt_fullscreen_off}  = add_image('menu/txt_fullscreen_off.png');
@@ -2481,33 +2484,72 @@ sub smg_printstatus {
     $app->flip();
 }
 
-sub smg_servers() {
-    smg_printstatus("CONTACTING MASTER SERVER...");
-    my $serverlist = fb_net::get_server_list();
-    my @servers;
-    if ($serverlist) {
-        foreach my $line (split /\n/, $serverlist) {
-            if ($line =~ /^(\S+) (\S+)$/) {
-                push @servers, { host => $1, port => $2 };
-            } else {
-                print STDERR "Unrecognized line in serverlist:\n\t$line\n";
-            }
-        }
-    } else {
-        smg_printstatus("UNABLE TO DOWNLOAD SERVER LIST!",
-                        "VERIFY YOUR NETWORK SETUP OR RETRY LATER.");
-        grab_key(0);
-    }
-    return @servers;
+our @smg_status_messages;
+sub smg_add_status_msg($) {
+    push @smg_status_messages, uc($_[0]);
+    @smg_status_messages > 4 and shift @smg_status_messages;
 }
 
-our @smg_status_messages;
+sub smg_servers() {
+
+    if ($pdata{gametype} eq 'lan') {
+        smg_printstatus("PROBING FOR AVAILABLE SERVERS ON THE LAN...");
+        my $ret = fb_net::discover_lan_servers();
+        if ($ret->{failure}) {
+            smg_printstatus("UNABLE TO PROBE FOR AVAILABLE SERVERS ON THE LAN!",
+                            "VERIFY YOUR NETWORK SETUP OR RETRY LATER.");
+            grab_key(0);
+        } else {
+            my @servers = @{$ret->{servers}};
+            if (!@servers) {
+                if (my $pid = fork()) {
+                    $pdata{autochooseserver} = 1;
+                    smg_add_status_msg("CREATED SERVER FOR LAN GAME.");
+                    sleep 1;
+                    return ({ host => 'localhost', port => 1511 });
+                } else {
+                    unless (exec 'fb-server', '-L', '-p', '1511') {
+                        print STDERR "Could not create server limited to lan game: $!\n";
+                        POSIX::_exit(1);
+                    }
+                }
+            } else {
+                return @servers;
+            }
+        }
+
+    } else {
+        smg_printstatus("CONTACTING MASTER SERVER...");
+        my $serverlist = fb_net::get_server_list();
+        my @servers;
+        if ($serverlist) {
+            foreach my $line (split /\n/, $serverlist) {
+                if ($line =~ /^(\S+) (\S+)$/) {
+                    push @servers, { host => $1, port => $2 };
+                } else {
+                    print STDERR "Unrecognized line in serverlist:\n\t$line\n";
+                }
+            }
+        } else {
+            smg_printstatus("UNABLE TO DOWNLOAD SERVER LIST!",
+                            "VERIFY YOUR NETWORK SETUP OR RETRY LATER.");
+            grab_key(0);
+        }
+        return @servers;
+    }
+}
 
 sub smg_choose_server(@) {
     my (@servers) = @_;
 
     erase_line($smg_starty_chat, $imgbin{back_netgame});     #- if we return from choose_game
     erase_line($smg_starty_players, $imgbin{back_netgame});  #-
+
+    if ($pdata{autochooseserver}) {
+        $pdata{autochooseserver} = 0;
+        fb_net::connect($servers[0]{host}, $servers[0]{port});
+        return fb_net::isconnected();
+    }
 
     my @sorted_servers;
     my $redraw = sub {
@@ -2551,7 +2593,7 @@ sub smg_choose_server(@) {
         smg_printstatus("NO AVAILABLE SERVER.",
                         "PLEASE RETRY LATER.");
         grab_key(0);
-        return;
+        return 0;
     }
     if (@sorted_servers && every { !$_->{selected} } @sorted_servers) {
         $sorted_servers[0]->{selected} = 1;
@@ -2631,11 +2673,6 @@ sub smg_choose_server(@) {
     return 1;
 }
 
-sub smg_add_status_msg($) {
-    push @smg_status_messages, uc($_[0]);
-    @smg_status_messages > 4 and shift @smg_status_messages;
-}
-
 sub smg_verify_command($;$) {
     my ($command, $rest) = @_;
     my $answer = fb_net::send_and_receive($command, $rest);
@@ -2704,7 +2741,6 @@ sub smg_choose_game() {
             $app->print($smg_startx, $smg_starty_chat, "SAY: $typed_chat");
         }
         smg_printstatus(@smg_status_messages);
-        $app->flip();
     };
 
     my $list = sub {
@@ -2750,6 +2786,7 @@ sub smg_choose_game() {
 
                 if ($k == SDLK_ESCAPE()) {
                     fb_net::disconnect();
+                    $erase->();
                     return 0;
 
                 } elsif ($k == SDLK_DOWN()) {
@@ -2861,6 +2898,7 @@ sub smg_choose_game() {
                             print "unexpected message received: $msg\n";
                         }
                     }
+                    $erase->();
                     return smg_choose_game();
                 } else {
                     print "unrecognized message received: $msg\n";
@@ -2877,6 +2915,7 @@ sub smg_choose_game() {
             $redraw->();
             play_sound('cancel');
             fb_c_stuff::fbdelay(2000);
+            $erase->();
             return 0;
         }
 
@@ -2906,7 +2945,6 @@ sub smg_start_game($) {
 
     my $redraw = sub {
         smg_printstatus(@smg_status_messages);
-        $app->flip();
     };
     $redraw->();
 
@@ -3002,10 +3040,26 @@ sub smg_start_game($) {
     }
 }
 
+sub show_mp_scores() {
+    $imgbin{back_netgame}->blit($apprects{main}, $app, $apprects{main});
+
+    if (any { $pdata{$_}{left} } @PLAYERS) {
+        smg_add_status_msg('*** GAME FINISHED, LEAVER(S): ' . join(', ', map { if_($pdata{$_}{left}, $pdata{$_}{nick}) } @PLAYERS));
+    }
+    @PLAYERS = reverse ssort { $pdata{$_}{score} } @PLAYERS;
+    if ($pdata{$PLAYERS[0]}{score} > $pdata{$PLAYERS[1]}{score}) {
+        smg_add_status_msg("*** WINNER: $pdata{$PLAYERS[0]}{nick}");
+    } else {
+        smg_add_status_msg('*** DRAW GAME!');
+    }
+    smg_add_status_msg('*** ' . join(', ', map { "$pdata{$_}{nick}: $pdata{$_}{score}" } @PLAYERS));
+    smg_printstatus(@smg_status_messages);
+}
+
 sub setup_mp_game() {
 
     $font = SDL::Font->new("$FPATH/gfx/font2.png");
-
+    
     $imgbin{back_netgame}->blit($apprects{main}, $app, $apprects{main});
 
     if (!fb_net::isconnected()) {
@@ -3016,7 +3070,7 @@ sub setup_mp_game() {
             fb_net::isconnected() or goto master_server;
         } else {
           master_server:
-            #- 1. contact master server
+            #- 1. get list of servers
             my @servers if 0;
             @servers = smg_servers() or return;
             
@@ -3026,21 +3080,19 @@ sub setup_mp_game() {
         }
             
     } else {
-        if (any { $pdata{$_}{left} } @PLAYERS) {
-            smg_add_status_msg('*** GAME FINISHED, LEAVER(S): ' . join(', ', map { if_($pdata{$_}{left}, $pdata{$_}{nick}) } @PLAYERS));
-        }
-        @PLAYERS = reverse ssort { $pdata{$_}{score} } @PLAYERS;
-        if ($pdata{$PLAYERS[0]}{score} > $pdata{$PLAYERS[1]}{score}) {
-            smg_add_status_msg("*** WINNER: $pdata{$PLAYERS[0]}{nick}");
-        } else {
-            smg_add_status_msg('*** DRAW GAME!');
-        }
-        smg_add_status_msg('*** ' . join(', ', map { "$pdata{$_}{nick}: $pdata{$_}{score}" } @PLAYERS));
+        show_mp_scores();
     }
 
   choose_game:
     #- 3. let user choose/create game
-    my $mynick = smg_choose_game() or goto choose_server;
+    my $mynick = smg_choose_game();
+    if (!$mynick) {
+        if ($pdata{gametype} eq 'lan') {
+            return;
+        } else {
+            goto choose_server;
+        }
+    }
 
     #- 4. start game waiting for other players, and receiving id/nick bindings
     smg_start_game($mynick) or goto choose_game;
@@ -3460,10 +3512,11 @@ sub menu {
     my %menu_ypos = ( '1pgame' =>      $MENU_FIRSTY,
 		      '2pgame' =>      $MENU_FIRSTY +     $SPACING,
 		      'netgame'=>      $MENU_FIRSTY + 2 * $SPACING,
-		      'editor' =>      $MENU_FIRSTY + 3 * $SPACING,
+		      'langame'=>      $MENU_FIRSTY + 3 * $SPACING,
+		      'editor' =>      $MENU_FIRSTY + 4 * $SPACING,
 #		      'fullscreen' =>  $MENU_FIRSTY + 3 * $SPACING,
-		      'graphics' =>    $MENU_FIRSTY + 4 * $SPACING,
-		      'sound' =>       $MENU_FIRSTY + 5 * $SPACING,
+		      'graphics' =>    $MENU_FIRSTY + 5 * $SPACING,
+#		      'sound' =>       $MENU_FIRSTY + 5 * $SPACING,
 		      'keys' =>        $MENU_FIRSTY + 6 * $SPACING,
 		      'highscores' =>  $MENU_FIRSTY + 7 * $SPACING,
 		  );
@@ -3472,18 +3525,20 @@ sub menu {
 			 '2pgame' => { pos => 2, type => 'rungame',
 				       run => sub { @PLAYERS = qw(p1 p2); $levels{current} = undef; } },
 			 'netgame'=> { pos => 3, type => 'rungame',
-				       run => sub { @PLAYERS = qw(p1 rp1); $levels{current} = undef; } },
-			 'editor' => { pos => 4, type => 'run', run => sub { $launch_editor->(); } },
+				       run => sub { @PLAYERS = qw(p1 rp1); $pdata{gametype} = 'net';  $levels{current} = undef; } },
+			 'langame'=> { pos => 4, type => 'rungame',
+				       run => sub { @PLAYERS = qw(p1 rp1); $pdata{gametype} = 'lan'; $levels{current} = undef; } },
+			 'editor' => { pos => 5, type => 'run', run => sub { $launch_editor->(); } },
 #			 'fullscreen' => { pos => 4, type => 'toggle',
 #					   act => sub { $fullscreen = 1; $app->fullscreen },
 #					   unact => sub { $fullscreen = 0; $app->fullscreen },
 #					   value => $fullscreen },
-			 'graphics' => { pos => 5, type => 'range', valuemin => 1, valuemax => 3,
+			 'graphics' => { pos => 6, type => 'range', valuemin => 1, valuemax => 3,
 					 change => sub { $graphics_level = $_[0] }, value => $graphics_level },
-			 'sound' => { pos => 6, type => 'toggle',
-				      act => sub { $menu_start_sound->() },
-				      unact => sub { $menu_stop_sound->() },
-				      value => $mixer_enabled },
+#			 'sound' => { pos => 6, type => 'toggle',
+#				      act => sub { $menu_start_sound->() },
+#				      unact => sub { $menu_stop_sound->() },
+#				      value => $mixer_enabled },
 			 'keys' => { pos => 7, type => 'run',
 				     run => sub { $change_keys->() } },
 			 'highscores' => { pos => 8, type => 'run',
@@ -3700,9 +3755,21 @@ while (1) {
 	    new_game();
 	} elsif ($@ =~ /^quit/) {
             print "quitted\n";
-            if (is_mp_game() && fb_net::reconnect() && new_game_once()) {
-                new_game();
+            if (is_mp_game()) {
+                if ($pdata{gametype} eq 'lan') {
+                    fb_net::disconnect();
+                    show_mp_scores();
+                    grab_key(0);
+                    goto go_to_menu;
+                } else {
+                    if (fb_net::reconnect() && new_game_once()) {
+                        new_game();
+                    } else {
+                        goto go_to_menu;
+                    }
+                }
             } else {
+              go_to_menu:
                 do { menu() } while (!new_game_once());
                 new_game();
             }
@@ -3711,6 +3778,3 @@ while (1) {
 	}
     }
 }
-
-
-#$lag pour billes malus
