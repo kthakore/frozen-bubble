@@ -2888,6 +2888,9 @@ sub setup_mp_game() {
 
 sub new_game_once {
 
+    #- we don't really know how many net players can be.. so let's clear this up hardly
+    $pdata{$_}{score} = 0 foreach qw(p1 p2 rp1 rp2 rp3 rp4);
+
     if (!$direct) {
         if (is_1p_game()) {
             choose_1p_game_mode() or return;
@@ -3468,9 +3471,6 @@ sub menu {
     $dump =~ s/'SDLK_(\w+)'/SDLK_$1/g;
     output($rcfile, $dump);
 
-    iter_players {
-	!is_1p_game() and $pdata{$::p}{score} = 0;
-    };
 }
 
 
