@@ -132,18 +132,24 @@ void cleanup_player(int fd)
 {
         struct game * g = find_game_by_fd(fd);
         if (g) {
-                int i;
+                int i, j;
                 char parted_msg[1000];
+
+                for (i = 0; i < g->players_number; i++)
+                        if (g->players_conn[i] == fd)
+                                break;
+
                 // inform other players
                 snprintf(parted_msg, sizeof(parted_msg), ok_player_parted, g->players_nick[i]);
-                for (i = 0; i < g->players_number; i++)
-                        if (g->players_conn[i] != fd)
-                                send_line_log_push(g->players_conn[i], parted_msg);
+                for (j = 0; j < g->players_number; j++)
+                        if (g->players_conn[j] != fd)
+                                send_line_log_push(g->players_conn[j], parted_msg);
+
                 // remove parting player from game
-                free(g->players_nick[fd]);
-                for (i = g->players_number - 2; i >= fd; i--) {
-                        g->players_conn[i] = g->players_conn[i + 1];
-                        g->players_nick[i] = g->players_nick[i + 1];
+                free(g->players_nick[i]);
+                for (j = g->players_number - 2; j >= i; j--) {
+                        g->players_conn[j] = g->players_conn[j + 1];
+                        g->players_nick[j] = g->players_nick[j + 1];
                 }
                 g->players_number--;
                 if (g->players_number == 0)
