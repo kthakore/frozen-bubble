@@ -2819,6 +2819,7 @@ sub smg_start_game($) {
             } else {
                 print "non-push received!? $msg\n";
             }
+            $redraw->();
         }
     }
 }
