@@ -21,7 +21,6 @@
 #include "tools.h"
 #include "log.h"
 
-
 #define MAX_PLAYERS 5
 
 struct game
@@ -33,6 +32,7 @@ struct game
 
 GList * games = NULL;
 
+static char ok_pong[] = "PONG";
 static char ok_player_joined[] = "JOINED: %s";
 static char ok_player_parted[] = "PARTED: %s";
 static char ok_talk[] = "TALK: %s";
@@ -235,7 +235,9 @@ int process_msg(int fd, char* msg)
         } else
                 args = NULL;
 
-        if (streq(current_command, "CREATE")) {
+        if (streq(current_command, "PING")) {
+                send_line_log(fd, ok_pong, msg_orig);
+        } else if (streq(current_command, "CREATE")) {
                 if (!args) {
                         send_line_log(fd, wn_missing_arguments, msg_orig);
                 } else {
