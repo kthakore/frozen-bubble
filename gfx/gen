@@ -1,0 +1,1 @@
+for i in *p2*; do echo "Working on ${i}..."; x=`file $i | perl -ne 'print int($1/2) if / (\d+) x (\d+),/'`; y=`file $i | perl -ne 'print int($2/2) if / (\d+) x (\d+),/'`; name=`echo $i | perl -pe 's/p2/rp1/'`; convert -geometry "${x}x$y" $i $name; cp $name `echo $i | perl -pe 's/p2/rp2/'`; cp $name `echo $i | perl -pe 's/p2/rp3/'`; cp $name `echo $i | perl -pe 's/p2/rp4/'`; done
