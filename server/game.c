@@ -511,18 +511,19 @@ int process_msg(int fd, char* msg)
 }
 
 
+static char prefixed_msg[4096] __attribute__((aligned(4096)));
 void process_msg_prio(int fd, char* msg, ssize_t len)
 {
         struct game * g = find_game_by_fd(fd);
         if (g) {
-                char prefixed_msg[10000];
+                ssize_t transmitted_len = MIN(len, 4095);
                 int i;
                 prefixed_msg[0] = fd;
-                memcpy(prefixed_msg + 1, msg, len);
+                memcpy(prefixed_msg + 1, msg, transmitted_len);
                 for (i = 0; i < g->players_number; i++) {
                         // '!' is synchro message, each client will want to receive it even sender
                         if (g->players_conn[i] != fd || prefixed_msg[1] == '!') {
-                                send(g->players_conn[i], prefixed_msg, len + 1, 0);
+                                send(g->players_conn[i], prefixed_msg, transmitted_len + 1, 0);
                         }
                 }
         } else {
