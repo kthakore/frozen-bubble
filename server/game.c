@@ -36,11 +36,12 @@ struct game
 };
 
 GList * games = NULL;
+GList * open_players = NULL;
 
 static char ok_pong[] = "PONG";
 static char ok_player_joined[] = "JOINED: %s";
 static char ok_player_parted[] = "PARTED: %s";
-static char ok_talk[] = "TALK: %s> %s";
+static char ok_talk[] = "TALK: %s";
 static char ok_start[] = "START: %s";
 static char ok_stop[] = "STOP: %s";
 static char ok_can_start[] = "GAME_CAN_START: %s";
@@ -128,6 +129,7 @@ static void create_game(int fd, char* nick)
         g->status = GAME_STATUS_OPEN;
         games = g_list_append(games, g);
         calculate_list_games();
+        open_players = g_list_append(open_players, GINT_TO_POINTER(fd));
 }
 
 static int add_player(struct game * g, int fd, char* nick)
@@ -144,6 +146,7 @@ static int add_player(struct game * g, int fd, char* nick)
                 g->players_nick[g->players_number] = nick;
                 g->players_number++;
                 calculate_list_games();
+                open_players = g_list_remove(open_players, GINT_TO_POINTER(fd));
                 return 1;
         } else {
                 return 0;
@@ -275,7 +278,7 @@ static void stop_game(int fd)
         }
 }
 
-void cleanup_player(int fd)
+void player_part_game(int fd)
 {
         struct game * g = find_game_by_fd(fd);
         if (g) {
@@ -310,21 +313,39 @@ void cleanup_player(int fd)
                         }
                 }
                 calculate_list_games();
+
+                open_players = g_list_append(open_players, GINT_TO_POINTER(fd));
         }
+}
+
+void player_connects(int fd)
+{
+        open_players = g_list_append(open_players, GINT_TO_POINTER(fd));
+}
+
+void player_disconnects(int fd)
+{
+        open_players = g_list_remove(open_players, GINT_TO_POINTER(fd));
+}
+
+static void talk_serverwide_aux(gpointer data, gpointer user_data)
+{
+        send_line_log(GPOINTER_TO_INT(data), user_data, "TALK");
 }
 
 static void talk(int fd, char* msg)
 {
         struct game * g = find_game_by_fd(fd);
+        char talk_msg[1000];
+        snprintf(talk_msg, sizeof(talk_msg), ok_talk, msg);
         if (g) {
+                // player is in a game, it's a game-only chat
                 int i;
-                int j = find_player_number(g, fd);
-                char talk_msg[1000];
-                snprintf(talk_msg, sizeof(talk_msg), ok_talk, g->players_nick[j], msg);
                 for (i = 0; i < g->players_number; i++)
                         send_line_log_push(g->players_conn[i], talk_msg);
         } else {
-                send_line_log(fd, wn_alone_in_the_dark, msg);
+                // player is not in a game, it's a server-wide chat
+                g_list_foreach(open_players, talk_serverwide_aux, talk_msg);
         }
 }
 
@@ -451,7 +472,7 @@ int process_msg(int fd, char* msg)
                 if (!already_in_game(fd)) {
                         send_line_log(fd, wn_not_in_game, msg_orig);
                 } else {
-                        cleanup_player(fd);
+                        player_part_game(fd);
                         send_ok(fd, msg_orig);
                 }
         } else if (streq(current_command, "LIST")) {

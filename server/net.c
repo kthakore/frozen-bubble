@@ -136,8 +136,9 @@ static void handle_incoming_data_generic(gpointer data, gpointer user_data, int 
                                 conn_terminated:
                                         l1("[%d] Closing connection", fd);
                                         close(fd);
-                                        cleanup_player(fd);
+                                        player_part_game(fd);
                                         new_conns = g_list_remove(new_conns, data);
+                                        player_disconnects(fd);
                                 }
                         }
                 }
@@ -207,6 +208,7 @@ void connections_manager(int sock)
                         } else {
                                 send_line_log_push(fd, greets_msg);
                                 conns = g_list_append(conns, GINT_TO_POINTER(fd));
+                                player_connects(fd);
                                 calculate_list_games();
                         }
                 }
