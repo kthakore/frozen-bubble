@@ -42,19 +42,19 @@ my $udp_server_port = 1511;  #- a.k.a 0xF 0xB thx misc
 sub discover_lan_servers {
     my $socket = IO::Socket::INET->new(Proto => 'udp');
     if (!$socket) {
-        print STDERR "Cannot create socket: $!";
-        return { failure => 'Cannot send broadcast' };
+        print STDERR "Cannot create socket: $!\n";
+        return { failure => 'Cannot send broadcast.' };
     }
     
     if (!$socket->setsockopt(SOL_SOCKET, SO_BROADCAST, 1)) {
-        print STDERR "Cannot setsockopt: $!";
-        return { failure => 'Cannot send broadcast' };
+        print STDERR "Cannot setsockopt: $!\n";
+        return { failure => 'Cannot send broadcast.' };
     }
 
     my $destpaddr = sockaddr_in($udp_server_port, INADDR_BROADCAST());
     if (!$socket->send("FB/$proto_major.$proto_minor SERVER PROBE", 0, $destpaddr)) {
-        print STDERR "Cannot send broadcast: $!";
-        return { failure => 'Cannot send broadcast' };
+        print STDERR "Cannot send broadcast: $!\n";
+        return { failure => 'Network is down/no network?' };
     }
 
     my $inmask = '';
@@ -63,8 +63,8 @@ sub discover_lan_servers {
     while (select(my $outmask = $inmask, undef, undef, 2)) {
         my ($srcpaddr, $rcvmsg);
         if (!defined($srcpaddr = $socket->recv($rcvmsg, 128, 0))) {
-            print STDERR "Cannot receive from socket: $!";
-            return { failure => 'Cannot read from broadcast' };
+            print STDERR "Cannot receive from socket: $!\n";
+            return { failure => 'Cannot read answer from broadcast.' };
         }
         my ($port, $ipaddr) = sockaddr_in($srcpaddr);
         if ($rcvmsg =~ m|^FB/$proto_major.$proto_minor SERVER HERE AT PORT (\d+)|) {
@@ -140,7 +140,8 @@ sub readline_() {
         ($results, $buffered_line) = $results =~ /([^\n]+\n)(.*)?/s;
     };
     if ($@) {
-        return "$results\n";
+        print STDERR "Sorry, your computer or the network is too slow, giving up.\n";
+        die 'quit';
     } else {
         return $results;
     }
@@ -511,7 +512,8 @@ sub grecv_get1msg() {
         alarm 0;
     };
     if ($@) {
-        return { id => 'NONE', msg => 'fake:timeout' };
+        print STDERR "Sorry, your computer or the network is too slow, giving up.\n";
+        die 'quit';
     } else {
         return shift @messages;
     }
