@@ -2413,6 +2413,8 @@ sub smg_choose_game() {
         if (!any { $_->{selected} } @actions) {
             $actions[0]{selected} = 1;
         }
+        smg_erase_line($smg_starty_players);
+        $app->print($smg_startx, $smg_starty_players, "AVAILABLE PLAYERS: $free");
     };
 
     my $typed_chat;
