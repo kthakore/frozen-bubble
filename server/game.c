@@ -35,6 +35,7 @@
 #include "net.h"
 #include "tools.h"
 #include "log.h"
+#include "game.h"
 
 #define MAX_PLAYERS 5
 
@@ -273,13 +274,19 @@ void player_part_game(int fd)
         if (g) {
                 int j;
                 int i = find_player_number(g, fd);
-                char parted_msg[1000];
 
-                // inform other players
-                snprintf(parted_msg, sizeof(parted_msg), ok_player_parted, g->players_nick[i]);
-                for (j = 0; j < g->players_number; j++)
-                        if (g->players_conn[j] != fd)
-                                send_line_log_push(g->players_conn[j], parted_msg);
+                if (g->status == GAME_STATUS_PLAYING) {
+                        // inform other players, playing state
+                        char leave_player_prio_msg[] = "leave:\n";
+                        process_msg_prio(fd, leave_player_prio_msg, sizeof(leave_player_prio_msg));
+                } else {
+                        char parted_msg[1000];
+                        // inform other players, non-playing state
+                        snprintf(parted_msg, sizeof(parted_msg), ok_player_parted, g->players_nick[i]);
+                        for (j = 0; j < g->players_number; j++)
+                                if (g->players_conn[j] != fd)
+                                        send_line_log_push(g->players_conn[j], parted_msg);
+                }
 
                 // remove parting player from game
                 free(g->players_nick[i]);
@@ -288,7 +295,7 @@ void player_part_game(int fd)
                         g->players_nick[j] = g->players_nick[j + 1];
                 }
                 g->players_number--;
-
+                
                 // completely remove game if empty
                 if (g->players_number == 0) {
                         games = g_list_remove(games, g);
@@ -302,7 +309,7 @@ void player_part_game(int fd)
                         }
                 }
                 calculate_list_games();
-
+                
                 open_players = g_list_append(open_players, GINT_TO_POINTER(fd));
         }
 }
