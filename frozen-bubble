@@ -1124,7 +1124,10 @@ sub handle_game_events() {
         my @keep_messages;
         my $check_action_possible = sub {
             my ($m, $player) = @_;
-            if ($actions{$player}{mp_fire} || $actions{$player}{mp_stick} || any { $_->{mp_stick} } @{$malus_bubble{$player}}) {
+            #- we check also the presence of malus bubbles, because if the malus order has lagged much
+            #- we might receive a fire or even a stick command before the malus bubbles are sticked,
+            #- this would provoke a local inconsistency
+            if ($actions{$player}{mp_fire} || $actions{$player}{mp_stick} || @{$malus_bubble{$player}}) {
                 push @keep_messages, $m;
                 return 0;
             } else {
@@ -1158,15 +1161,6 @@ sub handle_game_events() {
                     $actions{$player}{mp_stick} = 1;
                     ($pdata{$player}{stickcx}, $pdata{$player}{stickcy}, $pdata{$player}{stickcol}, my $newrootcols) = $params =~ /(.+):(.+):(.+):(.*)/;
                     @{$pdata{$player}{nextcolors}} = split / /, $newrootcols;
-                }
-            } elsif ($command eq 'malustick') {
-                if ($check_action_possible->($m, $player)) {
-                    my ($cx, $cy) = $params =~ /(.+):(.+)/;
-                    foreach my $b (@{$malus_bubble{$player}}) {
-                        if ($b->{'cx'} == $cx && $b->{'stick_y'} == $cy) {
-                            $b->{mp_stick} = 1;
-                        }
-                    }
                 }
             } elsif ($command eq 'malus') {
                 my ($num, $cx, $cy, $sticky) = $params =~ /(.+):(.+):(.+):(.+)/;
@@ -1777,13 +1771,9 @@ sub update_game() {
 	my $malus_end = [];
 	foreach my $b (@{$malus_bubble{$::p}}) {
 	    $b->{'y'} -= $MALUS_BUBBLE_SPEED;
-	    if ($b->{mp_stick}
-                || is_local_player($::p) && get_array_yclosest($b->{'y'}, $::p) <= $b->{'stick_y'}) {
+	    if (get_array_yclosest($b->{'y'}, $::p) <= $b->{'stick_y'}) {
 		real_stick_bubble($b, $b->{'cx'}, $b->{'stick_y'}, $::p, 0);
 		push @$malus_end, $b;
-                if (is_mp_game() && is_local_player($::p)) {
-                    fb_net::gsend("malustick:$b->{cx}:$b->{stick_y}");
-                }
 	    }
 	}
 	@$malus_end and @{$malus_bubble{$::p}} = difference2($malus_bubble{$::p}, $malus_end);
