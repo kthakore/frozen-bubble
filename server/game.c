@@ -287,8 +287,9 @@ void player_part_game(int fd)
 
                 if (g->status == GAME_STATUS_PLAYING) {
                         // inform other players, playing state
-                        char leave_player_prio_msg[] = "leave:\n";
-                        process_msg_prio(fd, leave_player_prio_msg, sizeof(leave_player_prio_msg));
+                        char leave_player_prio_msg[] = "?leave:\n";
+                        leave_player_prio_msg[0] = fd;
+                        process_msg_prio(fd, leave_player_prio_msg, strlen(leave_player_prio_msg));
                 } else {
                         char parted_msg[1000];
                         // inform other players, non-playing state
@@ -558,20 +559,44 @@ ssize_t get_reset_amount_transmitted(void)
         return ret;
 }
 
-static char prefixed_msg[4096] __attribute__((aligned(4096)));
+int rand_(double val) { return 1+(int) (val*rand()/(RAND_MAX+1.0)); }
+#define min(x, y) (x < y ? x : y)
+
 void process_msg_prio(int fd, char* msg, ssize_t len)
 {
         struct game * g = find_game_by_fd(fd);
         if (g) {
-                ssize_t transmitted_len = MIN(len, 4095);
                 int i;
-                prefixed_msg[0] = fd;
-                memcpy(prefixed_msg + 1, msg, transmitted_len);
                 for (i = 0; i < g->players_number; i++) {
                         // '!' is synchro message, each client will want to receive it even sender
-                        if (g->players_conn[i] != fd || prefixed_msg[1] == '!') {
-                                send(g->players_conn[i], prefixed_msg, transmitted_len + 1, 0);
-                                amount_transmitted += transmitted_len + 1;
+                        if (g->players_conn[i] != fd || msg[1] == '!') {
+                                ssize_t retval;
+                                ssize_t togo = len;
+                                l2("Sending total: %d bytes to %d", togo, g->players_conn[i]);
+                                while (togo) {
+                                        int randval = rand_(50);
+                                        ssize_t amount = min(randval, togo);
+                                        l2("Amount: %d togo: %d", amount, togo);
+                                        retval = send(g->players_conn[i], msg + (len - togo), amount, 0);
+                                        if (retval != amount) {
+                                                if (retval == -1) {
+                                                        perror("send");
+                                                } else {
+                                                        l2("short send of %d instead of %d bytes :(", retval, amount);
+                                                }
+                                        }
+                                        {
+                                                char buf[1024] = "";
+                                                char * from = msg + (len - togo);
+                                                int j;
+                                                for (j=0; j<amount; j++)
+                                                        strcat(buf, asprintf_("%d ", from[j]));
+                                                l2("sent %d bytes: %s", amount, buf);
+                                        }
+                                        togo -= amount;
+                                }
+                                l0("- done");
+                                amount_transmitted += len;
                         }
                 }
         } else {

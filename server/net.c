@@ -161,16 +161,18 @@ static void handle_incoming_data_generic(gpointer data, gpointer user_data, int 
                                 incoming_data_buffers_count[fd] = len;
                                 return;
                         }
-                        /* string operations will need a NULL conn_terminated string */
-                        buf[len] = '\0';
 
                         if (prio) {
                                 // prio e.g. in game
-                                process_msg_prio(fd, buf, len + 1);
+                                process_msg_prio(fd, buf, len);
                                 prio_processed = 1;
                         } else {
                                 char * eol;
                                 char * line = buf;
+
+                                /* string operations will need a NULL conn_terminated string */
+                                buf[len] = '\0';
+
                                 /* loop (to handle case when network gives us several lines at once) */
                                 while (!conn_terminated && (eol = strchr(line, '\n'))) {
                                         eol[0] = '\0';
