@@ -1213,7 +1213,7 @@ sub cleanup_player_bubbles {
 
 sub win {
     my ($player) = @_;
-    $pdata{$player}{score}++;
+    every { !$pdata{$_}{left} } @PLAYERS and $pdata{$player}{score}++;
     $pdata{$player}{ping_right}{state} = 'win';
     $pdata{$player}{ping_right}{img} = 0;
     print_scores($background);
