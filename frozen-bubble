@@ -2459,6 +2459,7 @@ sub smg_choose_game() {
                 my $k = $event->key_sym;
 
                 if ($k == SDLK_ESCAPE()) {
+                    fb_net::disconnect();
                     return 0;
 
                 } elsif ($k == SDLK_DOWN()) {
@@ -3350,6 +3351,7 @@ while (1) {
 	if ($@ =~ /^new_game/) {
 	    new_game();
 	} elsif ($@ =~ /^quit/) {
+            is_mp_game() and fb_net::disconnect();
             do { menu() } while (!new_game_once());
 	    new_game();
 	} else {
