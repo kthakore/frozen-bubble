@@ -1482,63 +1482,76 @@ sub update_game() {
             };
         }
 	if (@{$exploding_bubble{$winner}} == 0) {
-	    $event->pump;
-	    if ($event->poll != 0 && $event->type == SDL_KEYDOWN) {
-                if (is_mp_game()) {
-                    iter_players {
-                        $pdata{$::p}{left} and die 'quit';
-                    };
-                    fb_net::gsend("newgame:");
-                    my $waitingnum = scalar(@PLAYERS) - 1;
-                    iter_distant_players {
-                        $pdata{$::p}{still_game_messages} = 1;
-                    };
-                    while (1) {
-                        $event->pump;
-                        if ($event->poll != 0) {
-                            if ($event->type == SDL_KEYDOWN) {
-                                if ($event->key_sym == SDLK_ESCAPE()) {
-                                    die 'quit';
-                                }
-                            }
-                        }
-                        my (@messages) = fb_net::grecv();
-                        foreach my $msg (@messages) {
-                            if ($msg->{msg} =~ /^\Qfinished:\E/) {
-                                $pdata{$pdata{id2p}{$msg->{id}}}{still_game_messages} = 0;
-                            } elsif (any { $pdata{$_}{still_game_messages} } @PLAYERS) {
-                                #- drop last game messages, mostly "ping" stuff
-                                $msg->{msg} !~ /ping:/ and print "dropping unusual last game message $msg->{msg}\n";
-                                next;
-                            } else {
-                                if ($msg->{msg} =~ /^\Qnewgame:\E/) {
-                                    $waitingnum--;
-                                } else {
-                                    $msg->{msg} !~ /PARTED/ and print "received unusual message $msg->{msg}, quitting\n";
-                                    die 'quit';
-                                }
-                            }
-                        }
-                        #- need to do it here because we might have received two "newgame"
-                        #- in a 3-players game, but one of them might have quitted while
-                        #- this player was still not sending his newgame message
-                        $waitingnum == 0 and die 'new_game';
-
-                        put_image($imgbin{void_panel}, $MENUPOS{xpos_panel}, $MENUPOS{ypos_panel});
-                        my $message = "WAITING FOR $waitingnum OTHER PLAYER(S)";
-                        my $message2 = "TO START A NEW GAME...";
-                        my $xpos = 320 - SDL_TEXTWIDTH($message)/2;
-                        $app->print($xpos, $MENUPOS{ypos_panel} + 30, $message);
-                        $xpos = 320 - SDL_TEXTWIDTH($message2)/2;
-                        $app->print($xpos, $MENUPOS{ypos_panel} + 30 + 20, $message2);
-                        $app->flip;
-                        fb_c_stuff::fbdelay(50);
+            my $still_needwait = 0;
+            #- still wait if some bubbles are not yet "frozen"
+            iter_players {
+                @{$sticked_bubbles{$::p}} and $still_needwait = 1;
+            };
+            if (!$still_needwait) {
+                $event->pump;
+                if ($event->poll != 0 && $event->type == SDL_KEYDOWN) {
+                    if ($event->key_sym == SDLK_ESCAPE()) {
+                        die 'quit';
                     }
-                } else {
-                    die 'new_game';
+                    if (is_mp_game()) {
+                        iter_players {
+                            $pdata{$::p}{left} and die 'quit';
+                        };
+                        fb_net::gsend("newgame:");
+                        my $waitingnum = scalar(@PLAYERS) - 1;
+                        iter_distant_players {
+                            $pdata{$::p}{still_game_messages} = 1;
+                        };
+                        while (1) {
+                            $event->pump;
+                            if ($event->poll != 0) {
+                                if ($event->type == SDL_KEYDOWN) {
+                                    if ($event->key_sym == SDLK_ESCAPE()) {
+                                        die 'quit';
+                                    }
+                                }
+                            }
+                            my (@messages) = fb_net::grecv();
+                            foreach my $msg (@messages) {
+                                if ($msg->{msg} =~ /^\Qfinished:\E/) {
+                                    $pdata{$pdata{id2p}{$msg->{id}}}{still_game_messages} = 0;
+                                    print "$pdata{id2p}{$msg->{id}} is saying she's finished\n";
+                                } elsif (any { $pdata{$_}{still_game_messages} } @PLAYERS) {
+                                #- drop last game messages, mostly "ping" stuff
+                                    print "dropping last game message from $pdata{id2p}{$msg->{id}}: $msg->{msg}\n";
+                                    next;
+                                } else {
+                                    print "$pdata{id2p}{$msg->{id}} sends post-finish $msg->{msg}\n";
+                                    if ($msg->{msg} =~ /^\Qnewgame:\E/) {
+                                        $waitingnum--;
+                                        print "\twaitingnum decreases to $waitingnum\n";
+                                    } else {
+                                        $msg->{msg} !~ /PARTED/ and print "received unusual message $msg->{msg}, quitting\n";
+                                        die 'quit';
+                                    }
+                                }
+                            }
+                            #- need to do it here because we might have received two "newgame"
+                            #- in a 3-players game, but one of them might have quitted while
+                            #- this player was still not sending his newgame message
+                            $waitingnum == 0 and die 'new_game';
+
+                            put_image($imgbin{void_panel}, $MENUPOS{xpos_panel}, $MENUPOS{ypos_panel});
+                            my $message = "WAITING FOR $waitingnum OTHER PLAYER(S)";
+                            my $message2 = "TO START A NEW GAME...";
+                            my $xpos = 320 - SDL_TEXTWIDTH($message)/2;
+                            $app->print($xpos, $MENUPOS{ypos_panel} + 30, $message);
+                            $xpos = 320 - SDL_TEXTWIDTH($message2)/2;
+                            $app->print($xpos, $MENUPOS{ypos_panel} + 30 + 20, $message2);
+                            $app->flip;
+                            fb_c_stuff::fbdelay(50);
+                        }
+                    } else {
+                        die 'new_game';
+                    }
                 }
             }
-	}
+        }
 
     } else {
 	die "oops unhandled game state ($pdata{state})\n";
