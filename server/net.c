@@ -44,8 +44,8 @@
  * the requested command without passing this additional arg */
 char* current_command;
 
-int proto_major = 1;
-int proto_minor = 0;
+const int proto_major = 1;
+const int proto_minor = 0;
 
 static char greets_msg[] = "SERVER_READY";
 
@@ -60,9 +60,12 @@ static double date_amount_transmitted_reset;
 #define DEFAULT_PORT 1511  // a.k.a 0xF 0xB thx misc
 #define DEFAULT_MAX_USERS 200
 #define DEFAULT_MAX_TRANSMISSION_RATE 100000
+static int port = DEFAULT_PORT;
 static int max_users = DEFAULT_MAX_USERS;
 static int max_transmission_rate = DEFAULT_MAX_TRANSMISSION_RATE;
 
+static int tcp_server_socket;
+static int udp_server_socket = -1;
 
 /* send line adding the protocol in front of the supplied msg */
 static ssize_t send_line(int fd, char* msg)
@@ -177,10 +180,49 @@ static void handle_incoming_data_prio(gpointer data, gpointer user_data)
         handle_incoming_data_generic(data, user_data, 1);
 }
 
+static void handle_udp_request(void)
+{
+        static char fl_unrecognized[] = "You don't exist, go away.\n";
+        static char ok_input_base[] = "FB/%d.%d SERVER PROBE";
+        static char ok_answer_base[] = "FB/%d.%d SERVER HERE AT PORT %d";
+        static char * ok_input = NULL;
+        static char * ok_answer = NULL;
+        int n;
+        char msg[128];
+        struct sockaddr_in client_addr;
+        int client_len = sizeof(client_addr);
+        char * answer;
+        
+        if (!ok_input)   // C sux
+                ok_input = asprintf_(ok_input_base, proto_major, proto_minor);
+        if (!ok_answer)
+                ok_answer = asprintf_(ok_answer_base, proto_major, proto_minor, port);
+
+
+        memset(msg, 0, sizeof(msg));
+        n = recvfrom(udp_server_socket, msg, sizeof(msg), 0, (struct sockaddr *) &client_addr, &client_len);
+        if (n == -1) {
+                perror("recvfrom");
+                return;
+        }
+        
+        l2("UDP server receives %d bytes from %s.", n, inet_ntoa(client_addr.sin_addr));
+        if (strcmp(msg, ok_input)) {
+                answer = fl_unrecognized;
+                l0("Unrecognized.");
+        } else {
+                answer = ok_answer;
+                l0("Valid FB server probe, answering.");
+        }
+        
+        if (sendto(udp_server_socket, answer, strlen(answer), 0, (struct sockaddr *) &client_addr, sizeof(client_addr)) != strlen(answer)) {
+                perror("sendto");
+        }
+}
 
 static GList * conns = NULL;
 static GList * conns_prio = NULL;
-void connections_manager(int sock)
+void connections_manager(void)
 {
         struct sockaddr_in client_addr;
         ssize_t len = sizeof(client_addr);
@@ -196,7 +238,9 @@ void connections_manager(int sock)
                 FD_ZERO(&conns_set);
                 g_list_foreach(conns, fill_conns_set, &conns_set);
                 g_list_foreach(conns_prio, fill_conns_set, &conns_set);
-                FD_SET(sock, &conns_set);
+                FD_SET(tcp_server_socket, &conns_set);
+                if (udp_server_socket != -1)
+                        FD_SET(udp_server_socket, &conns_set);
                
                 tv.tv_sec = 30;
                 tv.tv_usec = 0;
@@ -220,9 +264,8 @@ void connections_manager(int sock)
                 if (prio_processed)
                         continue;
 
-                if (FD_ISSET(sock, &conns_set)) {
-                        if ((fd = accept(sock, (struct sockaddr *) &client_addr,
-                                         (socklen_t *) &len)) == -1) {
+                if (FD_ISSET(tcp_server_socket, &conns_set)) {
+                        if ((fd = accept(tcp_server_socket, (struct sockaddr *) &client_addr, (socklen_t *) &len)) == -1) {
                                 perror("accept");
                                 exit(-1);
                         }
@@ -253,6 +296,9 @@ void connections_manager(int sock)
                 g_list_foreach(conns, handle_incoming_data, &conns_set);
                 g_list_free(conns);
                 conns = new_conns;
+
+                if (udp_server_socket != -1 && FD_ISSET(udp_server_socket, &conns_set))
+                        handle_udp_request();
         }
 }
 
@@ -288,20 +334,39 @@ void help(void)
         printf("Usage: fb-server [OPTION]...\n");
         printf("\n");
         printf("     -h                        display this help then exits\n");
+        printf("     -l                        LAN mode: create an UDP server (on port %d) to answer broadcasts of clients discovering where are the servers\n", DEFAULT_PORT);
         printf("     -p port                   set the server port (defaults to %d)\n", DEFAULT_PORT);
         printf("     -u max_users              set the maximum of connected users (defaults to %d, physical maximum 252)\n", DEFAULT_MAX_USERS);
         printf("     -t max_transmission_rate  set the maximum transmission rate, in bytes per second (defaults to %d)\n", DEFAULT_MAX_TRANSMISSION_RATE);
 }
 
-int create_server(int argc, char **argv)
+void create_udp_server(void)
 {
-        int sock;
+        struct sockaddr_in server_addr;
+        udp_server_socket = socket(AF_INET, SOCK_DGRAM, 0);
+        if (udp_server_socket < 0) {
+                perror("socket");
+                exit(1);
+        }
+
+        server_addr.sin_family = AF_INET;
+        server_addr.sin_addr.s_addr = htonl(INADDR_ANY);
+        server_addr.sin_port = htons(DEFAULT_PORT);
+        if (bind(udp_server_socket, (struct sockaddr *) &server_addr, sizeof(server_addr)) < 0) {
+                perror("bind");
+                exit(1);
+        }
+
+        l1("Opened UDP broadcast server discover on default port %d", DEFAULT_PORT);
+}
+
+void create_server(int argc, char **argv)
+{
         struct sockaddr_in client_addr;
-        int port = DEFAULT_PORT;
         int valone = 1;
 
         while (1) {
-                int c = getopt(argc, argv, "hp:u:t:");
+                int c = getopt(argc, argv, "hlp:u:t:");
                 if (c == -1)
                         break;
                 
@@ -309,6 +374,9 @@ int create_server(int argc, char **argv)
                 case 'h':
                         help();
                         exit(0);
+                case 'l':
+                        create_udp_server();
+                        break;
                 case 'p':
                         port = charstar_to_int(optarg);
                         if (port != 0)
@@ -339,29 +407,26 @@ int create_server(int argc, char **argv)
                 }
         }
 
-        sock = socket(AF_INET, SOCK_STREAM, 0);
-        if (sock < 0) {
+        tcp_server_socket = socket(AF_INET, SOCK_STREAM, 0);
+        if (tcp_server_socket < 0) {
                 perror("socket");
                 exit(-1);
         }
 
-        setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &valone, sizeof(valone));
+        setsockopt(tcp_server_socket, SOL_SOCKET, SO_REUSEADDR, &valone, sizeof(valone));
 
         client_addr.sin_family = AF_INET;
         client_addr.sin_addr.s_addr = htonl(INADDR_ANY);
         client_addr.sin_port = htons(port);
-        if (bind(sock, (struct sockaddr *) &client_addr,
-                 sizeof(client_addr))) {
+        if (bind(tcp_server_socket, (struct sockaddr *) &client_addr, sizeof(client_addr))) {
                 perror("bind");
                 exit(-1);
         }
 
-        if (listen(sock, 1000) < 0) {
+        if (listen(tcp_server_socket, 1000) < 0) {
                 perror("listen");
                 exit(-1);
         }
 
-        l1("Opened server on port %d", port);
-
-        return sock;
+        l1("Opened TCP game server on port %d", port);
 }

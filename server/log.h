@@ -35,5 +35,7 @@ void l_(char* file, long line, const char* func, char* fmt, ...);
                              f, a1, a2)
 #define l3(f, a1, a2, a3) l_(__FILE__, (long) __LINE__, __func__, \
                              f, a1, a2, a3)
+#define l4(f, a1, a2, a3, a4) l_(__FILE__, (long) __LINE__, __func__, \
+                             f, a1, a2, a3, a4)
 
 #endif
