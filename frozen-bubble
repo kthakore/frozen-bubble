@@ -1054,7 +1054,10 @@ sub handle_game_events() {
                 $pdata{$player}{ping} = $frame;
             } elsif ($command eq 'leave') {
                 iter_players { #- need iter_players to get the small graphics change for free
-                    $::p eq $player and lose($::p);
+                    if ($::p eq $player) {
+                        lose($::p);
+                        $pdata{$::p}{left} = 1;
+                    }
                 };
             } elsif ($command eq 'fire') {
                 if ($check_action_possible->($m, $player)) {
@@ -1093,6 +1096,8 @@ sub handle_game_events() {
                         malus_change(-1, $player);
                     }
                 };
+            } else {
+                print STDERR "Unrecognized command: $m->{msg}\n";
             }
         }
         fb_net::gdelay_messages(@keep_messages);
@@ -1101,6 +1106,7 @@ sub handle_game_events() {
             if ($pdata{$::p}{state} ne 'lost' && $pdata{$::p}{ping} + 200 < $frame) {
                 print STDERR "Dropping player $::p, doesn't ping us anymore for ages.\n";
                 lose($::p);
+                $pdata{$::p}{left} = 1;
             }
         };
     }
@@ -1462,7 +1468,35 @@ sub update_game() {
 	    if ($event->poll != 0 && $event->type == SDL_KEYDOWN) {
                 #- FIXME: for the moment, go to the menu, will do better later
                 if (is_mp_game()) {
-                    die 'quit';
+                    iter_players {
+                        $pdata{$::p}{left} and die 'quit';
+                    };
+                    fb_net::gsend("newgame:");
+                    my $waitingnum = scalar(@PLAYERS) - 1;
+                    while (1) {
+                        $event->pump;
+                        if ($event->poll != 0) {
+                            if ($event->type == SDL_KEYDOWN) {
+                                if ($event->key_sym == SDLK_ESCAPE()) {
+                                    die 'quit';
+                                }
+                            }
+                        }
+                        my ($msg, @rest) = fb_net::grecv();
+                        fb_net::gdelay_messages(@rest);
+                        if ($msg) {
+                            if ($msg->{msg} =~ /^\Qnewgame:\E/) {
+                                $waitingnum--;
+                                print "received newgame, waiting num: $waitingnum\n";
+                                $waitingnum == 0 and die 'new_game';
+                            } else {
+                                print "received $msg->{msg}, quitting\n";
+                                die 'quit';
+                            }
+                        }
+                        fb_c_stuff::fbdelay(50);
+                        $app->flip;
+                    }
                 } else {
                     die 'new_game';
                 }
