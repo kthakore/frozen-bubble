@@ -39,46 +39,72 @@ my $ping = 50;
 
 sub send_($) {
     my ($msg) = @_;
-    print $sock "FB/$proto_major.$proto_minor $msg\n";
+    if (defined($sock)) {
+        my $bytes = syswrite($sock, "FB/$proto_major.$proto_minor $msg\n");
+        !$bytes and disconnect();
+    }
+}
+
+sub disconnect() {
+    if (defined($sock)) {
+        close $sock;
+        $sock = undef;
+    }
+}
+
+sub isconnected() {
+    return defined($sock);
 }
 
 sub readline_() {
+    if (!defined($sock)) {
+        return undef;
+    }
+
     my $results = '';
     do {
         my $buf;
-        sysread($sock, $buf, 1);
-        if ($!) {
+        my $bytes = sysread($sock, $buf, 1);
+        if (!defined($bytes)) {
             if ($! == EAGAIN) {
                 sleep($ping/1000/3);
             } else {
                 print STDERR "Oops, system error: $!\n";
                 return;
             }
+        } elsif ($bytes == 0) {
+            disconnect();
+            return $results;
+        } else {
+            $results .= $buf;
         }
-        $results .= $buf;
     } while ($results !~ /\n/);
-
-#    print STDERR "$results";
     return $results;
 }
 
 sub readline_ifdata() {
+    if (!defined($sock)) {
+        return undef;
+    }
+
     my $buf;
-    sysread($sock, $buf, 1);
-    if ($!) {
+    my $bytes = sysread($sock, $buf, 1);
+    if (!defined($bytes)) {
         if ($! == EAGAIN) {
             return;
         } else {
             print STDERR "Oops, system error: $!\n";
             return;
         }
-    }
-
-    if ($buf eq "\n") {
-        return $buf;
+    } elsif ($bytes == 0) {
+        disconnect();
+        return;
     } else {
-#        print STDERR $buf;
-        return $buf . readline_();
+        if ($buf eq "\n") {
+            return $buf;
+        } else {
+            return $buf . readline_();
+        }
     }
 }
 
@@ -138,7 +164,7 @@ sub list() {
         }
         return ($free, @games);
     } else {
-        print STDERR "Answer to LIST was not recognized. Server said:\n\t$msg\n";
+        $msg and print STDERR "Answer to LIST was not recognized. Server said:\n\t$msg\n";
         return;
     }
 }
@@ -150,7 +176,7 @@ sub create($) {
     if ($msg =~ /CREATE: OK/) {
         return 1;
     } else {
-        print STDERR "Could not create game. Server said:\n\t$msg\n";
+        $msg and print STDERR "Could not create game. Server said:\n\t$msg\n";
         return 0;
     }
 }
@@ -162,7 +188,7 @@ sub join($$) {
     if ($msg =~ /JOIN: OK/) {
         return 1;
     } else {
-        print STDERR "Could not join game. Server said:\n\t$msg\n";
+        $msg and print STDERR "Could not join game. Server said:\n\t$msg\n";
         return 0;
     }
 }
@@ -216,10 +242,6 @@ sub connect($$) {
     return $ping;
 }
 
-sub disconnect() {
-    $sock and close $sock;
-}
-
 sub http_download($) {
     my ($url) = @_;
 
@@ -233,11 +255,12 @@ sub http_download($) {
     }
     $sock->autoflush;
 
-    print $sock join("\015\012" =>
-                     "GET $path HTTP/1.0",
-		     "Host: $host:$port",
-		     "User-Agent: Frozen-Bubble/$proto_major.$proto_minor",
-		     "", "");
+    my $bytes = syswrite($sock, join("\015\012" =>
+                                     "GET $path HTTP/1.0",
+                                     "Host: $host:$port",
+                                     "User-Agent: Frozen-Bubble/$proto_major.$proto_minor",
+                                     "", ""));
+    !$bytes and return;
 
     #- skip until empty line
     my ($now, $last, $buf, $tmp) = 0;
@@ -288,7 +311,10 @@ sub get_server_list() {
 
 sub gsend($) {
     my ($msg) = @_;
-    print $sock "$msg\n";
+    if (defined($sock)) {
+        my $bytes = syswrite($sock, "$msg\n");
+        !$bytes and disconnect();
+    }
 }
 
 my @messages;
@@ -296,15 +322,22 @@ sub grecv() {
     my @msg = @messages;
     @messages = ();
 
+    if (!defined($sock)) {
+        return @msg;
+    }
+
     my $buf;
-    sysread($sock, $buf, 1024);
-    if ($!) {
+    my $bytes = sysread($sock, $buf, 1024);
+    if (!defined($bytes)) {
         if ($! == EAGAIN) {
             return @msg;
         } else {
             print STDERR "Oops, system error: $!\n";
             return;
         }
+    } elsif ($bytes == 0) {
+        disconnect();
+        return;
     }
 
     my $id;

@@ -1036,6 +1036,19 @@ sub handle_game_events() {
 
     if (is_mp_game()) {
         my @messages = fb_net::grecv();
+
+        if (!fb_net::isconnected()) {
+            put_image($imgbin{void_panel}, $MENUPOS{xpos_panel}, $MENUPOS{ypos_panel});
+            my $message = 'LOST CONNECTION TO SERVER!';
+            my $xpos = 320 - SDL_TEXTWIDTH($message)/2;
+            $app->print($xpos, $MENUPOS{ypos_panel} + 30, $message);
+            $app->flip;
+            fb_c_stuff::fbdelay(2000);
+            $event->pump while $event->poll != 0;
+            grab_key(0);
+            die 'quit';
+        }
+
         #- in order to keep ordering of actions executed in update_game, we must tolerate only one action at a time
         my @keep_messages;
         my $check_action_possible = sub {
@@ -1477,7 +1490,9 @@ sub update_game() {
                     };
                     fb_net::gsend("newgame:");
                     my $waitingnum = scalar(@PLAYERS) - 1;
-                    my $still_game_messages = 1;
+                    iter_distant_players {
+                        $pdata{$::p}{still_game_messages} = 1;
+                    };
                     while (1) {
                         $event->pump;
                         if ($event->poll != 0) {
@@ -1490,9 +1505,10 @@ sub update_game() {
                         my (@messages) = fb_net::grecv();
                         foreach my $msg (@messages) {
                             if ($msg->{msg} =~ /^\Qfinished:\E/) {
-                                $still_game_messages = 0;
-                            } elsif ($still_game_messages) {
+                                $pdata{$pdata{id2p}{$msg->{id}}}{still_game_messages} = 0;
+                            } elsif (any { $pdata{$_}{still_game_messages} } @PLAYERS) {
                                 #- drop last game messages, mostly "ping" stuff
+                                $msg->{msg} !~ /ping:/ and print "dropping unusual last game message $msg->{msg}\n";
                                 next;
                             } else {
                                 if ($msg->{msg} =~ /^\Qnewgame:\E/) {
@@ -2457,7 +2473,7 @@ sub smg_choose_game() {
             $y += $smg_lineheight;
         }
         smg_erase_line($smg_starty_chat);
-        if ($curaction->()->{name} eq 'CHAT') {
+        if ($curaction->() && $curaction->()->{name} eq 'CHAT') {
             $app->print($smg_startx, $smg_starty_chat, "SAY: $typed_chat");
         }
         smg_printstatus(@smg_status_messages);
@@ -2611,6 +2627,14 @@ sub smg_choose_game() {
             }
         }
 
+        if (!fb_net::isconnected()) {
+            smg_add_status_msg('*** LOST CONNECTION TO SERVER, ABANDONING...');
+            @actions = ();
+            $redraw->();
+            fb_c_stuff::fbdelay(2000);
+            return 0;
+        }
+
         if ($need4status) {
             fb_net::send_('STATUS');
             my $answer = smg_verify_command('STATUS');
@@ -2621,11 +2645,7 @@ sub smg_choose_game() {
     }
 
   start_game:
-    my $y = $smg_starty;
-    foreach (1 .. $max_actions) {
-        smg_erase_line($y);
-        $y += $smg_lineheight;
-    }
+    $erase->();
 
     return $mynick;
 }
@@ -2678,6 +2698,10 @@ sub smg_start_game($) {
                 if ($message =~ /^START: (.*)/) {
                     smg_add_status_msg("*** $1 ALSO STARTED THE GAME...");
                     play_sound('newroot');
+
+                } elsif ($message =~ /^TALK: (.*)/) {
+                    smg_add_status_msg($1);
+                    play_sound('typewriter');
 
                 } elsif ($message =~ /^STOP: (.*)/ || $message =~ /^PARTED: (.*)/) {
                     smg_add_status_msg("*** $1 ABORTED STARTING, CANCELLING GAME...");
