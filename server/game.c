@@ -129,7 +129,7 @@ static void create_game(int fd, char* nick)
         g->status = GAME_STATUS_OPEN;
         games = g_list_append(games, g);
         calculate_list_games();
-        open_players = g_list_append(open_players, GINT_TO_POINTER(fd));
+        open_players = g_list_remove(open_players, GINT_TO_POINTER(fd));
 }
 
 static int add_player(struct game * g, int fd, char* nick)
