@@ -970,6 +970,7 @@ sub check_mp_connection() {
         my $xpos = 320 - SDL_TEXTWIDTH($message)/2;
         $app->print($xpos, $MENUPOS{ypos_panel} + 30, $message);
         $app->flip;
+        play_sound('cancel');
         fb_c_stuff::fbdelay(3000);
         $event->pump while $event->poll != 0;
         grab_key(0);
@@ -2744,6 +2745,7 @@ sub smg_choose_game() {
                     fb_net::send_("PART");
                     my $answer = smg_verify_command('PART');
                     $redraw->();
+                    play_sound('cancel');
                     fb_c_stuff::fbdelay(2000);
                     while (my $msg = fb_net::readline_ifdata()) {
                         my ($command, $message) = fb_net::decode_msg($msg);
@@ -2765,6 +2767,7 @@ sub smg_choose_game() {
             smg_add_status_msg('*** LOST CONNECTION TO SERVER, ABANDONING...');
             @actions = ();
             $redraw->();
+            play_sound('cancel');
             fb_c_stuff::fbdelay(2000);
             return 0;
         }
@@ -2886,6 +2889,7 @@ sub smg_start_game($) {
         if (!fb_net::isconnected()) {
             smg_add_status_msg('*** LOST CONNECTION TO SERVER, ABANDONING...');
             $redraw->();
+            play_sound('cancel');
             fb_c_stuff::fbdelay(2000);
             return 0;
         }
