@@ -1027,6 +1027,10 @@ sub handle_game_events() {
 	}
 
 	if ($event->type == SDL_KEYDOWN && $event->key_sym == SDLK_ESCAPE) {
+            if (is_mp_game()) {
+                $pdata{p1}{left} = 1;
+                lose('p1');
+            }
 	    die 'quit';
 	}
         if ($event->type == SDL_QUIT) {
@@ -1195,7 +1199,7 @@ sub lose {
         }
     } else {
         $pdata{state} = "lost $player";
-        is_1p_game() or win($player eq 'p1' ? 'p2' : 'p1');
+        is_2p_game() and win($player eq 'p1' ? 'p2' : 'p1');
     }
   ret:
 }
