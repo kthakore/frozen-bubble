@@ -68,9 +68,12 @@ sub readline_() {
         if (!defined($bytes)) {
             if ($! == EAGAIN) {
                 sleep($ping/1000/3);
+            } elsif ($! == ECONNRESET) {
+                disconnect();
+                return $results;
             } else {
                 print STDERR "Oops, system error: $!\n";
-                return;
+                return undef;
             }
         } elsif ($bytes == 0) {
             disconnect();
@@ -91,10 +94,13 @@ sub readline_ifdata() {
     my $bytes = sysread($sock, $buf, 1);
     if (!defined($bytes)) {
         if ($! == EAGAIN) {
-            return;
+            return undef;
+        } elsif ($! == ECONNRESET) {
+            disconnect();
+            return undef;
         } else {
             print STDERR "Oops, system error: $!\n";
-            return;
+            return undef;
         }
     } elsif ($bytes == 0) {
         disconnect();
@@ -331,6 +337,9 @@ sub grecv() {
     if (!defined($bytes)) {
         if ($! == EAGAIN) {
             return @msg;
+        } elsif ($! == ECONNRESET) {
+            disconnect();
+            return;
         } else {
             print STDERR "Oops, system error: $!\n";
             return;
