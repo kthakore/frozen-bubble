@@ -262,7 +262,7 @@ static void stop_game(int fd)
                 char stop_msg[1000];
                 int j = find_player_number(g, fd);
                 if (g->status == GAME_STATUS_OPEN) {
-                        send_line_log(fd, wn_not_started, "START");
+                        send_line_log(fd, wn_not_started, "STOP");
                         return;
                 }
                 g->status = GAME_STATUS_OPEN;
