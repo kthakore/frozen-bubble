@@ -458,7 +458,7 @@ sub mp_propagate($$) {
     } else {
         my $m = fb_net::grecv_get1msg();
         if ($m->{msg} !~ /^\Q$key:\E(.+)/) {
-            print "Network protocol error.\n";
+            print "Network protocol error: waiting for $key, received $m->{msg}.\n";
             die 'quit';
         } else {
             return $1;
@@ -2361,7 +2361,7 @@ sub new_game() {
         check_mp_connection();
         my $m = fb_net::grecv_get1msg();
         if ($m->{msg} ne '!synchro') {
-            print "Network protocol error.\n";
+            print "Network protocol error: waiting for !synchro, received $m->{msg}.\n";
             die 'quit';
         }
         iter_distant_players {
