@@ -1207,6 +1207,13 @@ sub lose {
                 $pdata{state} = "finished $living[0]:$winnernick 0";
             }
         }
+        if ($pdata{$player}{left}) {
+            put_image_to_background($imgbin{left},
+                                    $POS{$player}{left_limit},
+                                    $POS{$player}{top_limit}); #- TOFIX
+            @{$sticked_bubbles{$player}} = ();
+        }
+
     } else {
         $pdata{state} = "lost $player";
         is_2p_game() and win($player eq 'p1' ? 'p2' : 'p1');
@@ -1272,11 +1279,6 @@ sub update_lost {
                 
                 if (!@{$sticked_bubbles{$player}}) {
                     $event->pump while $event->poll != 0;
-                    if ($pdata{$player}{left}) {
-                        put_image_to_background($imgbin{left},
-                                                $POS{$player}{left_limit} + $POS{$player}{next_bubble}{x} - 35,
-                                                $POS{$player}{'initial_bubble_y'} - 120); #- TOFIX
-                    }
                 }
             } else {
                 if (!is_mp_game()) {
