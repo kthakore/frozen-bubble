@@ -3,7 +3,7 @@
 #
 #                          Frozen-Bubble
 #
-# Copyright (c) 2000, 2001, 2002, 2003, 2004 Guillaume Cottenceau
+# Copyright (c) 2000, 2001, 2002, 2003, 2004 The Frozen-Bubble Team
 #
 # Sponsored by MandrakeSoft <http://www.mandrakesoft.com/>
 #
@@ -35,7 +35,7 @@
 # Yes it uses Perl, you non-believer :-).
 #
 
-use diagnostics;
+#use diagnostics;
 use strict;
 
 use vars qw($TARGET_ANIM_SPEED $BUBBLE_SIZE $ROW_SIZE $LAUNCHER_SPEED $BUBBLE_SPEED $MALUS_BUBBLE_SPEED $TIME_APPEARS_NEW_ROOT
@@ -90,12 +90,13 @@ $version = '1.0.1';
 print "        [[ Frozen-Bubble-$version ]]\n\n";
 print '  http://www.frozen-bubble.org/
 
-  Copyright (c) 2000, 2001, 2002, 2003, 2004 Guillaume Cottenceau.
-  Artwork: Alexis Younes
-           Amaury Amblard-Ladurantie
-  Soundtrack: Matthias Le Bidan
-  Design & Programming: Guillaume Cottenceau
-  Level Editor: Kim and David Joham
+  Copyright (c) 2000, 2001, 2002, 2003, 2004 The Frozen-Bubble Team.
+ 
+    Artwork: Alexis Younes
+             Amaury Amblard-Ladurantie
+    Soundtrack: Matthias Le Bidan
+    Design & Programming: Guillaume Cottenceau
+    Level Editor: Kim and David Joham
 
   Sponsored by MandrakeSoft <http://www.mandrakesoft.com/>
 
