@@ -76,7 +76,7 @@ $FPATH = '@DATADIR@/frozen-bubble';
                     on_top_next_relpos => { x => -4, 'y' => -3 },
                     hurry => { x => 10, 'y' => 265 },
                     malus => { x => 450, 'y' => 408 },
-                    scores => { x => 180, 'y' => 300 } },
+                    scores => { x => 180, 'y' => 440 } },
             rp1 => { left_limit => 20, right_limit => 148, top_limit => 18, 'initial_bubble_y' => 190,
                      canon => { x => 59, 'y' => 174 },
                      simpleshooter => { x => 83, 'y' => 197, diameter => 30 },
