@@ -2852,14 +2852,20 @@ sub setup_mp_game() {
 
     $imgbin{back_netgame}->blit($apprects{main}, $app, $apprects{main});
 
-    #- 1. contact master server
-    my @servers = smg_servers() or return;
+    if (!fb_net::isconnected()) {
+        #- 1. contact master server
+        my @servers if 0;
+        @servers = smg_servers() or return;
 
-    @smg_status_messages = ();
+        @smg_status_messages = ();
 
-  choose_server:
-    #- 2. let user choose server
-    smg_choose_server(@servers) or return;
+      choose_server:
+        #- 2. let user choose server
+        smg_choose_server(@servers) or return;
+
+    } else {
+        smg_add_status_msg('*** GAME FINISHED');
+    }
 
   choose_game:
     #- 3. let user choose/create game
@@ -3518,7 +3524,10 @@ while (1) {
 	if ($@ =~ /^new_game/) {
 	    new_game();
 	} elsif ($@ =~ /^quit/) {
-            is_mp_game() and fb_net::disconnect();
+            if (is_mp_game()) {
+                fb_net::reconnect();
+                new_game_once() and new_game();
+            }
             do { menu() } while (!new_game_once());
 	    new_game();
 	} else {
