@@ -31,7 +31,7 @@ use vars qw(@ISA @EXPORT $FPATH $FLPATH $FBLEVELS $colourblind %POS_1P %POS_2P %
 @EXPORT = qw($FPATH $FLPATH $colourblind $FBLEVELS %POS_1P %POS_2P %POS_MP $BUBBLE_SIZE $ROW_SIZE
              $PI cat_ member difference2 any every even odd sqr to_bool to_int if_ chomp_
              fold_left output append_to_file min max backtrace basename cp_af all partition ssort
-             sum put_in_hash);
+             sum put_in_hash mapn mapn_);
 
 $FPATH = '@DATADIR@/frozen-bubble';
 $FLPATH = '@LIBDIR@/frozen-bubble';
@@ -78,7 +78,8 @@ $FLPATH = '@LIBDIR@/frozen-bubble';
                     on_top_next_relpos => { x => -4, 'y' => -3 },
                     hurry => { x => 10, 'y' => 265 },
                     malus => { x => 450, 'y' => 408 },
-                    scores => { x => 180, 'y' => 440 } },
+                    scores => { x => 180, 'y' => 440 },
+                    nick => { x => 180, 'y' => 460 } },
             rp1 => { left_limit => 20, right_limit => 148, top_limit => 18, 'initial_bubble_y' => 191,
                      canon => { x => 59, 'y' => 174 },
                      simpleshooter => { x => 83, 'y' => 197, diameter => 30 },
@@ -242,5 +243,20 @@ sub ssort(&@) {
 }
 sub sum { my $n = 0; $n += $_ foreach @_; $n }
 sub put_in_hash { my ($a, $b) = @_; while (my ($k, $v) = each %{$b || {}}) { $a->{$k} = $v } $a }
+sub smapn {
+    my $f = shift;
+    my $n = shift;
+    my @r;
+    for (my $i = 0; $i < $n; $i++) { push @r, &$f(map { $_->[$i] } @_) }
+    @r
+}
+sub mapn(&@) {
+    my $f = shift;
+    smapn($f, min(map { scalar @$_ } @_), @_);
+}
+sub mapn_(&@) {
+    my $f = shift;
+    smapn($f, max(map { scalar @$_ } @_), @_);
+}
 # -=-=---=-=---=-=---=-=---=-=---=-=---=-=---=-=---=-=---=-=---=-=---=-=---=-=---=-=---=-=--
 

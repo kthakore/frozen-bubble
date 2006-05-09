@@ -18,9 +18,12 @@
  ******************************************************************************/
 
 #include "net.h"
+#include "game.h"
 
 int main(int argc, char **argv)
 {
+        game_init();
+
         create_server(argc, argv);
         connections_manager();
 

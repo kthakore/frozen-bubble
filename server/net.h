@@ -33,6 +33,7 @@ ssize_t send_line_log_push_binary(int fd, char* dest_msg, char* printable_msg);
 ssize_t send_ok(int fd, char* inco_msg);
 
 void connections_manager();
+void conn_terminated(int fd, char* reason);
 void create_server(int argc, char **argv);
 
 int conns_nb(void);

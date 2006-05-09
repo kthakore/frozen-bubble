@@ -70,7 +70,7 @@ sub discover_lan_servers {
         if ($rcvmsg =~ m|^FB/$proto_major.$proto_minor SERVER HERE AT PORT (\d+)|) {
             push @servers, { host => inet_ntoa($ipaddr), port => $1 };
         } else {
-            print STDERR "Receive weird/incompatible answer to UDP broadcast looking for LAN servers:\t$rcvmsg\n";
+            print STDERR "\nReceive weird/incompatible answer to UDP broadcast looking for LAN servers from $ipaddr:$port:\t$rcvmsg\n";
         }
     }
 
@@ -347,9 +347,11 @@ sub connect($$) {
     return { ping => $ping, name => $servername };
 }
 
+my @messages;
 sub reconnect() {
     if (defined($current_host) && defined($current_port)) {
         disconnect();
+        @messages = ();
         my $ret = fb_net::connect($current_host, $current_port);
         return exists $ret->{ping};
     }
@@ -418,11 +420,17 @@ sub http_download($) {
 sub get_server_list() {
     my @masters = qw(http://www.frozen-bubble.org/serverlist
                      http://frozen-bubble.sourceforge.net/serverlist
-                     http://people.mandrakesoft.com/~gc/serverlist);
+                     http://booh.org/fb-serverlist
+                     http://zarb.org/~gc/fb-serverlist);
     foreach ($masterserver || map { "$_-$proto_major" } @masters) {
         my $serverlist = http_download($_);
         $serverlist and return $serverlist;
     }
+}
+
+our $myid;
+sub setmyid($) {
+    $myid = $_[0];
 }
 
 
@@ -431,13 +439,13 @@ sub get_server_list() {
 sub gsend($) {
     my ($msg) = @_;
     if (defined($sock)) {
-        my $bytes = syswrite($sock, "$msg\n");
+        my $bytes = syswrite($sock, $myid . "$msg\n");
         !$bytes and disconnect();
     }
 }
 
-my @messages;
 my $buffered_buf;
+my $ouch;
 sub grecv() {
     my @msg = @messages;
     @messages = ();
@@ -462,29 +470,34 @@ sub grecv() {
         disconnect();
         return;
     }
+    print "received $bytes bytes, adding to buffered ", length($buffered_buf), "\n";
     $buf = $buffered_buf . $buf;
     $buffered_buf = undef;
-
-    my $id;
+    my @ascii = unpack("C*", $buf);
+    print "bytes in buf: @ascii\n";
+    
+    #- if previous receive was partial and was cut between \n and \0, we
+    #- have a NULL in front of the message now
+    if (substr($buf, 0, 1) eq "\0") {
+        print "********************************************* partial cut between LF and NULL?\n";
+        $buf = substr($buf, 1);
+    }
+        
     while ($buf) {
         #- first byte of a "frame" is the id of the sender
-        if (!$id) {
-            $id = substr($buf, 0, 1);
-            $buf = substr($buf, 1);
+        my $id = substr($buf, 0, 1);
+        $buf = substr($buf, 1);
+#            printf "extracted id: %d\n", ord($id);
+        if (ord($id) < 4 || ord($id) > 8) {     #- this 8 is temp and helps to find protocol problems as long as there are never more than 5 players on server
+            printf "****** ouch! id %d, buf now <$buf>\n", ord($id);
+            printf "\talready msg: <$_->{msg}> from %d\n", ord($_->{id}) foreach @msg;
+            $ouch = 1;
         }
-        #- then loop for messages, each one ending with a newline; several can be
-        #- sent at once: if the sender sent several messages before server reacted
+        #- match data of a frame (newline terminated)
         if (my ($msg, $rest) = $buf =~ /([^\n]+)\n(.*)?/s) {
             $buf = $rest;
             push @msg, { id => $id, msg => $msg };
-            #        print "recv-msg:$msg\n";
-            #- look for a NULL: it terminates a frame sent by the server from a given
-            #- sender; but we might have some more data if we're reacting only after
-            #- the server sent more than one frame
-            if (substr($buf, 0, 1) eq "\0") {
-                $id = undef;
-                $buf = substr($buf, 1);
-            }
+            print "\trecv-msg:", ord($id), ":$msg\n";
         } else {
             #- no match means that we received a partial packet
             print "*** partial receive! for <$buf>, buffering (theoretically harmless)\n";
@@ -493,6 +506,7 @@ sub grecv() {
         }
     }
 
+    $ouch and die;
     return @msg;
 }
 

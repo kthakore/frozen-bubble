@@ -128,13 +128,25 @@ static void fill_conns_set(gpointer data, gpointer user_data)
 }
 
 static GList * new_conns;
+void conn_terminated(int fd, char* reason)
+{
+        l2("[%d] Closing connection: %s", fd, reason);
+        close(fd);
+        player_part_game(fd);
+        new_conns = g_list_remove(new_conns, GINT_TO_POINTER(fd));
+        player_disconnects(fd);
+        if (lan_game_mode && g_list_length(new_conns) == 0 && udp_server_socket == -1) {
+                l0("LAN game mode server exiting on last client exit.");
+                exit(0);
+        }
+}
+
 static int prio_processed;
 static void handle_incoming_data_generic(gpointer data, gpointer user_data, int prio)
 {
         int fd;
 
         if (FD_ISSET((fd = GPOINTER_TO_INT(data)), (fd_set *) user_data)) {
-                int conn_terminated = 0;
                 char buf[INCOMING_DATA_BUFSIZE];
                 ssize_t len;
                 ssize_t offset = incoming_data_buffers_count[fd];
@@ -142,10 +154,10 @@ static void handle_incoming_data_generic(gpointer data, gpointer user_data, int 
                 memcpy(buf, incoming_data_buffers[fd], offset);
                 len = recv(fd, buf + offset, INCOMING_DATA_BUFSIZE - 1 - offset, 0);
                 if (len <= 0) {
-                        l1("[%d] Peer shutdown", fd);
                         if (len == -1)
-                                l2("[%d] This happened on a system error: %s", fd, strerror(errno));
-                        goto conn_terminated;
+                                l2("[%d] System error on recv: %s", fd, strerror(errno));
+                        conn_terminated(fd, "peer shutdown on recv");
+                        return;
                 } else {
                         len += offset;
                         // If we don't have a newline, it means we are seeing a partial send. Buffer
@@ -154,7 +166,8 @@ static void handle_incoming_data_generic(gpointer data, gpointer user_data, int 
                         if (buf[len-1] != '\n') {
                                 if (len == INCOMING_DATA_BUFSIZE - 1) {
                                         send_line_log_push(fd, fl_client_nolf);
-                                        goto conn_terminated;
+                                        conn_terminated(fd, "too much data without LF");
+                                        return;
                                 }
                                 l2("[%d] ****** buffering %d bytes", fd, len);
                                 memcpy(incoming_data_buffers[fd], buf, len);
@@ -174,25 +187,15 @@ static void handle_incoming_data_generic(gpointer data, gpointer user_data, int 
                                 buf[len] = '\0';
 
                                 /* loop (to handle case when network gives us several lines at once) */
-                                while (!conn_terminated && (eol = strchr(line, '\n'))) {
+                                while ((eol = strchr(line, '\n'))) {
                                         eol[0] = '\0';
                                         if (strlen(line) > 0 && eol[-1] == '\r')
                                                 eol[-1] = '\0';
-                                        conn_terminated = process_msg(fd, line);
-                                        line = eol + 1;
-                                }
-
-                                if (conn_terminated) {
-                                conn_terminated:
-                                        l1("[%d] Closing connection", fd);
-                                        close(fd);
-                                        player_part_game(fd);
-                                        new_conns = g_list_remove(new_conns, data);
-                                        player_disconnects(fd);
-                                        if (lan_game_mode && g_list_length(new_conns) == 0 && udp_server_socket == -1) {
-                                                l0("LAN game mode server exiting on last client exit.");
-                                                exit(0);
+                                        if (process_msg(fd, line)) {
+                                                conn_terminated(fd, "process_msg said to shutdown this connection");
+                                                return;
                                         }
+                                        line = eol + 1;
                                 }
                         }
                 }
@@ -218,7 +221,7 @@ static void handle_udp_request(void)
         int n;
         char msg[128];
         struct sockaddr_in client_addr;
-        int client_len = sizeof(client_addr);
+        socklen_t client_len = sizeof(client_addr);
         char * answer;
         
         if (!ok_input)   // C sux

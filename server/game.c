@@ -22,6 +22,7 @@
  * it should be as far away as possible from network operations
  */
 
+#define _GNU_SOURCE
 #include <stdlib.h>
 #include <unistd.h>
 #include <stdio.h>
@@ -287,7 +288,7 @@ void player_part_game(int fd)
 
                 if (g->status == GAME_STATUS_PLAYING) {
                         // inform other players, playing state
-                        char leave_player_prio_msg[] = "?leave:\n";
+                        char leave_player_prio_msg[] = "?leave\n";
                         leave_player_prio_msg[0] = fd;
                         process_msg_prio(fd, leave_player_prio_msg, strlen(leave_player_prio_msg));
                 } else {
@@ -562,14 +563,42 @@ ssize_t get_reset_amount_transmitted(void)
 int rand_(double val) { return 1+(int) (val*rand()/(RAND_MAX+1.0)); }
 #define min(x, y) (x < y ? x : y)
 
+static char synchro_command[] = "!synchro\n";
+static size_t synchro_command_len;
+
+void game_init() {
+        synchro_command_len = strlen(synchro_command);
+}
+
 void process_msg_prio(int fd, char* msg, ssize_t len)
 {
         struct game * g = find_game_by_fd(fd);
         if (g) {
                 int i;
                 for (i = 0; i < g->players_number; i++) {
-                        // '!' is synchro message, each client will want to receive it even sender
-                        if (g->players_conn[i] != fd || msg[1] == '!') {
+                        // Emitter wants to receive synchro message as well
+                        if (g->players_conn[i] == fd && memmem(msg, len, synchro_command, synchro_command_len)) {
+                                char synchro4self[] = "?!synchro\n";
+                                ssize_t retval;
+                                synchro4self[0] = fd;
+                                l1("******* sending synchro to %d", g->players_conn[i]);
+                                {
+                                        char buf[4096] = "";
+                                        int j;
+                                        for (j=0; j<len; j++)
+                                                strcat(buf, asprintf_("%d ", msg[j]));
+                                        l1("msg was: %s", buf);
+                                }
+                                retval = send(g->players_conn[i], synchro4self, sizeof(synchro4self) - 1, 0);
+                                if (retval != sizeof(synchro4self) - 1) {
+                                        if (retval == -1) {
+                                                conn_terminated(fd, "peer shutdown on send");
+                                        } else {
+                                                l2("short send of %d instead of %d bytes :(", retval, sizeof(synchro4self) - 1);
+                                        }
+                                }
+
+                        } else if (g->players_conn[i] != fd) {
                                 ssize_t retval;
                                 ssize_t togo = len;
                                 l2("Sending total: %d bytes to %d", togo, g->players_conn[i]);
@@ -580,7 +609,7 @@ void process_msg_prio(int fd, char* msg, ssize_t len)
                                         retval = send(g->players_conn[i], msg + (len - togo), amount, 0);
                                         if (retval != amount) {
                                                 if (retval == -1) {
-                                                        perror("send");
+                                                        conn_terminated(fd, "peer shutdown on send");
                                                 } else {
                                                         l2("short send of %d instead of %d bytes :(", retval, amount);
                                                 }
