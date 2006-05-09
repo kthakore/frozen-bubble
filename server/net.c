@@ -73,8 +73,8 @@ static int udp_server_socket = -1;
 static GList * conns = NULL;
 static GList * conns_prio = NULL;
 
-#define INCOMING_DATA_BUFSIZE 4096
-static char incoming_data_buffers[256][INCOMING_DATA_BUFSIZE] __attribute__((aligned(INCOMING_DATA_BUFSIZE)));
+#define INCOMING_DATA_BUFSIZE 16384
+static char * incoming_data_buffers[256];
 static int incoming_data_buffers_count[256];
 
 /* send line adding the protocol in front of the supplied msg */
@@ -132,6 +132,7 @@ void conn_terminated(int fd, char* reason)
 {
         l2("[%d] Closing connection: %s", fd, reason);
         close(fd);
+        free(incoming_data_buffers[fd]);
         player_part_game(fd);
         new_conns = g_list_remove(new_conns, GINT_TO_POINTER(fd));
         player_disconnects(fd);
@@ -325,7 +326,8 @@ void connections_manager(void)
                                         send_line_log_push(fd, greets_msg);
                                         conns = g_list_append(conns, GINT_TO_POINTER(fd));
                                         player_connects(fd);
-                                        memset(incoming_data_buffers[fd], 0, sizeof(incoming_data_buffers[fd]));  // force Linux to allocate now
+                                        incoming_data_buffers[fd] = malloc(sizeof(char) * INCOMING_DATA_BUFSIZE);
+                                        memset(incoming_data_buffers[fd], 0, sizeof(char) * INCOMING_DATA_BUFSIZE);  // force Linux to allocate now
                                         incoming_data_buffers_count[fd] = 0;
                                         calculate_list_games();
                                 }

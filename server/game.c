@@ -615,7 +615,7 @@ void process_msg_prio(int fd, char* msg, ssize_t len)
                                                 }
                                         }
                                         {
-                                                char buf[1024] = "";
+                                                char buf[16384] = "";
                                                 char * from = msg + (len - togo);
                                                 int j;
                                                 for (j=0; j<amount; j++)

@@ -17,11 +17,18 @@
  *
  ******************************************************************************/
 
+#include <stdio.h>
 #include "net.h"
 #include "game.h"
 
 int main(int argc, char **argv)
 {
+        printf("Frozen-Bubble server, v" VERSION "\n");
+        printf("\n");
+        printf("Copyright (c) 2006 Guillaume Cottenceau.\n");
+        printf("This is free software; see the source for copying conditions.  There is NO\n");
+        printf("warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n");
+
         game_init();
 
         create_server(argc, argv);
