@@ -20,7 +20,7 @@ fb-server: $(ALLOBJ)
 	$(CC) -I. $(CFLAGS) -c $<
 
 fb-server.o:
-	$(CC) -I. $(CFLAGS) -DVERSION=#VERSION# -c $<
+	$(CC) -I. $(CFLAGS) -DVERSION=\"$(shell cat ../VERSION)\" -c $<
 
 clean: 
 	rm -f fb-server *.o .depend

@@ -23,11 +23,12 @@
 
 int main(int argc, char **argv)
 {
-        printf("Frozen-Bubble server, v" VERSION "\n");
+        printf("Frozen-Bubble server version " VERSION " (protocol version %d.%d)\n", proto_major, proto_minor);
         printf("\n");
         printf("Copyright (c) 2006 Guillaume Cottenceau.\n");
         printf("This is free software; see the source for copying conditions.  There is NO\n");
         printf("warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n");
+        printf("\n");
 
         game_init();
 

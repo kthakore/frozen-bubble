@@ -6,7 +6,10 @@ LIBDIR = $(PREFIX)/lib
 BINDIR = $(PREFIX)/bin
 MANDIR = $(DATADIR)/man
 
-all: dirs
+all: prepare dirs
+
+prepare:
+	perl -ne "print \$$1 if m|\\\$$version = '(.*)';|" frozen-bubble > VERSION
 
 dirs:
 	@if ! perl -e 'use SDL'; then echo -e "\n    *** I need perl-SDL installed"; false; fi
