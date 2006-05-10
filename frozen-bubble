@@ -3,9 +3,9 @@
 #
 #                          Frozen-Bubble
 #
-# Copyright (c) 2000, 2001, 2002, 2003, 2004 The Frozen-Bubble Team
+# Copyright (c) 2000 - 2006 The Frozen-Bubble Team
 #
-# Sponsored by MandrakeSoft <http://www.mandrakesoft.com/>
+# Originally sponsored by Mandriva <http://www.mandriva.com/>
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 2, as
@@ -20,17 +20,15 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-#
 #******************************************************************************
 #
 # Design & Programming by Guillaume Cottenceau between Oct 2001 and Jan 2002.
 # Level Editor parts by Kim Joham and David Joham between Oct 2002 and Jan 2003.
-# Network game by Guillaume Cottenceau in 2004.
+# Network game by Guillaume Cottenceau in 2004, 2006 (blah!).
 #
 # Check official home: http://www.frozen-bubble.org/
 #
 #******************************************************************************
-#
 #
 # Yes it uses Perl, you non-believer :-).
 #
@@ -93,7 +91,7 @@ $version = '2.0.0';
 print "        [[ Frozen-Bubble-$version ]]\n\n";
 print '  http://www.frozen-bubble.org/
 
-  Copyright (c) 2000, 2001, 2002, 2003, 2004 The Frozen-Bubble Team.
+  Copyright (c) 2000 - 2006 The Frozen-Bubble Team.
  
     Artwork: Alexis Younes
              Amaury Amblard-Ladurantie
@@ -101,7 +99,7 @@ print '  http://www.frozen-bubble.org/
     Design & Programming: Guillaume Cottenceau
     Level Editor: Kim and David Joham
 
-  Sponsored by MandrakeSoft <http://www.mandrakesoft.com/>
+  Originally sponsored by Mandriva <http://www.mandriva.com/>
 
   This program is free software; you can redistribute it and/or modify
   it under the terms of the GNU General Public License version 2, as
