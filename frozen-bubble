@@ -2946,6 +2946,8 @@ sub smg_choose_game() {
     my $mynick = $ENV{USER} = substr($ENV{USER}, 0, 8);
     my $need4update;
     my $relist;
+    my $players_in_game = '';
+    my $can_start = 0;
     $list->();
 
     while (1) {
@@ -3011,15 +3013,17 @@ sub smg_choose_game() {
                                     $suffix = 1;
                                 }
                             } else {
+                                if ($curaction->()->{action} eq 'CREATE') {
+                                    $can_start = 1;
+                                }
                                 last;
                             }
                         }
                         if ($answer) {
-                            smg_add_status_msg("*** ERROR in ".$curaction->()->{join}.": $answer");
+                            smg_add_status_msg("*** ERROR: GAME JUST STARTED OR ABORTED");
                         } else {
                             $erase->();
-                            @actions = ({ name => 'CHAT', action => 'CHAT', selected => 1 },
-                                        { name => 'START GAME!', action => 'START' });
+                            @actions = { name => 'CHAT', action => 'CHAT', selected => 1 };
                             $state = 'wait_for_start';
                             $need4update = 1;
                             @smg_status_messages = ();
@@ -3030,8 +3034,7 @@ sub smg_choose_game() {
                         my $answer = smg_verify_command('START');
                         if ($answer) {
                             smg_add_status_msg("*** CAN'T START GAME: $answer");
-                        } else {
-                            goto start_game;
+                            return;
                         }
                     }
                     
@@ -3064,118 +3067,9 @@ sub smg_choose_game() {
                 } elsif ($message =~ /^PARTED: (.*)/) {
                     smg_add_status_msg("*** $1 LEFT THE GAME...");
                     play_sound('newroot_solo');
-                } elsif ($message =~ /^START: (.*)/) {
-                    smg_add_status_msg("*** $1 STARTED THE GAME AND IS WAITING!");
-                    play_sound('newroot');
-                } elsif ($message =~ /^STOP: (.*)/) {
-                    smg_add_status_msg("*** $1 ABORTED STARTING, CANCELLING GAME...");
-                    smg_verify_command('PART');
-                    $redraw->();
-                    play_sound('cancel');
-                    fb_c_stuff::fbdelay(2000);
-                    while (my $msg = fb_net::readline_ifdata()) {
-                        my ($command, $message) = fb_net::decode_msg($msg);
-                        if ($command ne 'PUSH' || $message !~ /^PARTED:/) {
-                            print "unexpected message received: $msg\n";
-                        }
-                    }
-                    $erase->();
-                    return smg_choose_game();
-                } else {
-                    print "unrecognized message received: $msg\n";
-                }
-                $need4update = 1;
-            } else {
-                print "non-push received!? $msg\n";
-            }
-        }
-
-        if (!fb_net::isconnected()) {
-            smg_add_status_msg('*** LOST CONNECTION TO SERVER, ABANDONING...');
-            @actions = ();
-            $redraw->();
-            play_sound('cancel');
-            fb_c_stuff::fbdelay(2000);
-            $erase->();
-            return 0;
-        }
-
-        if ($need4update) {
-            if ($state ne 'game_select') {
-                my $answer = fb_net::send_and_receive('STATUS');
-                erase_line($smg_starty_players, $imgbin{back_netgame});
-                $app->print($smg_startx, $smg_starty_players, "PLAYERS IN GAME: ".uc($answer));
-            }
-            $redraw->();
-            $need4update = 0;
-        }
-    }
-
-  start_game:
-    $erase->();
-
-    return $mynick;
-}
-
-sub smg_start_game($) {
-    my ($mynick) = @_;
-
-    smg_add_status_msg('WAITING FOR OTHER PLAYERS...');
-
-    @PLAYERS = qw(p1);
-
-    my $redraw = sub {
-        smg_printstatus(@smg_status_messages);
-    };
-    $redraw->();
-
-    while (1) {
-
-        $event->pump;
-        if ($event->poll != 0) {
-            if ($event->type == SDL_KEYDOWN) {
-                my $k = $event->key_sym;
-
-                if ($k == SDLK_ESCAPE()) {
-                    my $answer = smg_verify_command('STOP');
-                    if ($answer) {
-                        smg_add_status_msg("*** CAN'T STOP GAME: $answer");
-                    } else {
-                        smg_add_status_msg("*** ABORTED STARTING GAME...");
-                        $redraw->();
-                        fb_c_stuff::fbdelay(2000);
-                        return 0;
-                    }
-
-                } elsif ($k == $KEYS->{misc}{fs}) {
-                    $fullscreen = !$fullscreen;
-                    $app->fullscreen;
-                }
-            }
-            $redraw->();
-        } else {
-            fb_c_stuff::fbdelay(50);
-        }
-
-        while (my $msg = fb_net::readline_ifdata()) {
-            my ($command, $message) = fb_net::decode_msg($msg);
-            if ($command eq 'PUSH') {
-                if ($message =~ /^START: (.*)/) {
-                    smg_add_status_msg("*** $1 ALSO STARTED THE GAME...");
-                    play_sound('newroot');
-
-                } elsif ($message =~ /^TALK: (.*)/) {
-                    smg_add_status_msg($1);
-                    play_sound('typewriter');
-
-                } elsif ($message =~ /^STOP: (.*)/ || $message =~ /^PARTED: (.*)/) {
-                    smg_add_status_msg("*** $1 ABORTED STARTING, CANCELLING GAME...");
-                    smg_verify_command('PART');
-                    $redraw->();
-                    fb_c_stuff::fbdelay(2000);
-                    return 0;
-
                 } elsif ($message =~ /^GAME_CAN_START: (.*)/) {
+                    fb_net::send_("OK_GAME_START");
+                    @PLAYERS = qw(p1);
                     my $msg = $1;
                     my @mappings;
                     while ($msg) {
@@ -3202,23 +3096,37 @@ sub smg_start_game($) {
                         $pdata{id2p}{$m->{id}} = $player;
                     }
                     fb_net::setmyid($pdata{p1}{id});
+                    $pdata{$_}{score} = 0 foreach @PLAYERS;
                     return 1;
-                    
                 } else {
                     print "unrecognized message received: $msg\n";
                 }
+                $need4update = 1;
             } else {
                 print "non-push received!? $msg\n";
             }
-            $redraw->();
         }
 
         if (!fb_net::isconnected()) {
             smg_add_status_msg('*** LOST CONNECTION TO SERVER, ABANDONING...');
+            @actions = ();
             $redraw->();
             play_sound('cancel');
             fb_c_stuff::fbdelay(2000);
+            $erase->();
             return 0;
+        }
+
+        if ($need4update) {
+            if ($state ne 'game_select') {
+                $players_in_game = fb_net::send_and_receive('STATUS');
+                erase_line($smg_starty_players, $imgbin{back_netgame});
+                $app->print($smg_startx, $smg_starty_players, "PLAYERS IN GAME: ".uc($players_in_game));
+                @actions = { name => 'CHAT', action => 'CHAT', selected => 1 };
+                $can_start && $players_in_game =~ /,/ and push @actions, { name => 'START GAME!', action => 'START' };
+            }
+            $redraw->();
+            $need4update = 0;
         }
     }
 }
@@ -3266,23 +3174,8 @@ sub setup_mp_game() {
         show_mp_scores();
     }
 
-  choose_game:
     #- 3. let user choose/create game
-    my $mynick = smg_choose_game();
-    if (!$mynick) {
-        if ($pdata{gametype} eq 'lan') {
-            return;
-        } else {
-            goto choose_server;
-        }
-    }
-
-    #- 4. start game waiting for other players, and receiving id/nick bindings
-    smg_start_game($mynick) or goto choose_game;
-
-    $pdata{$_}{score} = 0 foreach @PLAYERS;
-
-    return 1;
+    return smg_choose_game() || setup_mp_game();
 }
 
 sub new_game_once {
