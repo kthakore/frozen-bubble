@@ -115,12 +115,14 @@ static char* list_game(const struct game * g)
 
 static char list_games_str[8192] __attribute__((aligned(4096))) = "";
 static int players_in_game;
+static int games_running;
 static void list_games_aux(gpointer data, gpointer user_data)
 {
         const struct game* g = data;
         char* game;
         if (g->status != GAME_STATUS_OPEN) {
                 players_in_game += g->players_number;
+                games_running++;
                 return;
         }
         strncat(list_games_str, "[", sizeof(list_games_str));
@@ -134,8 +136,9 @@ void calculate_list_games(void)
         char * free_players;
         memset(list_games_str, 0, strlen(list_games_str));
         players_in_game = 0;
+        games_running = 0;
         g_list_foreach(games, list_games_aux, NULL);
-        free_players = asprintf_(" free:%d", conns_nb() - players_in_game - 1);  // 1: don't count myself
+        free_players = asprintf_(" free:%d games:%d", conns_nb() - players_in_game - 1, games_running);  // 1: don't count myself
         strncat(list_games_str, free_players, sizeof(list_games_str));
         free(free_players);
 }

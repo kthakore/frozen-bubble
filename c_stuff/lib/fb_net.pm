@@ -245,14 +245,15 @@ sub send_and_receive($;$) {
 
 sub list() {
     my $msg = send_and_receive('LIST');
-    if ($msg =~ /(.*) free:(\d+)/) {
-        my $games = $1;
+    if ($msg =~ /(.*) free:(\d+) games:(\d+)/) {
+        my $freegames = $1;
         my $free = $2;
+        my $games = $3;
         my @games;
         while ($games =~ /\[([^\]]+)\]/g) {
             push @games, [ split /,/, $1 ];
         }
-        return ($free, @games);
+        return ($free, $games, @games);
     } else {
         return;
     }
