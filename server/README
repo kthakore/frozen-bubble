@@ -1,0 +1,80 @@
+             [[ Frozen-Bubble server ]]
+
+
+    Copyright (c) 2004, 2006 Guillaume Cottenceau.
+
+This program is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License
+version 2, as published by the Free Software Foundation.
+
+
+The Frozen-Bubble server is a standalone program acting as a
+bridge between Frozen-Bubble clients (where the players are). It
+uses the IP protocol thus players need Internet connectivity. It
+has some logic to control creating and joining a game, and then
+becomes a pure relay for in-game information communicated between
+players.
+
+
+]] Suitability to clients
+
+Because all clients connect to the server, the problems arising
+to clients/gamers behind NAT private networks and firewalls are
+suppressed. A central repository (doubly redundant) provides the
+list of active servers, which are then presented to the player
+sorted best pings first. Thus Frozen-Bubble network gaming should
+be available to most people.
+
+
+]] Suitability for hosting
+
+Because of its bridging nature, the Frozen-Bubble server does not
+need anything which is typically useful to clients, including the
+Perl game engine and the data. It is written in C language in the
+hope to be as portable as possible and imposing the lowest
+dependancy constraints on servers hosting it. It is typically
+distributed as source code or statically linked binary (to
+prevent a dependancy on a precise libc version and on the glib).
+
+
+]] Security
+
+C programs are ideal targets for crackers, essentially via format
+attacks. This is why the Frozen-Bubble server doesn't use
+arbitrary formats. Additionally, valgrind has been used to spot
+and fix any reported memory allocation problems. Yet the fact
+that the Frozen-Bubble server doesn't need root permissions for
+running is also a good protection against possible remaining
+problems.
+
+Because the security of your server is crucial, our advice is to
+create and use a special user to run it, in order to prevent from
+any damage on your personal files if anything bad would happen.
+You might also want to run it in rbash or with specially crafted
+ulimits.
+
+
+]] Scalability
+
+The Frozen-Bubble server is not scalable. It is not multi-
+threaded nor will fork to better handle a lot of parallel
+requests. Additionally, it is limited to 252 simultaneous
+players.
+
+However, administrators willing to host more than one server can
+launch any number of different Frozen-Bubble server processes on
+a single machine, provided they use different TCP ports.
+
+
+]] Server resource limits
+
+A built-in upload counter allows to set a limit after which no
+new players can connect to the server. It is useful for
+administrators who can't spare more than a defined limited of
+bandwidth from their hosting solution. It is believed to be
+better than using kernel shaping or an external tool such as
+trickle, because reaching the bandwidth limit wouldn't impair
+existing players.
+
+Note that bandwidth use is:
+
