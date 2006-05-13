@@ -211,7 +211,7 @@ int find_player_number(struct game *g, int fd)
         for (i = 0; i < g->players_number; i++)
                 if (g->players_conn[i] == fd)
                         return i;
-        l0("Internal error");
+        l0(OUTPUT_TYPE_ERROR, "Internal error");
         exit(1);
 }
 
@@ -250,12 +250,13 @@ static void start_game(int fd)
                         send_ok(fd, "START");
                         real_start_game(g);
                         calculate_list_games();
+                        l2(OUTPUT_TYPE_INFO, "running games increments to: %d (%d players)", games_running, players_in_game);
                 } else {
                         send_line_log(fd, wn_not_creator, "START");
                 }
 
         } else {
-                l0("Internal error");
+                l0(OUTPUT_TYPE_ERROR, "Internal error");
                 exit(1);
         }
 }
@@ -270,7 +271,7 @@ static void ok_start_game(int fd)
                                 if (g->players_conn[i] == fd) {
                                         if (!g->players_started[i]) {
                                                 g->players_started[i] = 1;
-                                                l1("%d entering prio mode", g->players_conn[i]);
+                                                l1(OUTPUT_TYPE_DEBUG, "%d entering prio mode", g->players_conn[i]);
                                                 add_prio(g->players_conn[i]);
                                         } else {
                                                 send_line_log(fd, wn_already_ok_started, "OK_GAME_START");
@@ -281,7 +282,7 @@ static void ok_start_game(int fd)
                         send_line_log(fd, wn_not_started, "OK_GAME_START");
                 }
         } else {
-                l0("Internal error");
+                l0(OUTPUT_TYPE_ERROR, "Internal error");
                 exit(1);
         }
 }
@@ -319,9 +320,12 @@ void player_part_game(int fd)
                 if (g->players_number == 0) {
                         games = g_list_remove(games, g);
                         free(g);
+                        calculate_list_games();
+                        l2(OUTPUT_TYPE_INFO, "running games decrements to: %d (%d players)", games_running, players_in_game);
+                } else {
+                        calculate_list_games();
                 }
-                calculate_list_games();
-                
+
                 open_players = g_list_append(open_players, GINT_TO_POINTER(fd));
         }
 }
@@ -344,7 +348,7 @@ static void stop_game(int fd)
                                 send_line_log_push(g->players_conn[j], stop_msg);
                 player_part_game(fd);
         } else {
-                l0("Internal error");
+                l0(OUTPUT_TYPE_ERROR, "Internal error");
                 exit(1);
         }
 }
@@ -437,7 +441,7 @@ int process_msg(int fd, char* msg)
                 int j;
                 for (j=0; j<strlen(msg); j++)
                         strcat(buf, asprintf_("%d ", msg[j]));
-                l2("process from %d: %s", fd, buf);
+                l2(OUTPUT_TYPE_DEBUG, "process from %d: %s", fd, buf);
         }
 
         /* check for leading protocol tag */
@@ -591,7 +595,7 @@ void process_msg_prio(int fd, char* msg, ssize_t len)
                 int j;
                 for (j=0; j<len; j++)
                         strcat(buf, asprintf_("%d ", msg[j]));
-                l2("process from %d: %s", fd, buf);
+                l2(OUTPUT_TYPE_DEBUG, "process from %d: %s", fd, buf);
         }
         if (g) {
                 int i;
@@ -601,37 +605,37 @@ void process_msg_prio(int fd, char* msg, ssize_t len)
                                 char synchro4self[] = "?!synchro\n";
                                 ssize_t retval;
                                 synchro4self[0] = fd;
-                                l1("******* sending synchro to %d", g->players_conn[i]);
+                                l1(OUTPUT_TYPE_DEBUG, "******* sending synchro to %d", g->players_conn[i]);
                                 {
                                         char buf[4096] = "";
                                         int j;
                                         for (j=0; j<len; j++)
                                                 strcat(buf, asprintf_("%d ", msg[j]));
-                                        l1("msg was: %s", buf);
+                                        l1(OUTPUT_TYPE_DEBUG, "msg was: %s", buf);
                                 }
                                 retval = send(g->players_conn[i], synchro4self, sizeof(synchro4self) - 1, 0);
                                 if (retval != sizeof(synchro4self) - 1) {
                                         if (retval == -1) {
                                                 conn_terminated(fd, "peer shutdown on send");
                                         } else {
-                                                l2("short send of %d instead of %d bytes :(", retval, sizeof(synchro4self) - 1);
+                                                l2(OUTPUT_TYPE_ERROR, "short send of %d instead of %d bytes :(", retval, sizeof(synchro4self) - 1);
                                         }
                                 }
 
                         } else if (g->players_conn[i] != fd) {
                                 ssize_t retval;
                                 ssize_t togo = len;
-                                l3("Sending total: %d bytes to %d (from %d)", togo, g->players_conn[i], fd);
+                                l3(OUTPUT_TYPE_DEBUG, "Sending total: %d bytes to %d (from %d)", togo, g->players_conn[i], fd);
                                 while (togo) {
                                         int randval = rand_(50);
                                         ssize_t amount = min(randval, togo);
-                                        l2("Amount: %d togo: %d", amount, togo);
+                                        l2(OUTPUT_TYPE_DEBUG, "Amount: %d togo: %d", amount, togo);
                                         retval = send(g->players_conn[i], msg + (len - togo), amount, 0);
                                         if (retval != amount) {
                                                 if (retval == -1) {
                                                         conn_terminated(fd, "peer shutdown on send");
                                                 } else {
-                                                        l2("short send of %d instead of %d bytes :(", retval, amount);
+                                                        l2(OUTPUT_TYPE_ERROR, "short send of %d instead of %d bytes :(", retval, amount);
                                                 }
                                         }
                                         {
@@ -640,16 +644,16 @@ void process_msg_prio(int fd, char* msg, ssize_t len)
                                                 int j;
                                                 for (j=0; j<amount; j++)
                                                         strcat(buf, asprintf_("%d ", from[j]));
-                                                l2("sent %d bytes: %s", amount, buf);
+                                                l2(OUTPUT_TYPE_DEBUG, "sent %d bytes: %s", amount, buf);
                                         }
                                         togo -= amount;
                                 }
-                                l0("- done");
+                                l0(OUTPUT_TYPE_DEBUG, "- done");
                                 amount_transmitted += len;
                         }
                 }
         } else {
-                l1("Internal error: could not find game by fd: %d", fd);
+                l1(OUTPUT_TYPE_ERROR, "Internal error: could not find game by fd: %d", fd);
                 exit(1);
         }
 }

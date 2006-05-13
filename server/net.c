@@ -61,6 +61,7 @@ static double date_amount_transmitted_reset;
 #define DEFAULT_PORT 1511  // a.k.a 0xF 0xB thx misc
 #define DEFAULT_MAX_USERS 200
 #define DEFAULT_MAX_TRANSMISSION_RATE 100000
+#define DEFAULT_OUTPUT "CONNECT"
 static int port = DEFAULT_PORT;
 static int max_users = DEFAULT_MAX_USERS;
 static int max_transmission_rate = DEFAULT_MAX_TRANSMISSION_RATE;
@@ -90,7 +91,7 @@ static ssize_t send_line(int fd, char* msg)
 
 ssize_t send_line_log(int fd, char* dest_msg, char* inco_msg)
 {
-        l3("[%d] %s -> %s", fd, inco_msg, dest_msg);
+        l3(OUTPUT_TYPE_DEBUG, "[%d] %s -> %s", fd, inco_msg, dest_msg);
         return send_line(fd, dest_msg);
 }
 
@@ -99,7 +100,7 @@ ssize_t send_line_log_push(int fd, char* dest_msg)
         char * tmp = current_command;
         ssize_t b;
         current_command = "PUSH";
-        l2("[%d] PUSH %s", fd, dest_msg);
+        l2(OUTPUT_TYPE_DEBUG, "[%d] PUSH %s", fd, dest_msg);
         b = send_line(fd, dest_msg);
         current_command = tmp;
         return b;
@@ -110,7 +111,7 @@ ssize_t send_line_log_push_binary(int fd, char* dest_msg, char* printable_msg)
         char * tmp = current_command;
         ssize_t b;
         current_command = "PUSH";
-        l2("[%d] PUSH (binary message) %s", fd, printable_msg);
+        l2(OUTPUT_TYPE_DEBUG, "[%d] PUSH (binary message) %s", fd, printable_msg);
         b = send_line(fd, dest_msg);
         current_command = tmp;
         return b;
@@ -130,14 +131,14 @@ static void fill_conns_set(gpointer data, gpointer user_data)
 static GList * new_conns;
 void conn_terminated(int fd, char* reason)
 {
-        l2("[%d] Closing connection: %s", fd, reason);
+        l2(OUTPUT_TYPE_CONNECT, "[%d] Closing connection: %s", fd, reason);
         close(fd);
         free(incoming_data_buffers[fd]);
         player_part_game(fd);
         new_conns = g_list_remove(new_conns, GINT_TO_POINTER(fd));
         player_disconnects(fd);
         if (lan_game_mode && g_list_length(new_conns) == 0 && udp_server_socket == -1) {
-                l0("LAN game mode server exiting on last client exit.");
+                l0(OUTPUT_TYPE_INFO, "LAN game mode server exiting on last client exit.");
                 exit(0);
         }
 }
@@ -156,7 +157,7 @@ static void handle_incoming_data_generic(gpointer data, gpointer user_data, int 
                 len = recv(fd, buf + offset, INCOMING_DATA_BUFSIZE - 1 - offset, 0);
                 if (len <= 0) {
                         if (len == -1)
-                                l2("[%d] System error on recv: %s", fd, strerror(errno));
+                                l2(OUTPUT_TYPE_DEBUG, "[%d] System error on recv: %s", fd, strerror(errno));
                         conn_terminated(fd, "peer shutdown on recv");
                         return;
                 } else {
@@ -170,7 +171,7 @@ static void handle_incoming_data_generic(gpointer data, gpointer user_data, int 
                                         conn_terminated(fd, "too much data without LF");
                                         return;
                                 }
-                                l2("[%d] ****** buffering %d bytes", fd, len);
+                                l2(OUTPUT_TYPE_DEBUG, "[%d] ****** buffering %d bytes", fd, len);
                                 memcpy(incoming_data_buffers[fd], buf, len);
                                 incoming_data_buffers_count[fd] = len;
                                 return;
@@ -238,13 +239,13 @@ static void handle_udp_request(void)
                 return;
         }
         
-        l2("UDP server receives %d bytes from %s.", n, inet_ntoa(client_addr.sin_addr));
+        l2(OUTPUT_TYPE_DEBUG, "UDP server receives %d bytes from %s.", n, inet_ntoa(client_addr.sin_addr));
         if (strcmp(msg, ok_input) || (lan_game_mode && g_list_length(conns_prio) > 0)) {
                 answer = fl_unrecognized;
-                l0("Unrecognized/full.");
+                l0(OUTPUT_TYPE_DEBUG, "Unrecognized/full.");
         } else {
                 answer = ok_answer;
-                l0("Valid FB server probe, answering.");
+                l0(OUTPUT_TYPE_DEBUG, "Valid FB server probe, answering.");
         }
         
         if (sendto(udp_server_socket, answer, strlen(answer), 0, (struct sockaddr *) &client_addr, sizeof(client_addr)) != strlen(answer)) {
@@ -308,19 +309,19 @@ void connections_manager(void)
                                 perror("accept");
                                 exit(-1);
                         }
-                        l2("Accepted connection from %s: fd %d", inet_ntoa(client_addr.sin_addr), fd);
+                        l2(OUTPUT_TYPE_CONNECT, "Accepted connection from %s: fd %d", inet_ntoa(client_addr.sin_addr), fd);
                         if (fd > 255 || conns_nb() >= max_users || (lan_game_mode && g_list_length(conns_prio) > 0)) {
                                 send_line_log_push(fd, fl_server_full);
-                                l1("[%d] Closing connection", fd);
+                                l1(OUTPUT_TYPE_CONNECT, "[%d] Closing connection", fd);
                                 close(fd);
                         } else {
                                 double now = get_current_time();
                                 double rate = get_reset_amount_transmitted() / (now - date_amount_transmitted_reset);
-                                l1("Transmission rate: %.2f bytes/sec", rate);
+                                l1(OUTPUT_TYPE_DEBUG, "Transmission rate: %.2f bytes/sec", rate);
                                 date_amount_transmitted_reset = now;
                                 if (rate > max_transmission_rate) {
                                         send_line_log_push(fd, fl_server_overloaded);
-                                        l1("[%d] Closing connection", fd);
+                                        l1(OUTPUT_TYPE_CONNECT, "[%d] Closing connection", fd);
                                         close(fd);
                                 } else {
                                         send_line_log_push(fd, greets_msg);
@@ -382,13 +383,14 @@ void help(void)
         printf("     -p port                   set the server port (defaults to %d)\n", DEFAULT_PORT);
         printf("     -u max_users              set the maximum of connected users (defaults to %d, physical maximum 252)\n", DEFAULT_MAX_USERS);
         printf("     -t max_transmission_rate  set the maximum transmission rate, in bytes per second (defaults to %d)\n", DEFAULT_MAX_TRANSMISSION_RATE);
+        printf("     -o outputtype             set the output type; can be DEBUG, INFO, CONNECT, ERROR; each level includes messages of next level; defaults to INFO\n");
 }
 
 void create_udp_server(void)
 {
         struct sockaddr_in server_addr;
 
-        l1("Creating UDP server for answering broadcast server discover, on default port %d", DEFAULT_PORT);
+        l1(OUTPUT_TYPE_INFO, "Creating UDP server for answering broadcast server discover, on default port %d", DEFAULT_PORT);
 
         udp_server_socket = socket(AF_INET, SOCK_DGRAM, 0);
         if (udp_server_socket < 0) {
@@ -411,7 +413,7 @@ void create_server(int argc, char **argv)
         int valone = 1;
 
         while (1) {
-                int c = getopt(argc, argv, "hn:lLp:u:t:");
+                int c = getopt(argc, argv, "hn:lLp:u:t:o:");
                 if (c == -1)
                         break;
                 
@@ -421,7 +423,7 @@ void create_server(int argc, char **argv)
                         exit(0);
                 case 'n':
                         if (strlen(optarg) > 12) {
-                                l0("Commandline: name is too long, maximum is 12 characters");
+                                l0(OUTPUT_TYPE_ERROR, "Commandline: name is too long, maximum is 12 characters");
                                 exit(1);
                         } else {
                                 int i;
@@ -429,11 +431,22 @@ void create_server(int argc, char **argv)
                                         if (!((optarg[i] >= 'a' && optarg[i] <= 'z')
                                               || (optarg[i] >= '0' && optarg[i] <= '9')
                                               || optarg[i] == '.' || optarg[i] == '-')) {
-                                                l0("Commandline: name must contain only chars in [a-z0-9.-]");
+                                                l0(OUTPUT_TYPE_ERROR, "Commandline: name must contain only chars in [a-z0-9.-]");
                                                 exit(1);
                                         }
                                 }
                                 servername = strdup(optarg);
+                        }
+                        break;
+                case 'o':
+                        if (streq(optarg, "DEBUG")) {
+                                output_type = OUTPUT_TYPE_DEBUG;
+                        } else if (streq(optarg, "INFO")) {
+                                output_type = OUTPUT_TYPE_INFO;
+                        } else if (streq(optarg, "CONNECT")) {
+                                output_type = OUTPUT_TYPE_CONNECT;
+                        } else if (streq(optarg, "ERROR")) {
+                                output_type = OUTPUT_TYPE_ERROR;
                         }
                         break;
                 case 'l':
@@ -446,39 +459,39 @@ void create_server(int argc, char **argv)
                 case 'p':
                         port = charstar_to_int(optarg);
                         if (port != 0)
-                                l1("Commandline: setting port to %d", port);
+                                l1(OUTPUT_TYPE_INFO, "Commandline: setting port to %d", port);
                         else {
                                 port = DEFAULT_PORT;
-                                l1("Commandline: %s not convertible to int, ignoring", optarg);
+                                l1(OUTPUT_TYPE_ERROR, "Commandline: %s not convertible to int, ignoring", optarg);
                         }
                         break;
                 case 'u':
                         max_users = charstar_to_int(optarg);
                         if (max_users != 0)
-                                l1("Commandline: setting maximum users to %d", max_users);
+                                l1(OUTPUT_TYPE_INFO, "Commandline: setting maximum users to %d", max_users);
                         else {
                                 max_users = DEFAULT_MAX_USERS;
-                                l1("Commandline: %s not convertible to int, ignoring", optarg);
+                                l1(OUTPUT_TYPE_ERROR, "Commandline: %s not convertible to int, ignoring", optarg);
                         }
                         break;
                 case 't':
                         max_transmission_rate = charstar_to_int(optarg);
                         if (max_transmission_rate != 0)
-                                l1("Commandline: setting maximum transmission rate to %d bytes/sec", max_transmission_rate);
+                                l1(OUTPUT_TYPE_INFO, "Commandline: setting maximum transmission rate to %d bytes/sec", max_transmission_rate);
                         else {
                                 max_transmission_rate = DEFAULT_MAX_TRANSMISSION_RATE;
-                                l1("Commandline: %s not convertible to int, ignoring", optarg);
+                                l1(OUTPUT_TYPE_ERROR, "Commandline: %s not convertible to int, ignoring", optarg);
                         }
                         break;
                 }
         }
 
         if (!servername) {
-                l0("Must give a name to the server with -n <name>.");
+                l0(OUTPUT_TYPE_ERROR, "Must give a name to the server with -n <name>.");
                 exit(1);
         }
 
-        l1("Creating TCP game server on port %d", port);
+        l1(OUTPUT_TYPE_INFO, "Creating TCP game server on port %d", port);
 
         tcp_server_socket = socket(AF_INET, SOCK_STREAM, 0);
         if (tcp_server_socket < 0) {

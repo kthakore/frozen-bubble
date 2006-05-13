@@ -29,13 +29,14 @@
 #include <fcntl.h>
 
 #include "tools.h"
+#include "log.h"
 
+int output_type = OUTPUT_TYPE_INFO;
 
 double get_current_time(void) 
 {
     struct timezone tz;
     struct timeval now;
-
     gettimeofday(&now, &tz);
     return (double) now.tv_sec + now.tv_usec / 1e6;
 }
@@ -49,20 +50,30 @@ char* get_current_date(void)
     time_t seconds = (time_t)time;
     lt = localtime(&seconds);
     strftime(buf, sizeof(buf), "%Y-%m-%d %H:%M:%S", lt);
-    snprintf(current_date, sizeof(current_date),
-             "%s.%03d", buf, (int)(1000 * (time-seconds)));
+    snprintf(current_date, sizeof(current_date), "%s.%03d", buf, (int)(1000 * (time-seconds)));
     return current_date;
 }
 
-void l_(char* file, long line, const char* func, char* fmt, ...)
+void l_(int wanted_output_type, char* file, long line, const char* func, char* fmt, ...)
 {
     char *msg;
     va_list args;
-    va_start(args, fmt);
-    msg = vasprintf_(fmt, args); // segfault later if no more memory :)
-    va_end(args);
-    fprintf(stderr, "[%s] %s:%ld(%s): %s\n",
-                    get_current_date(), file, line, func, msg);
-    free(msg);
+    if (output_type <= wanted_output_type) {
+            va_start(args, fmt);
+            msg = vasprintf_(fmt, args); // segfault later if no more memory :)
+            va_end(args);
+            if (wanted_output_type == OUTPUT_TYPE_DEBUG) {
+                    fprintf(stderr, "[%s] DEBUG   %s:%ld(%s): %s\n", get_current_date(), file, line, func, msg);
+            } else if (wanted_output_type == OUTPUT_TYPE_INFO) {
+                    fprintf(stderr, "[%s] INFO    %s:%ld(%s): %s\n", get_current_date(), file, line, func, msg);
+            } else if (wanted_output_type == OUTPUT_TYPE_CONNECT) {
+                    fprintf(stderr, "[%s] CONNECT %s:%ld(%s): %s\n", get_current_date(), file, line, func, msg);
+            } else if (wanted_output_type == OUTPUT_TYPE_ERROR) {
+                    fprintf(stderr, "[%s] ERROR   %s:%ld(%s): %s\n", get_current_date(), file, line, func, msg);
+            } else {
+                    fprintf(stderr, "[%s] ???      %s:%ld(%s): %s\n", get_current_date(), file, line, func, msg);
+            }
+            free(msg);
+    }
 }
 
