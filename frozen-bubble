@@ -155,7 +155,7 @@ local $_ = "@ARGV";
     if (!$ret->{ping}) {
         die "Can't proceed: $ret->{failure}\n";
     }
-    my ($free, @games) = fb_net::list();
+    my ($free, undef, @games) = fb_net::list();
     my $ok;
     if (@games) {
         $ok = fb_net::join($games[0][0], $mynick);
@@ -2909,7 +2909,7 @@ sub smg_choose_game() {
 
     my $list = sub {
         $state eq 'game_select' or return;
-        my ($free, @games) = fb_net::list();
+        my ($free, undef, @games) = fb_net::list();
         my ($join, $rest) = partition { $_->{name} =~ /^JOIN/ } @actions;
         $_->{ok} = 0 foreach @$join;
       listgames:

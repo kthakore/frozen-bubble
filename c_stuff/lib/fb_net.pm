@@ -82,7 +82,7 @@ sub discover_lan_servers {
 #- before game operations
 
 our $sock;
-our $ping = 50;
+our $ping = 200;
 
 our $masterserver;  #- for forcing the masterserver on commandline
 
@@ -250,7 +250,7 @@ sub list() {
         my $free = $2;
         my $games = $3;
         my @games;
-        while ($games =~ /\[([^\]]+)\]/g) {
+        while ($freegames =~ /\[([^\]]+)\]/g) {
             push @games, [ split /,/, $1 ];
         }
         return ($free, $games, @games);
@@ -326,7 +326,7 @@ sub connect($$) {
         }
     }
 
-    $ping = 1;
+    $ping = 200;
     my $t0 = gettimeofday;
     send_('PING');
     $msg = readline_();
@@ -347,6 +347,7 @@ sub connect($$) {
     $current_port = $port;
     return { ping => $ping, name => $servername };
 }
+
 
 my @messages;
 sub reconnect() {
