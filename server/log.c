@@ -27,6 +27,8 @@
 #include <time.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <syslog.h>
+#include <signal.h>
 
 #include "tools.h"
 #include "log.h"
@@ -54,25 +56,40 @@ char* get_current_date(void)
     return current_date;
 }
 
+void sigterm_catcher(int signum) {
+        l0(OUTPUT_TYPE_INFO, "Received SIGTERM, terminating.");
+        exit(EXIT_SUCCESS);
+}
+
+void logging_init(int portnum) {
+        openlog(asprintf_("fb-server[TCP%d]", portnum), LOG_PID, LOG_DAEMON);
+        if (output_type == OUTPUT_TYPE_DEBUG) {
+                l0(OUTPUT_TYPE_INFO, "Starting log. Messages displayed: DEBUG, INFO, CONNECT, ERROR.");
+        } else if (output_type == OUTPUT_TYPE_INFO) {
+                l0(OUTPUT_TYPE_INFO, "Starting log. Messages displayed: INFO, CONNECT, ERROR.");
+        }
+        signal(SIGTERM, sigterm_catcher);
+}
+
 void l_(int wanted_output_type, char* file, long line, const char* func, char* fmt, ...)
 {
     char *msg;
     va_list args;
     if (output_type <= wanted_output_type) {
+            int level = 0;
             va_start(args, fmt);
             msg = vasprintf_(fmt, args); // segfault later if no more memory :)
             va_end(args);
             if (wanted_output_type == OUTPUT_TYPE_DEBUG) {
-                    fprintf(stderr, "[%s] DEBUG   %s:%ld(%s): %s\n", get_current_date(), file, line, func, msg);
+                    level = LOG_DEBUG;
             } else if (wanted_output_type == OUTPUT_TYPE_INFO) {
-                    fprintf(stderr, "[%s] INFO    %s:%ld(%s): %s\n", get_current_date(), file, line, func, msg);
+                    level = LOG_INFO;
             } else if (wanted_output_type == OUTPUT_TYPE_CONNECT) {
-                    fprintf(stderr, "[%s] CONNECT %s:%ld(%s): %s\n", get_current_date(), file, line, func, msg);
+                    level = LOG_NOTICE;
             } else if (wanted_output_type == OUTPUT_TYPE_ERROR) {
-                    fprintf(stderr, "[%s] ERROR   %s:%ld(%s): %s\n", get_current_date(), file, line, func, msg);
-            } else {
-                    fprintf(stderr, "[%s] ???      %s:%ld(%s): %s\n", get_current_date(), file, line, func, msg);
+                    level = LOG_ERR;
             }
+            syslog(level, "[%s] %s:%ld(%s): %s\n", get_current_date(), file, line, func, msg);
             free(msg);
     }
 }

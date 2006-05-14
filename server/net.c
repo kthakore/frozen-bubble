@@ -139,7 +139,7 @@ void conn_terminated(int fd, char* reason)
         player_disconnects(fd);
         if (lan_game_mode && g_list_length(new_conns) == 0 && udp_server_socket == -1) {
                 l0(OUTPUT_TYPE_INFO, "LAN game mode server exiting on last client exit.");
-                exit(0);
+                exit(EXIT_SUCCESS);
         }
 }
 
@@ -235,7 +235,7 @@ static void handle_udp_request(void)
         memset(msg, 0, sizeof(msg));
         n = recvfrom(udp_server_socket, msg, sizeof(msg), 0, (struct sockaddr *) &client_addr, &client_len);
         if (n == -1) {
-                perror("recvfrom");
+                l1(OUTPUT_TYPE_ERROR, "recvfrom: %s", strerror(errno));
                 return;
         }
         
@@ -249,7 +249,7 @@ static void handle_udp_request(void)
         }
         
         if (sendto(udp_server_socket, answer, strlen(answer), 0, (struct sockaddr *) &client_addr, sizeof(client_addr)) != strlen(answer)) {
-                perror("sendto");
+                l1(OUTPUT_TYPE_ERROR, "sendto: %s", strerror(errno));
         }
 }
 
@@ -281,8 +281,8 @@ void connections_manager(void)
                 tv.tv_usec = 0;
 
                 if ((retval = select(FD_SETSIZE, &conns_set, NULL, NULL, &tv)) == -1) {
-                        perror("select");
-                        exit(-1);
+                        l1(OUTPUT_TYPE_ERROR, "select: %s", strerror(errno));
+                        exit(EXIT_FAILURE);
                 }
 
                 // timeout
@@ -306,8 +306,8 @@ void connections_manager(void)
 
                 if (tcp_server_socket != -1 && FD_ISSET(tcp_server_socket, &conns_set)) {
                         if ((fd = accept(tcp_server_socket, (struct sockaddr *) &client_addr, (socklen_t *) &len)) == -1) {
-                                perror("accept");
-                                exit(-1);
+                                l1(OUTPUT_TYPE_ERROR, "accept: %s", strerror(errno));
+                                continue;
                         }
                         l2(OUTPUT_TYPE_CONNECT, "Accepted connection from %s: fd %d", inet_ntoa(client_addr.sin_addr), fd);
                         if (fd > 255 || conns_nb() >= max_users || (lan_game_mode && g_list_length(conns_prio) > 0)) {
@@ -327,7 +327,7 @@ void connections_manager(void)
                                         send_line_log_push(fd, greets_msg);
                                         conns = g_list_append(conns, GINT_TO_POINTER(fd));
                                         player_connects(fd);
-                                        incoming_data_buffers[fd] = malloc(sizeof(char) * INCOMING_DATA_BUFSIZE);
+                                        incoming_data_buffers[fd] = malloc_(sizeof(char) * INCOMING_DATA_BUFSIZE);
                                         memset(incoming_data_buffers[fd], 0, sizeof(char) * INCOMING_DATA_BUFSIZE);  // force Linux to allocate now
                                         incoming_data_buffers_count[fd] = 0;
                                         calculate_list_games();
@@ -381,7 +381,7 @@ void help(void)
         printf("     -l                        LAN mode: create an UDP server (on port %d) to answer broadcasts of clients discovering where are the servers\n", DEFAULT_PORT);
         printf("     -L                        LAN/game mode: create an UDP server as above, but limit number of games to 1 (this is for an FB client hosting a LAN server)\n");
         printf("     -p port                   set the server port (defaults to %d)\n", DEFAULT_PORT);
-        printf("     -u max_users              set the maximum of connected users (defaults to %d, physical maximum 252)\n", DEFAULT_MAX_USERS);
+        printf("     -u max_users              set the maximum of connected users (defaults to %d, physical maximum 255)\n", DEFAULT_MAX_USERS);
         printf("     -t max_transmission_rate  set the maximum transmission rate, in bytes per second (defaults to %d)\n", DEFAULT_MAX_TRANSMISSION_RATE);
         printf("     -o outputtype             set the output type; can be DEBUG, INFO, CONNECT, ERROR; each level includes messages of next level; defaults to INFO\n");
 }
@@ -395,15 +395,15 @@ void create_udp_server(void)
         udp_server_socket = socket(AF_INET, SOCK_DGRAM, 0);
         if (udp_server_socket < 0) {
                 perror("socket");
-                exit(1);
+                exit(EXIT_FAILURE);
         }
 
         server_addr.sin_family = AF_INET;
         server_addr.sin_addr.s_addr = htonl(INADDR_ANY);
         server_addr.sin_port = htons(DEFAULT_PORT);
         if (bind(udp_server_socket, (struct sockaddr *) &server_addr, sizeof(server_addr)) < 0) {
-                perror("bind");
-                exit(1);
+                perror("bind UDP 1511");
+                exit(EXIT_FAILURE);
         }
 }
 
@@ -420,19 +420,19 @@ void create_server(int argc, char **argv)
                 switch (c) {
                 case 'h':
                         help();
-                        exit(0);
+                        exit(EXIT_SUCCESS);
                 case 'n':
                         if (strlen(optarg) > 12) {
-                                l0(OUTPUT_TYPE_ERROR, "Commandline: name is too long, maximum is 12 characters");
-                                exit(1);
+                                fprintf(stderr, "Commandline: name is too long, maximum is 12 characters\n");
+                                exit(EXIT_FAILURE);
                         } else {
                                 int i;
                                 for (i = 0; i < strlen(optarg); i++) {
                                         if (!((optarg[i] >= 'a' && optarg[i] <= 'z')
                                               || (optarg[i] >= '0' && optarg[i] <= '9')
                                               || optarg[i] == '.' || optarg[i] == '-')) {
-                                                l0(OUTPUT_TYPE_ERROR, "Commandline: name must contain only chars in [a-z0-9.-]");
-                                                exit(1);
+                                                fprintf(stderr, "Commandline: name must contain only chars in [a-z0-9.-]\n");
+                                                exit(EXIT_FAILURE);
                                         }
                                 }
                                 servername = strdup(optarg);
@@ -487,16 +487,14 @@ void create_server(int argc, char **argv)
         }
 
         if (!servername) {
-                l0(OUTPUT_TYPE_ERROR, "Must give a name to the server with -n <name>.");
-                exit(1);
+                fprintf(stderr, "Must give a name to the server with -n <name>.\n");
+                exit(EXIT_FAILURE);
         }
-
-        l1(OUTPUT_TYPE_INFO, "Creating TCP game server on port %d", port);
 
         tcp_server_socket = socket(AF_INET, SOCK_STREAM, 0);
         if (tcp_server_socket < 0) {
-                perror("socket");
-                exit(-1);
+                fprintf(stderr, "creating socket: %s\n", strerror(errno));
+                exit(EXIT_FAILURE);
         }
 
         setsockopt(tcp_server_socket, SOL_SOCKET, SO_REUSEADDR, &valone, sizeof(valone));
@@ -505,12 +503,17 @@ void create_server(int argc, char **argv)
         client_addr.sin_addr.s_addr = htonl(INADDR_ANY);
         client_addr.sin_port = htons(port);
         if (bind(tcp_server_socket, (struct sockaddr *) &client_addr, sizeof(client_addr))) {
-                perror("bind");
-                exit(-1);
+                fprintf(stderr, "binding port %d: %s\n", port, strerror(errno));
+                exit(EXIT_FAILURE);
         }
 
         if (listen(tcp_server_socket, 1000) < 0) {
-                perror("listen");
-                exit(-1);
+                fprintf(stderr, "listen: %s\n", strerror(errno));
+                exit(EXIT_FAILURE);
         }
+
+        // Binded correctly, now we can init logging specifying the port (useful for multiple servers)
+        logging_init(port);
+
+        l1(OUTPUT_TYPE_INFO, "Creating TCP game server on port %d", port);
 }

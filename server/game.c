@@ -145,7 +145,7 @@ void calculate_list_games(void)
 
 static void create_game(int fd, char* nick)
 {
-        struct game * g = malloc(sizeof(struct game));
+        struct game * g = malloc_(sizeof(struct game));
         g->players_number = 1;
         g->players_conn[0] = fd;
         g->players_nick[0] = nick;
@@ -212,7 +212,7 @@ int find_player_number(struct game *g, int fd)
                 if (g->players_conn[i] == fd)
                         return i;
         l0(OUTPUT_TYPE_ERROR, "Internal error");
-        exit(1);
+        exit(EXIT_FAILURE);
 }
 
 static void real_start_game(struct game* g)
@@ -257,7 +257,7 @@ static void start_game(int fd)
 
         } else {
                 l0(OUTPUT_TYPE_ERROR, "Internal error");
-                exit(1);
+                exit(EXIT_FAILURE);
         }
 }
 
@@ -283,7 +283,7 @@ static void ok_start_game(int fd)
                 }
         } else {
                 l0(OUTPUT_TYPE_ERROR, "Internal error");
-                exit(1);
+                exit(EXIT_FAILURE);
         }
 }
 
@@ -349,7 +349,7 @@ static void stop_game(int fd)
                 player_part_game(fd);
         } else {
                 l0(OUTPUT_TYPE_ERROR, "Internal error");
-                exit(1);
+                exit(EXIT_FAILURE);
         }
 }
 
@@ -557,7 +557,7 @@ int process_msg(int fd, char* msg)
                 show_games();
                 net_debug();
         } else if (streq(current_command, "HALT")) {
-                exit(0);
+                exit(EXIT_SUCCESS);
 #endif
         } else {
                 send_line_log(fd, wn_unknown_command, msg);
@@ -654,6 +654,6 @@ void process_msg_prio(int fd, char* msg, ssize_t len)
                 }
         } else {
                 l1(OUTPUT_TYPE_ERROR, "Internal error: could not find game by fd: %d", fd);
-                exit(1);
+                exit(EXIT_FAILURE);
         }
 }

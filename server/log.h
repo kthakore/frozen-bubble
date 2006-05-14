@@ -28,6 +28,7 @@ char* get_current_date(void);
 enum output_types { OUTPUT_TYPE_DEBUG, OUTPUT_TYPE_INFO, OUTPUT_TYPE_CONNECT, OUTPUT_TYPE_ERROR };
 extern int output_type;
 
+void logging_init();
 void l_(int wanted_output_type, char* file, long line, const char* func, char* fmt, ...);
 
 #define l0(wanted_output_type, f)             l_(wanted_output_type, __FILE__, (long) __LINE__, __func__, f)

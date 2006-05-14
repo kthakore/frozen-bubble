@@ -20,6 +20,7 @@
 #include <stdio.h>
 #include "net.h"
 #include "game.h"
+#include "tools.h"
 
 int main(int argc, char **argv)
 {
@@ -33,6 +34,7 @@ int main(int argc, char **argv)
         game_init();
 
         create_server(argc, argv);
+        daemonize();
         connections_manager();
 
         return 0;

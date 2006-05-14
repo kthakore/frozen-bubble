@@ -23,6 +23,8 @@
 #include <stdarg.h>
 #include <string.h>
 #include <ctype.h>
+#include <errno.h>
+#include <sys/socket.h>
 
 #include <glib.h>
 
@@ -59,6 +61,7 @@ char * vasprintf_(const char *msg, va_list args)
 // _GNU_SOURCE's asprintf like, but
 // - doesn't need _GNU_SOURCE
 // - returns allocated string
+// - never returns NULL (prints failure and exit on out of memory)
 char * asprintf_(const char *msg, ...)
 {
         char * results;
@@ -69,9 +72,19 @@ char * asprintf_(const char *msg, ...)
         return results;
 }
 
+void * malloc_(size_t size)
+{
+        void * ret = malloc(size);
+        if (ret == NULL) {
+                fprintf(stderr, "Out of memory, exiting.\n");
+                exit(EXIT_FAILURE);
+        }
+        return ret;
+}
+
 void * memdup(void *src, size_t size)
 {
-        void * r = malloc(size);
+        void * r = malloc_(size);
         memcpy(r, src, size);
         return r;
 }
@@ -119,4 +132,46 @@ gboolean g_list_any(GList * list, GTruthFunc func, gpointer user_data)
                 return FALSE;
         else
                 return TRUE;
+}
+
+void daemonize() {
+        pid_t pid, sid;
+        int sock;
+        
+        pid = fork();
+        if (pid < 0) {
+                l1(OUTPUT_TYPE_ERROR, "Cannot fork: %s", strerror(errno));
+                exit(EXIT_FAILURE);
+        }
+        if (pid > 0) {
+                exit(EXIT_SUCCESS);
+        }
+        
+        // Don't stay orphan
+        sid = setsid();
+        if (sid < 0) {
+                l1(OUTPUT_TYPE_ERROR, "Cannot setsid: %s", strerror(errno));
+                exit(EXIT_FAILURE);
+        }
+
+        // Don't lock a directory
+        if (chdir("/") < 0) {
+                l1(OUTPUT_TYPE_ERROR, "Cannot chdir: %s", strerror(errno));
+                exit(EXIT_FAILURE);
+        }
+        printf("Entering daemon mode.\n");
+
+        close(STDIN_FILENO);
+        close(STDOUT_FILENO);
+        close(STDERR_FILENO);
+
+        // Using the file descriptor number 0 is not possible due to the string-oriented protocol when
+        // negociating the game (since C strings cannot contain the NULL char). Retain one file descriptor.
+        sock = socket(AF_INET, SOCK_STREAM, 0);
+        if (sock < 0) {
+                l1(OUTPUT_TYPE_ERROR, "creating socket: %s\n", strerror(errno));
+                exit(EXIT_FAILURE);
+        }
+
+        l0(OUTPUT_TYPE_INFO, "Entered daemon mode");
 }

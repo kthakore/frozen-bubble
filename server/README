@@ -58,7 +58,7 @@ ulimits.
 
 The Frozen-Bubble server is not scalable. It is not multi-
 threaded nor will fork to better handle a lot of parallel
-requests. Additionally, it is limited to 252 simultaneous
+requests. Additionally, it is limited to 255 simultaneous
 players.
 
 However, administrators willing to host more than one server can

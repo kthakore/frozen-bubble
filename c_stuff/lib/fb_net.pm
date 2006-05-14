@@ -480,17 +480,17 @@ sub grecv() {
     
     #- if previous receive was partial and was cut between \n and \0, we
     #- have a NULL in front of the message now
-    if (substr($buf, 0, 1) eq "\0") {
-        print "********************************************* partial cut between LF and NULL?\n";
-        $buf = substr($buf, 1);
-    }
+#    if (substr($buf, 0, 1) eq "\0") {
+#        print "********************************************* partial cut between LF and NULL?\n";
+#        $buf = substr($buf, 1);
+#    }
         
     while ($buf) {
         #- first byte of a "frame" is the id of the sender
         my $id = substr($buf, 0, 1);
         $buf = substr($buf, 1);
 #            printf "extracted id: %d\n", ord($id);
-        if (ord($id) < 4 || ord($id) > 8) {     #- this 8 is temp and helps to find protocol problems as long as there are never more than 5 players on server
+        if (ord($id) < 1 || ord($id) > 5) {     #- this tesst is temp and helps to find protocol problems as long as there are never more than 5 players on server
             printf "****** ouch! id %d, buf now <$buf>\n", ord($id);
             printf "\talready msg: <$_->{msg}> from %d\n", ord($_->{id}) foreach @msg;
             $ouch = 1;
