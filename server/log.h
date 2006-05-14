@@ -26,6 +26,7 @@ extern char current_date[50];
 char* get_current_date(void);
 
 enum output_types { OUTPUT_TYPE_DEBUG, OUTPUT_TYPE_INFO, OUTPUT_TYPE_CONNECT, OUTPUT_TYPE_ERROR };
+extern int debug_mode;
 extern int output_type;
 
 void logging_init();

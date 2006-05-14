@@ -381,16 +381,18 @@ void help(void)
         printf("     -l                        LAN mode: create an UDP server (on port %d) to answer broadcasts of clients discovering where are the servers\n", DEFAULT_PORT);
         printf("     -L                        LAN/game mode: create an UDP server as above, but limit number of games to 1 (this is for an FB client hosting a LAN server)\n");
         printf("     -p port                   set the server port (defaults to %d)\n", DEFAULT_PORT);
-        printf("     -u max_users              set the maximum of connected users (defaults to %d, physical maximum 255)\n", DEFAULT_MAX_USERS);
+        printf("     -u max_users              set the maximum of connected users (defaults to %d, physical maximum 255 in non debug mode)\n", DEFAULT_MAX_USERS);
         printf("     -t max_transmission_rate  set the maximum transmission rate, in bytes per second (defaults to %d)\n", DEFAULT_MAX_TRANSMISSION_RATE);
         printf("     -o outputtype             set the output type; can be DEBUG, INFO, CONNECT, ERROR; each level includes messages of next level; defaults to INFO\n");
+        printf("     -d                        debug mode: do not daemonize and log on STDERR rather than through syslog\n");
+        printf("     -c conffile               specify the path of the configuration file\n");
 }
 
 void create_udp_server(void)
 {
         struct sockaddr_in server_addr;
 
-        l1(OUTPUT_TYPE_INFO, "Creating UDP server for answering broadcast server discover, on default port %d", DEFAULT_PORT);
+        printf("-l: creating UDP server for answering broadcast server discover, on default port %d\n", DEFAULT_PORT);
 
         udp_server_socket = socket(AF_INET, SOCK_DGRAM, 0);
         if (udp_server_socket < 0) {
@@ -407,82 +409,121 @@ void create_udp_server(void)
         }
 }
 
+void handle_parameter(char command, char * param) {
+        switch (command) {
+        case 'h':
+                help();
+                exit(EXIT_SUCCESS);
+        case 'n':
+                if (strlen(param) > 12) {
+                        fprintf(stderr, "-n: name is too long, maximum is 12 characters\n");
+                        exit(EXIT_FAILURE);
+                } else {
+                        int i;
+                        for (i = 0; i < strlen(param); i++) {
+                                if (!((param[i] >= 'a' && param[i] <= 'z')
+                                      || (param[i] >= '0' && param[i] <= '9')
+                                      || param[i] == '.' || param[i] == '-')) {
+                                        fprintf(stderr, "-n: name must contain only chars in [a-z0-9.-]\n");
+                                        exit(EXIT_FAILURE);
+                                }
+                        }
+                        servername = strdup(param);
+                }
+                break;
+        case 'o':
+                if (streq(param, "DEBUG")) {
+                        output_type = OUTPUT_TYPE_DEBUG;
+                } else if (streq(param, "INFO")) {
+                        output_type = OUTPUT_TYPE_INFO;
+                } else if (streq(param, "CONNECT")) {
+                        output_type = OUTPUT_TYPE_CONNECT;
+                } else if (streq(param, "ERROR")) {
+                        output_type = OUTPUT_TYPE_ERROR;
+                }
+                break;
+        case 'l':
+                create_udp_server();
+                break;
+        case 'L':
+                create_udp_server();
+                lan_game_mode = 1;
+                break;
+        case 'p':
+                port = charstar_to_int(param);
+                if (port != 0)
+                        printf("-p: setting port to %d\n", port);
+                else {
+                        port = DEFAULT_PORT;
+                        fprintf(stderr, "-p: %s not convertible to int, ignoring\n", param);
+                }
+                break;
+        case 'u':
+                max_users = charstar_to_int(param);
+                if (max_users != 0)
+                        printf("-u: setting maximum users to %d\n", max_users);
+                else {
+                        max_users = DEFAULT_MAX_USERS;
+                        fprintf(stderr, "-u: %s not convertible to int, ignoring\n", param);
+                }
+                break;
+        case 't':
+                max_transmission_rate = charstar_to_int(param);
+                if (max_transmission_rate != 0)
+                        printf("-t: setting maximum transmission rate to %d bytes/sec\n", max_transmission_rate);
+                else {
+                        max_transmission_rate = DEFAULT_MAX_TRANSMISSION_RATE;
+                        fprintf(stderr, "-t: %s not convertible to int, ignoring\n", param);
+                }
+                break;
+        case 'd':
+                printf("-d: debug mode on: will not daemonize and will display log messages on STDERR\n");
+                debug_mode = TRUE;
+                break;
+        default:
+                fprintf(stderr, "unrecognized option %c, ignoring\n", command);
+        }
+}
+
 void create_server(int argc, char **argv)
 {
         struct sockaddr_in client_addr;
         int valone = 1;
 
         while (1) {
-                int c = getopt(argc, argv, "hn:lLp:u:t:o:");
+                int c = getopt(argc, argv, "hn:lLp:u:t:o:c:d");
                 if (c == -1)
                         break;
                 
-                switch (c) {
-                case 'h':
-                        help();
-                        exit(EXIT_SUCCESS);
-                case 'n':
-                        if (strlen(optarg) > 12) {
-                                fprintf(stderr, "Commandline: name is too long, maximum is 12 characters\n");
-                                exit(EXIT_FAILURE);
+                if (c == 'c') {
+                        FILE* f;
+                        printf("-c: reading configuration file %s\n", optarg);
+                        f = fopen(optarg, "r");
+                        if (!f) {
+                                fprintf(stderr, "-c: error opening %s, ignoring\n", optarg);
                         } else {
-                                int i;
-                                for (i = 0; i < strlen(optarg); i++) {
-                                        if (!((optarg[i] >= 'a' && optarg[i] <= 'z')
-                                              || (optarg[i] >= '0' && optarg[i] <= '9')
-                                              || optarg[i] == '.' || optarg[i] == '-')) {
-                                                fprintf(stderr, "Commandline: name must contain only chars in [a-z0-9.-]\n");
-                                                exit(EXIT_FAILURE);
+                                char buf[8192];
+                                while (fgets(buf, sizeof(buf), f)) {
+                                        char command, param[256];
+                                        if (buf[0] == '#')
+                                                continue;
+                                        if (sscanf(buf, "%c %256s\n", &command, param) == 2) {
+                                                handle_parameter(command, param);
+                                        } else if (sscanf(buf, "%c\n", &command) == 1) {
+                                                handle_parameter(command, NULL);
+                                        } else {
+                                                fprintf(stderr, "-c: ignoring line %s\n", buf);
                                         }
                                 }
-                                servername = strdup(optarg);
+                                if (ferror(f)) {
+                                        fprintf(stderr, "-c: error reading %s\n", optarg);
+                                }
+                                fclose(f);
                         }
                         break;
-                case 'o':
-                        if (streq(optarg, "DEBUG")) {
-                                output_type = OUTPUT_TYPE_DEBUG;
-                        } else if (streq(optarg, "INFO")) {
-                                output_type = OUTPUT_TYPE_INFO;
-                        } else if (streq(optarg, "CONNECT")) {
-                                output_type = OUTPUT_TYPE_CONNECT;
-                        } else if (streq(optarg, "ERROR")) {
-                                output_type = OUTPUT_TYPE_ERROR;
-                        }
-                        break;
-                case 'l':
-                        create_udp_server();
-                        break;
-                case 'L':
-                        create_udp_server();
-                        lan_game_mode = 1;
-                        break;
-                case 'p':
-                        port = charstar_to_int(optarg);
-                        if (port != 0)
-                                l1(OUTPUT_TYPE_INFO, "Commandline: setting port to %d", port);
-                        else {
-                                port = DEFAULT_PORT;
-                                l1(OUTPUT_TYPE_ERROR, "Commandline: %s not convertible to int, ignoring", optarg);
-                        }
-                        break;
-                case 'u':
-                        max_users = charstar_to_int(optarg);
-                        if (max_users != 0)
-                                l1(OUTPUT_TYPE_INFO, "Commandline: setting maximum users to %d", max_users);
-                        else {
-                                max_users = DEFAULT_MAX_USERS;
-                                l1(OUTPUT_TYPE_ERROR, "Commandline: %s not convertible to int, ignoring", optarg);
-                        }
-                        break;
-                case 't':
-                        max_transmission_rate = charstar_to_int(optarg);
-                        if (max_transmission_rate != 0)
-                                l1(OUTPUT_TYPE_INFO, "Commandline: setting maximum transmission rate to %d bytes/sec", max_transmission_rate);
-                        else {
-                                max_transmission_rate = DEFAULT_MAX_TRANSMISSION_RATE;
-                                l1(OUTPUT_TYPE_ERROR, "Commandline: %s not convertible to int, ignoring", optarg);
-                        }
-                        break;
+
+                } else {
+                        handle_parameter(c, optarg);
                 }
         }
 
@@ -515,5 +556,5 @@ void create_server(int argc, char **argv)
         // Binded correctly, now we can init logging specifying the port (useful for multiple servers)
         logging_init(port);
 
-        l1(OUTPUT_TYPE_INFO, "Creating TCP game server on port %d", port);
+        l2(OUTPUT_TYPE_INFO, "Creating TCP game server on port %d. Servername is '%s'.", port, servername);
 }

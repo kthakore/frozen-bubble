@@ -1,0 +1,43 @@
+             [[ Frozen-Bubble server ]]
+
+
+    Copyright (c) 2004, 2006 Guillaume Cottenceau.
+
+This program is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License
+version 2, as published by the Free Software Foundation.
+
+
+This directory contains a suggested initscript and skeleton
+configuration file for automatic starting of the Frozen-Bubble
+server.
+
+Since the Frozen-Bubble server at least needs to know the name of
+the server (as displayed in the Frozen-Bubble clients which will
+have to choose between available servers), a configuration file
+is best suited for this purpose.
+
+The initscript by default loads the '/etc/fb-server.conf' file
+(-c commandline option controls the name of the configuration
+file, if you need to modify its location or name). You have to
+install and modify the skeleton configuration file specifying the
+name of your server. Name must be 12 characters long maximum and
+only contain characters in [a-z0-9.-].
+
+If needed, other configuration parameters can be set in the
+configuration file. Each configuration parameter must be on its
+own line, first character is the name of the option, followed if
+needed by a space character and the string parameter of the
+option. The list of options can be retrieved by launching the
+Frozen-Bubble server with option '--help'. For example, a
+configuration file copied from the skeleton configuration file
+but also specifying a different server port and LAN mode would
+contain:
+
+--------8<--------8<--------8<--------8<--------8<--------8<-----
+# Simplest Frozen-Bubble server configuration file. Just specify
+# the desired name of your server below.
+n <servername>
+p 1789
+l
+--------8<--------8<--------8<--------8<--------8<--------8<-----

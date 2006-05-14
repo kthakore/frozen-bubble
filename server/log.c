@@ -34,6 +34,7 @@
 #include "log.h"
 
 int output_type = OUTPUT_TYPE_INFO;
+int debug_mode = FALSE;
 
 double get_current_time(void) 
 {
@@ -90,9 +91,15 @@ void l_(int wanted_output_type, char* file, long line, const char* func, char* f
                     level = LOG_ERR;
             }
             if (output_type == OUTPUT_TYPE_DEBUG) {
-                    syslog(level, "[%s] %s:%ld(%s): %s\n", get_current_date(), file, line, func, msg);
+                    if (debug_mode)
+                            fprintf(stderr, "[%s] %s:%ld(%s): %s\n", get_current_date(), file, line, func, msg);
+                    else
+                            syslog(level, "[%s] %s:%ld(%s): %s", get_current_date(), file, line, func, msg);
             } else {
-                    syslog(level, msg);
+                    if (debug_mode)
+                            fprintf(stderr, "%s\n", msg);
+                    else
+                            syslog(level, msg);
             }
             free(msg);
     }

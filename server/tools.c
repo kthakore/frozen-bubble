@@ -137,7 +137,10 @@ gboolean g_list_any(GList * list, GTruthFunc func, gpointer user_data)
 void daemonize() {
         pid_t pid, sid;
         int sock;
-        
+
+        if (debug_mode)
+                return;
+
         pid = fork();
         if (pid < 0) {
                 l1(OUTPUT_TYPE_ERROR, "Cannot fork: %s", strerror(errno));

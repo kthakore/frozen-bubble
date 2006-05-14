@@ -37,6 +37,8 @@ messages to syslog. It is typically distributed as source code or
 statically linked binary (to prevent a dependancy on a precise
 libc version and on the glib).
 
+Check the contents and README of directory 'init' for init tools.
+
 
 ]] Security
 

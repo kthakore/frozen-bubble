@@ -1,0 +1,70 @@
+#!/bin/sh
+#
+# fb-server      Frozen-Bubble server
+#
+# chkconfig: 2345 99 10
+# description: this is the Frozen-Bubble server; it allows people to play \
+#              Frozen-Bubble over the Internet.
+# processname: fb-server
+# pidfile: /var/run/fb-server.pid
+# config: /etc/fb-server.conf
+
+# Source function library.
+. /etc/rc.d/init.d/functions
+
+# Source networking configuration.
+. /etc/sysconfig/network
+
+servicename=fb-server
+
+# Check that networking is up.
+[ ${NETWORKING} = "no" ] && exit 0
+
+start() {
+	gprintf "Starting Frozen-Bubble server: "
+	fb-server -c /etc/fb-server.conf 2>/dev/null 1>&2 && success || failure
+	RETVAL=$?
+	[ $RETVAL -eq 0 ] && touch /var/lock/subsys/$servicename
+        echo
+	return $RETVAL
+}
+
+stop() {
+	gprintf "Stopping Frozen-Bubble server: "
+        killproc fb-server -TERM
+	RETVAL=$?
+	[ $RETVAL -eq 0 ] && rm -f /var/lock/subsys/$servicename
+	echo
+	return $RETVAL
+}
+
+restart() {
+	stop
+	start
+}
+
+# See how we were called.
+case "$1" in
+  start)
+	start
+	;;
+  stop)
+	stop
+	;;
+  restart)
+	stop
+	start
+	;;
+  status)
+        status fb-server
+        RETVAL=$?
+        ;;
+  condrestart)
+	[ -f /var/lock/subsys/$servicename ] && restart || :
+	;;
+  *)
+	gprintf "Usage: $servicename {start|stop|restart|status|condrestart}\n"
+	exit 1
+esac
+
+exit $?
