@@ -29,12 +29,13 @@ be available to most people.
 ]] Suitability for hosting
 
 Because of its bridging nature, the Frozen-Bubble server does not
-need anything which is typically useful to clients, including the
-Perl game engine and the data. It is written in C language in the
-hope to be as portable as possible and imposing the lowest
-dependancy constraints on servers hosting it. It is typically
-distributed as source code or statically linked binary (to
-prevent a dependancy on a precise libc version and on the glib).
+need the Perl game engine and the data. It is written in C
+language in the hope to be as portable as possible and imposing
+the lowest dependancy constraints on servers hosting it. It tries
+to behave as a good citizen by daemonizing and sending log
+messages to syslog. It is typically distributed as source code or
+statically linked binary (to prevent a dependancy on a precise
+libc version and on the glib).
 
 
 ]] Security
