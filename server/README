@@ -20,10 +20,10 @@ players.
 
 Because all clients connect to the server, the problems arising
 to clients/gamers behind NAT private networks and firewalls are
-suppressed. A central repository (doubly redundant) provides the
-list of active servers, which are then presented to the player
-sorted best pings first. Thus Frozen-Bubble network gaming should
-be available to most people.
+suppressed. A central repository (redundant) provides the list of
+active servers, which are then presented to the player sorted
+best pings first. Thus Frozen-Bubble network gaming should be
+available to most people.
 
 
 ]] Suitability for hosting

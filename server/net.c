@@ -505,7 +505,7 @@ void create_server(int argc, char **argv)
                                 char buf[8192];
                                 while (fgets(buf, sizeof(buf), f)) {
                                         char command, param[256];
-                                        if (buf[0] == '#')
+                                        if (buf[0] == '#' || buf[0] == '\0')
                                                 continue;
                                         if (sscanf(buf, "%c %256s\n", &command, param) == 2) {
                                                 handle_parameter(command, param);

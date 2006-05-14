@@ -24,20 +24,32 @@ install and modify the skeleton configuration file specifying the
 name of your server. Name must be 12 characters long maximum and
 only contain characters in [a-z0-9.-].
 
+Additionally, if you have the 'curl' executable installed, you
+can let the initscript register and unregister the Frozen-Bubble
+server automatically for you. What you need is changing
+<server_hostname> according to the public hostname (or IP) of
+your server.
+
 If needed, other configuration parameters can be set in the
 configuration file. Each configuration parameter must be on its
 own line, first character is the name of the option, followed if
 needed by a space character and the string parameter of the
 option. The list of options can be retrieved by launching the
-Frozen-Bubble server with option '--help'. For example, a
-configuration file copied from the skeleton configuration file
-but also specifying a different server port and LAN mode would
-contain:
+Frozen-Bubble server with option '--help'.
+
+Here's an example of configuration file copied from the skeleton
+configuration file, but also specifying the servername and the
+server hostname, yet also specifying a different server port and
+LAN mode:
 
 --------8<--------8<--------8<--------8<--------8<--------8<-----
 # Simplest Frozen-Bubble server configuration file. Just specify
 # the desired name of your server below.
-n <servername>
+n zarb
 p 1789
 l
+
+# For automatic registering of your server, set the public hostname
+# (or IP) of your server here:
+# server_hostname zarb.org
 --------8<--------8<--------8<--------8<--------8<--------8<-----
