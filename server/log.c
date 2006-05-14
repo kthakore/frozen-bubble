@@ -89,7 +89,11 @@ void l_(int wanted_output_type, char* file, long line, const char* func, char* f
             } else if (wanted_output_type == OUTPUT_TYPE_ERROR) {
                     level = LOG_ERR;
             }
-            syslog(level, "[%s] %s:%ld(%s): %s\n", get_current_date(), file, line, func, msg);
+            if (output_type == OUTPUT_TYPE_DEBUG) {
+                    syslog(level, "[%s] %s:%ld(%s): %s\n", get_current_date(), file, line, func, msg);
+            } else {
+                    syslog(level, msg);
+            }
             free(msg);
     }
 }
