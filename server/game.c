@@ -22,7 +22,6 @@
  * it should be as far away as possible from network operations
  */
 
-#define _GNU_SOURCE
 #include <stdlib.h>
 #include <unistd.h>
 #include <stdio.h>
@@ -601,7 +600,7 @@ void process_msg_prio(int fd, char* msg, ssize_t len)
                 int i;
                 for (i = 0; i < g->players_number; i++) {
                         // Emitter wants to receive synchro message as well
-                        if (g->players_conn[i] == fd && memmem(msg, len, synchro_command, synchro_command_len)) {
+                        if (g->players_conn[i] == fd && memmem_(msg, len, synchro_command, synchro_command_len)) {
                                 char synchro4self[] = "?!synchro\n";
                                 ssize_t retval;
                                 synchro4self[0] = fd;

@@ -28,6 +28,7 @@ char * asprintf_(const char *msg, ...);
 char * vasprintf_(const char *msg, va_list args);
 void * malloc_(size_t size);
 void * memdup(void *src, size_t size);
+char * memmem_(char *a, int sizea, char *b, int sizeb);
 
 void * GListp2data(GList * elem);
 typedef gpointer (*GFoldFunc) (gpointer data, gpointer partial, gpointer user_data);

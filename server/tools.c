@@ -178,3 +178,22 @@ void daemonize() {
 
         l0(OUTPUT_TYPE_INFO, "Entered daemon mode");
 }
+
+// don't create portability problems
+char *memmem_(char *a, int sizea, char *b, int sizeb)
+{
+        // copied from hexedit, thanks pixel :)
+        char *p;
+        if (sizeb > sizea) {
+                return NULL;
+        } else {
+                int i = sizea - sizeb + 1;
+                
+                for (; (p = memchr(a, b[0], i)); i -= p - a + 1, a = p + 1) {
+                        if ((memcmp(p + 1, b + 1, sizeb - 1)) == 0) {
+                                return p;
+                        }
+                }
+                return NULL;
+        }
+}
