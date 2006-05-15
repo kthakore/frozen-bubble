@@ -90,14 +90,11 @@ void l_(int wanted_output_type, char* file, long line, const char* func, char* f
             } else if (wanted_output_type == OUTPUT_TYPE_ERROR) {
                     level = LOG_ERR;
             }
-            if (output_type == OUTPUT_TYPE_DEBUG) {
-                    if (debug_mode)
-                            fprintf(stderr, "[%s] %s:%ld(%s): %s\n", get_current_date(), file, line, func, msg);
-                    else
+            if (debug_mode)
+                    fprintf(stderr, "[%s] %s:%ld(%s): %s\n", get_current_date(), file, line, func, msg);
+            else {
+                    if (output_type == OUTPUT_TYPE_DEBUG)
                             syslog(level, "[%s] %s:%ld(%s): %s", get_current_date(), file, line, func, msg);
-            } else {
-                    if (debug_mode)
-                            fprintf(stderr, "%s\n", msg);
                     else
                             syslog(level, msg);
             }
