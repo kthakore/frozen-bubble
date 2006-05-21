@@ -422,9 +422,10 @@ void handle_parameter(char command, char * param) {
                         int i;
                         for (i = 0; i < strlen(param); i++) {
                                 if (!((param[i] >= 'a' && param[i] <= 'z')
+                                      || (param[i] >= 'A' && param[i] <= 'Z')
                                       || (param[i] >= '0' && param[i] <= '9')
                                       || param[i] == '.' || param[i] == '-')) {
-                                        fprintf(stderr, "-n: name must contain only chars in [a-z0-9.-]\n");
+                                        fprintf(stderr, "-n: name must contain only chars in [a-zA-Z0-9.-]\n");
                                         exit(EXIT_FAILURE);
                                 }
                         }
