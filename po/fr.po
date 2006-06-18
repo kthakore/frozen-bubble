@@ -2,13 +2,214 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2006-06-18 18:40+0200\n"
-"PO-Revision-Date: 2006-06-18 18:40+0200\n"
+"POT-Creation-Date: 2006-06-18 19:29+0200\n"
+"PO-Revision-Date: 2006-06-18 19:30+0200\n"
 "Last-Translator: Guillaume Cottenceau>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=ISO-8859-1\n"
 "Content-Transfer-Encoding: 8bit\n"
 
+#: ../frozen-bubble:2633
+msgid "Start 1-player game menu"
+msgstr "Menu de démarrage jeu 1-joueur"
+
+#: ../frozen-bubble:2735
+msgid "*** Please wait, probing for available servers on local network..."
+msgstr ""
+"*** Veuillez patienter, détection des serveurs disponibles sur le réseau "
+"local..."
+
+#: ../frozen-bubble:2738
+msgid "*** Unable to probe for available servers on local network!"
+msgstr ""
+"*** Impossible de détecter les serveurs disponibles sur le réseau local !"
+
+#: ../frozen-bubble:2740
+msgid "*** Verify your network setup"
+msgstr "*** Vérifiez votre configuration réseau"
+
+#: ../frozen-bubble:2749
+msgid "*** No server found, and could not start server"
+msgstr "*** Aucun serveur trouvé, et impossible de créer un serveur"
+
+#: ../frozen-bubble:2750
+msgid "*** Verify your installation or contact your vendor"
+msgstr "*** Vérifier votre installation ou contactez votre distributeur"
+
+#: ../frozen-bubble:2757
+msgid "*** No server found, created server for local network game"
+msgstr ""
+"*** Aucun serveur trouvé, un serveur pour jeu sur réseau local a été créé"
+
 #: ../frozen-bubble:2773
 msgid "*** Contacting master server..."
 msgstr "*** Entrée en contact avec le serveur maître..."
+
+#: ../frozen-bubble:2784
+msgid "*** Server list received properly"
+msgstr "*** Liste des serveurs reçue correctement"
+
+#: ../frozen-bubble:2786
+msgid "*** Unable to download server list from master server!"
+msgstr ""
+"*** Impossible de télécharger la liste des serveurs à partir du serveur "
+"maître !"
+
+#: ../frozen-bubble:2787
+msgid "*** Verify your network setup or retry later"
+msgstr "*** Vérifiez votre configuration réseau ou réessayer ultérieurement"
+
+#: ../frozen-bubble:2820
+#, perl-format
+msgid "Available players:%s  Ping:%sms"
+msgstr "Joueurs disponibles:%s  Ping:%sms"
+
+#: ../frozen-bubble:2857
+msgid "*** No available game server"
+msgstr "*** Aucun serveur de jeu disponible"
+
+#: ../frozen-bubble:2858
+msgid "*** Please retry later or try a local network game (lan game)"
+msgstr ""
+"*** Veuillez réessayer plus tard ou essayez un jeu sur réseau local (lan "
+"game)"
+
+#: ../frozen-bubble:2865
+msgid "*** Please choose a server"
+msgstr "*** Veuillez choisir un serveur"
+
+#: ../frozen-bubble:2926
+#, perl-format
+msgid "*** Connected to server '%s'"
+msgstr "*** Connecté au serveur '%s'"
+
+#: ../frozen-bubble:3042 ../frozen-bubble:3215
+msgid "Chat"
+msgstr "Chat"
+
+#: ../frozen-bubble:3043
+msgid "Create new game"
+msgstr "Créer un nouveau jeu"
+
+#: ../frozen-bubble:3080
+msgid "Say: "
+msgstr "Dire : "
+
+#: ../frozen-bubble:3093
+#, perl-format
+msgid "Join game: %s"
+msgstr "Rejoindre le jeu : %s"
+
+#: ../frozen-bubble:3108
+#, perl-format
+msgid "Available Players: %s"
+msgstr "Joueurs disponibles : %s"
+
+#: ../frozen-bubble:3132
+msgid "*** Leaving game..."
+msgstr "*** Jeu quitté..."
+
+#: ../frozen-bubble:3203
+msgid "*** Game created - now you need to wait for players to join"
+msgstr ""
+"*** Jeu créé - maintenant vous devez attendre que d'autre joueurs vous "
+"rejoignent"
+
+#: ../frozen-bubble:3205
+msgid "*** Joined game"
+msgstr "*** Jeu rejoint"
+
+#: ../frozen-bubble:3212
+msgid "*** Error: game just started or aborted"
+msgstr "*** Erreur : le jeu vient d'être démarré ou interrompu"
+
+#: ../frozen-bubble:3224
+#, perl-format
+msgid "*** Can't start game: '%s'"
+msgstr "*** Impossible de démarrer le jeu : '%s'"
+
+#: ../frozen-bubble:3254
+#, perl-format
+msgid "*** %s joined the game!"
+msgstr "*** %s a rejoint la partie !"
+
+#: ../frozen-bubble:3257
+#, perl-format
+msgid "*** %s left the game..."
+msgstr "*** %s a quitté le jeu..."
+
+#: ../frozen-bubble:3300
+msgid "*** Lost connection to server, abandoning..."
+msgstr "*** Connexion au serveur perdue, abandon..."
+
+#: ../frozen-bubble:3313
+#, perl-format
+msgid "Players in game: %s"
+msgstr "Joueurs présents : %s"
+
+#: ../frozen-bubble:3315
+msgid "Start game!"
+msgstr "Démarrer le jeu !"
+
+#: ../frozen-bubble:3327
+#, perl-format
+msgid "*** Game finished, because the following player(s) left: %s"
+msgstr "*** Jeu fini, car le(s) joueur(s) suivant(s) sont partis : %s"
+
+#: ../frozen-bubble:3331
+#, perl-format
+msgid "*** Winner: %s"
+msgstr "*** Gagnant : %s"
+
+#: ../frozen-bubble:3333
+msgid "*** Draw game!"
+msgstr "*** Match nul !"
+
+#: ../frozen-bubble:3335
+#, perl-format
+msgid "*** Scores: %s"
+msgstr "*** Scores : %s"
+
+#: ../frozen-bubble:3738
+msgid "Please enter new keys:"
+msgstr "Veuillez entrer les nouvelles touches :"
+
+#: ../frozen-bubble:3740
+msgid "Player 1; turn left?"
+msgstr "J. 1 ; tourner à gauche ?"
+
+#: ../frozen-bubble:3741
+msgid "Player 1; turn right?"
+msgstr "J. 1 ; tourner à droite ?"
+
+#: ../frozen-bubble:3742
+msgid "Player 1; fire?"
+msgstr "J. 1 ; feu ?"
+
+#: ../frozen-bubble:3743
+msgid "Player 1; center?"
+msgstr "J. 1 ; centrer ?"
+
+#: ../frozen-bubble:3745
+msgid "Player 2; turn left?"
+msgstr "J. 2 ; tourner à gauche ?"
+
+#: ../frozen-bubble:3746
+msgid "Player 2; turn right?"
+msgstr "J. 2 ; tourner à droite ?"
+
+#: ../frozen-bubble:3747
+msgid "Player 2; fire?"
+msgstr "J. 2 ; feu ?"
+
+#: ../frozen-bubble:3748
+msgid "Player 2; center?"
+msgstr "J. 2 ; centrer ?"
+
+#: ../frozen-bubble:3750
+msgid "Toggle fullscreen?"
+msgstr "Basculer plein écran ?"
+
+#: ../frozen-bubble:3751
+msgid "Chat (net/lan game)?"
+msgstr "Chat (jeu réseau)"

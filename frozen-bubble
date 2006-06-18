@@ -2630,7 +2630,7 @@ sub choose_1p_game_mode() {
         }
         put_image($img, $MENUPOS{xpos_panel}, $MENUPOS{ypos_panel});
 
-        my $title = "Start 1-player game menu";
+        my $title = t("Start 1-player game menu");
         my $ypos = $MENUPOS{ypos_panel} + 10;
         my $xpos = (640 - width('menu', $title)) / 2;
         print_('menu', $app, $xpos, $ypos, $title);
@@ -2732,12 +2732,12 @@ END { clean_server(); }
 sub smg_servers() {
 
     if ($pdata{gametype} eq 'lan') {
-        smg_add_status_msg("*** Please wait, probing for available servers on local network...");
+        smg_add_status_msg(t("*** Please wait, probing for available servers on local network..."));
         my $ret = fb_net::discover_lan_servers();
         if ($ret->{failure}) {
-            smg_add_status_msg("*** Unable to probe for available servers on local network!",
+            smg_add_status_msg(t("*** Unable to probe for available servers on local network!"),
                                "*** " . $ret->{failure},
-                               "*** Verify your network setup");
+                               t("*** Verify your network setup"));
             grab_key();
             return;
         } else {
@@ -2746,15 +2746,15 @@ sub smg_servers() {
                 my $fb_server = "$FLPATH/fb-server";
                 if (!-x $fb_server) {
                     print STDERR "$fb_server is missing or not executable!\n";
-                    smg_add_status_msg("*** No server found, and could not start server",
-                                       "*** Verify your installation or contact your vendor");
+                    smg_add_status_msg(t("*** No server found, and could not start server"),
+                                       t("*** Verify your installation or contact your vendor"));
                     grab_key();
                     return;
                 } else {
                     if (my $pid = fork()) {
                         $pdata{autochooseserver} = 1;
                         $pdata{serverpid} = $pid;
-                        smg_add_status_msg("*** No server found, created server for local network game");
+                        smg_add_status_msg(t("*** No server found, created server for local network game"));
                         sleep 1;
                         return ({ host => 'localhost', port => 1511 });
                     } else {
@@ -2781,10 +2781,10 @@ sub smg_servers() {
                     print STDERR "Unrecognized line in serverlist:\n\t$line\n";
                 }
             }
-            smg_add_status_msg("*** Server list received properly");
+            smg_add_status_msg(t("*** Server list received properly"));
         } else {
-            smg_add_status_msg("*** Unable to download server list from master server!",
-                               "*** Verify your network setup or retry later");
+            smg_add_status_msg(t("*** Unable to download server list from master server!"),
+                               t("*** Verify your network setup or retry later"));
             grab_key();
         }
         return @servers;
@@ -2817,7 +2817,7 @@ sub smg_choose_server(@) {
                 put_image($malus_gfx{tomate}, 56, $y);
             }
             print_('netdialogs', $app, $smg_startx, $y, $server->{name});
-            print_('netdialogs', $app, 340, $y, "Available players:$server->{players}  Ping:$server->{ping}ms");
+            print_('netdialogs', $app, 340, $y, t("Available players:%s  Ping:%sms", $server->{players}, $server->{ping}));
                                                      
             $y += $smg_lineheight;
         }
@@ -2854,15 +2854,15 @@ sub smg_choose_server(@) {
 
     $ping->();
     if (every { $_->{disabled} } @servers) {
-        smg_add_status_msg("*** No available game server",
-                           "*** Please retry later or try a local network game (LAN game)");
+        smg_add_status_msg(t("*** No available game server"),
+                           t("*** Please retry later or try a local network game (lan game)"));
         grab_key();
         return 0;
     }
     if (@sorted_servers && every { !$_->{selected} } @sorted_servers) {
         $sorted_servers[0]->{selected} = 1;
     }
-    smg_add_status_msg("*** Please choose a server");
+    smg_add_status_msg(t("*** Please choose a server"));
     $redraw->();
 
     while (1) {
@@ -2923,7 +2923,7 @@ sub smg_choose_server(@) {
         if ($server->{selected}) {
             fb_net::connect($server->{host}, $server->{port});
             fb_net::isconnected() or return smg_choose_server(@servers);
-            smg_add_status_msg("*** Connected to server '$server->{name}'");
+            smg_add_status_msg(t("*** Connected to server '%s'", $server->{name}));
             last;
         }
     }
@@ -3039,8 +3039,8 @@ sub callback_entry {
 }
 
 sub smg_choose_game() {
-    my @actions = ({ name => 'Chat', action => 'CHAT', selected => 1 },
-                   { name => 'Create new game', action => 'CREATE' });
+    my @actions = ({ name => t("Chat"), action => 'CHAT', selected => 1 },
+                   { name => t("Create new game"), action => 'CREATE' });
     my $max_actions = 10;
 
     my $curaction = sub {
@@ -3077,7 +3077,7 @@ sub smg_choose_game() {
         }
         erase_line($smg_starty_chat, $imgbin{back_netgame});
         if ($curaction->() && $curaction->()->{action} eq 'CHAT') {
-            callback_entry('print', { xpos => $smg_startx, ypos => $smg_starty_chat, prefix => 'Say: ', font => 'netdialogs' });
+            callback_entry('print', { xpos => $smg_startx, ypos => $smg_starty_chat, prefix => t("Say: "), font => 'netdialogs' });
         }
         smg_printstatus();
     };
@@ -3090,7 +3090,7 @@ sub smg_choose_game() {
       listgames:
         foreach my $players (@games) {
             if (@$players < 5) {
-                my $name = 'Join game: ' . join(', ', @$players);
+                my $name = t("Join game: %s", join(', ', @$players));
                 foreach my $line (@$join) {
                     if ($line->{name} eq $name) {
                         $line->{ok} = 1;
@@ -3105,7 +3105,7 @@ sub smg_choose_game() {
             $actions[0]{selected} = 1;
         }
         erase_line($smg_starty_players, $imgbin{back_netgame});
-        print_('netdialogs', $app, $smg_startx, $smg_starty_players, "Available Players: $free");
+        print_('netdialogs', $app, $smg_startx, $smg_starty_players, t("Available Players: %s", $free));
         $redraw->();
     };
 
@@ -3129,7 +3129,7 @@ sub smg_choose_game() {
 
                 if ($k == SDLK_ESCAPE()) {
                     if ($ingame) {
-                        smg_add_status_msg("*** Leaving game...");
+                        smg_add_status_msg(t("*** Leaving game..."));
                         fb_net::reconnect();
                         return smg_choose_game();
                     } else {
@@ -3200,19 +3200,19 @@ sub smg_choose_game() {
                             } else {
                                 if ($curaction->()->{action} eq 'CREATE') {
                                     $can_start = 1;
-                                    smg_add_status_msg("*** Game created - now you need to wait for players to join");
+                                    smg_add_status_msg(t("*** Game created - now you need to wait for players to join"));
                                 } else {
-                                    smg_add_status_msg("*** Joined game");
+                                    smg_add_status_msg(t("*** Joined game"));
                                 }
                                 $ingame = 1;
                                 last;
                             }
                         }
                         if ($answer) {
-                            smg_add_status_msg("*** Error: game just started or aborted");
+                            smg_add_status_msg(t("*** Error: game just started or aborted"));
                         } else {
                             $erase->();
-                            @actions = { name => 'Chat', action => 'CHAT', selected => 1 };
+                            @actions = { name => t("Chat"), action => 'CHAT', selected => 1 };
                             $state = 'wait_for_start';
                             $need4update = 1;
                         }
@@ -3221,7 +3221,7 @@ sub smg_choose_game() {
                     if ($curaction->()->{action} eq 'START') {
                         my $answer = smg_verify_command('START');
                         if ($answer) {
-                            smg_add_status_msg("*** Can't start game: $answer");
+                            smg_add_status_msg(t("*** Can't start game: '%s'", $answer));
                             return;
                         }
                     }
@@ -3251,10 +3251,10 @@ sub smg_choose_game() {
                     smg_add_status_msg($1);
                     play_sound('typewriter');
                 } elsif ($message =~ /^JOINED: (.*)/) {
-                    smg_add_status_msg("*** $1 joined the game!");
+                    smg_add_status_msg(t("*** %s joined the game!", $1));
                     play_sound('newroot_solo');
                 } elsif ($message =~ /^PARTED: (.*)/) {
-                    smg_add_status_msg("*** $1 left the game...");
+                    smg_add_status_msg(t("*** %s left the game...", $1));
                     play_sound('newroot_solo');
                 } elsif ($message =~ /^GAME_CAN_START: (.*)/) {
                     fb_net::send_("OK_GAME_START");
@@ -3297,7 +3297,7 @@ sub smg_choose_game() {
         }
 
         if (!fb_net::isconnected()) {
-            smg_add_status_msg('*** Lost connection to server, abandoning...');
+            smg_add_status_msg(t("*** Lost connection to server, abandoning..."));
             @actions = ();
             $redraw->();
             play_sound('cancel');
@@ -3310,9 +3310,9 @@ sub smg_choose_game() {
             if ($state ne 'game_select') {
                 $players_in_game = fb_net::send_and_receive('STATUS');
                 erase_line($smg_starty_players, $imgbin{back_netgame});
-                print_('netdialogs', $app, $smg_startx, $smg_starty_players, "Players in game: " . $players_in_game);
+                print_('netdialogs', $app, $smg_startx, $smg_starty_players, t("Players in game: %s", $players_in_game));
                 @actions = { name => 'Chat', action => 'CHAT', selected => 1 };
-                $can_start && $players_in_game =~ /,/ and push @actions, { name => 'Start game!', action => 'START' };
+                $can_start && $players_in_game =~ /,/ and push @actions, { name => t("Start game!"), action => 'START' };
             }
             $redraw->();
             $need4update = 0;
@@ -3324,15 +3324,15 @@ sub show_mp_scores() {
     $imgbin{back_netgame}->blit($apprects{main}, $app, $apprects{main});
 
     if (any { $pdata{$_}{left} } @PLAYERS) {
-        smg_add_status_msg('*** Game finished, because the following player(s) left: ' . join(', ', map { if_($pdata{$_}{left}, $pdata{$_}{nick}) } @PLAYERS));
+        smg_add_status_msg(t("*** Game finished, because the following player(s) left: %s", join(', ', map { if_($pdata{$_}{left}, $pdata{$_}{nick}) } @PLAYERS)));
     }
     @PLAYERS = reverse ssort { $pdata{$_}{score} } @PLAYERS;
     if ($pdata{$PLAYERS[0]}{score} > $pdata{$PLAYERS[1]}{score}) {
-        smg_add_status_msg("*** Winner: $pdata{$PLAYERS[0]}{nick}");
+        smg_add_status_msg(t("*** Winner: %s", $pdata{$PLAYERS[0]}{nick}));
     } else {
-        smg_add_status_msg('*** Draw game!');
+        smg_add_status_msg(t("*** Draw game!"));
     }
-    smg_add_status_msg('*** ' . join(', ', map { "$pdata{$_}{nick}: $pdata{$_}{score}" } @PLAYERS));
+    smg_add_status_msg(t("*** Scores: %s", join(', ', map { "$pdata{$_}{nick}: $pdata{$_}{score}" } @PLAYERS)));
 }
 
 sub setup_mp_game() {
@@ -3735,20 +3735,20 @@ sub menu {
     };
 
     my $change_keys = sub {
-	ask_from({ intro => [ 'Please enter new keys:' ],
+	ask_from({ intro => [ t("Please enter new keys:") ],
 		   entries => [
-			       { 'q' => 'Player 1; turn left?',  'a' => \$KEYS->{p1}{left},  f => 'ONE_CHAR' },
-			       { 'q' => 'Player 1; turn right?', 'a' => \$KEYS->{p1}{right}, f => 'ONE_CHAR' },
-			       { 'q' => 'Player 1; fire?',  'a' => \$KEYS->{p1}{fire},  f => 'ONE_CHAR' },
-			       { 'q' => 'Player 1; center?',  'a' => \$KEYS->{p1}{center},  f => 'ONE_CHAR' },
+			       { 'q' => t("Player 1; turn left?"),  'a' => \$KEYS->{p1}{left},  f => 'ONE_CHAR' },
+			       { 'q' => t("Player 1; turn right?"), 'a' => \$KEYS->{p1}{right}, f => 'ONE_CHAR' },
+			       { 'q' => t("Player 1; fire?"),  'a' => \$KEYS->{p1}{fire},  f => 'ONE_CHAR' },
+			       { 'q' => t("Player 1; center?"),  'a' => \$KEYS->{p1}{center},  f => 'ONE_CHAR' },
                                { f => 'SPACE' },
-			       { 'q' => 'Player 2; turn left?',  'a' => \$KEYS->{p2}{left},  f => 'ONE_CHAR' },
-			       { 'q' => 'Player 2; turn right?', 'a' => \$KEYS->{p2}{right}, f => 'ONE_CHAR' },
-			       { 'q' => 'Player 2; fire?',  'a' => \$KEYS->{p2}{fire},  f => 'ONE_CHAR' },
-			       { 'q' => 'Player 2; center?',  'a' => \$KEYS->{p2}{center},  f => 'ONE_CHAR' },
+			       { 'q' => t("Player 2; turn left?"),  'a' => \$KEYS->{p2}{left},  f => 'ONE_CHAR' },
+			       { 'q' => t("Player 2; turn right?"), 'a' => \$KEYS->{p2}{right}, f => 'ONE_CHAR' },
+			       { 'q' => t("Player 2; fire?"),  'a' => \$KEYS->{p2}{fire},  f => 'ONE_CHAR' },
+			       { 'q' => t("Player 2; center?"),  'a' => \$KEYS->{p2}{center},  f => 'ONE_CHAR' },
                                { f => 'SPACE' },
-			       { 'q' => 'Toggle fullscreen?', 'a' => \$KEYS->{misc}{fs}, f => 'ONE_CHAR' },
-			       { 'q' => 'Chat (net/lan game)?', 'a' => \$KEYS->{misc}{chat}, f => 'ONE_CHAR' },
+			       { 'q' => t("Toggle fullscreen?"), 'a' => \$KEYS->{misc}{fs}, f => 'ONE_CHAR' },
+			       { 'q' => t("Chat (net/lan game)?"), 'a' => \$KEYS->{misc}{chat}, f => 'ONE_CHAR' },
 			      ],
 		   outro => 'Thanks!',
 		   erase_background => $back_start
