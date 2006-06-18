@@ -46,6 +46,7 @@ use vars qw($TARGET_ANIM_SPEED $BUBBLE_SIZE $ROW_SIZE $LAUNCHER_SPEED $BUBBLE_SP
             $lev_number $playermalus $loaded_levelset $direct_levelset $chainreaction %chains %history %img_mini $frame $sock $gameserver);
 
 use Data::Dumper;
+use Locale::gettext;
 use POSIX;
 
 use SDL;
@@ -88,6 +89,9 @@ $rcfile = "$ENV{HOME}/.fbrc";
 eval(cat_($rcfile));
 eval(cat_($hiscorefile = "$ENV{HOME}/.fbhighscores"));
 $version = '2.0.0';
+
+textdomain("frozen-bubble");
+bind_textdomain_codeset("frozen-bubble", "UTF-8");  #- we're going to use SDL-ttf functions using UTF-8 input
 
 print "        [[ Frozen-Bubble-$version ]]\n\n";
 print '  http://www.frozen-bubble.org/
@@ -2766,7 +2770,7 @@ sub smg_servers() {
         }
 
     } else {
-        smg_add_status_msg("*** Contacting master server...");
+        smg_add_status_msg(t("*** Contacting master server..."));
         my $serverlist = fb_net::get_server_list();
         my @servers;
         if ($serverlist) {

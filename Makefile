@@ -1,4 +1,4 @@
-DIRS = c_stuff server
+DIRS = c_stuff po server
 
 PREFIX = /usr/local
 DATADIR = $(PREFIX)/share
