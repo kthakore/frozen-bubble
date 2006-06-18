@@ -37,10 +37,10 @@
 use strict;
 
 use vars qw($TARGET_ANIM_SPEED $BUBBLE_SIZE $ROW_SIZE $LAUNCHER_SPEED $BUBBLE_SPEED $MALUS_BUBBLE_SPEED $TIME_APPEARS_NEW_ROOT
-            %POS %POS_1P %POS_2P %MENUPOS $KEYS %actions %angle %pdata $app $font %apprects $event %rects %sticked_bubbles %root_bubbles
+            %POS %POS_1P %POS_2P %MENUPOS $KEYS %actions %angle %pdata $app %apprects $event %rects %sticked_bubbles %root_bubbles
             $background $background_orig @bubbles_images $gcwashere %bubbles_anim %launched_bubble %tobe_launched %next_bubble
             $shooter $sdl_flags $mixer $mixer_enabled $music_disabled $sfx_disabled @playlist %sound %music %pinguin %canon
-            $graphics_level @update_rects $CANON_ROTATIONS_NB %malus_bubble %falling_bubble %exploding_bubble %malus_gfx
+            $graphics_level @update_rects $CANON_ROTATIONS_NB %malus_bubble %falling_bubble %exploding_bubble %malus_gfx %ttfonts
             %sticking_bubble $version $time %imgbin $TIME_HURRY_WARN $TIME_HURRY_MAX $TIMEOUT_PINGUIN_SLEEP $FREE_FALL_CONSTANT
             $direct @PLAYERS @ALL_PLAYERS %levels $display_on_app_disabled $total_time $time_1pgame $fullscreen $rcfile $hiscorefile $HISCORES
             $lev_number $playermalus $loaded_levelset $direct_levelset $chainreaction %chains %history %img_mini $frame $sock $gameserver);
@@ -53,8 +53,8 @@ use SDL::App;
 use SDL::Surface;
 use SDL::Event;
 use SDL::Cursor;
-use SDL::Font;
 use SDL::Mixer;
+use SDL::TTFont;
 
 use fb_stuff;
 use fb_net;
@@ -82,6 +82,7 @@ $graphics_level = 3;
 @ALL_PLAYERS = qw(p1 p2 rp1 rp2 rp3 rp4);
 $playermalus = 0;
 $chainreaction = 0;
+$HISCORES = [];
 
 $rcfile = "$ENV{HOME}/.fbrc";
 eval(cat_($rcfile));
@@ -192,6 +193,7 @@ local $_ = "@ARGV";
     
 };
 
+
 #- ------------------------------------------------------------------------
 
 END {
@@ -260,7 +262,7 @@ sub init_sound() {
 	return 0;
     }
     print "[Sound Init]\n";
-    my @sounds = qw(stick destroy_group newroot newroot_solo lose hurry pause menu_change menu_selected rebound launch malus noh snore cancel typewriter applause);
+    my @sounds = qw(stick destroy_group newroot newroot_solo lose hurry pause menu_change menu_selected rebound launch malus noh snore cancel typewriter applause chatted);
     foreach (@sounds) {
 	my $sound_path = "$FPATH/snd/$_.wav";
 	$sound{$_} = SDL::Sound->new($sound_path);
@@ -848,6 +850,9 @@ sub stick_bubble($$$$$) {
 
 sub print_next_bubble($$;$) {
     my ($img, $player, $not_on_top_next) = @_;
+    if (is_mp_game() && $pdata{p1}{chatting}) {
+        return;
+    }
     put_image_to_background($img, $next_bubble{$player}{'x'}, $next_bubble{$player}{'y'});
     $not_on_top_next or put_image_to_background($bubbles_anim{on_top_next},
                                                 $POS{$player}{left_limit} + $POS{$player}{next_bubble}{x} + $POS{$player}{on_top_next_relpos}{x},
@@ -911,20 +916,29 @@ sub handle_graphics($) {
 	}
 
 	#- shooter
-	if ($graphics_level > 1) {
-	    my $num = int($angle{$::p}*$CANON_ROTATIONS_NB/($PI/2) + 0.5)-$CANON_ROTATIONS_NB;
-	    $fun->($canon{img}{$num},
-                   $POS{$::p}{canon}{x} + $canon{$::p =~ /rp/ ? 'data_mini' : 'data'}{$num}->[0],
-		   $POS{$::p}{canon}{'y'} + $canon{$::p =~ /rp/ ? 'data_mini' : 'data'}{$num}->[1]);
-	} else {
-	    $fun->($shooter,
-		   $POS{$::p}{simpleshooter}{x} + $POS{$::p}{simpleshooter}{diameter}*cos($angle{$::p}),
-		   $POS{$::p}{simpleshooter}{'y'} - $POS{$::p}{simpleshooter}{diameter}*sin($angle{$::p}));
-	}
-	#- penguins
-	if ($graphics_level == 3) {
-	    $fun->($pinguin{$::p}{$pdata{$::p}{ping_right}{state}}[$pdata{$::p}{ping_right}{img}], $POS{$::p}{left_limit}+$POS{$::p}{pinguin}{x}, $POS{$::p}{pinguin}{'y'});
-	}
+        if ($graphics_level > 1) {
+            my $num = int($angle{$::p}*$CANON_ROTATIONS_NB/($PI/2) + 0.5)-$CANON_ROTATIONS_NB;
+                $fun->($canon{img}{$num},
+                       $POS{$::p}{canon}{x} + $canon{$::p =~ /rp/ ? 'data_mini' : 'data'}{$num}->[0],
+                       $POS{$::p}{canon}{'y'} + $canon{$::p =~ /rp/ ? 'data_mini' : 'data'}{$num}->[1]);
+        } else {
+            $fun->($shooter,
+                   $POS{$::p}{simpleshooter}{x} + $POS{$::p}{simpleshooter}{diameter}*cos($angle{$::p}),
+                   $POS{$::p}{simpleshooter}{'y'} - $POS{$::p}{simpleshooter}{diameter}*sin($angle{$::p}));
+        }
+
+        #- penguins
+        if (!is_mp_game() || $::p ne 'p1' || !$pdata{p1}{chatting}) {
+            if ($graphics_level == 3) {
+                $fun->($pinguin{$::p}{$pdata{$::p}{ping_right}{state}}[$pdata{$::p}{ping_right}{img}], $POS{$::p}{left_limit}+$POS{$::p}{pinguin}{x}, $POS{$::p}{pinguin}{'y'});
+            }
+        }
+
+        #- chat message in mp
+        if (is_mp_game() && $pdata{$::p}{chat_msg_delay}) {
+            $pdata{$::p}{chat_msg_delay}--;
+            $pdata{$::p}{chat_msg_delay} or remove_image_from_background($imgbin{void_chat_small}, $POS{$::p}{chatting}{x}, $POS{$::p}{chatting}{'y'});
+        }
 
 	#- moving bubbles --> I want them on top of the rest
 	foreach (@{$malus_bubble{$::p}}, @{$falling_bubble{$::p}}, @{$exploding_bubble{$::p}}) {
@@ -997,40 +1011,73 @@ sub print_compressor() {
     }
 }
 
-our $smg_lineheight = 22;
+our $smg_lineheight = 16;
+
+sub print_ {
+    my ($kind, $surface, $x, $y, @text) = @_;
+    exists $ttfonts{$kind} or die "$kind is no kind\n";
+    myttfprint_($ttfonts{$kind}{bg}, $surface, $x+1, $y+1, @text);
+    myttfprint_($ttfonts{$kind}{fg}, $surface, $x, $y, @text);
+}
+
+sub myttfprint_ {
+    my ($self,$surface,$x,$y,@text) = @_;
+
+    length(join("",@text)) > 0 or return;
+    
+    $surface = $$surface{-surface} if ( ref($surface) && $surface->isa("SDL::Surface"));
+    
+    SDL::FreeSurface($self->{-surface}) if ($$self{-surface});
+    
+    $$self{-surface} = fb_c_stuff::TTFPutString($$self{-font},$$self{-mode},
+                                                $surface,$x,$y,$$self{-fg}{-color},$$self{-bg}{-color},join("",@text));
+    
+    die "Could not print \"", join("",@text), "\" to surface, ",
+      SDL::GetError(), "\n" unless ($$self{-surface});
+}
+
+sub width_ {
+    my ($self,@text) = @_;
+    SDL::TTFSizeUTF8($$self{-font},join(" ",@text));
+}
+
+sub width {
+    my ($kind, @text) = @_;
+    exists $ttfonts{$kind} or die "$kind is no kind\n";
+    return ${width_($ttfonts{$kind}{fg}, @text)}[0];
+}
 
 sub mp_disconnect_with_reason {
     my (@messages) = @_;
     put_image($imgbin{void_panel}, $MENUPOS{xpos_panel}, $MENUPOS{ypos_panel});
     my $y = $MENUPOS{ypos_panel} + 30;
     foreach (@messages) {
-        $app->print(320 - SDL_TEXTWIDTH($_)/2, $y, $_);
+        print_('menu', $app, 320 - width('menu', $_)/2, $y, $_);
         $y += $smg_lineheight;
     }
     $app->flip;
     play_sound('cancel');
     fb_c_stuff::fbdelay(3000);
     $event->pump while $event->poll != 0;
-    grab_key(0);
+    grab_key();
     die 'quit';
 }
 
 sub check_mp_connection {
-    fb_net::isconnected() or mp_disconnect_with_reason('LOST CONNECTION TO SERVER!');
+    fb_net::isconnected() or mp_disconnect_with_reason('Lost connection to server!');
 }
 
-sub add_loserz_chat_msg($) {
-    my ($message) = @_;
-    play_sound('menu_selected');
-    push @{$pdata{loserz_chat_messages}}, $message;
-    @{$pdata{loserz_chat_messages}} > 7 and shift @{$pdata{loserz_chat_messages}};
-    my $y = $MENUPOS{ypos_panel} + 60;
-    foreach my $msg (@{$pdata{loserz_chat_messages}}) {
-        erase_line($y, $background, $MENUPOS{xpos_panel} + 10, $imgbin{void_panel}->width - 20);
-        $app->print($MENUPOS{xpos_panel} + 10, $y, $msg);
-        $y += 22;
-    }
+sub update_say_mp {
+    put_image($imgbin{void_chat}, $POS{p1}{chatting}{x}, $POS{p1}{chatting}{'y'});
+    callback_entry('print', { xpos => $POS{p1}{chatting}{x} + 10, ypos => $POS{p1}{chatting}{'y'} + 9, font => 'ingame' });
     push @update_rects, $apprects{main};
+}
+
+sub cleanup_chatting {
+    $pdata{p1}{chatting} = 0;
+    $event->set_key_repeat(0, 0);
+    remove_image_from_background($imgbin{void_chat}, $POS{p1}{chatting}{x}, $POS{p1}{chatting}{'y'});
+    print_next_bubble($next_bubble{p1}{img}, 'p1');
 }
 
 sub handle_game_events() {
@@ -1039,46 +1086,22 @@ sub handle_game_events() {
 	if ($event->type == SDL_KEYDOWN) {
 	    my $keypressed = $event->key_sym;
 
-            if (is_mp_game() && $pdata{p1}{state} eq 'lost' && living_players() <= @PLAYERS - 2 && !@{$sticked_bubbles{p1}}) {
-                $pdata{p1}{state} = 'chatting';
-                put_image_to_background($imgbin{void_panel}, $MENUPOS{xpos_panel}, $MENUPOS{ypos_panel});
-                $app->print($MENUPOS{xpos_panel} + 10, $MENUPOS{ypos_panel} + 15, "CHAT WITH OTHER LOSERZ");
-                $app->print($MENUPOS{xpos_panel} + 10, $MENUPOS{ypos_panel} + 35, "TO PLAY NEXT GAME, DONT HIT ESC!");
-                $pdata{p1}{typed_chat} = '';
-                @{$pdata{loserz_chat_messages}} = ();
-                push @update_rects, $apprects{main};
-                
-            } elsif (is_mp_game() && $pdata{p1}{state} eq 'chatting') {
+            if (is_mp_game() && $pdata{p1}{chatting}) {
 
-                my $update_say = sub {
-                    my $y_typingchat = 325;
-                    erase_line($y_typingchat, $background, $MENUPOS{xpos_panel} + 10, $imgbin{void_panel}->width - 20);
-                    $app->print($MENUPOS{xpos_panel} + 10, $y_typingchat, "SAY: $pdata{$::p}{typed_chat}");
-                    push @update_rects, $apprects{main};
-                };
-
-                if (($keypressed == SDLK_RETURN() || $keypressed == SDLK_KP_ENTER()) && $pdata{$::p}{typed_chat}) {
-                    my $message = "($pdata{p1}{nick}) $pdata{$::p}{typed_chat}";
-                    fb_net::gsend("talk:$message");
-                    add_loserz_chat_msg($message);
-                    $pdata{$::p}{typed_chat} = '';
-                    $update_say->();
-                    print "sent chat <$message>\n";
-                } else {
-                    $pdata{$::p}{typed_chat} = update_typed_chat($pdata{$::p}{typed_chat}, $keypressed, 25);
-                    my $target_message = "($pdata{p1}{nick}) $pdata{$::p}{typed_chat}";
-                    if (SDL_TEXTWIDTH($target_message) > $imgbin{void_panel}->width - 20) {
-                        $pdata{$::p}{typed_chat} =~ s/.$//;
-                    }
-                    $update_say->();
+                if (($keypressed == SDLK_RETURN() || $keypressed == SDLK_KP_ENTER()) && callback_entry('gettext') > 0) {
+                    fb_net::gsend('talk:' . join('', callback_entry('gettext')));
+                    cleanup_chatting();
+                } elsif (!member($keypressed, SDLK_RETURN(), SDLK_KP_ENTER(), SDLK_TAB())) {
+                    callback_entry('keypressed', { event => $event, maxlen => $imgbin{void_chat}->width - 20, font => 'ingame' });
+                    callback_entry('moved');
+                    update_say_mp();
                     print "updated chat\n";
                 }
 
             } else {
                 iter_local_players {
-                    my $pkey = is_1p_game() ? 'p2' : $::p;
                     foreach (qw(left right fire center)) {
-                        $keypressed == $KEYS->{$pkey}{$_} and $actions{$::p}{$_} = 1, last;
+                        $keypressed == $KEYS->{$::p}{$_} and $actions{$::p}{$_} = 1, last;
                     }
                 };
                 
@@ -1086,7 +1109,15 @@ sub handle_game_events() {
                     $fullscreen = !$fullscreen;
                     $app->fullscreen;
                 }
-                
+
+                if ($keypressed == $KEYS->{misc}{chat} && is_mp_game()) {
+                    callback_entry('reset');
+                    $pdata{p1}{chatting} = 1;
+                    $event->set_key_repeat(200, 50);
+                    print "p1 state: $pdata{p1}{state}\n";
+                    put_image_to_background($imgbin{void_chat}, $POS{p1}{chatting}{x}, $POS{p1}{chatting}{'y'});
+                }
+
                 if ($keypressed == SDLK_PAUSE && !is_mp_game()) {
                     play_sound('pause');
                     $mixer_enabled && $mixer and $mixer->pause_music;
@@ -1128,19 +1159,25 @@ sub handle_game_events() {
 	    my $keypressed = $event->key_sym;
 
 	    iter_local_players {
-		my $pkey = is_1p_game() ? 'p2' : $::p;
 		foreach (qw(left right fire center)) {
-		    $keypressed == $KEYS->{$pkey}{$_} and $actions{$::p}{$_} = 0, last;
+		    $keypressed == $KEYS->{$::p}{$_} and $actions{$::p}{$_} = 0, last;
 		}
 	    }
 	}
 
 	if ($event->type == SDL_KEYDOWN && $event->key_sym == SDLK_ESCAPE) {
             if (is_mp_game()) {
-                $pdata{p1}{left} = 1;
-                lose('p1');
+                if ($pdata{p1}{chatting}) {
+                    cleanup_chatting();
+                    play_sound('cancel');
+                } else {
+                    $pdata{p1}{left} = 1;
+                    lose('p1');
+                    die 'quit';
+                }
+            } else {
+                die 'quit';
             }
-	    die 'quit';
 	}
         if ($event->type == SDL_QUIT) {
             exit 0;
@@ -1148,6 +1185,8 @@ sub handle_game_events() {
     }
 
     if (is_mp_game()) {
+        $pdata{p1}{chatting} && callback_entry('ping') and update_say_mp();
+
         my @messages = fb_net::grecv();
 
         check_mp_connection();
@@ -1226,14 +1265,16 @@ sub handle_game_events() {
                 unshift @messages, $m;
                 last;
             } elsif ($command eq 'talk') {
-                if ($pdata{p1}{state} eq 'chatting') {
-                    #- chat for loserz
-                    add_loserz_chat_msg($params);
-                }
+                put_image_to_background($imgbin{void_chat_small}, $POS{$player}{chatting}{x}, $POS{$player}{chatting}{'y'});
+                print_('ingame_small', $background, $POS{$player}{chatting}{x} + 5, $POS{$player}{chatting}{'y'} + 3, $params);
+                erase_image($imgbin{void_chat_small}, $POS{$player}{chatting}{x}, $POS{$player}{chatting}{'y'});
+                push @update_rects, $apprects{main};
+                play_sound('chatted');
+                $pdata{$player}{chat_msg_delay} = 500;
             } elsif ($command eq 'drop') {
                 if ($params eq $pdata{p1}{nick}) {
                     #- ouch, someone dropped me. bad bad guy :(. but let's cooperate.
-                    mp_disconnect_with_reason('YOU WERE DROPPED!', '', 'YOUR LAG IS TOO HIGH OR', 'NETWORK WAS INTERRUPTED');
+                    mp_disconnect_with_reason('You were dropped!', '', 'Your lag is too high or', 'network was interrupted');
                 }
             } elsif ($command eq 'stickstory') {
                 my ($whofor, $serialized) = $params =~ /(.*)!(.*)/;
@@ -1272,7 +1313,7 @@ sub handle_game_events() {
                                 fb_net::gsend('die');
                                 while (1) {
                                     $app->flip;
-                                    fb_c_stuff::fbdelay(50);
+                                    fb_c_stuff::fbdelay($TARGET_ANIM_SPEED);
                                 }
                             }
                         }
@@ -1281,7 +1322,7 @@ sub handle_game_events() {
             } elsif ($command eq 'die') {
                 while (1) {
                     $app->flip;
-                    fb_c_stuff::fbdelay(50);
+                    fb_c_stuff::fbdelay($TARGET_ANIM_SPEED);
                 }
             } else {
                 print STDERR "****** Unrecognized command: $m->{msg}\n";
@@ -1303,13 +1344,17 @@ sub handle_game_events() {
 sub print_scores($) {
     my ($surface) = @_;  
     iter_players_ {  #- sometimes called from within a iter_players so...
-        my $xpos = $POS{$::p_}{scores}{x}-SDL_TEXTWIDTH($pdata{$::p_}{score})/2;
-        my $drect = SDL::Rect->new(-width => 30, -height => 30, -x => $xpos - 5, '-y' => $POS{$::p_}{scores}{'y'});
+        my $xpos = $POS{$::p_}{scores}{x} - width('ingame', $pdata{$::p_}{score})/2;
+        my $drect = SDL::Rect->new(-width => 20, -height => $::p_ =~ /rp/ ? 12 : 24, -x => $xpos, '-y' => $POS{$::p_}{scores}{'y'});
         $background_orig->blit($drect, $surface, $drect);
         push @update_rects, $drect;
-	$surface->print($xpos, $POS{$::p_}{scores}{'y'}, $pdata{$::p_}{score});
-	#!is_local_player($::p_) and $surface->print($POS{$::p_}{nick}{x}-SDL_TEXTWIDTH($pdata{$::p_}{nick})/2, $POS{$::p_}{nick}{'y'}, $pdata{$::p_}{nick});
-        $surface->print($POS{$::p_}{nick}{x}-SDL_TEXTWIDTH($pdata{$::p_}{nick})/2, $POS{$::p_}{nick}{'y'}, $pdata{$::p_}{nick});
+        if ($::p_ =~ /rp/) {
+            print_('ingame_small', $surface, $xpos, $POS{$::p_}{scores}{'y'}, $pdata{$::p_}{score});
+            is_mp_game() and print_('ingame_small', $surface, $POS{$::p_}{nick}{x}, $POS{$::p_}{nick}{'y'}, $pdata{$::p_}{nick});
+        } else {
+            print_('ingame', $surface, $xpos, $POS{$::p_}{scores}{'y'}, $pdata{$::p_}{score});
+            is_mp_game() and print_('ingame', $surface, $POS{$::p_}{nick}{x}, $POS{$::p_}{nick}{'y'}, $pdata{$::p_}{nick});
+        }
     };
 }
 
@@ -1451,9 +1496,9 @@ sub update_lost {
     my $still_sticked = sum(map { @{$sticked_bubbles{$_}} } @PLAYERS);
     if ($pdata{state} eq 'won ' && $still_sticked == 1) {
         put_image($imgbin{void_panel}, $MENUPOS{xpos_panel}, $MENUPOS{ypos_panel});
-        my $message = "DRAW GAME!";
-        my $xpos = 320 - SDL_TEXTWIDTH($message)/2;
-        $app->print($xpos, $MENUPOS{ypos_panel} + 30, $message);
+        my $message = "Draw game!";
+        my $xpos = 320 - width('menu', $message)/2;
+        print_('menu', $app, $xpos, $MENUPOS{ypos_panel} + 30, $message);
         $app->flip;
     }
 }
@@ -1824,7 +1869,7 @@ sub update_game() {
                             die 'quit';
                         }
                         check_mp_connection();
-                        fb_c_stuff::fbdelay(50);
+                        fb_c_stuff::fbdelay($TARGET_ANIM_SPEED);
                     }
                 };
 
@@ -2010,7 +2055,28 @@ sub init_game() {
     print '[SDL Init] ';
     restart_app();
     $frame = 0;
-    $font = SDL::Font->new("$FPATH/gfx/font.png");
+
+    $ttfonts{netdialogs}{fg} = SDL::TTFont->new(-name => "/usr/share/fonts/ttf/vera/Vera.ttf", -size => 12, -mode => SDL::TTF_UTF8_BLENDED(),
+                                                -foreground => $SDL::Color::black);
+    $ttfonts{netdialogs}{bg} = SDL::TTFont->new(-name => "/usr/share/fonts/ttf/vera/Vera.ttf", -size => 12, -mode => SDL::TTF_UTF8_BLENDED(),
+                                                -foreground => $SDL::Color::white);
+    $ttfonts{netdialogs_servermsg}{fg} = SDL::TTFont->new(-name => "/usr/share/fonts/ttf/vera/VeraIt.ttf", -size => 12, -mode => SDL::TTF_UTF8_BLENDED(),
+                                                          -foreground => $SDL::Color::black);
+    $ttfonts{netdialogs_servermsg}{bg} = SDL::TTFont->new(-name => "/usr/share/fonts/ttf/vera/VeraIt.ttf", -size => 12, -mode => SDL::TTF_UTF8_BLENDED(),
+                                                          -foreground => $SDL::Color::white);
+    $ttfonts{menu}{fg} = SDL::TTFont->new(-name => "/usr/share/fonts/ttf/vera/Vera.ttf", -size => 16, -mode => SDL::TTF_UTF8_BLENDED(),
+                                          -foreground => $SDL::Color::white);
+    $ttfonts{menu}{bg} = SDL::TTFont->new(-name => "/usr/share/fonts/ttf/vera/Vera.ttf", -size => 16, -mode => SDL::TTF_UTF8_BLENDED(),
+                                          -foreground => $SDL::Color::black);
+    $ttfonts{ingame}{fg} = SDL::TTFont->new(-name => "/usr/share/fonts/ttf/vera/Vera.ttf", -size => 18, -mode => SDL::TTF_TEXT_BLENDED(),
+                                            -foreground => $SDL::Color::white);
+    $ttfonts{ingame}{bg} = SDL::TTFont->new(-name => "/usr/share/fonts/ttf/vera/Vera.ttf", -size => 18, -mode => SDL::TTF_TEXT_BLENDED(),
+                                            -foreground => $SDL::Color::black);
+    $ttfonts{ingame_small}{fg} = SDL::TTFont->new(-name => "/usr/share/fonts/ttf/vera/Vera.ttf", -size => 10, -mode => SDL::TTF_TEXT_BLENDED(),
+                                                  -foreground => $SDL::Color::white);
+    $ttfonts{ingame_small}{bg} = SDL::TTFont->new(-name => "/usr/share/fonts/ttf/vera/Vera.ttf", -size => 10, -mode => SDL::TTF_TEXT_BLENDED(),
+                                                  -foreground => $SDL::Color::black);
+
     $apprects{main} = SDL::Rect->new(-width => $app->width, -height => $app->height);
     $event = SDL::Event->new;
     $event->set_unicode(1);
@@ -2018,7 +2084,6 @@ sub init_game() {
     $total_time = $app->ticks;
     $imgbin{loading} = add_image('loading.png');
     put_image($imgbin{loading}, 10, 10);
-    $app->print(30, 60, uc("tip!  use '-h' on command-line to get more options"));
     $app->flip;
     $imgbin{loading_step} = add_image('loading_step.png');
  
@@ -2098,6 +2163,8 @@ sub init_game() {
     $imgbin{txt_highscores_off}  = add_image('menu/txt_highscores_off.png');
     $imgbin{txt_highscores_over} = add_image('menu/txt_highscores_over.png');
     $imgbin{void_panel} = add_image('menu/void_panel.png');
+    $imgbin{void_chat} = add_image('menu/void_chat.png');
+    $imgbin{void_chat_small} = add_image('menu/void_chat_small.png');
     $imgbin{version} = add_image('menu/version.png');
     $imgbin{blink} = add_image('menu/blink.png');
     $imgbin{left} = add_image('left.png');
@@ -2182,21 +2249,19 @@ sub open_level($) {
     }
 }
 
-sub grab_key($) {
-    my ($unicode) = @_;
+sub grab_key {
     my $keyp;
 
     do {
 	$event->wait;
 	if ($event->type == SDL_KEYDOWN) {
-	    #$keyp = $unicode ? ($event->key_unicode || $event->key_sym) : $event->key_sym;
 	    $keyp = $event->key_sym;
 	}
     } while ($event->type != SDL_KEYDOWN);
 
     #- so that using "capital" letter should work
     if (member($keyp, SDLK_LSHIFT(), SDLK_RSHIFT())) {
-        return grab_key($unicode);
+        return grab_key();
     } else {
         return $keyp;
     }
@@ -2215,11 +2280,10 @@ sub display_highscores() {
     my $high_rect = SDL::Rect->new('-x' => $POS{p1}{left_limit} & 0xFFFFFFFC, '-y' => $POS{p1}{top_limit} & 0xFFFFFFFC,
 				   '-width' => ($POS{p1}{right_limit}-$POS{p1}{left_limit}) & 0xFFFFFFFC, -height => ($POS{p1}{'initial_bubble_y'}-$POS{p1}{top_limit}-10) & 0xFFFFFFFC);
 
-    $font = SDL::Font->new("$FPATH/gfx/font-hi.png");
     my $centered_print = sub($$$) {
 	my ($x, $y, $txt) = @_;
-	$app->print($x+($imgbin{hiscore_frame}->width-SDL_TEXTWIDTH(uc($txt)))/2 - 6,
-		    $y+$imgbin{hiscore_frame}->height - 8, uc($txt));
+	print_('menu', $app, $x + ($imgbin{hiscore_frame}->width - width('menu', $txt))/2 - 6,
+                             $y + $imgbin{hiscore_frame}->height - 8, $txt);
     };
 
     my $old_levelset = $loaded_levelset;
@@ -2259,7 +2323,7 @@ sub display_highscores() {
 	fb_c_stuff::shrink($tmp->{-surface}, $background->display_format->{-surface}, 0, 0, $high_rect->{-rect}, 4);
         $tmp->blit(undef, $app, SDL::Rect->new(-x => $high_posx, '-y' => $high_posy));
 	$centered_print->($high_posx, $high_posy,    $high->{name});
-	$centered_print->($high_posx, $high_posy+20, $high->{level} eq 'WON' ? "WON!" : "LVL-".$high->{level});
+	$centered_print->($high_posx, $high_posy+20, $high->{level} eq 'WON' ? "won!" : "level ".$high->{level});
 	my $min = int($high->{time}/60);
 	my $sec = int($high->{time} - $min*60); length($sec) == 1 and $sec = "0$sec";
 	$centered_print->($high_posx, $high_posy+40, "$min'$sec''");
@@ -2271,9 +2335,8 @@ sub display_highscores() {
     $app->flip;
     $display_on_app_disabled = 0;
 
-    $font = SDL::Font->new("$FPATH/gfx/font.png");
     $event->pump while ($event->poll != 0);
-    grab_key(0);
+    grab_key();
 }
 
 sub keysym_to_char($) { my ($key) = @_; eval("$key eq SDLK_$_") and return uc($_) foreach @fbsyms::syms }
@@ -2281,68 +2344,90 @@ sub keysym_to_char($) { my ($key) = @_; eval("$key eq SDLK_$_") and return uc($_
 sub ask_from($) {
     my ($w) = @_;
     # $w->{intro} = [ 'text_intro_line1', 'text_intro_line2', ... ]
-    # $w->{entries} = [ { q => 'question1?', a => \$var_answer1, f => 'flags' }, {...} ]   flags: ONE_CHAR
+    # $w->{entries} = [ { q => 'question1?', a => \$var_answer1, f => 'flags' }, {...} ]   flags: ONE_CHAR, SPACE
     # $w->{outro} = 'text_outro_uniline'
     # $w->{erase_background} = $background_right_one
 
     put_image($imgbin{void_panel}, $MENUPOS{xpos_panel}, $MENUPOS{ypos_panel});
 
     my $xpos;
-    my $ypos = $MENUPOS{ypos_panel} + 5;
+    my $ypos = $MENUPOS{ypos_panel} + 12;
+    my $lineheight = 18;
 
     foreach my $i (@{$w->{intro}}) {
 	if ($i) {
-	    my $xpos = (640-SDL_TEXTWIDTH($i))/2;
-	    $app->print($xpos, $ypos, $i);
+	    my $xpos = (640 - width('menu', $i))/2;
+	    print_('menu', $app, $xpos, $ypos, $i);
 	}
-	$ypos += 22;
+	$ypos += $lineheight;
     }
 
-    $ypos += 3;
+    $ypos += 10;
 
     my $ok = 1;
+    $event->set_key_repeat(200, 50);
   entries:
     foreach my $entry (@{$w->{entries}}) {
-	$xpos = (640-$imgbin{void_panel}->width)/2 + 120 - SDL_TEXTWIDTH($entry->{'q'})/2;
-	$app->print($xpos, $ypos, $entry->{'q'});
+	$xpos = (640-$imgbin{void_panel}->width)/2 + 120 - width('menu', $entry->{'q'})/2;
+	print_('menu', $app, $xpos, $ypos, $entry->{'q'});
 	$app->flip;
 	my $srect_mulchar_redraw = SDL::Rect->new(-width => $imgbin{void_panel}->width, -height => 30,
-						 -x => $xpos + 140 - $MENUPOS{xpos_panel}, '-y' => $ypos - $MENUPOS{ypos_panel});
+                                                  -x => $xpos + 140 - $MENUPOS{xpos_panel}, '-y' => $ypos - $MENUPOS{ypos_panel});
 	my $drect_mulchar_redraw = SDL::Rect->new(-width => $imgbin{void_panel}->width, -height => 30,
-						 -x => $xpos + 140, '-y' => $ypos);
+                                                  -x => $xpos + 140, '-y' => $ypos);
+        my $x_echo = (640-$imgbin{void_panel}->width)/2 + 220;
 	my $txt;
-	while (1) {
-	    my $k = grab_key($entry->{f} !~ 'ONE_CHAR');
-	    $k == SDLK_ESCAPE and $ok = 0, last entries;
-	    play_sound('typewriter');
-	    if ($entry->{f} =~ 'ONE_CHAR' || $k != SDLK_RETURN) {
-		my $x_echo = (640-$imgbin{void_panel}->width)/2 + 230;
-		if ($entry->{f} =~ 'ONE_CHAR') {
-		    $txt = $k;
-		    $app->print($x_echo, $ypos, keysym_to_char($k));
-		} else {
-		    $k = keysym_to_char($k);
-		    length($k) == 1 && length($txt) < 8 and $txt .= $k;
-		    member($k, qw(BACKSPACE DELETE LEFT)) and $txt =~ s/.$//;
-		    $imgbin{void_panel}->blit($srect_mulchar_redraw, $app, $drect_mulchar_redraw);
-		    $app->print($x_echo, $ypos, $txt);
-		}
-		$app->flip;
-	    }
-	    $entry->{f} =~ 'ONE_CHAR' || $k == SDLK_RETURN and last;
+        if ($entry->{f} ne 'SPACE') {
+            if ($entry->{f} eq 'ONE_CHAR') {
+                my $k = grab_key();
+                play_sound('typewriter');
+                $k == SDLK_ESCAPE and $ok = 0, last entries;
+                $txt = $k;
+                print_('menu', $app, $x_echo, $ypos, keysym_to_char($k));
+            } else {
+                callback_entry('reset');
+                while (1) {
+                    if (callback_entry('ping')) {
+                        $imgbin{void_panel}->blit($srect_mulchar_redraw, $app, $drect_mulchar_redraw);
+                        callback_entry('print', { xpos => $x_echo, ypos => $ypos, font => 'menu' });
+                    }
+                    $app->flip;
+                    $event->pump;
+                    if ($event->poll != 0) {
+                        if ($event->type == SDL_KEYDOWN) {
+                            my $k = $event->key_sym;
+                            if ($k == SDLK_ESCAPE()) {
+                                $ok = 0;
+                                last entries;
+                            } elsif ($k == SDLK_RETURN() || $k == SDLK_KP_ENTER()) {
+                                $txt = join('', callback_entry('gettext'));
+                                last;
+                            } else {
+                                callback_entry('keypressed', { event => $event, maxlen => 100, font => 'menu' });
+                                $imgbin{void_panel}->blit($srect_mulchar_redraw, $app, $drect_mulchar_redraw);
+                                callback_entry('moved');
+                                callback_entry('print', { xpos => $x_echo, ypos => $ypos, font => 'menu' });
+                            }
+                        }
+                    } else {
+                        fb_c_stuff::fbdelay($TARGET_ANIM_SPEED);
+                    }
+                }
+            }
 	}
 	$entry->{answer} = $txt;
-	$ypos += 22;
+	$ypos += $entry->{f} eq 'SPACE' ? $lineheight / 2 : $lineheight;
     }
+    $event->set_key_repeat(0, 0);
 
     if ($ok) {
 	${$_->{a}} = $_->{answer} foreach @{$w->{entries}};
-	$xpos = (640-SDL_TEXTWIDTH($w->{outro}))/2;
-	$ypos = (480+$imgbin{void_panel}->height)/2 - 35;
-	$app->print($xpos, $ypos, $w->{outro});
+	$xpos = (640 - width('menu', $w->{outro}))/2;
+	$ypos = (480 + $imgbin{void_panel}->height)/2 - 35;
+	print_('menu', $app, $xpos, $ypos, $w->{outro});
 	$app->flip;
 	play_sound('menu_selected');
-	sleep 1;
+	sleep 2;
     } else {
 	play_sound('cancel');
     }
@@ -2365,6 +2450,7 @@ sub new_game() {
 
     my $backgr;
     if (is_mp_game()) {
+        $pdata{p1}{chatting} and cleanup_chatting();
 	$backgr = $imgbin{back_mp};
 	%POS = %POS_MP;
     } elsif (is_2p_game()) {
@@ -2540,10 +2626,10 @@ sub choose_1p_game_mode() {
         }
         put_image($img, $MENUPOS{xpos_panel}, $MENUPOS{ypos_panel});
 
-        my $title = "START 1P GAME MENU";
+        my $title = "Start 1-player game menu";
         my $ypos = $MENUPOS{ypos_panel} + 10;
-        my $xpos = (640 - SDL_TEXTWIDTH($title)) / 2;
-        $app->print($xpos, $ypos, $title);
+        my $xpos = (640 - width('menu', $title)) / 2;
+        print_('menu', $app, $xpos, $ypos, $title);
 
         foreach (@ordered_names) {
             $_ ne $ordered_names[$active_menu] and $draw_element->($_, 'off');
@@ -2595,6 +2681,9 @@ our $smg_startx = 78;
 our $smg_starty = 30;
 our $smg_starty_chat = 316;
 our $smg_starty_players = $smg_starty_chat + $smg_lineheight;
+our $smg_max_messages = 5;
+our $smg_statusx = 46;
+our $smg_statusy = 435;
 
 sub erase_line($$;$$) {
     my ($pos, $background, $xpos, $width) = @_;
@@ -2602,21 +2691,28 @@ sub erase_line($$;$$) {
     $background->blit($drect, $app, $drect);
 }
 
+our @smg_status_messages;
+our $smg_status_message_offsetpage = 1;
+
 sub smg_printstatus {
-    my (@messages) = @_;
-    my $y = 370;
-    foreach (0..3) {
+    my $y = $smg_statusy;
+    my $i = $smg_status_message_offsetpage;
+    while ($i < $smg_max_messages + $smg_status_message_offsetpage && @smg_status_messages >= $i) {
         erase_line($y, $imgbin{back_netgame});
-        $app->print($smg_startx, $y, $messages[$_]);
-        $y += $smg_lineheight;
+        if ($smg_status_messages[-$i]) {
+            my $kind = $smg_status_messages[-$i] =~ /^\*\*\*/ ? 'netdialogs_servermsg' : 'netdialogs';
+            print_($kind, $app, $smg_statusx, $y, $smg_status_messages[-$i]);
+        }
+        $y -= $smg_lineheight;
+        $i++;
     }
     $app->flip();
 }
 
-our @smg_status_messages;
-sub smg_add_status_msg($) {
-    push @smg_status_messages, uc($_[0]);
-    @smg_status_messages > 4 and shift @smg_status_messages;
+sub smg_add_status_msg {
+    push @smg_status_messages, @_;
+    $smg_status_message_offsetpage = 1;
+    smg_printstatus();
 }
 
 sub clean_server {
@@ -2632,13 +2728,13 @@ END { clean_server(); }
 sub smg_servers() {
 
     if ($pdata{gametype} eq 'lan') {
-        smg_printstatus("PROBING FOR AVAILABLE SERVERS ON THE LAN...");
+        smg_add_status_msg("*** Please wait, probing for available servers on local network...");
         my $ret = fb_net::discover_lan_servers();
         if ($ret->{failure}) {
-            smg_printstatus("UNABLE TO PROBE FOR AVAILABLE SERVERS ON THE LAN!",
-                            uc($ret->{failure}),
-                            "VERIFY YOUR NETWORK SETUP.");
-            grab_key(0);
+            smg_add_status_msg("*** Unable to probe for available servers on local network!",
+                               "*** " . $ret->{failure},
+                               "*** Verify your network setup");
+            grab_key();
             return;
         } else {
             my @servers = @{$ret->{servers}};
@@ -2646,15 +2742,15 @@ sub smg_servers() {
                 my $fb_server = "$FLPATH/fb-server";
                 if (!-x $fb_server) {
                     print STDERR "$fb_server is missing or not executable!\n";
-                    smg_printstatus("NO SERVER FOUND, AND COULD NOT START SERVER.",
-                                    "VERIFY YOUR INSTALLATION OR CONTACT YOUR VENDOR.");
-                    grab_key(0);
+                    smg_add_status_msg("*** No server found, and could not start server",
+                                       "*** Verify your installation or contact your vendor");
+                    grab_key();
                     return;
                 } else {
                     if (my $pid = fork()) {
                         $pdata{autochooseserver} = 1;
                         $pdata{serverpid} = $pid;
-                        smg_add_status_msg("NO SERVER FOUND, CREATED SERVER FOR LAN GAME.");
+                        smg_add_status_msg("*** No server found, created server for local network game");
                         sleep 1;
                         return ({ host => 'localhost', port => 1511 });
                     } else {
@@ -2670,7 +2766,7 @@ sub smg_servers() {
         }
 
     } else {
-        smg_printstatus("CONTACTING MASTER SERVER...");
+        smg_add_status_msg("*** Contacting master server...");
         my $serverlist = fb_net::get_server_list();
         my @servers;
         if ($serverlist) {
@@ -2681,10 +2777,11 @@ sub smg_servers() {
                     print STDERR "Unrecognized line in serverlist:\n\t$line\n";
                 }
             }
+            smg_add_status_msg("*** Server list received properly");
         } else {
-            smg_printstatus("UNABLE TO DOWNLOAD SERVER LIST!",
-                            "VERIFY YOUR NETWORK SETUP OR RETRY LATER.");
-            grab_key(0);
+            smg_add_status_msg("*** Unable to download server list from master server!",
+                               "*** Verify your network setup or retry later");
+            grab_key();
         }
         return @servers;
     }
@@ -2715,8 +2812,8 @@ sub smg_choose_server(@) {
             if ($server->{selected}) {
                 put_image($malus_gfx{tomate}, 56, $y);
             }
-            $app->print($smg_startx, $y, uc($server->{name}));
-            $app->print(320, $y, "AVAIL PLAYERS:$server->{players} PING:$server->{ping}");
+            print_('netdialogs', $app, $smg_startx, $y, $server->{name});
+            print_('netdialogs', $app, 340, $y, "Available players:$server->{players}  Ping:$server->{ping}ms");
                                                      
             $y += $smg_lineheight;
         }
@@ -2727,7 +2824,6 @@ sub smg_choose_server(@) {
     my $ping = sub {
         foreach my $server (@servers) {
             if (!$server->{disabled}) {
-                $reping or smg_printstatus('CONNECTING TO: ' . uc($server->{host} . ':' . $server->{port}));
                 my $ret = fb_net::connect($server->{host}, $server->{port});
                 if (!$ret->{ping}) {
                     $server->{disabled} = $ret->{failure};
@@ -2754,15 +2850,15 @@ sub smg_choose_server(@) {
 
     $ping->();
     if (every { $_->{disabled} } @servers) {
-        smg_printstatus("NO AVAILABLE SERVER.",
-                        "PLEASE RETRY LATER.");
-        grab_key(0);
+        smg_add_status_msg("*** No available game server",
+                           "*** Please retry later or try a local network game (LAN game)");
+        grab_key();
         return 0;
     }
     if (@sorted_servers && every { !$_->{selected} } @sorted_servers) {
         $sorted_servers[0]->{selected} = 1;
     }
-    smg_printstatus("PLEASE CHOOSE A SERVER");
+    smg_add_status_msg("*** Please choose a server");
     $redraw->();
 
     while (1) {
@@ -2814,24 +2910,24 @@ sub smg_choose_server(@) {
             }
             $redraw->();
         } else {
-            fb_c_stuff::fbdelay(50);
+            fb_c_stuff::fbdelay($TARGET_ANIM_SPEED);
         }
     }
 
   ok_smg_choose_server:
-    my $y = $smg_starty;
-    foreach (@servers) {
-        erase_line($y, $imgbin{back_netgame});
-        $y += $smg_lineheight;
-    }
-    @smg_status_messages = ();
-
     foreach my $server (@servers) {
         if ($server->{selected}) {
             fb_net::connect($server->{host}, $server->{port});
             fb_net::isconnected() or return smg_choose_server(@servers);
+            smg_add_status_msg("*** Connected to server '$server->{name}'");
             last;
         }
+    }
+
+    my $y = $smg_starty;
+    foreach (@servers) {
+        erase_line($y, $imgbin{back_netgame});
+        $y += $smg_lineheight;
     }
 
     return 1;
@@ -2847,25 +2943,100 @@ sub smg_verify_command($;$) {
     }
 }
 
-sub update_typed_chat($$$) {
-    my ($typed_chat, $k, $maxlen) = @_;
-    $k = keysym_to_char($k);
-    my %trivial_map = ('SPACE' => ' ', 'PERIOD' => '.', 'COMMA' => ',',
-                       'QUOTE' => "'", 'SLASH' => '/', 'MINUS' => '-');
-    $k = $trivial_map{$k} || $k;
-    if (length($k) == 1 && length($typed_chat) < $maxlen) {
-        $typed_chat .= $k;
-        play_sound('typewriter');
-    } elsif (member($k, qw(BACKSPACE DELETE LEFT))) {
-        $typed_chat =~ s/.$//;
-        play_sound('typewriter');
+sub callback_entry {
+    my ($action, $params) = @_;
+    my @typed if 0;
+    my $position if 0;
+    my $echo_blink_counter if 0;
+    if ($action eq 'reset') {
+        @typed = ();
+        $position = 0;
+        $echo_blink_counter = 51;
     }
-    return $typed_chat;
+    if ($action eq 'moved') {
+        $echo_blink_counter = 75;
+    }
+    if ($action eq 'keypressed') {
+        if ($params->{event}->key_sym == SDLK_BACKSPACE()) {
+            if ($position >= 1) {
+                splice @typed, $position - 1, 1;
+                $position--;
+                play_sound('typewriter');
+            } else {
+                play_sound('stick');
+            }
+        } elsif ($params->{event}->key_sym == SDLK_DELETE()) {
+            if ($position < $#typed + 1) {
+                splice @typed, $position, 1;
+                play_sound('typewriter');
+            } else {
+                play_sound('stick');
+            }
+        } elsif ($params->{event}->key_sym == SDLK_LEFT()) {
+            if ($position >= 1) {
+                $position--;
+                play_sound('typewriter');
+            } else {
+                play_sound('stick');
+            }
+        } elsif ($params->{event}->key_sym == SDLK_RIGHT()) {
+            if ($position <= $#typed) {
+                $position++;
+                play_sound('typewriter');
+            } else {
+                play_sound('stick');
+            }
+        } elsif ($params->{event}->key_sym == SDLK_HOME()) {
+            $position = 0;
+            play_sound('typewriter');
+        } elsif ($params->{event}->key_sym == SDLK_END()) {
+            $position = $#typed + 1;
+            play_sound('typewriter');
+        } elsif (!member($params->{event}->key_sym, SDLK_TAB())) {
+            my $utf8char = fb_c_stuff::utf8key($params->{event}{-event});
+            if ($utf8char ne '') {
+                splice @typed, $position, 0, $utf8char;
+                if (width($params->{font}, $params->{prefix} . join('', @typed)) >= $params->{maxlen}) {
+                    splice @typed, $position, 1;
+                    play_sound('stick');
+                } else {
+                    $position++;
+                    play_sound('typewriter');
+                }
+            } else {
+                if (!member($params->{event}->key_sym, SDLK_CAPSLOCK(), SDLK_NUMLOCK(), SDLK_LSHIFT(), SDLK_RSHIFT())) {
+                    play_sound('stick');
+                }
+            }
+        } else {
+            play_sound('stick');
+        }
+    }
+    if ($action eq 'gettext') {
+        return @typed;
+    }
+    if ($action eq 'settext') {
+        @typed = @$params;
+    }
+    if ($action eq 'print') {
+        print_($params->{font}, $app, $params->{xpos}, $params->{ypos}, $params->{prefix} . join('', @typed));
+        if ($echo_blink_counter > 25) {
+            my @before_echo = @typed;
+            splice @before_echo, $position;
+            my $width = width($params->{font}, $params->{prefix} . join('', @before_echo)) - 3;
+            print_($params->{font}, $app, $params->{xpos} + $width, $params->{ypos}, '|');
+        }
+    }
+    if ($action eq 'ping') {
+        $echo_blink_counter--;
+        $echo_blink_counter or $echo_blink_counter = 50;
+        return $echo_blink_counter == 50 || $echo_blink_counter == 25;
+    }
 }
 
 sub smg_choose_game() {
-    my @actions = ({ name => 'CHAT', action => 'CHAT', selected => 1 },
-                   { name => 'CREATE NEW GAME', action => 'CREATE' });
+    my @actions = ({ name => 'Chat', action => 'CHAT', selected => 1 },
+                   { name => 'Create new game', action => 'CREATE' });
     my $max_actions = 10;
 
     my $curaction = sub {
@@ -2882,7 +3053,6 @@ sub smg_choose_game() {
 
     my $state = 'game_select';
 
-    my $typed_chat;
     my $erase = sub {
         my $y = $smg_starty;
         foreach (1 .. $max_actions) {
@@ -2890,6 +3060,7 @@ sub smg_choose_game() {
             $y += $smg_lineheight;
         }
     };
+    callback_entry('reset');
     my $redraw = sub {
         $erase->();
         my $y = $smg_starty;
@@ -2897,25 +3068,25 @@ sub smg_choose_game() {
             if ($action->{selected}) {
                 put_image($malus_gfx{tomate}, 56, $y);
             }
-            $app->print($smg_startx, $y, $action->{name});
+            print_('netdialogs', $app, $smg_startx, $y, $action->{name});
             $y += $smg_lineheight;
         }
         erase_line($smg_starty_chat, $imgbin{back_netgame});
-        if ($curaction->() && $curaction->()->{name} eq 'CHAT') {
-            $app->print($smg_startx, $smg_starty_chat, "SAY: $typed_chat");
+        if ($curaction->() && $curaction->()->{action} eq 'CHAT') {
+            callback_entry('print', { xpos => $smg_startx, ypos => $smg_starty_chat, prefix => 'Say: ', font => 'netdialogs' });
         }
-        smg_printstatus(@smg_status_messages);
+        smg_printstatus();
     };
 
     my $list = sub {
         $state eq 'game_select' or return;
         my ($free, undef, @games) = fb_net::list();
-        my ($join, $rest) = partition { $_->{name} =~ /^JOIN/ } @actions;
+        my ($join, $rest) = partition { $_->{action} eq 'JOIN' } @actions;
         $_->{ok} = 0 foreach @$join;
       listgames:
         foreach my $players (@games) {
             if (@$players < 5) {
-                my $name = 'JOIN: ' . uc(join(',', @$players));
+                my $name = 'Join game: ' . join(', ', @$players);
                 foreach my $line (@$join) {
                     if ($line->{name} eq $name) {
                         $line->{ok} = 1;
@@ -2930,7 +3101,7 @@ sub smg_choose_game() {
             $actions[0]{selected} = 1;
         }
         erase_line($smg_starty_players, $imgbin{back_netgame});
-        $app->print($smg_startx, $smg_starty_players, "AVAILABLE PLAYERS: $free");
+        print_('netdialogs', $app, $smg_startx, $smg_starty_players, "Available Players: $free");
         $redraw->();
     };
 
@@ -2938,12 +3109,14 @@ sub smg_choose_game() {
     my $need4update;
     my $relist;
     my $players_in_game = '';
+    my $ingame = 0;
     my $can_start = 0;
     $list->();
 
     while (1) {
         $relist++;
         $relist % (3*20) == 0 and $list->();
+        callback_entry('ping') and $redraw->();
 
         $event->pump;
         if ($event->poll != 0) {
@@ -2951,9 +3124,26 @@ sub smg_choose_game() {
                 my $k = $event->key_sym;
 
                 if ($k == SDLK_ESCAPE()) {
-                    fb_net::disconnect();
-                    $erase->();
-                    return 0;
+                    if ($ingame) {
+                        smg_add_status_msg("*** Leaving game...");
+                        fb_net::reconnect();
+                        return smg_choose_game();
+                    } else {
+                        fb_net::disconnect();
+                        $erase->();
+                        return 0;
+                    }
+
+                } elsif ($k == SDLK_PAGEUP()) {
+                    $smg_status_message_offsetpage += 4;
+                    $smg_status_message_offsetpage >= @smg_status_messages - $smg_max_messages and $smg_status_message_offsetpage = @smg_status_messages - $smg_max_messages + 1;
+                    $smg_status_message_offsetpage < 1 and $smg_status_message_offsetpage = 1;
+                    $redraw->();
+
+                } elsif ($k == SDLK_PAGEDOWN()) {
+                    $smg_status_message_offsetpage -= 4;
+                    $smg_status_message_offsetpage < 1 and $smg_status_message_offsetpage = 1;
+                    $redraw->();
 
                 } elsif ($k == SDLK_DOWN()) {
                     each_index {
@@ -2979,10 +3169,10 @@ sub smg_choose_game() {
                     }
 
                 } elsif ($k == SDLK_RETURN() || $k == SDLK_KP_ENTER()) {
-                    if ($curaction->()->{action} eq 'CHAT' && length($typed_chat) > 0) {
+                    if ($curaction->()->{action} eq 'CHAT' && callback_entry('gettext') > 0) {
                         play_sound('menu_selected');
-                        fb_net::send_("TALK ($mynick) $typed_chat");
-                        $typed_chat = '';
+                        fb_net::send_("TALK ($mynick) " . join('', callback_entry('gettext')));
+                        callback_entry('settext', []);
                     }
 
                     if (member($curaction->()->{action}, 'CREATE', 'JOIN')) {
@@ -3006,25 +3196,28 @@ sub smg_choose_game() {
                             } else {
                                 if ($curaction->()->{action} eq 'CREATE') {
                                     $can_start = 1;
+                                    smg_add_status_msg("*** Game created - now you need to wait for players to join");
+                                } else {
+                                    smg_add_status_msg("*** Joined game");
                                 }
+                                $ingame = 1;
                                 last;
                             }
                         }
                         if ($answer) {
-                            smg_add_status_msg("*** ERROR: GAME JUST STARTED OR ABORTED");
+                            smg_add_status_msg("*** Error: game just started or aborted");
                         } else {
                             $erase->();
-                            @actions = { name => 'CHAT', action => 'CHAT', selected => 1 };
+                            @actions = { name => 'Chat', action => 'CHAT', selected => 1 };
                             $state = 'wait_for_start';
                             $need4update = 1;
-                            @smg_status_messages = ();
                         }
                     }
                             
                     if ($curaction->()->{action} eq 'START') {
                         my $answer = smg_verify_command('START');
                         if ($answer) {
-                            smg_add_status_msg("*** CAN'T START GAME: $answer");
+                            smg_add_status_msg("*** Can't start game: $answer");
                             return;
                         }
                     }
@@ -3032,7 +3225,7 @@ sub smg_choose_game() {
 
                 } else {
                     if ($curaction->()->{action} eq 'CHAT') {
-                        $typed_chat = update_typed_chat($typed_chat, $k, 32);
+                        callback_entry('keypressed', { event => $event, maxlen => 480, font => 'netdialogs' });
                     
                     } elsif ($k == $KEYS->{misc}{fs}) {
                         $fullscreen = !$fullscreen;
@@ -3041,9 +3234,10 @@ sub smg_choose_game() {
                 }
 
             }
+            callback_entry('moved');
             $redraw->();
         } else {
-            fb_c_stuff::fbdelay(50);
+            fb_c_stuff::fbdelay($TARGET_ANIM_SPEED);
         }
 
         while (my $msg = fb_net::readline_ifdata()) {
@@ -3053,10 +3247,10 @@ sub smg_choose_game() {
                     smg_add_status_msg($1);
                     play_sound('typewriter');
                 } elsif ($message =~ /^JOINED: (.*)/) {
-                    smg_add_status_msg("*** $1 JOINED THE GAME!");
+                    smg_add_status_msg("*** $1 joined the game!");
                     play_sound('newroot_solo');
                 } elsif ($message =~ /^PARTED: (.*)/) {
-                    smg_add_status_msg("*** $1 LEFT THE GAME...");
+                    smg_add_status_msg("*** $1 left the game...");
                     play_sound('newroot_solo');
                 } elsif ($message =~ /^GAME_CAN_START: (.*)/) {
                     fb_net::send_("OK_GAME_START");
@@ -3083,7 +3277,7 @@ sub smg_choose_game() {
                             push @PLAYERS, $player;
                         }
                         $pdata{$player}{id} = $m->{id};
-                        $pdata{$player}{nick} = uc($m->{nick});
+                        $pdata{$player}{nick} = $m->{nick};
                         $pdata{id2p}{$m->{id}} = $player;
                     }
                     fb_net::setmyid($pdata{p1}{id});
@@ -3099,7 +3293,7 @@ sub smg_choose_game() {
         }
 
         if (!fb_net::isconnected()) {
-            smg_add_status_msg('*** LOST CONNECTION TO SERVER, ABANDONING...');
+            smg_add_status_msg('*** Lost connection to server, abandoning...');
             @actions = ();
             $redraw->();
             play_sound('cancel');
@@ -3112,9 +3306,9 @@ sub smg_choose_game() {
             if ($state ne 'game_select') {
                 $players_in_game = fb_net::send_and_receive('STATUS');
                 erase_line($smg_starty_players, $imgbin{back_netgame});
-                $app->print($smg_startx, $smg_starty_players, "PLAYERS IN GAME: ".uc($players_in_game));
-                @actions = { name => 'CHAT', action => 'CHAT', selected => 1 };
-                $can_start && $players_in_game =~ /,/ and push @actions, { name => 'START GAME!', action => 'START' };
+                print_('netdialogs', $app, $smg_startx, $smg_starty_players, "Players in game: " . $players_in_game);
+                @actions = { name => 'Chat', action => 'CHAT', selected => 1 };
+                $can_start && $players_in_game =~ /,/ and push @actions, { name => 'Start game!', action => 'START' };
             }
             $redraw->();
             $need4update = 0;
@@ -3126,26 +3320,24 @@ sub show_mp_scores() {
     $imgbin{back_netgame}->blit($apprects{main}, $app, $apprects{main});
 
     if (any { $pdata{$_}{left} } @PLAYERS) {
-        smg_add_status_msg('*** GAME FINISHED, LEAVER(S): ' . join(', ', map { if_($pdata{$_}{left}, $pdata{$_}{nick}) } @PLAYERS));
+        smg_add_status_msg('*** Game finished, because the following player(s) left: ' . join(', ', map { if_($pdata{$_}{left}, $pdata{$_}{nick}) } @PLAYERS));
     }
     @PLAYERS = reverse ssort { $pdata{$_}{score} } @PLAYERS;
     if ($pdata{$PLAYERS[0]}{score} > $pdata{$PLAYERS[1]}{score}) {
-        smg_add_status_msg("*** WINNER: $pdata{$PLAYERS[0]}{nick}");
+        smg_add_status_msg("*** Winner: $pdata{$PLAYERS[0]}{nick}");
     } else {
-        smg_add_status_msg('*** DRAW GAME!');
+        smg_add_status_msg('*** Draw game!');
     }
     smg_add_status_msg('*** ' . join(', ', map { "$pdata{$_}{nick}: $pdata{$_}{score}" } @PLAYERS));
-    smg_printstatus(@smg_status_messages);
 }
 
 sub setup_mp_game() {
-
-    $font = SDL::Font->new("$FPATH/gfx/font2.png");
     
     $imgbin{back_netgame}->blit($apprects{main}, $app, $apprects{main});
 
     if (!fb_net::isconnected()) {
         @smg_status_messages = ();
+        $smg_status_message_offsetpage = 1;
         if ($gameserver) {
             my ($host, $port) = $gameserver =~ /(\S+):(\S+)/;
             fb_net::connect($host, $port);
@@ -3166,7 +3358,8 @@ sub setup_mp_game() {
     }
 
     #- 3. let user choose/create game
-    return smg_choose_game() || setup_mp_game();
+    smg_choose_game() || goto choose_server;
+    return 1;
 }
 
 sub new_game_once {
@@ -3177,13 +3370,15 @@ sub new_game_once {
         }
         if (is_2p_game() && $graphics_level > 1) {
             my $answ;
-            ask_from({ intro => [ '2-PLAYER GAME', '', '', 'ENABLE CHAIN-REACTION?', '' ],
+            ask_from({ intro => [ '2-player game', '', '', 'Enable chain-reaction?', '' ],
                        entries => [ { 'q' => 'Y OR N?', 'a' => \$answ, f => 'ONE_CHAR' } ],
-                       outro => 'ENJOY THE GAME!' }) or return;
+                       outro => 'Enjoy the game!' }) or return;
             $chainreaction = $answ == SDLK_y; #;;
         }
         if (is_mp_game()) {
+            $event->set_key_repeat(200, 50);
             setup_mp_game() or return;
+            $event->set_key_repeat(0, 0);
             $pdata{gamenum} = 0;
         }
     }
@@ -3215,9 +3410,9 @@ sub handle_new_hiscores() {
     $new_entry{level} = $levels{current};
     $new_entry{time} = $total_seconds;
     $new_entry{piclevel} = count_highscorehistory_levels();
-    ask_from({ intro => [ 'CONGRATULATIONS!', "YOU HAVE A HIGHSCORE!", '' ],
-	       entries => [ { 'q' => 'YOUR NAME?', 'a' => \$new_entry{name} } ],
-	       outro => 'GREAT GAME!',
+    ask_from({ intro => [ 'Congratulations!', "You have a highscore!", '' ],
+	       entries => [ { 'q' => 'Your name?', 'a' => \$new_entry{name} } ],
+	       outro => 'Great game!',
 	       erase_background => $background,
 	     });
 
@@ -3536,19 +3731,22 @@ sub menu {
     };
 
     my $change_keys = sub {
-	ask_from({ intro => [ 'PLEASE ENTER NEW KEYS' ],
+	ask_from({ intro => [ 'Please enter new keys:' ],
 		   entries => [
-			       { 'q' => 'RIGHT-PL/LEFT?',  'a' => \$KEYS->{p2}{left},  f => 'ONE_CHAR' },
-			       { 'q' => 'RIGHT-PL/RIGHT?', 'a' => \$KEYS->{p2}{right}, f => 'ONE_CHAR' },
-			       { 'q' => 'RIGHT-PL/FIRE?',  'a' => \$KEYS->{p2}{fire},  f => 'ONE_CHAR' },
-			       { 'q' => 'RIGHT-PL/CENTER?',  'a' => \$KEYS->{p2}{center},  f => 'ONE_CHAR' },
-			       { 'q' => 'LEFT-PL/LEFT?',  'a' => \$KEYS->{p1}{left},  f => 'ONE_CHAR' },
-			       { 'q' => 'LEFT-PL/RIGHT?', 'a' => \$KEYS->{p1}{right}, f => 'ONE_CHAR' },
-			       { 'q' => 'LEFT-PL/FIRE?',  'a' => \$KEYS->{p1}{fire},  f => 'ONE_CHAR' },
-			       { 'q' => 'LEFT-PL/CENTER?',  'a' => \$KEYS->{p1}{center},  f => 'ONE_CHAR' },
-			       { 'q' => 'TOGGLE FULLSCREEN?', 'a' => \$KEYS->{misc}{fs}, f => 'ONE_CHAR' },
+			       { 'q' => 'Player 1; turn left?',  'a' => \$KEYS->{p1}{left},  f => 'ONE_CHAR' },
+			       { 'q' => 'Player 1; turn right?', 'a' => \$KEYS->{p1}{right}, f => 'ONE_CHAR' },
+			       { 'q' => 'Player 1; fire?',  'a' => \$KEYS->{p1}{fire},  f => 'ONE_CHAR' },
+			       { 'q' => 'Player 1; center?',  'a' => \$KEYS->{p1}{center},  f => 'ONE_CHAR' },
+                               { f => 'SPACE' },
+			       { 'q' => 'Player 2; turn left?',  'a' => \$KEYS->{p2}{left},  f => 'ONE_CHAR' },
+			       { 'q' => 'Player 2; turn right?', 'a' => \$KEYS->{p2}{right}, f => 'ONE_CHAR' },
+			       { 'q' => 'Player 2; fire?',  'a' => \$KEYS->{p2}{fire},  f => 'ONE_CHAR' },
+			       { 'q' => 'Player 2; center?',  'a' => \$KEYS->{p2}{center},  f => 'ONE_CHAR' },
+                               { f => 'SPACE' },
+			       { 'q' => 'Toggle fullscreen?', 'a' => \$KEYS->{misc}{fs}, f => 'ONE_CHAR' },
+			       { 'q' => 'Chat (net/lan game)?', 'a' => \$KEYS->{misc}{chat}, f => 'ONE_CHAR' },
 			      ],
-		   outro => 'THANKS!',
+		   outro => 'Thanks!',
 		   erase_background => $back_start
 		 });
 	$invalidate_all->();
@@ -3828,7 +4026,7 @@ while (1) {
                 if ($pdata{gametype} eq 'lan') {
                     fb_net::disconnect();
                     show_mp_scores();
-                    grab_key(0);
+                    grab_key();
                     goto go_to_menu;
                 } else {
                     if (fb_net::reconnect() && new_game_once()) {

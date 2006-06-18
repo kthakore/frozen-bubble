@@ -32,10 +32,11 @@ system("sdl-config --cflags 2>/dev/null 1>/dev/null") == 0
 
 
 ccompile('#include <SDL/SDL.h>
-          #include <SDL/SDL_mixer.h>',
+          #include <SDL/SDL_mixer.h>
+          #include <SDL/SDL_ttf.h>',
 	 '',
 	 `sdl-config --cflags`,
-	 chomp_(`sdl-config --libs`) . ' -lSDL_mixer')
+	 chomp_(`sdl-config --libs`) . ' -lSDL_mixer -lSDL_ttf')
   or
   die_ 'SDL_mixer is needed (and, by the way, version >= 1.2.2 will be needed)';
 
@@ -51,7 +52,7 @@ ccompile('#include <SDL/SDL.h>
 
 WriteMakefile(
     'NAME'         => 'fb_c_stuff',
-    'LIBS'         => [ chomp_(`sdl-config --libs`) . ' -lSDL_mixer'],
+    'LIBS'         => [ chomp_(`sdl-config --libs`) . ' -lSDL_mixer -lSDL_ttf'],
     'VERSION_FROM' => 'fb_c_stuff.pm', # finds VERSION
     'OBJECT'       => 'fb_c_stuff.o',
     'INC'          => chomp_(`sdl-config --cflags`) . ' -I.',

@@ -20,9 +20,20 @@
 #include "EXTERN.h"
 #include "perl.h"
 #include "XSUB.h"
+#include <iconv.h>
 
 #include <SDL/SDL.h>
 #include <SDL/SDL_mixer.h>
+#include <SDL/SDL_ttf.h>
+#define TEXT_SOLID      1
+#define TEXT_SHADED     2
+#define TEXT_BLENDED    4
+#define UTF8_SOLID      8
+#define UTF8_SHADED     16      
+#define UTF8_BLENDED    32
+#define UNICODE_SOLID   64
+#define UNICODE_SHADED  128
+#define UNICODE_BLENDED 256
 
 const int XRES = 640;
 const int YRES = 480;
@@ -392,63 +403,43 @@ inline void put_pixel(SDL_Surface * surf, int x, int y, Uint32 pixelvalue, int b
         memcpy(surf->pixels + x*bpp + y*surf->pitch, &pixelvalue, bpp);
 }
 
-/************************** 262144 colours demo effect ****************************/
-
-void tv_(SDL_Surface * dest, SDL_Surface * orig, int xpos, int ypos, SDL_Rect * orig_rect)
-{
-	int bpp = dest->format->BytesPerPixel;
-        Uint32 rmax = orig->format->Rmask >> orig->format->Rshift;
-        Uint32 gmax = orig->format->Gmask >> orig->format->Gshift;
-        Uint32 bmax = orig->format->Bmask >> orig->format->Bshift;
-        Uint32 grmul = gmax/rmax;
-        Uint32 gbmul = gmax/bmax;
-	myLockSurface(orig);
-	myLockSurface(dest);
-	for (x = orig_rect->x; x < orig_rect->x + orig_rect->w; x++) {
-		for (y = orig_rect->y; y < orig_rect->y + orig_rect->h; y+=3) {
-			if (!dest->format->palette) {
-				/* no palette */
-                                Uint32 pixelvalue; /* this should also be okay for 16-bit and 24-bit formats */
-				Uint32 rvalue;
-				Uint32 gvalue;
-				Uint32 bvalue;
-				Uint32 r = 0; Uint32 g = 0; Uint32 b = 0;
-				Uint32 r_, g_, b_;
-                                for (j=0; j<3; j++) {
-                                        memcpy(&pixelvalue, orig->pixels + x*bpp + (y+j)*orig->pitch, bpp);
-                                        r += (pixelvalue & orig->format->Rmask) >> orig->format->Rshift;
-                                        g += (pixelvalue & orig->format->Gmask) >> orig->format->Gshift;
-                                        b += (pixelvalue & orig->format->Bmask) >> orig->format->Bshift;
-				}
-                                r_ = (r/3) << orig->format->Rshift;
-                                g_ = (g/3) << orig->format->Gshift;
-                                b_ = (b/3) << orig->format->Bshift;
-
-                                rvalue = r_ + ((b_ >> 0) & orig->format->Bmask) + ((g_ >> 0) & orig->format->Gmask);
-                                gvalue = g_ + ((r_ >> 0) & orig->format->Rmask) + ((b_ >> 0) & orig->format->Bmask);
-                                bvalue = b_ + ((g_ >> 0) & orig->format->Gmask) + ((r_ >> 0) & orig->format->Rmask);
-
-                                put_pixel(dest, x - orig_rect->x + xpos,     y - orig_rect->y + ypos,     rvalue, bpp);
-                                put_pixel(dest, x - orig_rect->x + xpos,     y - orig_rect->y + ypos + 1, gvalue, bpp);
-                                put_pixel(dest, x - orig_rect->x + xpos,     y - orig_rect->y + ypos + 2, bvalue, bpp);
-			} else {
-				/* there is a palette... I don't care of the bloody oldskoolers who still use
-				   8-bit displays & al, they can suffer and die ;p */
-                                printf("not implemented\n");
-                                abort();
-			}
-		}
-	}
-	myUnlockSurface(orig);
-	myUnlockSurface(dest);
+SV* utf8key_(SDL_Event * e) {
+        iconv_t cd;
+        char source[3];
+        char* retval = source;
+        source[0] = e->key.keysym.unicode & 0xFF;
+        source[1] = ( e->key.keysym.unicode & 0xFF00 ) >> 8;
+        source[2] = '\0';
+        cd = iconv_open("UTF8", "UTF16LE");  // shouldn't this be BE? :/
+        if (cd != (iconv_t) (-1)) {
+                // an utf8 char is maximum 4 chars long
+                char dest[5];
+                char *src = source;
+                char *dst = dest;
+                size_t source_len = 2;
+                size_t dest_len = 4;
+                if ((iconv(cd, &src, &source_len, &dst, &dest_len)) != (size_t) (-1)) {
+                        *dst = 0;
+                        retval = dest;
+                }
+        }
+        iconv_close(cd);
+        return newSVpv(retval, 0);
 }
 
-
+void TTFPutSt_() {
+                printf("1\n");
+                SDL_GetTicks();
+                printf("1b\n");
+                SDL_Delay(10);
+                printf("1c\n");
+                TTF_Init();
+                printf("1d\n");
+}
 
 /************************** Gateway to Perl ****************************/
 
 MODULE = fb_c_stuff		PACKAGE = fb_c_stuff
-PROTOTYPES : DISABLE
 
 void
 init_effects(datapath)
@@ -521,16 +512,6 @@ shrink(dest, orig, xpos, ypos, orig_rect, factor)
 		shrink_(dest, orig, xpos, ypos, orig_rect, factor);
 
 void
-tv(dest, orig, xpos, ypos, orig_rect)
-        SDL_Surface * dest
-        SDL_Surface * orig
-        int xpos
-	int ypos
-        SDL_Rect * orig_rect
-	CODE:
-		tv_(dest, orig, xpos, ypos, orig_rect);
-
-void
 _exit(status)
         int status
 
@@ -548,3 +529,112 @@ fbdelay(ms)
 			 ms -= SDL_GetTicks() - then;
 		     } while (ms > 1);
 		     
+SV *
+utf8key(event)
+  SDL_Event * event
+  CODE:
+  RETVAL = utf8key_(event);
+  OUTPUT:
+  RETVAL
+
+
+SDL_Surface*
+TTFPutString ( font, mode, surface, x, y, fg, bg, text )
+	TTF_Font *font
+	int mode
+	SDL_Surface *surface
+	int x
+	int y
+	SDL_Color *fg
+	SDL_Color *bg
+	char *text
+	CODE:
+		SDL_Surface *img;
+		SDL_Rect dest;
+		int w,h;
+		dest.x = x;
+		dest.y = y;
+		RETVAL = NULL;
+		switch (mode) {
+			case TEXT_SOLID:
+				img = TTF_RenderText_Solid(font,text,*fg);
+				TTF_SizeText(font,text,&w,&h);
+				dest.w = w;
+				dest.h = h;
+				break;
+			case TEXT_SHADED:
+				img = TTF_RenderText_Shaded(font,text,*fg,*bg);
+				TTF_SizeText(font,text,&w,&h);
+				dest.w = w;
+				dest.h = h;
+				break;
+			case TEXT_BLENDED:
+				img = TTF_RenderText_Blended(font,text,*fg);
+				TTF_SizeText(font,text,&w,&h);
+				dest.w = w;
+				dest.h = h;
+				break;
+			case UTF8_SOLID:
+				img = TTF_RenderUTF8_Solid(font,text,*fg);
+				TTF_SizeUTF8(font,text,&w,&h);
+				dest.w = w;
+				dest.h = h;
+				break;
+			case UTF8_SHADED:
+				img = TTF_RenderUTF8_Shaded(font,text,*fg,*bg);
+				TTF_SizeUTF8(font,text,&w,&h);
+				dest.w = w;
+				dest.h = h;
+				break;
+			case UTF8_BLENDED:
+				img = TTF_RenderUTF8_Blended(font,text,*fg);
+				TTF_SizeUTF8(font,text,&w,&h);
+				dest.w = w;
+				dest.h = h;
+				break;
+			case UNICODE_SOLID:
+				img = TTF_RenderUNICODE_Solid(font,(Uint16*)text,*fg);
+				TTF_SizeUNICODE(font,(Uint16*)text,&w,&h);
+				dest.w = w;
+				dest.h = h;
+				break;
+			case UNICODE_SHADED:
+				img = TTF_RenderUNICODE_Shaded(font,(Uint16*)text,*fg,*bg);
+				TTF_SizeUNICODE(font,(Uint16*)text,&w,&h);
+				dest.w = w;
+				dest.h = h;
+				break;
+			case UNICODE_BLENDED:
+				img = TTF_RenderUNICODE_Blended(font,(Uint16*)text,*fg);
+				TTF_SizeUNICODE(font,(Uint16*)text,&w,&h);
+				dest.w = w;
+				dest.h = h;
+				break;
+			default:
+				img = TTF_RenderText_Shaded(font,text,*fg,*bg);
+				TTF_SizeText(font,text,&w,&h);
+				dest.w = w;
+				dest.h = h;
+		}
+		if ( img && img->format ) {
+                        if ( img->format->palette ) {
+                                SDL_Color *c = &img->format->palette->colors[0];
+                                Uint32 key = SDL_MapRGB( img->format, c->r, c->g, c->b );
+                                SDL_SetColorKey(img,SDL_SRCCOLORKEY,key );
+                                if (0 > SDL_BlitSurface(img,NULL,surface,&dest)) {
+                                        SDL_FreeSurface(img);
+                                        RETVAL = NULL;	
+                                } else {
+                                        RETVAL = img;
+                                }
+                        } else {
+                                if (0 > SDL_BlitSurface(img,NULL,surface,&dest)) {
+                                        SDL_FreeSurface(img);
+                                        RETVAL = NULL;	
+                                } else {
+                                        RETVAL = img;
+                                }
+                        }
+		}
+	OUTPUT:
+		RETVAL
