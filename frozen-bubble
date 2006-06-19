@@ -2758,7 +2758,7 @@ sub smg_servers() {
                         sleep 1;
                         return ({ host => 'localhost', port => 1511 });
                     } else {
-                        unless (exec $fb_server, '-L', '-p', '1511', '-n', 'lan-' . substr($ENV{USER}, 0, 8)) {
+                        unless (exec $fb_server, '-L', '-p', '1511', '-d', '-n', 'lan-' . substr($ENV{USER}, 0, 8)) {
                             print STDERR "Could not create server limited to lan game: $!\n";
                             POSIX::_exit(1);
                         }
@@ -3311,7 +3311,7 @@ sub smg_choose_game() {
                 $players_in_game = fb_net::send_and_receive('STATUS');
                 erase_line($smg_starty_players, $imgbin{back_netgame});
                 print_('netdialogs', $app, $smg_startx, $smg_starty_players, t("Players in game: %s", $players_in_game));
-                @actions = { name => 'Chat', action => 'CHAT', selected => 1 };
+                @actions = { name => t("Chat"), action => 'CHAT', selected => 1 };
                 $can_start && $players_in_game =~ /,/ and push @actions, { name => t("Start game!"), action => 'START' };
             }
             $redraw->();
@@ -3362,7 +3362,13 @@ sub setup_mp_game() {
     }
 
     #- 3. let user choose/create game
-    smg_choose_game() || goto choose_server;
+    if (!smg_choose_game()) {
+        if ($pdata{gametype} eq 'lan') {
+            return;
+        } else {
+            goto choose_server;
+        }
+    }
     return 1;
 }
 
@@ -3374,9 +3380,9 @@ sub new_game_once {
         }
         if (is_2p_game() && $graphics_level > 1) {
             my $answ;
-            ask_from({ intro => [ '2-player game', '', '', 'Enable chain-reaction?', '' ],
-                       entries => [ { 'q' => 'Y OR N?', 'a' => \$answ, f => 'ONE_CHAR' } ],
-                       outro => 'Enjoy the game!' }) or return;
+            ask_from({ intro => [ t("2-player game"), '', '', t("Enable chain-reaction?"), '' ],
+                       entries => [ { 'q' => t("%s or %s?", 'Y', 'N'), 'a' => \$answ, f => 'ONE_CHAR' } ],
+                       outro => t("Enjoy the game!") }) or return;
             $chainreaction = $answ == SDLK_y; #;;
         }
         if (is_mp_game()) {
@@ -3414,9 +3420,9 @@ sub handle_new_hiscores() {
     $new_entry{level} = $levels{current};
     $new_entry{time} = $total_seconds;
     $new_entry{piclevel} = count_highscorehistory_levels();
-    ask_from({ intro => [ 'Congratulations!', "You have a highscore!", '' ],
-	       entries => [ { 'q' => 'Your name?', 'a' => \$new_entry{name} } ],
-	       outro => 'Great game!',
+    ask_from({ intro => [ t("Congratulations!"), t("You have a highscore!"), '' ],
+	       entries => [ { 'q' => t("Your name?"), 'a' => \$new_entry{name} } ],
+	       outro => t("Great game!"),
 	       erase_background => $background,
 	     });
 
@@ -3750,7 +3756,7 @@ sub menu {
 			       { 'q' => t("Toggle fullscreen?"), 'a' => \$KEYS->{misc}{fs}, f => 'ONE_CHAR' },
 			       { 'q' => t("Chat (net/lan game)?"), 'a' => \$KEYS->{misc}{chat}, f => 'ONE_CHAR' },
 			      ],
-		   outro => 'Thanks!',
+		   outro => t("Thanks!"),
 		   erase_background => $back_start
 		 });
 	$invalidate_all->();
