@@ -420,7 +420,7 @@ sub http_download($) {
 }
 
 sub get_server_list() {
-    my @masters = qw(http://www.frozen-bubble.org/serverlist
+    my @masters = qw(http://www.frozen-bubble.org/servers/serverlist
                      http://frozen-bubble.sourceforge.net/serverlist
                      http://booh.org/fb-serverlist
                      http://zarb.org/~gc/fb-serverlist);
