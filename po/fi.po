@@ -1,0 +1,250 @@
+# translation of frozen-bubble.pot to Finnish
+# This file is distributed under the same license as the PACKAGE package.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER.
+# Anssi Hannula <anssi.hannula@gmail.com>, 2006.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: frozen-bubble\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2006-06-19 21:47+0200\n"
+"PO-Revision-Date: 2006-07-16 22:23+0300\n"
+"Last-Translator: Anssi Hannula <anssi.hannula@gmail.com>\n"
+"Language-Team: Finnish\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: KBabel 1.10.2\n"
+
+#: ../frozen-bubble:2633
+msgid "Start 1-player game menu"
+msgstr "Yksinpelin aloitusvalikko"
+
+#: ../frozen-bubble:2735
+msgid "*** Please wait, probing for available servers on local network..."
+msgstr "*** Odota, haetaan palvelimia lähiverkosta..."
+
+#: ../frozen-bubble:2738
+msgid "*** Unable to probe for available servers on local network!"
+msgstr "*** Palvelimien haku lähiverkosta epäonnistui!"
+
+#: ../frozen-bubble:2740
+msgid "*** Verify your network setup"
+msgstr "*** Tarkista verkkoasetuksesi"
+
+#: ../frozen-bubble:2749
+msgid "*** No server found, and could not start server"
+msgstr "*** Palvelimia ei löydetty eikä palvelinta voitu käynnistää"
+
+#: ../frozen-bubble:2750
+msgid "*** Verify your installation or contact your vendor"
+msgstr "*** Tarkista asennuksesi tai ota yhteyttä järjestelmän toimittajaan"
+
+#: ../frozen-bubble:2757
+msgid "*** No server found, created server for local network game"
+msgstr "*** Palvelimia ei löydetty, luotiin palvelin lähiverkkopeliä varten"
+
+#: ../frozen-bubble:2773
+msgid "*** Contacting master server..."
+msgstr "*** Yhdistetään pääpalvelimeen..."
+
+#: ../frozen-bubble:2784
+msgid "*** Server list received properly"
+msgstr "*** Palvelinlista ladattu onnistuneesti"
+
+#: ../frozen-bubble:2786
+msgid "*** Unable to download server list from master server!"
+msgstr "*** Palvelinlistan lataaminen pääpalvelimelta epäonnistui!"
+
+#: ../frozen-bubble:2787
+msgid "*** Verify your network setup or retry later"
+msgstr "*** Tarkista verkkoasetuksesi tai yritä myöhemmin uudelleen"
+
+#: ../frozen-bubble:2820
+#, perl-format
+msgid "Available players:%s  Ping:%sms"
+msgstr "Vapaita pelaajia:%s  Ping:%sms"
+
+#: ../frozen-bubble:2857
+msgid "*** No available game server"
+msgstr "*** Pelipalvelimia ei saatavilla"
+
+#: ../frozen-bubble:2858
+msgid "*** Please retry later or try a local network game (lan game)"
+msgstr "*** Yritä myöhemmin uudelleen tai kokeile lähiverkkopeliä"
+
+#: ../frozen-bubble:2865
+msgid "*** Please choose a server"
+msgstr "*** Valitse palvelin"
+
+#: ../frozen-bubble:2926
+#, perl-format
+msgid "*** Connected to server '%s'"
+msgstr "*** Yhdistetty palvelimeen '%s'"
+
+#: ../frozen-bubble:3042 ../frozen-bubble:3215 ../frozen-bubble:3314
+msgid "Chat"
+msgstr "Keskustelu"
+
+#: ../frozen-bubble:3043
+msgid "Create new game"
+msgstr "Luo uusi peli"
+
+#: ../frozen-bubble:3080
+msgid "Say: "
+msgstr "Sano: "
+
+#: ../frozen-bubble:3093
+#, perl-format
+msgid "Join game: %s"
+msgstr "Liity peliin: %s"
+
+#: ../frozen-bubble:3108
+#, perl-format
+msgid "Available Players: %s"
+msgstr "Vapaita pelaajia: %s"
+
+#: ../frozen-bubble:3132
+msgid "*** Leaving game..."
+msgstr "*** Poistutaan pelistä..."
+
+#: ../frozen-bubble:3203
+msgid "*** Game created - now you need to wait for players to join"
+msgstr "*** Peli luotu - odota pelaajien liittymistä"
+
+#: ../frozen-bubble:3205
+msgid "*** Joined game"
+msgstr "*** Liitytty peliin"
+
+#: ../frozen-bubble:3212
+msgid "*** Error: game just started or aborted"
+msgstr "*** Virhe: peli on juuri aloitettu tai peruutit liittymisen"
+
+#: ../frozen-bubble:3224
+#, perl-format
+msgid "*** Can't start game: '%s'"
+msgstr "*** Peliä ei voida aloittaa: '%s'"
+
+#: ../frozen-bubble:3254
+#, perl-format
+msgid "*** %s joined the game!"
+msgstr "*** %s liittyi peliin!"
+
+#: ../frozen-bubble:3257
+#, perl-format
+msgid "*** %s left the game..."
+msgstr "*** %s poistui pelistä..."
+
+#: ../frozen-bubble:3300
+msgid "*** Lost connection to server, abandoning..."
+msgstr "*** Yhteys palvelimeen menetettiin, hylätään..."
+
+#: ../frozen-bubble:3313
+#, perl-format
+msgid "Players in game: %s"
+msgstr "Pelaajat pelissä: %s"
+
+#: ../frozen-bubble:3315
+msgid "Start game!"
+msgstr "Aloita peli!"
+
+#: ../frozen-bubble:3327
+#, perl-format
+msgid "*** Game finished, because the following player(s) left: %s"
+msgstr "*** Peli päättyi, koska seuraava(t) pelaaja(t) poistui(vat): %s"
+
+#: ../frozen-bubble:3331
+#, perl-format
+msgid "*** Winner: %s"
+msgstr "*** Voittaja: %s"
+
+#: ../frozen-bubble:3333
+msgid "*** Draw game!"
+msgstr "*** Tasapeli!"
+
+#: ../frozen-bubble:3335
+#, perl-format
+msgid "*** Scores: %s"
+msgstr "*** Pisteet: %s"
+
+#: ../frozen-bubble:3383
+msgid "2-player game"
+msgstr "Kaksinpeli"
+
+#: ../frozen-bubble:3383
+msgid "Enable chain-reaction?"
+msgstr "Aktivoidaanko ketjureaktio?"
+
+#: ../frozen-bubble:3384
+#, perl-format
+msgid "%s or %s?"
+msgstr "%s vai %s?"
+
+#: ../frozen-bubble:3385
+msgid "Enjoy the game!"
+msgstr "Nauti pelistä!"
+
+#: ../frozen-bubble:3423
+msgid "Congratulations!"
+msgstr "Onnittelut!"
+
+#: ../frozen-bubble:3423
+msgid "You have a highscore!"
+msgstr "Pääsit ennätyslistalle!"
+
+#: ../frozen-bubble:3424
+msgid "Your name?"
+msgstr "Nimesi?"
+
+#: ../frozen-bubble:3425
+msgid "Great game!"
+msgstr "Loistava peli!"
+
+#: ../frozen-bubble:3744
+msgid "Please enter new keys:"
+msgstr "Aseta uudet näppäimet:"
+
+#: ../frozen-bubble:3746
+msgid "Player 1; turn left?"
+msgstr "Pelaaja 1; käännä vasemmalle?"
+
+#: ../frozen-bubble:3747
+msgid "Player 1; turn right?"
+msgstr "Pelaaja 1; käännä oikealle?"
+
+#: ../frozen-bubble:3748
+msgid "Player 1; fire?"
+msgstr "Pelaaja 1; ammu?"
+
+#: ../frozen-bubble:3749
+msgid "Player 1; center?"
+msgstr "Pelaaja 1; keskitä?"
+
+#: ../frozen-bubble:3751
+msgid "Player 2; turn left?"
+msgstr "Pelaaja 2; käännä vasemmalle?"
+
+#: ../frozen-bubble:3752
+msgid "Player 2; turn right?"
+msgstr "Pelaaja 2; käännä oikealle?"
+
+#: ../frozen-bubble:3753
+msgid "Player 2; fire?"
+msgstr "Pelaaja 2; ammu?"
+
+#: ../frozen-bubble:3754
+msgid "Player 2; center?"
+msgstr "Pelaaja 2; keskitä?"
+
+#: ../frozen-bubble:3756
+msgid "Toggle fullscreen?"
+msgstr "Kokoruudun kytkentä?"
+
+#: ../frozen-bubble:3757
+msgid "Chat (net/lan game)?"
+msgstr "Keskustelu (verkkopeli)?"
+
+#: ../frozen-bubble:3759
+msgid "Thanks!"
+msgstr "Kiitos!"
+
