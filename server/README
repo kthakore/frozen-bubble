@@ -79,5 +79,5 @@ better than using kernel shaping or an external tool such as
 trickle, because reaching the bandwidth limit wouldn't impair
 existing players.
 
-Note that bandwidth use is:
-
+Note that server upload bandwidth use is around 100 bytes/second
+per connected player.
