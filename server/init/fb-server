@@ -40,7 +40,7 @@ start() {
             readconf
             if [ "$server_hostname" != "" -a -x /usr/bin/curl ]; then
                 gprintf "Registering Frozen-Bubble server '$server_hostname:$server_port': "
-                /usr/bin/curl "http://zarb.org/~gc/as/add_server.php?server-add=$server_hostname&server-add-port=$server_port" 2>/dev/null | grep -q 'Ok' && success || failure
+                /usr/bin/curl "http://www.frozen-bubble.org/servers/servers.php?server-add=$server_hostname&server-add-port=$server_port" 2>/dev/null | grep -q 'Ok' && success || failure
                 echo
             fi
         fi
@@ -58,7 +58,7 @@ stop() {
             readconf
             if [ "$server_hostname" != "" -a -x /usr/bin/curl ]; then
                 gprintf "Unregistering Frozen-Bubble server '$server_hostname:$server_port': "
-                /usr/bin/curl "http://zarb.org/~gc/as/add_server.php?server-remove=$server_hostname&server-remove-port=$server_port" 2>/dev/null | grep -q 'Ok' && success || failure
+                /usr/bin/curl "http://www.frozen-bubble.org/servers/servers.php?server-remove=$server_hostname&server-remove-port=$server_port" 2>/dev/null | grep -q 'Ok' && success || failure
                 echo
             fi
         fi
