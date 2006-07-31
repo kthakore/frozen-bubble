@@ -2794,7 +2794,7 @@ sub smg_servers() {
 
 sub smg_choose_server(@) {
     my (@servers) = @_;
-    my $max_lines = 14;
+    my $max_lines = 20;
     erase_line($smg_starty_chat, $imgbin{back_netgame});     #- if we return from choose_game
     erase_line($smg_starty_players, $imgbin{back_netgame});  #-
 
@@ -2842,6 +2842,9 @@ sub smg_choose_server(@) {
         @sorted_servers = sort { $a->{ping} <=> $b->{ping} } @$available;
         if (@sorted_servers > $max_lines) {
             $#sorted_servers = $max_lines - 1;
+        }
+        foreach (difference2(\@servers, \@sorted_servers)) {
+            $_->{disabled} = 1;  #- disable slow servers if there are a lot of them
         }
         #- handle case when currently selected server gets down or out per too high ping
         if (@sorted_servers && !any { $_->{selected} } @sorted_servers) {
