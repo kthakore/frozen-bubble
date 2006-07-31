@@ -322,7 +322,7 @@ void connections_manager(void)
                         l2(OUTPUT_TYPE_CONNECT, "Accepted connection from %s: fd %d", inet_ntoa(client_addr.sin_addr), fd);
                         if (fd > 255 || conns_nb() >= max_users || (lan_game_mode && g_list_length(conns_prio) > 0)) {
                                 send_line_log_push(fd, fl_server_full);
-                                l1(OUTPUT_TYPE_CONNECT, "[%d] Closing connection", fd);
+                                l1(OUTPUT_TYPE_CONNECT, "[%d] Closing connection (server full)", fd);
                                 close(fd);
                         } else {
                                 double now = get_current_time();
@@ -331,7 +331,7 @@ void connections_manager(void)
                                 date_amount_transmitted_reset = now;
                                 if (rate > max_transmission_rate) {
                                         send_line_log_push(fd, fl_server_overloaded);
-                                        l1(OUTPUT_TYPE_CONNECT, "[%d] Closing connection", fd);
+                                        l1(OUTPUT_TYPE_CONNECT, "[%d] Closing connection (maximum transmission rate reached)", fd);
                                         close(fd);
                                 } else {
                                         send_line_log_push(fd, greets_msg);
