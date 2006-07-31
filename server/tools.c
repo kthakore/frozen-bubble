@@ -30,6 +30,7 @@
 
 #include "tools.h"
 #include "log.h"
+#include "net.h"
 
 // converts a char* to the number it represents, with:
 // - when failing it returns 0
@@ -76,7 +77,17 @@ void * malloc_(size_t size)
 {
         void * ret = malloc(size);
         if (ret == NULL) {
-                fprintf(stderr, "Out of memory, exiting.\n");
+                fprintf(stderr, "Out of memory, exiting - size was %d.\n", size);
+                exit(EXIT_FAILURE);
+        }
+        return ret;
+}
+
+void * realloc_(void * ptr, size_t size)
+{
+        void * ret = realloc(ptr, size);
+        if (ret == NULL) {
+                fprintf(stderr, "Out of memory, exiting - size was %d.\n", size);
                 exit(EXIT_FAILURE);
         }
         return ret;
@@ -147,6 +158,8 @@ void daemonize() {
                 exit(EXIT_FAILURE);
         }
         if (pid > 0) {
+                // Need to register from a separate process because master server will test us
+                register_server();
                 exit(EXIT_SUCCESS);
         }
         
@@ -176,7 +189,7 @@ void daemonize() {
                 exit(EXIT_FAILURE);
         }
 
-        l0(OUTPUT_TYPE_INFO, "Entered daemon mode");
+        l0(OUTPUT_TYPE_INFO, "Entered daemon mode.");
 }
 
 // don't create portability problems

@@ -21,14 +21,6 @@ servicename=fb-server
 # Check that networking is up.
 [ ${NETWORKING} = "no" ] && exit 0
 
-readconf() {
-    server_hostname=`grep server_hostname $conffile | sed -e 's/# server_hostname //'`
-    server_port=`grep ^p $conffile | sed -e 's/p //'`
-    if [ "$server_port" == "" ]; then
-        server_port=1511
-    fi
-}
-        
 start() {
 	gprintf "Starting Frozen-Bubble server: "
 	fb-server -c $conffile 2>/dev/null >&2 && success || failure
@@ -36,13 +28,6 @@ start() {
 	echo
 	if [ $RETVAL -eq 0 ]; then
             touch /var/lock/subsys/$servicename
-            #- register to master serverlist if needed
-            readconf
-            if [ "$server_hostname" != "" -a -x /usr/bin/curl ]; then
-                gprintf "Registering Frozen-Bubble server '$server_hostname:$server_port': "
-                /usr/bin/curl "http://www.frozen-bubble.org/servers/servers.php?server-add=$server_hostname&server-add-port=$server_port" 2>/dev/null | grep -q 'Ok' && success || failure
-                echo
-            fi
         fi
 	return $RETVAL
 }
@@ -54,13 +39,6 @@ stop() {
 	echo
 	if [ $RETVAL -eq 0 ]; then
             rm -f /var/lock/subsys/$servicename
-            #- unregister from master serverlist if needed
-            readconf
-            if [ "$server_hostname" != "" -a -x /usr/bin/curl ]; then
-                gprintf "Unregistering Frozen-Bubble server '$server_hostname:$server_port': "
-                /usr/bin/curl "http://www.frozen-bubble.org/servers/servers.php?server-remove=$server_hostname&server-remove-port=$server_port" 2>/dev/null | grep -q 'Ok' && success || failure
-                echo
-            fi
         fi
 	return $RETVAL
 }

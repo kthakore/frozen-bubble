@@ -2,6 +2,8 @@
  *
  * Copyright (c) 2004 Guillaume Cottenceau
  *
+ * Portions from Mandriva's stage1.
+ *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2, as
  * published by the Free Software Foundation.
@@ -32,6 +34,9 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <netdb.h>
+#include <poll.h>
+#include <sys/utsname.h>
 
 #include <glib.h>
 
@@ -70,6 +75,11 @@ static int lan_game_mode = 0;
 
 static int tcp_server_socket;
 static int udp_server_socket = -1;
+
+static int quiet = 0;
+
+static char* external_hostname = NULL;
+static int external_port = -1;
 
 static GList * conns = NULL;
 static GList * conns_prio = NULL;
@@ -364,7 +374,17 @@ void add_prio(int fd)
         }
 }
 
-void help(void)
+void close_server() {
+        if (tcp_server_socket != -1) {
+                close(tcp_server_socket);
+        }
+        if (udp_server_socket != -1) {
+                close(udp_server_socket);
+        }
+        tcp_server_socket = udp_server_socket = -1;
+}
+
+static void help(void)
 {
         printf("[[ Frozen-Bubble server ]]\n");
         printf(" \n");
@@ -381,14 +401,17 @@ void help(void)
         printf("     -l                        LAN mode: create an UDP server (on port %d) to answer broadcasts of clients discovering where are the servers\n", DEFAULT_PORT);
         printf("     -L                        LAN/game mode: create an UDP server as above, but limit number of games to 1 (this is for an FB client hosting a LAN server)\n");
         printf("     -p port                   set the server port (defaults to %d)\n", DEFAULT_PORT);
+        printf("     -H host                   set the hostname (or IP) as seen from outside\n");
+        printf("     -P port                   set the server port as seen from outside (defaults to the port specified with -p)\n");
         printf("     -u max_users              set the maximum of connected users (defaults to %d, physical maximum 255 in non debug mode)\n", DEFAULT_MAX_USERS);
         printf("     -t max_transmission_rate  set the maximum transmission rate, in bytes per second (defaults to %d)\n", DEFAULT_MAX_TRANSMISSION_RATE);
         printf("     -o outputtype             set the output type; can be DEBUG, INFO, CONNECT, ERROR; each level includes messages of next level; defaults to INFO\n");
-        printf("     -d                        debug mode: do not daemonize and log on STDERR rather than through syslog\n");
+        printf("     -d                        debug mode: do not daemonize, and log on STDERR rather than through syslog (implies -q)\n");
+        printf("     -q                        \"quiet\" mode: don't automatically register the server to www.frozen-bubble.org\n");
         printf("     -c conffile               specify the path of the configuration file\n");
 }
 
-void create_udp_server(void)
+static void create_udp_server(void)
 {
         struct sockaddr_in server_addr;
 
@@ -409,7 +432,7 @@ void create_udp_server(void)
         }
 }
 
-void handle_parameter(char command, char * param) {
+static void handle_parameter(char command, char * param) {
         switch (command) {
         case 'h':
                 help();
@@ -452,9 +475,11 @@ void handle_parameter(char command, char * param) {
                 break;
         case 'p':
                 port = charstar_to_int(param);
-                if (port != 0)
+                if (port != 0) {
                         printf("-p: setting port to %d\n", port);
-                else {
+                        if (external_port == -1)
+                                external_port = port;
+                } else {
                         port = DEFAULT_PORT;
                         fprintf(stderr, "-p: %s not convertible to int, ignoring\n", param);
                 }
@@ -481,6 +506,23 @@ void handle_parameter(char command, char * param) {
                 printf("-d: debug mode on: will not daemonize and will display log messages on STDERR\n");
                 debug_mode = TRUE;
                 break;
+        case 'q':
+                printf("-q: quiet mode: will not register to www.frozen-bubble.org\n");
+                quiet = TRUE;
+                break;
+        case 'H':
+                printf("-H: setting hostname as seen from outside to %s\n", param);
+                external_hostname = strdup(param);
+                break;
+        case 'P':
+                external_port = charstar_to_int(param);
+                if (external_port != 0)
+                        printf("-P: setting port as seen from outside to %d\n", port);
+                else {
+                        external_port = -1;
+                        fprintf(stderr, "-P: %s not convertible to int, ignoring\n", param);
+                }
+                break;
         default:
                 fprintf(stderr, "unrecognized option %c, ignoring\n", command);
         }
@@ -492,7 +534,7 @@ void create_server(int argc, char **argv)
         int valone = 1;
 
         while (1) {
-                int c = getopt(argc, argv, "hn:lLp:u:t:o:c:d");
+                int c = getopt(argc, argv, "hn:lLp:u:t:o:c:dqH:P:");
                 if (c == -1)
                         break;
                 
@@ -506,7 +548,7 @@ void create_server(int argc, char **argv)
                                 char buf[8192];
                                 while (fgets(buf, sizeof(buf), f)) {
                                         char command, param[256];
-                                        if (buf[0] == '#' || buf[0] == '\0')
+                                        if (buf[0] == '#' || buf[0] == '\n' || buf[0] == '\r')
                                                 continue;
                                         if (sscanf(buf, "%c %256s\n", &command, param) == 2) {
                                                 handle_parameter(command, param);
@@ -528,8 +570,16 @@ void create_server(int argc, char **argv)
                 }
         }
 
+        if (external_port == -1)
+                external_port = port;
+
         if (!servername) {
                 fprintf(stderr, "Must give a name to the server with -n <name>.\n");
+                exit(EXIT_FAILURE);
+        }
+
+        if (!quiet && !external_hostname) {
+                fprintf(stderr, "In non quiet mode, must set the external host name with -H.\n");
                 exit(EXIT_FAILURE);
         }
 
@@ -557,5 +607,236 @@ void create_server(int argc, char **argv)
         // Binded correctly, now we can init logging specifying the port (useful for multiple servers)
         logging_init(port);
 
-        l2(OUTPUT_TYPE_INFO, "Creating TCP game server on port %d. Servername is '%s'.", port, servername);
+        l2(OUTPUT_TYPE_INFO, "Created TCP game server on port %d. Servername is '%s'.", port, servername);
+}
+
+static int mygethostbyname(char * name, struct in_addr * addr)
+{
+	struct hostent * h;
+
+        h = gethostbyname(name);
+	if (!h) {
+                l1(OUTPUT_TYPE_DEBUG, "Unknown host %s", name);
+                return -1;
+
+	} else if (h->h_addr_list && (h->h_addr_list)[0]) {
+		memcpy(addr, (h->h_addr_list)[0], sizeof(*addr));
+                l2(OUTPUT_TYPE_DEBUG, "%s is at %s", name, inet_ntoa(*addr));
+		return 0;
+	}
+	return -1;
+}
+
+static char * http_get(char * host, int port, char * path)
+{
+	char * buf, * ptr, * user_agent;
+	char headers[4096];
+	char * nextChar = headers;
+	int checkedCode;
+	struct in_addr serverAddress;
+	struct pollfd polls;
+	int sock;
+        int size, bufsize, dlsize;
+	int rc;
+        ssize_t bytes;
+	struct sockaddr_in destPort;
+	char * header_content_length = "Content-Length: ";
+        struct utsname uname_;
+
+        l3(OUTPUT_TYPE_DEBUG, "HTTP_GET: retrieving http://%s:%d%s", host, port, path);
+
+	if ((rc = mygethostbyname(host, &serverAddress))) {
+                l1(OUTPUT_TYPE_ERROR, "HTTP_GET: cannot resolve %s", host);
+                return NULL;
+        }
+
+	sock = socket(AF_INET, SOCK_STREAM, IPPROTO_IP);
+	if (sock < 0) {
+                l2(OUTPUT_TYPE_ERROR, "HTTP_GET: cannot create socket for connection to %s:%d", host, port);
+		return NULL;
+	}
+
+	destPort.sin_family = AF_INET;
+	destPort.sin_port = htons(port);
+	destPort.sin_addr = serverAddress;
+
+	if (connect(sock, (struct sockaddr *) &destPort, sizeof(destPort))) {
+		close(sock);
+                l2(OUTPUT_TYPE_ERROR, "HTTP_GET: cannot connect to %s:%d", host, port);
+		return NULL;
+	}
+
+        uname(&uname_);
+        user_agent = asprintf_("Frozen-Bubble server version " VERSION " (protocol version %d.%d) on %s/%s\n", proto_major, proto_minor, uname_.sysname, uname_.machine);
+        buf = asprintf_("GET %s HTTP/0.9\r\nHost: %s\r\nUser-Agent: %s\r\n\r\n", path, host, user_agent);
+        free(user_agent);
+	write(sock, buf, strlen(buf));
+        free(buf);
+
+	/* This is fun; read the response a character at a time until we:
+
+	   1) Get our first \r\n; which lets us check the return code
+	   2) Get a \r\n\r\n, which means we're done */
+
+	*nextChar = '\0';
+	checkedCode = 0;
+	while (!strstr(headers, "\r\n\r\n")) {
+		polls.fd = sock;
+		polls.events = POLLIN;
+		rc = poll(&polls, 1, 20*1000);
+
+		if (rc == 0) {
+			close(sock);
+                        l3(OUTPUT_TYPE_ERROR, "HTTP_GET: timeout retrieving http://%s:%d%s", host, port, path);
+			return NULL;
+		} else if (rc < 0) {
+			close(sock);
+                        l3(OUTPUT_TYPE_ERROR, "HTTP_GET: I/O error retrieving http://%s:%d%s", host, port, path);
+			return NULL;
+		}
+
+		if (read(sock, nextChar, 1) != 1) {
+			close(sock);
+                        l3(OUTPUT_TYPE_ERROR, "HTTP_GET: I/O error retrieving http://%s:%d%s", host, port, path);
+			return NULL;
+		}
+
+		nextChar++;
+		*nextChar = '\0';
+
+		if (nextChar - headers == sizeof(headers)) {
+			close(sock);
+                        l3(OUTPUT_TYPE_ERROR, "HTTP_GET: I/O error retrieving http://%s:%d%s", host, port, path);
+			return NULL;
+		}
+
+		if (!checkedCode && strstr(headers, "\r\n")) {
+			char * start, * end;
+
+			checkedCode = 1;
+			start = headers;
+			while (!isspace(*start) && *start)
+                                start++;
+			if (!*start) {
+				close(sock);
+                                l3(OUTPUT_TYPE_ERROR, "HTTP_GET: I/O error retrieving http://%s:%d%s", host, port, path);
+                                return NULL;
+			}
+			start++;
+
+			end = start;
+			while (!isspace(*end) && *end)
+                                end++;
+			if (!*end) {
+				close(sock);
+                                l3(OUTPUT_TYPE_ERROR, "HTTP_GET: I/O error retrieving http://%s:%d%s", host, port, path);
+                                return NULL;
+			}
+
+			*end = '\0';
+                        l1(OUTPUT_TYPE_DEBUG, "HTTP_GET: server response '%s'", start);
+			if (strcmp(start, "200")) {
+				close(sock);
+                                l4(OUTPUT_TYPE_ERROR, "HTTP_GET: bad server response %s retrieving http://%s:%d%s", start, host, port, path);
+                                return NULL;
+			}
+
+			*end = ' ';
+		}
+	}
+
+	if ((buf = strstr(headers, header_content_length))) {
+		size = charstar_to_int(buf + strlen(header_content_length));
+                bufsize = size + 1;
+        } else {
+                size = -1;
+                bufsize = 4096;
+        }
+        
+        dlsize = 0;
+        buf = ptr = malloc_(bufsize);
+        while (1) {
+                bytes = read(sock, ptr, bufsize - (ptr - buf) - 1);
+                if (bytes == -1) {
+                        l1(OUTPUT_TYPE_ERROR, "HTTP_GET: read: %s", strerror(errno));
+                        close(sock);
+                        return NULL;
+                } else if (bytes == 0) {
+                        // 0 == EOF
+                        ptr[0] = '\0';
+                        buf = realloc_(buf, dlsize + 1);
+                        close(sock);
+                        return buf;
+                } else {
+                        l1(OUTPUT_TYPE_DEBUG, "HTTP_GET: read %d bytes", bytes);
+                        dlsize += bytes;
+                        ptr = buf + dlsize;
+                        if (size > -1 && dlsize == size) {
+                                ptr[0] = '\0';
+                                buf = realloc_(buf, dlsize + 1);
+                                close(sock);
+                                return buf;
+                        }
+                        if (bufsize - (ptr - buf) - 1 < 2048) {
+                                bufsize += 4096;
+                                buf = realloc_(buf, bufsize);
+                                ptr = buf + dlsize;
+                        }
+                        l2(OUTPUT_TYPE_DEBUG, "HTTP_GET: dlsize %d bytes, bufsize %d bytes", dlsize, bufsize);
+                }
+        }
+}
+
+void register_server() {
+        if (!quiet && !lan_game_mode) {
+                char* path = asprintf_("/servers/servers.php?server-add=%s&server-add-port=%d", external_hostname, external_port);
+                char* doc = http_get("www.frozen-bubble.org", 80, path);
+                free(path);
+                if (doc != NULL) {
+                        if (strstr(doc, "FB_TAG_SERVER_ADDED")) {
+                                l2(OUTPUT_TYPE_INFO, "Successfully registered server (host:%s port:%d) to 'www.frozen-bubble.org'.", external_hostname, external_port);
+                        } else {
+                                char * ptr = doc;
+                                l2(OUTPUT_TYPE_ERROR, "Problem registering server (host:%s port:%d) to 'www.frozen-bubble.org'.", external_hostname, external_port);
+                                l2(OUTPUT_TYPE_ERROR, "Notice: for successful registering, using the said host and port from outside must reach this server!", external_hostname, external_port);
+                                while ((ptr = strstr(doc, "FB_TAG_"))) {
+                                        char * end = strchr(ptr, ' ');
+                                        if (end) {
+                                                *end = '\0';
+                                                l1(OUTPUT_TYPE_ERROR, "-> %s", ptr + 7);
+                                                ptr = end + 1;
+                                        } else {
+                                                break;
+                                        }
+                                }
+                                quiet = TRUE;  // don't unregister on SIGTERM
+                        }
+                }
+        }
+}
+
+void unregister_server() {
+        if (!quiet && !lan_game_mode) {
+                char* path = asprintf_("/servers/servers.php?server-remove=%s&server-remove-port=%d", external_hostname, external_port);
+                char* doc = http_get("www.frozen-bubble.org", 80, path);
+                free(path);
+                if (doc != NULL) {
+                        if (strstr(doc, "FB_TAG_SERVER_REMOVED")) {
+                                l0(OUTPUT_TYPE_INFO, "Successfully unregistered server to 'www.frozen-bubble.org'.");
+                        } else {
+                                char * ptr = doc;
+                                l0(OUTPUT_TYPE_ERROR, "Problem unregistering server to 'www.frozen-bubble.org'.");
+                                while ((ptr = strstr(doc, "FB_TAG_"))) {
+                                        char * end = strchr(ptr, ' ');
+                                        if (end) {
+                                                *end = '\0';
+                                                l1(OUTPUT_TYPE_ERROR, "-> %s", ptr + 7);
+                                                ptr = end + 1;
+                                        } else {
+                                                break;
+                                        }
+                                }
+                        }
+                }
+        }
 }

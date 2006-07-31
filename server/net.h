@@ -35,6 +35,9 @@ ssize_t send_ok(int fd, char* inco_msg);
 void connections_manager();
 void conn_terminated(int fd, char* reason);
 void create_server(int argc, char **argv);
+void register_server();
+void unregister_server();
+void close_server();
 
 int conns_nb(void);
 void add_prio(int fd);

@@ -27,6 +27,7 @@ char * trim_newline(char * s);
 char * asprintf_(const char *msg, ...);
 char * vasprintf_(const char *msg, va_list args);
 void * malloc_(size_t size);
+void * realloc_(void * ptr, size_t size);
 void * memdup(void *src, size_t size);
 char * memmem_(char *a, int sizea, char *b, int sizeb);
 

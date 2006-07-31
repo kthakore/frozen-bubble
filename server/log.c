@@ -32,6 +32,7 @@
 
 #include "tools.h"
 #include "log.h"
+#include "net.h"
 
 int output_type = OUTPUT_TYPE_INFO;
 int debug_mode = FALSE;
@@ -59,6 +60,8 @@ char* get_current_date(void)
 
 void sigterm_catcher(int signum) {
         l0(OUTPUT_TYPE_INFO, "Received SIGTERM, terminating.");
+        close_server();
+        unregister_server();
         exit(EXIT_SUCCESS);
 }
 

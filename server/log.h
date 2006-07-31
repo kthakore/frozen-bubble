@@ -32,9 +32,10 @@ extern int output_type;
 void logging_init();
 void l_(int wanted_output_type, char* file, long line, const char* func, char* fmt, ...);
 
-#define l0(wanted_output_type, f)             l_(wanted_output_type, __FILE__, (long) __LINE__, __func__, f)
-#define l1(wanted_output_type, f, a1)         l_(wanted_output_type, __FILE__, (long) __LINE__, __func__, f, a1)
-#define l2(wanted_output_type, f, a1, a2)     l_(wanted_output_type, __FILE__, (long) __LINE__, __func__, f, a1, a2)
-#define l3(wanted_output_type, f, a1, a2, a3) l_(wanted_output_type, __FILE__, (long) __LINE__, __func__, f, a1, a2, a3)
+#define l0(wanted_output_type, f)                 l_(wanted_output_type, __FILE__, (long) __LINE__, __func__, f)
+#define l1(wanted_output_type, f, a1)             l_(wanted_output_type, __FILE__, (long) __LINE__, __func__, f, a1)
+#define l2(wanted_output_type, f, a1, a2)         l_(wanted_output_type, __FILE__, (long) __LINE__, __func__, f, a1, a2)
+#define l3(wanted_output_type, f, a1, a2, a3)     l_(wanted_output_type, __FILE__, (long) __LINE__, __func__, f, a1, a2, a3)
+#define l4(wanted_output_type, f, a1, a2, a3, a4) l_(wanted_output_type, __FILE__, (long) __LINE__, __func__, f, a1, a2, a3, a4)
 
 #endif
