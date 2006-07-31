@@ -289,7 +289,7 @@ sub connect($$) {
 
     $current_host = $current_port = undef;
 
-    $sock = IO::Socket::INET->new(PeerAddr => $host, PeerPort => $port, Proto => 'tcp', Timeout => 5);
+    $sock = IO::Socket::INET->new(PeerAddr => $host, PeerPort => $port, Proto => 'tcp', Timeout => 2);
     if (!$sock) {
         print STDERR "Couldn't connect to $host:$port: $@\n";
         return { failure => 'Server is down' };
@@ -426,7 +426,7 @@ sub get_server_list() {
                      http://zarb.org/~gc/fb-serverlist);
     foreach ($masterserver || map { "$_-$proto_major" } @masters) {
         my $serverlist = http_download($_);
-        $serverlist and return $serverlist;
+        defined $serverlist and return $serverlist;
     }
 }
 

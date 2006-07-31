@@ -2765,7 +2765,7 @@ sub smg_servers() {
                     }
                 }
             } else {
-                return @servers;
+                return \@servers;
             }
         }
 
@@ -2773,7 +2773,7 @@ sub smg_servers() {
         smg_add_status_msg(t("*** Contacting master server..."));
         my $serverlist = fb_net::get_server_list();
         my @servers;
-        if ($serverlist) {
+        if (defined $serverlist) {
             foreach my $line (split /\n/, $serverlist) {
                 if ($line =~ /^(\S+) (\S+)$/) {
                     push @servers, { host => $1, port => $2 };
@@ -2786,15 +2786,15 @@ sub smg_servers() {
             smg_add_status_msg(t("*** Unable to download server list from master server!"),
                                t("*** Verify your network setup or retry later"));
             grab_key();
+            return;
         }
-        return @servers;
+        return \@servers;
     }
 }
 
 sub smg_choose_server(@) {
     my (@servers) = @_;
     my $max_lines = 14;
-
     erase_line($smg_starty_chat, $imgbin{back_netgame});     #- if we return from choose_game
     erase_line($smg_starty_players, $imgbin{back_netgame});  #-
 
@@ -2853,7 +2853,7 @@ sub smg_choose_server(@) {
     };
 
     $ping->();
-    if (every { $_->{disabled} } @servers) {
+    if (@servers == 0 || every { $_->{disabled} } @servers) {
         smg_add_status_msg(t("*** No available game server"),
                            t("*** Please retry later or try a local network game (lan game)"));
         grab_key();
@@ -3349,12 +3349,12 @@ sub setup_mp_game() {
         } else {
           master_server:
             #- 1. get list of servers
-            my @servers if 0;
-            @servers = smg_servers() or return;
+            my $servers = smg_servers();
+            defined $servers or return;
             
           choose_server:
             #- 2. let user choose server
-            smg_choose_server(@servers) or return;
+            smg_choose_server(@$servers) or return;
         }
             
     } else {
