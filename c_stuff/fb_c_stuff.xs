@@ -282,6 +282,8 @@ void plasma_init(char * datapath)
 		exit(1);
 	}
 
+        fclose(f);
+
 	plasma_max = -1;
 	for (x=0; x<XRES; x++)
 		for (y=0; y<YRES; y++)
