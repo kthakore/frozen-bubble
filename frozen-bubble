@@ -2060,25 +2060,28 @@ sub init_game() {
     restart_app();
     $frame = 0;
 
-    $ttfonts{netdialogs}{fg} = SDL::TTFont->new(-name => "/usr/share/fonts/ttf/vera/Vera.ttf", -size => 12, -mode => SDL::TTF_UTF8_BLENDED(),
+    my $main_font = '/usr/share/fonts/ttf/dejavu/DejaVuSans.ttf';
+    my $italic_font = '/usr/share/fonts/ttf/dejavu/DejaVuSans-Oblique.ttf';
+
+    $ttfonts{netdialogs}{fg} = SDL::TTFont->new(-name => $main_font, -size => 12, -mode => SDL::TTF_UTF8_BLENDED(),
                                                 -foreground => $SDL::Color::black);
-    $ttfonts{netdialogs}{bg} = SDL::TTFont->new(-name => "/usr/share/fonts/ttf/vera/Vera.ttf", -size => 12, -mode => SDL::TTF_UTF8_BLENDED(),
+    $ttfonts{netdialogs}{bg} = SDL::TTFont->new(-name => $main_font, -size => 12, -mode => SDL::TTF_UTF8_BLENDED(),
                                                 -foreground => $SDL::Color::white);
-    $ttfonts{netdialogs_servermsg}{fg} = SDL::TTFont->new(-name => "/usr/share/fonts/ttf/vera/VeraIt.ttf", -size => 12, -mode => SDL::TTF_UTF8_BLENDED(),
+    $ttfonts{netdialogs_servermsg}{fg} = SDL::TTFont->new(-name => $italic_font, -size => 12, -mode => SDL::TTF_UTF8_BLENDED(),
                                                           -foreground => $SDL::Color::black);
-    $ttfonts{netdialogs_servermsg}{bg} = SDL::TTFont->new(-name => "/usr/share/fonts/ttf/vera/VeraIt.ttf", -size => 12, -mode => SDL::TTF_UTF8_BLENDED(),
+    $ttfonts{netdialogs_servermsg}{bg} = SDL::TTFont->new(-name => $italic_font, -size => 12, -mode => SDL::TTF_UTF8_BLENDED(),
                                                           -foreground => $SDL::Color::white);
-    $ttfonts{menu}{fg} = SDL::TTFont->new(-name => "/usr/share/fonts/ttf/vera/Vera.ttf", -size => 16, -mode => SDL::TTF_UTF8_BLENDED(),
+    $ttfonts{menu}{fg} = SDL::TTFont->new(-name => $main_font, -size => 16, -mode => SDL::TTF_UTF8_BLENDED(),
                                           -foreground => $SDL::Color::white);
-    $ttfonts{menu}{bg} = SDL::TTFont->new(-name => "/usr/share/fonts/ttf/vera/Vera.ttf", -size => 16, -mode => SDL::TTF_UTF8_BLENDED(),
+    $ttfonts{menu}{bg} = SDL::TTFont->new(-name => $main_font, -size => 16, -mode => SDL::TTF_UTF8_BLENDED(),
                                           -foreground => $SDL::Color::black);
-    $ttfonts{ingame}{fg} = SDL::TTFont->new(-name => "/usr/share/fonts/ttf/vera/Vera.ttf", -size => 18, -mode => SDL::TTF_TEXT_BLENDED(),
+    $ttfonts{ingame}{fg} = SDL::TTFont->new(-name => $main_font, -size => 18, -mode => SDL::TTF_TEXT_BLENDED(),
                                             -foreground => $SDL::Color::white);
-    $ttfonts{ingame}{bg} = SDL::TTFont->new(-name => "/usr/share/fonts/ttf/vera/Vera.ttf", -size => 18, -mode => SDL::TTF_TEXT_BLENDED(),
+    $ttfonts{ingame}{bg} = SDL::TTFont->new(-name => $main_font, -size => 18, -mode => SDL::TTF_TEXT_BLENDED(),
                                             -foreground => $SDL::Color::black);
-    $ttfonts{ingame_small}{fg} = SDL::TTFont->new(-name => "/usr/share/fonts/ttf/vera/Vera.ttf", -size => 10, -mode => SDL::TTF_TEXT_BLENDED(),
+    $ttfonts{ingame_small}{fg} = SDL::TTFont->new(-name => $main_font, -size => 10, -mode => SDL::TTF_TEXT_BLENDED(),
                                                   -foreground => $SDL::Color::white);
-    $ttfonts{ingame_small}{bg} = SDL::TTFont->new(-name => "/usr/share/fonts/ttf/vera/Vera.ttf", -size => 10, -mode => SDL::TTF_TEXT_BLENDED(),
+    $ttfonts{ingame_small}{bg} = SDL::TTFont->new(-name => $main_font, -size => 10, -mode => SDL::TTF_TEXT_BLENDED(),
                                                   -foreground => $SDL::Color::black);
 
     $apprects{main} = SDL::Rect->new(-width => $app->width, -height => $app->height);
@@ -2756,8 +2759,9 @@ sub smg_servers() {
                         $pdata{serverpid} = $pid;
                         smg_add_status_msg(t("*** No server found, created server for local network game"));
                         sleep 1;
-                        return ({ host => 'localhost', port => 1511 });
+                        return [ { host => 'localhost', port => 1511 } ];
                     } else {
+                        %ttfonts = undef;  #- close related file descriptors
                         unless (exec $fb_server, '-L', '-p', '1511', '-d', '-n', 'lan-' . substr($ENV{USER}, 0, 8)) {
                             print STDERR "Could not create server limited to lan game: $!\n";
                             POSIX::_exit(1);
