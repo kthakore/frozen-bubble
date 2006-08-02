@@ -137,7 +137,7 @@ void calculate_list_games(void)
         players_in_game = 0;
         games_running = 0;
         g_list_foreach(games, list_games_aux, NULL);
-        free_players = asprintf_(" free:%d games:%d", conns_nb() - players_in_game - 1, games_running);  // 1: don't count myself
+        free_players = asprintf_(" free:%d games:%d playing:%d", conns_nb() - players_in_game - 1, games_running, players_in_game);  // 1: don't count myself
         strncat(list_games_str, free_players, sizeof(list_games_str));
         free(free_players);
 }
