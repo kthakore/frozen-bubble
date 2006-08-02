@@ -14,8 +14,7 @@ server.
 
 Since the Frozen-Bubble server at least needs to know the name of
 the server (as displayed in the Frozen-Bubble clients which will
-have to choose between available servers) and the hostname (or
-IP) of the server as seen from outside, a configuration file
+have to choose between available servers), a configuration file
 is best suited for this purpose.
 
 The initscript by default loads the '/etc/fb-server.conf' file
@@ -33,16 +32,21 @@ option. The list of options can be retrieved by launching the
 Frozen-Bubble server with option '--help'.
 
 Here's an example of configuration file copied from the skeleton
-configuration file, but also specifying the server name, the
-server hostname, different server port and LAN mode:
+configuration file, but also specifying the server name, a
+different server port and LAN mode:
 
 --------8<--------8<--------8<--------8<--------8<--------8<-----
 # Name of the server as seen by FB players
 n zarb
-# External hostname
-H zarb.org
 # Change default port
 p 1789
 # Also create an UDP server for easy LAN games.
 l
 --------8<--------8<--------8<--------8<--------8<--------8<-----
+
+Notice that the registration process of the server is done
+automatically if the -q option is not set. The remote end as seen
+by www.frozen-bubble.org is used as IP, and the TCP port used
+(defaults to 1511 or specified with -p) as port. If you're using
+host/port forwarding, you can use the options -H and -P to
+register the proper host/port as seen from outside.

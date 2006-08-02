@@ -78,7 +78,7 @@ static int udp_server_socket = -1;
 
 static int quiet = 0;
 
-static char* external_hostname = NULL;
+static char* external_hostname = "DISTANT_END";
 static int external_port = -1;
 
 static GList * conns = NULL;
@@ -401,7 +401,7 @@ static void help(void)
         printf("     -l                        LAN mode: create an UDP server (on port %d) to answer broadcasts of clients discovering where are the servers\n", DEFAULT_PORT);
         printf("     -L                        LAN/game mode: create an UDP server as above, but limit number of games to 1 (this is for an FB client hosting a LAN server)\n");
         printf("     -p port                   set the server port (defaults to %d)\n", DEFAULT_PORT);
-        printf("     -H host                   set the hostname (or IP) as seen from outside\n");
+        printf("     -H host                   set the hostname (or IP) as seen from outside (by default, when registering the server to www.frozen-bubble.org, the distant end at IP level will be used)\n");
         printf("     -P port                   set the server port as seen from outside (defaults to the port specified with -p)\n");
         printf("     -u max_users              set the maximum of connected users (defaults to %d, physical maximum 255 in non debug mode)\n", DEFAULT_MAX_USERS);
         printf("     -t max_transmission_rate  set the maximum transmission rate, in bytes per second (defaults to %d)\n", DEFAULT_MAX_TRANSMISSION_RATE);
@@ -575,11 +575,6 @@ void create_server(int argc, char **argv)
 
         if (!servername) {
                 fprintf(stderr, "Must give a name to the server with -n <name>.\n");
-                exit(EXIT_FAILURE);
-        }
-
-        if (!quiet && !external_hostname) {
-                fprintf(stderr, "In non quiet mode, must set the external host name with -H.\n");
                 exit(EXIT_FAILURE);
         }
 
