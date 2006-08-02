@@ -1,0 +1,249 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2006-06-19 21:47+0200\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: ../frozen-bubble:2633
+msgid "Start 1-player game menu"
+msgstr "Paleisti 1-žaidėjo žaidimo meniu"
+
+#: ../frozen-bubble:2735
+msgid "*** Please wait, probing for available servers on local network..."
+msgstr "*** Prašome palaukti, ieškoma lokalių serverių..."
+
+#: ../frozen-bubble:2738
+msgid "*** Unable to probe for available servers on local network!"
+msgstr "*** Neįmanoma lokalių serverių paieška tinkle!"
+
+#: ../frozen-bubble:2740
+msgid "*** Verify your network setup"
+msgstr "*** Patikrinkite tinklo nustatymus"
+
+#: ../frozen-bubble:2749
+msgid "*** No server found, and could not start server"
+msgstr "*** Serveris nerastas ir neįmanoma pradėti serverio"
+
+#: ../frozen-bubble:2750
+msgid "*** Verify your installation or contact your vendor"
+msgstr "*** Patikrinkite instaliaciją arba susisiekite su tiekėju"
+
+#: ../frozen-bubble:2757
+msgid "*** No server found, created server for local network game"
+msgstr "*** Serveris nerastas, sukurtas serveris lokalaus tinklo žaidimui"
+
+#: ../frozen-bubble:2773
+msgid "*** Contacting master server..."
+msgstr "*** Susisiekiama su pagrindiniu serveriu..."
+
+#: ../frozen-bubble:2784
+msgid "*** Server list received properly"
+msgstr "*** Serverių sąrašas priimtas sėkmingai"
+
+#: ../frozen-bubble:2786
+msgid "*** Unable to download server list from master server!"
+msgstr "*** Neįmanoma atsisiųsti serverių sąrašo iš pagrindinio serverio!"
+
+#: ../frozen-bubble:2787
+msgid "*** Verify your network setup or retry later"
+msgstr "*** Patikrinkite tinklo ryšį arba pabandykite vėliau"
+
+#: ../frozen-bubble:2820
+#, perl-format
+msgid "Available players:%s  Ping:%sms"
+msgstr "Esami žaidėjai:%s  Atsakas:%sms"
+
+#: ../frozen-bubble:2857
+msgid "*** No available game server"
+msgstr "*** Nėra prieinamų žaidimų serverių"
+
+#: ../frozen-bubble:2858
+msgid "*** Please retry later or try a local network game (lan game)"
+msgstr "*** Prašome pabandyti vėliau, arba pabandyti lokalaus tinklo žaidimą"
+
+#: ../frozen-bubble:2865
+msgid "*** Please choose a server"
+msgstr "*** Prašome pasirinkti serverį"
+
+#: ../frozen-bubble:2926
+#, perl-format
+msgid "*** Connected to server '%s'"
+msgstr "*** Prisijungta prie serverio '%s'"
+
+#: ../frozen-bubble:3042 ../frozen-bubble:3215 ../frozen-bubble:3314
+msgid "Chat"
+msgstr "Pokalbis"
+
+#: ../frozen-bubble:3043
+msgid "Create new game"
+msgstr "Sukurti naują žaidimą"
+
+#: ../frozen-bubble:3080
+msgid "Say: "
+msgstr "Sakyti: "
+
+#: ../frozen-bubble:3093
+#, perl-format
+msgid "Join game: %s"
+msgstr "Prisijungti prie žaidimo: %s"
+
+#: ../frozen-bubble:3108
+#, perl-format
+msgid "Available Players: %s"
+msgstr "Galimi žaidėjai: %s"
+
+#: ../frozen-bubble:3132
+msgid "*** Leaving game..."
+msgstr "*** Paliekamas žaidimas..."
+
+#: ../frozen-bubble:3203
+msgid "*** Game created - now you need to wait for players to join"
+msgstr "*** Žaidimas sukurtas - dabar jums reikia palaukti, kol žaidėjai prisijungs"
+
+#: ../frozen-bubble:3205
+msgid "*** Joined game"
+msgstr "*** Prisijungta prie žaidimo"
+
+#: ../frozen-bubble:3212
+msgid "*** Error: game just started or aborted"
+msgstr "*** Klaida: žaidimas ką tik pradėtas arba atšauktas"
+
+#: ../frozen-bubble:3224
+#, perl-format
+msgid "*** Can't start game: '%s'"
+msgstr "*** Neįmanoma pradėti žaidimo: '%s'"
+
+#: ../frozen-bubble:3254
+#, perl-format
+msgid "*** %s joined the game!"
+msgstr "*** %s prisijungė prie žaidimo!"
+
+#: ../frozen-bubble:3257
+#, perl-format
+msgid "*** %s left the game..."
+msgstr "*** %s paliko žaidimą..."
+
+#: ../frozen-bubble:3300
+msgid "*** Lost connection to server, abandoning..."
+msgstr "*** Prarastas ryšys su serveriu, nutraukiama..."
+
+#: ../frozen-bubble:3313
+#, perl-format
+msgid "Players in game: %s"
+msgstr "Žaidėjai žaidime: %s"
+
+#: ../frozen-bubble:3315
+msgid "Start game!"
+msgstr "Pradėti žaidimą!"
+
+#: ../frozen-bubble:3327
+#, perl-format
+msgid "*** Game finished, because the following player(s) left: %s"
+msgstr "*** Žaidimas baigtas, nes šis žaidėjas(-ai) išėjo: %s"
+
+#: ../frozen-bubble:3331
+#, perl-format
+msgid "*** Winner: %s"
+msgstr "*** Laimėtojas: %s"
+
+#: ../frozen-bubble:3333
+msgid "*** Draw game!"
+msgstr "*** Lygiosios!"
+
+#: ../frozen-bubble:3335
+#, perl-format
+msgid "*** Scores: %s"
+msgstr "*** Taškai: %s"
+
+#: ../frozen-bubble:3383
+msgid "2-player game"
+msgstr "2-žaidėjų žaidimas"
+
+#: ../frozen-bubble:3383
+msgid "Enable chain-reaction?"
+msgstr "Įgalinti grandininę reakciją?"
+
+#: ../frozen-bubble:3384
+#, perl-format
+msgid "%s or %s?"
+msgstr "%s ar %s?"
+
+#: ../frozen-bubble:3385
+msgid "Enjoy the game!"
+msgstr "Mėgaukitės žaidimu!"
+
+#: ../frozen-bubble:3423
+msgid "Congratulations!"
+msgstr "Sveikinimai!"
+
+#: ../frozen-bubble:3423
+msgid "You have a highscore!"
+msgstr "Jūs pasiekėte rekordą!"
+
+#: ../frozen-bubble:3424
+msgid "Your name?"
+msgstr "Jūsų vardas?"
+
+#: ../frozen-bubble:3425
+msgid "Great game!"
+msgstr "Puikus žaidimas!"
+
+#: ../frozen-bubble:3744
+msgid "Please enter new keys:"
+msgstr "Prašome įvesti naują valdymą:"
+
+#: ../frozen-bubble:3746
+msgid "Player 1; turn left?"
+msgstr "Žaidėjas 1; pasukti kairėn?"
+
+#: ../frozen-bubble:3747
+msgid "Player 1; turn right?"
+msgstr "Žaidėjas 1; pasukti dešinėn?"
+
+#: ../frozen-bubble:3748
+msgid "Player 1; fire?"
+msgstr "Žadėjas 1; ugnis?"
+
+#: ../frozen-bubble:3749
+msgid "Player 1; center?"
+msgstr "Žaidėjas 1; centras?"
+
+#: ../frozen-bubble:3751
+msgid "Player 2; turn left?"
+msgstr "Žaidėjas 2; pasukti kairėn?"
+
+#: ../frozen-bubble:3752
+msgid "Player 2; turn right?"
+msgstr "Žaidėjas 2; pasukti dešinėn?"
+
+#: ../frozen-bubble:3753
+msgid "Player 2; fire?"
+msgstr "Žaidėjas 2; ugnis?"
+
+#: ../frozen-bubble:3754
+msgid "Player 2; center?"
+msgstr "Žaidėjas 2; centras?"
+
+#: ../frozen-bubble:3756
+msgid "Toggle fullscreen?"
+msgstr "Perjungti į/iš pilno ekrano?"
+
+#: ../frozen-bubble:3757
+msgid "Chat (net/lan game)?"
+msgstr "Pokalbis (interneto/tinklo žaidimas)?"
+
+#: ../frozen-bubble:3759
+msgid "Thanks!"
+msgstr "Ačiū!"
