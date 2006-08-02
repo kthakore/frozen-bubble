@@ -52,7 +52,7 @@ sub discover_lan_servers {
     }
 
     my $destpaddr = sockaddr_in($udp_server_port, INADDR_BROADCAST());
-    if (!$socket->send("FB/$proto_major.$proto_minor SERVER PROBE", 0, $destpaddr)) {
+    if (!$socket->send("FB/$proto_major\.$proto_minor SERVER PROBE", 0, $destpaddr)) {
         print STDERR "Cannot send broadcast: $!\n";
         return { failure => 'Network is down/no network?' };
     }
@@ -67,7 +67,7 @@ sub discover_lan_servers {
             return { failure => 'Cannot read answer from broadcast.' };
         }
         my ($port, $ipaddr) = sockaddr_in($srcpaddr);
-        if ($rcvmsg =~ m|^FB/$proto_major.$proto_minor SERVER HERE AT PORT (\d+)|) {
+        if ($rcvmsg =~ m|^FB/$proto_major\.$proto_minor SERVER HERE AT PORT (\d+)|) {
             push @servers, { host => inet_ntoa($ipaddr), port => $1 };
         } else {
             print STDERR "\nReceive weird/incompatible answer to UDP broadcast looking for LAN servers from $ipaddr:$port:\t$rcvmsg\n";
