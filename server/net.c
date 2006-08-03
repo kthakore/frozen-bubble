@@ -789,7 +789,12 @@ void register_server() {
                 free(path);
                 if (doc != NULL) {
                         if (strstr(doc, "FB_TAG_SERVER_ADDED")) {
-                                l2(OUTPUT_TYPE_INFO, "Successfully registered server (host:%s port:%d) to 'www.frozen-bubble.org'.", external_hostname, external_port);
+                                if (streq(external_hostname, "DISTANT_END")) {
+                                        // don't confuse admin printing a cryptic DISTANT_END hostname
+                                        l1(OUTPUT_TYPE_INFO, "Successfully registered server (port:%d) to 'www.frozen-bubble.org'.", external_port);
+                                } else {
+                                        l2(OUTPUT_TYPE_INFO, "Successfully registered server (host:%s port:%d) to 'www.frozen-bubble.org'.", external_hostname, external_port);
+                                }
                         } else {
                                 char * ptr = doc;
                                 l2(OUTPUT_TYPE_ERROR, "Problem registering server (host:%s port:%d) to 'www.frozen-bubble.org'.", external_hostname, external_port);
@@ -817,7 +822,12 @@ void unregister_server() {
                 free(path);
                 if (doc != NULL) {
                         if (strstr(doc, "FB_TAG_SERVER_REMOVED")) {
-                                l0(OUTPUT_TYPE_INFO, "Successfully unregistered server to 'www.frozen-bubble.org'.");
+                                if (streq(external_hostname, "DISTANT_END")) {
+                                        // don't confuse admin printing a cryptic DISTANT_END hostname
+                                        l1(OUTPUT_TYPE_INFO, "Successfully unregistered server (port:%d) to 'www.frozen-bubble.org'.", external_port);
+                                } else {
+                                        l2(OUTPUT_TYPE_INFO, "Successfully unregistered server (host:%s port:%d) to 'www.frozen-bubble.org'.", external_hostname, external_port);
+                                }
                         } else {
                                 char * ptr = doc;
                                 l0(OUTPUT_TYPE_ERROR, "Problem unregistering server to 'www.frozen-bubble.org'.");
