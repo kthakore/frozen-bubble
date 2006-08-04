@@ -2060,7 +2060,7 @@ sub init_game() {
     restart_app();
     $frame = 0;
 
-    my $main_font = '/usr/share/fonts/ttf/dejavu/DejaVuSans.ttf';
+    my $main_font = '/usr/share/fonts/ttf/dejavu/DejaVuSans.ttf'; #/usr/share/fonts/ttf/japanese/sazanami-gothic.ttf';
     my $italic_font = '/usr/share/fonts/ttf/dejavu/DejaVuSans-Oblique.ttf';
 
     $ttfonts{netdialogs}{fg} = SDL::TTFont->new(-name => $main_font, -size => 12, -mode => SDL::TTF_UTF8_BLENDED(),
@@ -2874,7 +2874,7 @@ sub smg_choose_server(@) {
 
     while (1) {
         $reping++;
-        $reping % (5*20) == 0 and $ping->();
+        $reping % (30*50) == 0 and $ping->();
 
         $event->pump;
         if ($event->poll != 0) {
