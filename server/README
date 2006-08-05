@@ -64,9 +64,10 @@ threaded nor will fork to better handle a lot of parallel
 requests. Additionally, it is limited to 255 simultaneous
 players.
 
-However, administrators willing to host more than one server can
-launch any number of different Frozen-Bubble server processes on
-a single machine, provided they use different TCP ports.
+Due to its rather low upload and CPU consumption, administrators
+can host more than one logical server (multiple Frozen-Bubble
+server processes on a single machine), provided they use
+different TCP ports.
 
 
 ]] Server resource limits
@@ -80,4 +81,5 @@ trickle, because reaching the bandwidth limit wouldn't impair
 existing players.
 
 Note that server upload bandwidth use is around 100 bytes/second
-per connected player.
+per connected player, which should make a server never use more
+than 25 KB/sec upload.

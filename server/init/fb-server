@@ -7,7 +7,7 @@
 #              Frozen-Bubble over the Internet.
 # processname: fb-server
 # pidfile: /var/run/fb-server.pid
-# config: /etc/fb-server.conf
+# config: /etc/fb-server*.conf
 
 # Source function library.
 . /etc/rc.d/init.d/functions
@@ -15,25 +15,31 @@
 # Source networking configuration.
 . /etc/sysconfig/network
 
-conffile=/etc/fb-server.conf
+conffiles=/etc/fb-server*.conf
 servicename=fb-server
 
 # Check that networking is up.
 [ ${NETWORKING} = "no" ] && exit 0
 
 start() {
-	gprintf "Starting Frozen-Bubble server: "
-	fb-server -c $conffile 2>/dev/null >&2 && success || failure
-	RETVAL=$?
-	echo
-	if [ $RETVAL -eq 0 ]; then
+	gprintf "Starting Frozen-Bubble server(s): "
+        ATLEASTONE=-1
+        for file in $conffiles; do
+            fb-server -c $file >/dev/null && success || failure  
+            RETVAL=$?
+            if [ "$ATLEASTONE" -ne 0 ]; then
+                ATLEASTONE=$RETVAL
+            fi
+            echo
+        done
+	if [ $ATLEASTONE -eq 0 ]; then
             touch /var/lock/subsys/$servicename
         fi
-	return $RETVAL
+	return $ATLEASTONE
 }
 
 stop() {
-	gprintf "Stopping Frozen-Bubble server: "
+	gprintf "Stopping Frozen-Bubble server(s): "
         killproc fb-server -TERM
 	RETVAL=$?
 	echo

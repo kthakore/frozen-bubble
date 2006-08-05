@@ -54,7 +54,7 @@ const int proto_minor = 0;
 
 static char greets_msg_base[] = "SERVER_READY %s %s";
 static char* servername = NULL;
-static char* serverlocale = NULL;
+static char* serverlanguage = NULL;
 
 static char ok_generic[] = "OK";
 
@@ -271,7 +271,7 @@ void connections_manager(void)
         struct timeval tv;
         static char * greets_msg = NULL;
         if (!greets_msg)   // C sux
-                greets_msg = asprintf_(greets_msg_base, servername, serverlocale);
+                greets_msg = asprintf_(greets_msg_base, servername, serverlanguage);
 
         date_amount_transmitted_reset = get_current_time();
 
@@ -409,6 +409,9 @@ static void help(void)
         printf("     -o outputtype             set the output type; can be DEBUG, INFO, CONNECT, ERROR; each level includes messages of next level; defaults to INFO\n");
         printf("     -d                        debug mode: do not daemonize, and log on STDERR rather than through syslog (implies -q)\n");
         printf("     -q                        \"quiet\" mode: don't automatically register the server to www.frozen-bubble.org\n");
+        printf("     -a                        set the preferred language of the server (it is just an indication used by players when choosing a server, so that they can chat using their native language - you can chose none with -z)\n");
+        printf("     -z                        set that there is no preferred language for the server (see -a)\n");
+        printf("     -q                        \"quiet\" mode: don't automatically register the server to www.frozen-bubble.org\n");
         printf("     -c conffile               specify the path of the configuration file\n");
 }
 
@@ -535,16 +538,16 @@ static void handle_parameter(char command, char * param) {
                     || streq(param, "sl") || streq(param, "sq") || streq(param, "sv") || streq(param, "tg") || streq(param, "tr")
                     || streq(param, "uk") || streq(param, "uz") || streq(param, "vi") || streq(param, "wa") || streq(param, "zh_CN")
                     || streq(param, "zh_TW")) {
-                        serverlocale = strdup(param);
-                        printf("-a: setting preferred locale for users of the server to '%s'\n", serverlocale);
+                        serverlanguage = strdup(param);
+                        printf("-a: setting preferred language for users of the server to '%s'\n", serverlanguage);
                 } else {
-                        fprintf(stderr, "-a: %s not a valid locale, ignoring\n", param);
-                        fprintf(stderr, "    valid locales are: af, ar, az, bg, br, bs, ca, cs, cy, da, el, en, eo, eu, fr, ga, gl, hr, hu, id, is, it, ja, ko, lt, lv, mk, ms, nl, no, pl, pt_BR, ro, ru, sk, sl, sq, sv, tg, tr, uk, uz, vi, wa, zh_CN, zh_TW\n" );
+                        fprintf(stderr, "-a: %s not a valid language, ignoring\n", param);
+                        fprintf(stderr, "    valid languages are: af, ar, az, bg, br, bs, ca, cs, cy, da, el, en, eo, eu, fr, ga, gl, hr, hu, id, is, it, ja, ko, lt, lv, mk, ms, nl, no, pl, pt_BR, ro, ru, sk, sl, sq, sv, tg, tr, uk, uz, vi, wa, zh_CN, zh_TW\n" );
                 }
                 break;
         case 'z':
-                printf("-z: no preferred locale for users of the server\n");
-                serverlocale = "zz";
+                printf("-z: no preferred language for users of the server\n");
+                serverlanguage = "zz";
                 break;
         default:
                 fprintf(stderr, "unrecognized option %c, ignoring\n", command);
@@ -601,8 +604,8 @@ void create_server(int argc, char **argv)
                 exit(EXIT_FAILURE);
         }
 
-        if (!serverlocale) {
-                fprintf(stderr, "Must set the preferred locale of users of the server with -a <locale> or specify there is none with -z.\n");
+        if (!serverlanguage) {
+                fprintf(stderr, "Must set the preferred language of users of the server with -a <language> or specify there is none with -z.\n");
                 exit(EXIT_FAILURE);
         }
 
