@@ -326,7 +326,7 @@ sub choose_action {
             highlight_option('erase');
             if ($caller eq 'button') {
                 $action = 'erase';
-                erase_bubble($POS_1P{next_bubble}{x} + $POS_1P{p1}{left_limit}, $POS_1P{next_bubble}{'y'});
+                erase_bubble($POS_1P{p1}{next_bubble}{x} + $POS_1P{p1}{left_limit}, $POS_1P{p1}{next_bubble}{'y'});
             }
         }
 
