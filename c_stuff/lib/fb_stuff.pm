@@ -39,6 +39,19 @@ $DEJAVUPATH = '@DEJAVUPATH@';
 $DEJAVUOBLIQUEPATH = '@DEJAVUOBLIQUEPATH@';
 $SAZANAMIGOTHICPATH = '@SAZANAMIGOTHICPATH@';
 
+%POS_1P = ( p1 => { left_limit => 190, right_limit => 446, top_limit => 44, 'initial_bubble_y' => 390,
+                    canon => { x => 268, 'y' => 356 },
+                    simpleshooter => { x => 317, 'y' => 405, diameter => 60 },
+                    pinguin => { x => 168, 'y' => 437 },
+                    next_bubble => { x => 112, 'y' => 440 },
+                    on_top_next_relpos => { x => -4, 'y' => -3 },
+                    hurry => { x => 10, 'y' => 265 },
+                    scores => { x => 25, 'y' => 205 } },
+	    centerpanel => { x => 149, 'y' => 190 },
+	    pause_clip => { x => 263, 'y' => 212 },
+            compressor_xpos => 321,
+	  );
+
 %POS_2P = ( p1 => { left_limit => 30, right_limit => 286, top_limit => 40, 'initial_bubble_y' => 390,
                     canon => { x => 108, 'y' => 356 },
                     simpleshooter => { x => 157, 'y' => 405, diameter => 60 },
@@ -47,7 +60,10 @@ $SAZANAMIGOTHICPATH = '@SAZANAMIGOTHICPATH@';
                     on_top_next_relpos => { x => -4, 'y' => -3 },
                     hurry => { x => 10, 'y' => 265 },
                     malus => { x => 308, 'y' => 408 },
-                    scores => { x => 293, 'y' => 428 } },
+                    scores => { x => 135, 'y' => 9 },
+                    nick => { x => 160, 'y' => 9 },
+                    chatting => { x => 30, 'y' => 440 },
+                  },
 	    p2 => { left_limit => 354, right_limit => 610, top_limit => 40, 'initial_bubble_y' => 390,
                     canon => { x => 432, 'y' => 356 },
                     simpleshooter => { x => 481, 'y' => 405, diameter => 60 },
@@ -56,22 +72,13 @@ $SAZANAMIGOTHICPATH = '@SAZANAMIGOTHICPATH@';
                     on_top_next_relpos => { x => -4, 'y' => -3 },
                     hurry => { x => 10, 'y' => 265 },
                     malus => { x => 331, 'y' => 408 },
-                    scores => { x => 341, 'y' => 428 } },
+                    scores => { x => 460, 'y' => 9 },
+                    nick => { x => 485, 'y' => 9 },
+                    chatting => { x => 450, 'y' => 460 },
+                  },
 	    centerpanel => { x => 153, 'y' => 190 },
 	  );
-
-%POS_1P = ( p1 => { left_limit => 190, right_limit => 446, top_limit => 44, 'initial_bubble_y' => 390,
-                    canon => { x => 268, 'y' => 356 },
-                    simpleshooter => { x => 317, 'y' => 405, diameter => 60 },
-                    pinguin => { x => 168, 'y' => 437 },
-                    next_bubble => { x => 112, 'y' => 440 },
-                    on_top_next_relpos => { x => -4, 'y' => -3 },
-                    hurry => { x => 10, 'y' => 265 },
-                    scores => { x => 180, 'y' => 432 } },
-	    centerpanel => { x => 149, 'y' => 190 },
-	    pause_clip => { x => 263, 'y' => 212 },
-            compressor_xpos => 321,
-	  );
+$POS_2P{rp1} = $POS_2P{p2};  #- in net/lan 2p mode, use bigger graphics and positions
 
 %POS_MP = ( p1 => { left_limit => 190, right_limit => 446, top_limit => 44, 'initial_bubble_y' => 390,
                     canon => { x => 268, 'y' => 356 },   #- (left_limit + right_limit) / 2 - 50  |  initial_bubble_y + 16 - 50  (50x50 is half dimensions of gfx/shoot/base)

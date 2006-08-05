@@ -286,9 +286,14 @@ sub add_default_rect($) {
     $rects{$surface} = SDL::Rect->new(-width => $surface->width, -height => $surface->height);
 }
 
+sub mini_graphics {
+    my ($p) = @_;
+    return @PLAYERS >= 3 && $p =~ /rp/;
+}
+
 sub translate_mini_image {
     my ($image) = @_;
-    if ($::p_ =~ /rp/ || ($::p_ eq '' && $::p =~ /rp/)) {
+    if (mini_graphics($::p_) || ($::p_ eq '' && mini_graphics($::p))) {
         $img_mini{$image} and return $img_mini{$image};
     }
     return $image;
@@ -410,7 +415,7 @@ sub iter_players(&) {
     @p == 0 and @p = @PLAYERS;
     local $::p;
     foreach $::p (@p) {
-        $::p !~ /rp/ and goto normal_sizes;  #- can't use an if block because of local
+        mini_graphics($::p) or goto normal_sizes;  #- can't use an if block because of local
         local $BUBBLE_SIZE = $BUBBLE_SIZE / 2;
         local $BUBBLE_SPEED = $BUBBLE_SPEED / 2;
         local $ROW_SIZE = $ROW_SIZE / 2;
@@ -662,8 +667,8 @@ sub destroy_bubbles {
     my ($player, @bubz) = @_;
     $graphics_level == 1 and return;
     foreach (@bubz) {
-	$_->{speedx} = (rand(3)-1.5) / ($player =~ /rp/ ? 2 : 1);
-	$_->{speedy} = (-rand(4)-2) / ($player =~ /rp/ ? 2 : 1);
+	$_->{speedx} = (rand(3)-1.5) / ( mini_graphics($player) ? 2 : 1 );
+	$_->{speedy} = (-rand(4)-2) / ( mini_graphics($player) ? 2 : 1 );
     }
     push @{$exploding_bubble{$player}}, @bubz;
 }
@@ -922,8 +927,8 @@ sub handle_graphics($) {
         if ($graphics_level > 1) {
             my $num = int($angle{$::p}*$CANON_ROTATIONS_NB/($PI/2) + 0.5)-$CANON_ROTATIONS_NB;
                 $fun->($canon{img}{$num},
-                       $POS{$::p}{canon}{x} + $canon{$::p =~ /rp/ ? 'data_mini' : 'data'}{$num}->[0],
-                       $POS{$::p}{canon}{'y'} + $canon{$::p =~ /rp/ ? 'data_mini' : 'data'}{$num}->[1]);
+                       $POS{$::p}{canon}{x} + $canon{mini_graphics($::p) ? 'data_mini' : 'data'}{$num}->[0],
+                       $POS{$::p}{canon}{'y'} + $canon{mini_graphics($::p) ? 'data_mini' : 'data'}{$num}->[1]);
         } else {
             $fun->($shooter,
                    $POS{$::p}{simpleshooter}{x} + $POS{$::p}{simpleshooter}{diameter}*cos($angle{$::p}),
@@ -933,7 +938,9 @@ sub handle_graphics($) {
         #- penguins
         if (!is_mp_game() || $::p ne 'p1' || !$pdata{p1}{chatting}) {
             if ($graphics_level == 3) {
-                $fun->($pinguin{$::p}{$pdata{$::p}{ping_right}{state}}[$pdata{$::p}{ping_right}{img}], $POS{$::p}{left_limit}+$POS{$::p}{pinguin}{x}, $POS{$::p}{pinguin}{'y'});
+                my $player = @PLAYERS == 2 && $::p eq 'rp1' ? 'p2' : $::p;
+                $fun->($pinguin{$player}{$pdata{$::p}{ping_right}{state}}[$pdata{$::p}{ping_right}{img}],
+                       $POS{$player}{left_limit}+$POS{$player}{pinguin}{x}, $POS{$player}{pinguin}{'y'});
             }
         }
 
@@ -1348,14 +1355,18 @@ sub print_scores($) {
     my ($surface) = @_;  
     iter_players_ {  #- sometimes called from within a iter_players so...
         my $xpos = $POS{$::p_}{scores}{x} - width('ingame', $pdata{$::p_}{score})/2;
-        my $drect = SDL::Rect->new(-width => 20, -height => $::p_ =~ /rp/ ? 12 : 24, -x => $xpos, '-y' => $POS{$::p_}{scores}{'y'});
+        my $drect = SDL::Rect->new(-width => 20, -height => mini_graphics($::p_) ? 12 : 24, -x => $xpos, '-y' => $POS{$::p_}{scores}{'y'});
         $background_orig->blit($drect, $surface, $drect);
         push @update_rects, $drect;
-        if ($::p_ =~ /rp/) {
+        if (mini_graphics($::p_)) {
             print_('ingame_small', $surface, $xpos, $POS{$::p_}{scores}{'y'}, $pdata{$::p_}{score});
             is_mp_game() and print_('ingame_small', $surface, $POS{$::p_}{nick}{x}, $POS{$::p_}{nick}{'y'}, $pdata{$::p_}{nick});
         } else {
-            print_('ingame', $surface, $xpos, $POS{$::p_}{scores}{'y'}, $pdata{$::p_}{score});
+            if (@PLAYERS == 1) {
+                print_('ingame', $surface, $xpos, $POS{$::p_}{scores}{'y'}, t("Level %s", $pdata{$::p_}{score}));
+            } else {
+                print_('ingame', $surface, $xpos, $POS{$::p_}{scores}{'y'}, $pdata{$::p_}{score});
+            }
             is_mp_game() and print_('ingame', $surface, $POS{$::p_}{nick}{x}, $POS{$::p_}{nick}{'y'}, $pdata{$::p_}{nick});
         }
     };
@@ -1417,8 +1428,8 @@ sub lose {
             }
         }
         if ($pdata{$player}{left}) {
-            put_image_to_background($imgbin{left},
-                                    $POS{$player}{left_limit},
+            put_image_to_background(mini_graphics($player) ? $imgbin{left_mini} : $imgbin{left},
+                                    $POS{$player}{left_limit} + 2,
                                     $POS{$player}{top_limit}); #- TOFIX
             @{$sticked_bubbles{$player}} = ();
             play_sound('cancel');
@@ -2187,6 +2198,7 @@ sub init_game() {
     $imgbin{void_chat_small} = add_image('menu/void_chat_small.png');
     $imgbin{version} = add_image('menu/version.png');
     $imgbin{blink} = add_image('menu/blink.png');
+    $imgbin{left_mini} = add_image('left-mini.png');
     $imgbin{left} = add_image('left.png');
     $imgbin{mp_ready_newgame} = add_image('pinguins/mp_ready_newgame.png');
     $imgbin{mp_waiting_newgame} = add_image('pinguins/mp_waiting_newgame.png');
@@ -2480,8 +2492,13 @@ sub new_game() {
     my $backgr;
     if (is_mp_game()) {
         $pdata{p1}{chatting} and cleanup_chatting();
-	$backgr = $imgbin{back_mp};
-	%POS = %POS_MP;
+        if (@PLAYERS == 2) {  #- in net/lan 2p mode, use bigger graphics and positions
+            $backgr = $imgbin{back_2p};
+            %POS = %POS_2P;
+        } else {
+            $backgr = $imgbin{back_mp};
+            %POS = %POS_MP;
+        }
     } elsif (is_2p_game()) {
 	$backgr = $imgbin{back_2p};
 	%POS = %POS_2P;
@@ -4069,7 +4086,6 @@ while (1) {
 	if ($@ =~ /^new_game/) {
 	    new_game();
 	} elsif ($@ =~ /^quit/) {
-            print "quitted\n";
             if (is_mp_game()) {
                 if ($pdata{gametype} eq 'lan') {
                     fb_net::disconnect();
