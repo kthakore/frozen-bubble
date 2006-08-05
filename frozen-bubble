@@ -2060,30 +2060,6 @@ sub init_game() {
     restart_app();
     $frame = 0;
 
-    my $main_font = '/usr/share/fonts/ttf/dejavu/DejaVuSans.ttf'; #/usr/share/fonts/ttf/japanese/sazanami-gothic.ttf';
-    my $italic_font = '/usr/share/fonts/ttf/dejavu/DejaVuSans-Oblique.ttf';
-
-    $ttfonts{netdialogs}{fg} = SDL::TTFont->new(-name => $main_font, -size => 12, -mode => SDL::TTF_UTF8_BLENDED(),
-                                                -foreground => $SDL::Color::black);
-    $ttfonts{netdialogs}{bg} = SDL::TTFont->new(-name => $main_font, -size => 12, -mode => SDL::TTF_UTF8_BLENDED(),
-                                                -foreground => $SDL::Color::white);
-    $ttfonts{netdialogs_servermsg}{fg} = SDL::TTFont->new(-name => $italic_font, -size => 12, -mode => SDL::TTF_UTF8_BLENDED(),
-                                                          -foreground => $SDL::Color::black);
-    $ttfonts{netdialogs_servermsg}{bg} = SDL::TTFont->new(-name => $italic_font, -size => 12, -mode => SDL::TTF_UTF8_BLENDED(),
-                                                          -foreground => $SDL::Color::white);
-    $ttfonts{menu}{fg} = SDL::TTFont->new(-name => $main_font, -size => 16, -mode => SDL::TTF_UTF8_BLENDED(),
-                                          -foreground => $SDL::Color::white);
-    $ttfonts{menu}{bg} = SDL::TTFont->new(-name => $main_font, -size => 16, -mode => SDL::TTF_UTF8_BLENDED(),
-                                          -foreground => $SDL::Color::black);
-    $ttfonts{ingame}{fg} = SDL::TTFont->new(-name => $main_font, -size => 18, -mode => SDL::TTF_TEXT_BLENDED(),
-                                            -foreground => $SDL::Color::white);
-    $ttfonts{ingame}{bg} = SDL::TTFont->new(-name => $main_font, -size => 18, -mode => SDL::TTF_TEXT_BLENDED(),
-                                            -foreground => $SDL::Color::black);
-    $ttfonts{ingame_small}{fg} = SDL::TTFont->new(-name => $main_font, -size => 10, -mode => SDL::TTF_TEXT_BLENDED(),
-                                                  -foreground => $SDL::Color::white);
-    $ttfonts{ingame_small}{bg} = SDL::TTFont->new(-name => $main_font, -size => 10, -mode => SDL::TTF_TEXT_BLENDED(),
-                                                  -foreground => $SDL::Color::black);
-
     $apprects{main} = SDL::Rect->new(-width => $app->width, -height => $app->height);
     $event = SDL::Event->new;
     $event->set_unicode(1);
@@ -2101,6 +2077,44 @@ sub init_game() {
     $background = SDL::Surface->new(-width => $app->width, -height => $app->height, -depth => 32, -Amask => '0 but true');
     $background_orig = SDL::Surface->new(-width => $app->width, -height => $app->height, -depth => 32, -Amask => '0 but true');
     $imgbin{backstartfull} = SDL::Surface->new(-name => "$FPATH/gfx/menu/back_start.png");
+
+    print_step('.'); 
+    my $main_font = $DEJAVUPATH;
+    my $italic_font = $DEJAVUOBLIQUEPATH;
+    my $mode = SDL::TTF_UTF8_BLENDED();
+
+    if ($ENV{LANGUAGE} =~ /^ja/) {
+        $main_font = $SAZANAMIGOTHICPATH;
+        $mode = SDL::TTF_UTF8_SOLID();
+    }
+
+    $ttfonts{netdialogs}{fg} = SDL::TTFont->new(-name => $main_font, -size => 12, -mode => $mode,
+                                                -foreground => $SDL::Color::black);
+    $ttfonts{netdialogs}{bg} = SDL::TTFont->new(-name => $main_font, -size => 12, -mode => $mode,
+                                                -foreground => $SDL::Color::white);
+    if ($ENV{LANGUAGE} =~ /^ja/) {
+        $ttfonts{netdialogs_servermsg}{fg} = $ttfonts{netdialogs}{fg};  #- save 5M of RSS
+        $ttfonts{netdialogs_servermsg}{bg} = $ttfonts{netdialogs}{bg};
+    } else {
+        $ttfonts{netdialogs_servermsg}{fg} = SDL::TTFont->new(-name => $italic_font, -size => 12, -mode => $mode,
+                                                              -foreground => $SDL::Color::black);
+        $ttfonts{netdialogs_servermsg}{bg} = SDL::TTFont->new(-name => $italic_font, -size => 12, -mode => $mode,
+                                                              -foreground => $SDL::Color::white);
+    }
+    $ttfonts{menu}{fg} = SDL::TTFont->new(-name => $main_font, -size => 16, -mode => $mode,
+                                          -foreground => $SDL::Color::white);
+    $ENV{LANGUAGE} =~ /^ja/ and print_step('.');  #- loading japanese font is much slower
+    $ttfonts{menu}{bg} = SDL::TTFont->new(-name => $main_font, -size => 16, -mode => $mode,
+                                          -foreground => $SDL::Color::black);
+    $ttfonts{ingame}{fg} = SDL::TTFont->new(-name => $main_font, -size => 18, -mode => $mode,
+                                            -foreground => $SDL::Color::white);
+    $ttfonts{ingame}{bg} = SDL::TTFont->new(-name => $main_font, -size => 18, -mode => $mode,
+                                            -foreground => $SDL::Color::black);
+    $ENV{LANGUAGE} =~ /^ja/ and print_step('.');
+    $ttfonts{ingame_small}{fg} = SDL::TTFont->new(-name => $main_font, -size => 10, -mode => $mode,
+                                                  -foreground => $SDL::Color::white);
+    $ttfonts{ingame_small}{bg} = SDL::TTFont->new(-name => $main_font, -size => 10, -mode => $mode,
+                                                  -foreground => $SDL::Color::black);
 
     print_step('.'); 
     foreach my $ball (1..8) {
@@ -2771,7 +2785,7 @@ sub smg_servers() {
                         return [ { host => 'localhost', port => 1511 } ];
                     } else {
                         %ttfonts = undef;  #- close related file descriptors
-                        unless (exec $fb_server, '-L', '-p', '1511', '-d', '-n', 'lan-' . substr($ENV{USER}, 0, 8)) {
+                        unless (exec $fb_server, '-L', '-p', '1511', '-d', '-n', 'lan-' . substr($ENV{USER}, 0, 8), '-z') {
                             print STDERR "Could not create server limited to lan game: $!\n";
                             POSIX::_exit(1);
                         }
@@ -2829,7 +2843,7 @@ sub smg_choose_server(@) {
             if ($server->{selected}) {
                 put_image($malus_gfx{tomate}, $smg_startx - 24, $y);
             }
-            exists $imgbin{flag}{$server->{locale}} and put_image($imgbin{flag}{$server->{locale}}, $smg_startx, $y);
+            exists $imgbin{flag}{$server->{language}} and put_image($imgbin{flag}{$server->{language}}, $smg_startx, $y);
             print_('netdialogs', $app, $smg_startx + 34, $y, $server->{name});
             print_('netdialogs', $app, 340, $y, t("Available players:%s  Ping:%sms", $server->{players}, $server->{ping}));
                                                      

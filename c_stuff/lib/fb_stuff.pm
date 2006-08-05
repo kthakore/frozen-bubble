@@ -35,6 +35,9 @@ use vars qw(@ISA @EXPORT $FPATH $FLPATH $FBLEVELS $colourblind %POS_1P %POS_2P %
 
 $FPATH = '@DATADIR@/frozen-bubble';
 $FLPATH = '@LIBDIR@/frozen-bubble';
+$DEJAVUPATH = '@DEJAVUPATH@';
+$DEJAVUOBLIQUEPATH = '@DEJAVUOBLIQUEPATH@';
+$SAZANAMIGOTHICPATH = '@SAZANAMIGOTHICPATH@';
 
 %POS_2P = ( p1 => { left_limit => 30, right_limit => 286, top_limit => 40, 'initial_bubble_y' => 390,
                     canon => { x => 108, 'y' => 356 },
