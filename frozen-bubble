@@ -131,8 +131,7 @@ local $_ = "@ARGV";
  -cb, --colourblind          use bubbles for colourblind people
  -pm<#n>, --playermalus<#n>  add a malus of n to the left player (can be negative)
  -ls<name>, --levelset<name> directly start with the specified levelset name
- -ms<url>, --masterserver<url> use the specified URL to fetch the serverlist from
- -gs<host:port>, --gameserver<host:port> try to use the specified host and port as game server
+ -gs<host:port>, --gameserver<host:port> in NET game, directly use this game server
 
 ";
 
@@ -3377,7 +3376,10 @@ sub setup_mp_game() {
         if ($gameserver) {
             my ($host, $port) = $gameserver =~ /(\S+):(\S+)/;
             fb_net::connect($host, $port);
-            fb_net::isconnected() or goto master_server;
+            if (!fb_net::isconnected()) {
+		print STDERR "Cannot connect to specified gameserver, fallbacking to contacting master server\n";
+                goto master_server;
+            }
         } else {
           master_server:
             #- 1. get list of servers
@@ -3398,7 +3400,11 @@ sub setup_mp_game() {
         if ($pdata{gametype} eq 'lan') {
             return;
         } else {
-            goto choose_server;
+            if ($gameserver) {
+                return;
+            } else {
+                goto choose_server;
+            }
         }
     }
     return 1;
