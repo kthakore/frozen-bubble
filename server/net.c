@@ -837,7 +837,6 @@ void register_server() {
                                                 break;
                                         }
                                 }
-                                quiet = TRUE;  // don't unregister on SIGTERM
                         }
                 }
         }
