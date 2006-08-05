@@ -881,7 +881,7 @@ sub remove_dialog {
 				   '-y' => $background->height/2 - $surface_dialog->height/2,
 				   -width => $surface_dialog->width, -height => $surface_dialog->height);
     $background->blit($rect{middle}, $app, $rect{middle});
-    $app->update;
+    $app->flip;
 
     # update the screen
     load_level();
@@ -1463,7 +1463,6 @@ sub clear_level {
 				  '-y' => $POS_1P{p1}{top_limit});
     
     $background->blit($rect{clear}, $app, $rect{clear});
-    $app->update;
 }
 
 sub delete_level {
@@ -1745,8 +1744,8 @@ sub print_dialog_list_arrow_up {
 sub print_levelset_name {
     $rect{ls_name_erase} = SDL::Rect->new(-x => 195, '-y' => 0, -width => 445-195, -height => 35);
     $background->blit($rect{ls_name_erase}, $app, $rect{ls_name_erase});
-    $app->update;
     $app->print(($background->width - SDL_TEXTWIDTH(uc($levelset_name)))/2 - 6, 7, uc($levelset_name));
+    $app->flip;
 }
 
 sub print_text_generic {
@@ -1879,7 +1878,7 @@ sub print_jump_to_level_value {
 					   -width => $surface_dialog->width,
 					   -height => $surface_dialog->height - 3*$WOOD_PLANK_HEIGHT);
         $surface_dialog->blit($rect{dialog_blank}, $app, $rect{dialog_new});
-        $app->update;
+        $app->flip;
         if ($key == SDLK_BACKSPACE()) {
             chop $jump_to_level_value;
         } else {
@@ -1928,7 +1927,7 @@ sub print_new_ls_name {
 					   -width => $surface_dialog->width,
 					   -height => $surface_dialog->height - 3*$WOOD_PLANK_HEIGHT);
         $surface_dialog->blit($rect{dialog_blank}, $app, $rect{dialog_new});
-        $app->update;
+        $app->flip;
         if ($key == SDLK_BACKSPACE()) {
             chop $new_ls_name_text;
         } elsif ($key == SDLK_MINUS() || $key == SDLK_KP_MINUS()) {
@@ -2006,12 +2005,11 @@ sub print_level_nb {
 					 -width => 100, -height => 25);
 
     $background->blit($level_sign_rect, $app, $level_sign_rect);
-    $app->update($level_sign_rect);
 
     my $text = "$curr_level/" . keys %bubble_hash;
 
     $app->print($POS_1P{p1}{scores}{x} - 12 * length($text)/2, $POS_1P{p1}{scores}{y}, $text);
-
+    $app->update($level_sign_rect);
 }
 
 
