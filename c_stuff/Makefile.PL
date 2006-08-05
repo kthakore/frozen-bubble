@@ -38,7 +38,7 @@ ccompile('#include <SDL/SDL.h>
 	 `sdl-config --cflags`,
 	 chomp_(`sdl-config --libs`) . ' -lSDL_mixer -lSDL_ttf')
   or
-  die_ 'SDL_mixer is needed (and, by the way, version >= 1.2.2 will be needed)';
+  die_ 'SDL_mixer and SDL_ttf are needed (and, by the way, SDL_mixer version >= 1.2.2)';
 
 
 ccompile('#include <SDL/SDL.h>

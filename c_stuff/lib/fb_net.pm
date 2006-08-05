@@ -309,10 +309,10 @@ sub connect($$) {
 
     my $msg = readline_();
     my ($remote_major, $remote_minor, $isready) = $msg =~ m|^FB/(\d+).(\d+) (.*)|;
-    my ($servername, $serverlocale);
+    my ($servername, $serverlanguage);
     if ($isready =~ /^PUSH: SERVER_READY (.*) (.*)/) {
         $servername = $1;
-        $serverlocale = $2;
+        $serverlanguage = $2;
     } else {
         disconnect();
         if ($isready eq 'PUSH: SERVER_IS_FULL') {
@@ -346,7 +346,7 @@ sub connect($$) {
 
     $current_host = $host;
     $current_port = $port;
-    return { ping => $ping, name => $servername, locale => $serverlocale };
+    return { ping => $ping, name => $servername, language => $serverlanguage };
 }
 
 
