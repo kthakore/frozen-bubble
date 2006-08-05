@@ -52,8 +52,9 @@ char* current_command;
 const int proto_major = 1;
 const int proto_minor = 0;
 
-static char greets_msg_base[] = "SERVER_READY %s";
+static char greets_msg_base[] = "SERVER_READY %s %s";
 static char* servername = NULL;
+static char* serverlocale = NULL;
 
 static char ok_generic[] = "OK";
 
@@ -270,7 +271,7 @@ void connections_manager(void)
         struct timeval tv;
         static char * greets_msg = NULL;
         if (!greets_msg)   // C sux
-                greets_msg = asprintf_(greets_msg_base, servername);
+                greets_msg = asprintf_(greets_msg_base, servername, serverlocale);
 
         date_amount_transmitted_reset = get_current_time();
 
@@ -523,6 +524,28 @@ static void handle_parameter(char command, char * param) {
                         fprintf(stderr, "-P: %s not convertible to int, ignoring\n", param);
                 }
                 break;
+        case 'a':
+                if (streq(param, "af") || streq(param, "ar") || streq(param, "az") || streq(param, "bg") || streq(param, "br")
+                    || streq(param, "bs") || streq(param, "ca") || streq(param, "cs") || streq(param, "cy") || streq(param, "da")
+                    || streq(param, "el") || streq(param, "en") || streq(param, "eo") || streq(param, "eu") || streq(param, "fr")
+                    || streq(param, "ga") || streq(param, "gl") || streq(param, "hr") || streq(param, "hu") || streq(param, "id")
+                    || streq(param, "is") || streq(param, "it") || streq(param, "ja") || streq(param, "ko") || streq(param, "lt")
+                    || streq(param, "lv") || streq(param, "mk") || streq(param, "ms") || streq(param, "nl") || streq(param, "no")
+                    || streq(param, "pl") || streq(param, "pt_BR") || streq(param, "ro") || streq(param, "ru") || streq(param, "sk")
+                    || streq(param, "sl") || streq(param, "sq") || streq(param, "sv") || streq(param, "tg") || streq(param, "tr")
+                    || streq(param, "uk") || streq(param, "uz") || streq(param, "vi") || streq(param, "wa") || streq(param, "zh_CN")
+                    || streq(param, "zh_TW")) {
+                        serverlocale = strdup(param);
+                        printf("-a: setting preferred locale for users of the server to '%s'\n", serverlocale);
+                } else {
+                        fprintf(stderr, "-a: %s not a valid locale, ignoring\n", param);
+                        fprintf(stderr, "    valid locales are: af, ar, az, bg, br, bs, ca, cs, cy, da, el, en, eo, eu, fr, ga, gl, hr, hu, id, is, it, ja, ko, lt, lv, mk, ms, nl, no, pl, pt_BR, ro, ru, sk, sl, sq, sv, tg, tr, uk, uz, vi, wa, zh_CN, zh_TW\n" );
+                }
+                break;
+        case 'z':
+                printf("-z: no preferred locale for users of the server\n");
+                serverlocale = "zz";
+                break;
         default:
                 fprintf(stderr, "unrecognized option %c, ignoring\n", command);
         }
@@ -534,7 +557,7 @@ void create_server(int argc, char **argv)
         int valone = 1;
 
         while (1) {
-                int c = getopt(argc, argv, "hn:lLp:u:t:o:c:dqH:P:");
+                int c = getopt(argc, argv, "hn:lLp:u:t:o:c:dqH:P:a:z");
                 if (c == -1)
                         break;
                 
@@ -575,6 +598,11 @@ void create_server(int argc, char **argv)
 
         if (!servername) {
                 fprintf(stderr, "Must give a name to the server with -n <name>.\n");
+                exit(EXIT_FAILURE);
+        }
+
+        if (!serverlocale) {
+                fprintf(stderr, "Must set the preferred locale of users of the server with -a <locale> or specify there is none with -z.\n");
                 exit(EXIT_FAILURE);
         }
 
