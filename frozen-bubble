@@ -2178,6 +2178,15 @@ sub init_game() {
     $imgbin{mp_ready_newgame} = add_image('pinguins/mp_ready_newgame.png');
     $imgbin{mp_waiting_newgame} = add_image('pinguins/mp_waiting_newgame.png');
 
+    #- little flags
+    foreach my $f (glob("$FPATH/gfx/flags/*")) {
+        $f =~ /flag-(\S+)\.png/;
+        $imgbin{flag}{$1} = add_image_file($f);
+    }
+
+    $pinguin{$::p}{action} = [ add_images("pinguins/action_$::p*.png") ];
+    my @levelsets = sort glob("$FBLEVELS/*");
+
     #- scrolling banner
     $imgbin{banner_artwork} = add_image('menu/banner_artwork.png');
     $imgbin{banner_soundtrack} = add_image('menu/banner_soundtrack.png');
@@ -2818,9 +2827,10 @@ sub smg_choose_server(@) {
         $y = $smg_starty;
         foreach my $server (@sorted_servers) {
             if ($server->{selected}) {
-                put_image($malus_gfx{tomate}, 56, $y);
+                put_image($malus_gfx{tomate}, $smg_startx - 24, $y);
             }
-            print_('netdialogs', $app, $smg_startx, $y, $server->{name});
+            exists $imgbin{flag}{$server->{locale}} and put_image($imgbin{flag}{$server->{locale}}, $smg_startx, $y);
+            print_('netdialogs', $app, $smg_startx + 34, $y, $server->{name});
             print_('netdialogs', $app, 340, $y, t("Available players:%s  Ping:%sms", $server->{players}, $server->{ping}));
                                                      
             $y += $smg_lineheight;
@@ -3345,6 +3355,7 @@ sub show_mp_scores() {
 sub setup_mp_game() {
     
     $imgbin{back_netgame}->blit($apprects{main}, $app, $apprects{main});
+    my $servers;
 
     if (!fb_net::isconnected()) {
         @smg_status_messages = ();
@@ -3356,7 +3367,7 @@ sub setup_mp_game() {
         } else {
           master_server:
             #- 1. get list of servers
-            my $servers = smg_servers();
+            $servers = smg_servers();
             defined $servers or return;
             
           choose_server:
