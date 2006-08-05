@@ -96,7 +96,7 @@ bind_textdomain_codeset("frozen-bubble", "UTF-8");  #- we're going to use SDL-tt
 print "        [[ Frozen-Bubble-$version ]]\n\n";
 print '  http://www.frozen-bubble.org/
 
-  Copyright (c) 2000 - 2006 The Frozen-Bubble Team.
+  Copyright (c) 2000-2006 The Frozen-Bubble Team.
  
     Artwork: Alexis Younes
              Amaury Amblard-Ladurantie

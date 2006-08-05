@@ -1,33 +1,20 @@
                    [[ Frozen-Bubble ]]
 
-
-Copyright (c) 2000, 2001, 2002, 2003 Guillaume Cottenceau.
+Copyright (c) 2000-2006 The Frozen-Bubble Team.
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
 version 2, as published by the Free Software Foundation.
 
-
-Artwork:
-	Alexis Younes <73lab at free.fr>
-		(everything but the bubbles)
-	Amaury Amblard-Ladurantie <amaury at linuxfr.org>
-		(the bubbles)
-
-Soundtrack:
-	Matthias Le Bidan <matthias.le_bidan at caramail.com>
-		(the three musics and all the sound effects)
-
-Design & Programming:
-	Guillaume Cottenceau <guillaume.cottenceau at free.fr>
-		(design and manage the project, whole sourcecode)
-	Kim and David Joham <[k|d]joham at yahoo.com>
-		(level editor)
-
+Check the AUTHORS file for the full story of who did what.
 
             [[ http://www.frozen-bubble.org/ ]]
 
 
+Notice: the following is an historic explanation of Frozen-Bubble
+written in 2002 which is kept here for information:
+
+-=-=---=-=---=-=---=-=---=-=---=-=---=-=---=-=---=-=---=-=---=-=--
 This game began when I, as a packager for Mandrakesoft[1] and
 amateur of the Perl language (which I discovered reading the
 source code of Mandrake's graphical installer, DrakX[2]),
@@ -86,4 +73,4 @@ Footnotes:
 [5] http://sdlperl.org/
 
 [6] http://73lab.com/
-
+-=-=---=-=---=-=---=-=---=-=---=-=---=-=---=-=---=-=---=-=---=-=--
