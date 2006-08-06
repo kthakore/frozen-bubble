@@ -49,7 +49,8 @@ arbitrary formats. Additionally, valgrind has been used to spot
 and fix any reported memory allocation problems. Yet the fact
 that the Frozen-Bubble server doesn't need root permissions for
 running is also a good protection against possible remaining
-problems.
+problems. Consider also -fstack-protector for compiling the
+server if you're using a recent enough gcc.
 
 Because the security of your server is crucial, our advice is to
 create and use a special user to run it, in order to prevent from
