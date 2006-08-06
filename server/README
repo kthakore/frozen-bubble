@@ -62,6 +62,8 @@ compromise your server:
   function to OpenBSD's strlcat is used when strcat functionality
   is needed
 
+- flawfinder has been used and each spotted item checked/fixed
+
 - it doesn't need root permission to operate
 
 Consider also -fstack-protector for compiling the server if

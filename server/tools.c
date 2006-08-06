@@ -45,13 +45,6 @@ int charstar_to_int(const char * s)
         return number;
 }
 
-char * trim_newline(char * s)
-{
-        if (s && s[strlen(s)-1] == '\n')
-                s[strlen(s)-1] = '\0';
-        return s;
-}
-
 char * vasprintf_(const char *msg, va_list args)
 {
         char s[8192];

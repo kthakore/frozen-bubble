@@ -23,7 +23,6 @@
 #include <glib.h>
 
 int charstar_to_int(const char * s);
-char * trim_newline(char * s);
 char * asprintf_(const char *msg, ...);
 char * vasprintf_(const char *msg, va_list args);
 void * malloc_(size_t size);

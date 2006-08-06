@@ -94,11 +94,17 @@ static int incoming_data_buffers_count[256];
 static ssize_t send_line(int fd, char* msg)
 {
         char buf[1000];
+        int size;
         if (current_command)
-                snprintf(buf, sizeof(buf), "FB/%d.%d %s: %s\n", proto_major, proto_minor, current_command, msg);
+                size = snprintf(buf, sizeof(buf), "FB/%d.%d %s: %s\n", proto_major, proto_minor, current_command, msg);
         else 
-                snprintf(buf, sizeof(buf), "FB/%d.%d ???: %s\n", proto_major, proto_minor, msg);
-        return send(fd, buf, strlen(buf), 0);
+                size = snprintf(buf, sizeof(buf), "FB/%d.%d ???: %s\n", proto_major, proto_minor, msg);
+        if (size > 0) {
+                return send(fd, buf, size, 0);
+        } else {
+                l2(OUTPUT_TYPE_ERROR, "[%d] Format failure, impossible to send message '%s'", fd, msg);
+                return 0;
+        }
 }
 
 ssize_t send_line_log(int fd, char* dest_msg, char* inco_msg)
@@ -593,7 +599,7 @@ void create_server(int argc, char **argv)
                                         char command, param[256];
                                         if (buf[0] == '#' || buf[0] == '\n' || buf[0] == '\r')
                                                 continue;
-                                        if (sscanf(buf, "%c %256s\n", &command, param) == 2) {
+                                        if (sscanf(buf, "%c %255s\n", &command, param) == 2) {
                                                 handle_parameter(command, param);
                                         } else if (sscanf(buf, "%c\n", &command) == 1) {
                                                 handle_parameter(command, NULL);
@@ -747,7 +753,7 @@ static char * http_get(char * host, int port, char * path)
 		nextChar++;
 		*nextChar = '\0';
 
-		if (nextChar - headers == sizeof(headers)) {
+		if (nextChar + 1 - headers == sizeof(headers)) {
 			close(sock);
                         l3(OUTPUT_TYPE_ERROR, "HTTP_GET: I/O error retrieving http://%s:%d%s", host, port, path);
 			return NULL;
@@ -822,6 +828,13 @@ static char * http_get(char * host, int port, char * path)
                         }
                         if (bufsize - (ptr - buf) - 1 < 2048) {
                                 bufsize += 4096;
+                                if (bufsize >= 1024*1024*1024) {
+                                        l0(OUTPUT_TYPE_ERROR, "HTTP_GET: maximum download size of 1024*1024*1024 reached");
+                                        ptr[0] = '\0';
+                                        buf = realloc_(buf, dlsize + 1);
+                                        close(sock);
+                                        return buf;
+                                }
                                 buf = realloc_(buf, bufsize);
                                 ptr = buf + dlsize;
                         }

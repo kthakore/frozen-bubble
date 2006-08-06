@@ -133,7 +133,7 @@ static void list_games_aux(gpointer data, gpointer user_data)
 void calculate_list_games(void)
 {
         char * free_players;
-        memset(list_games_str, 0, strlen(list_games_str));
+        list_games_str[0] = '\0';
         players_in_game = 0;
         games_running = 0;
         g_list_foreach(games, list_games_aux, NULL);
