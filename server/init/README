@@ -28,7 +28,10 @@ option values) for all subsequent servers you can host. For first
 server you must at least set the servername (name must be 12
 characters long maximum and only contain characters in
 [a-z0-9.-]) and the language, and for all subsequent servers you
-must also specify a different port.
+must also specify a different port. Note: if you host multiple
+servers, it is probably a good idea to not use the same server
+name for each of them (even if languages are different) so that
+players can easily rendez-vous on the correct server.
 
 If needed, other configuration parameters can be set in the
 configuration file. Each configuration parameter must be on its

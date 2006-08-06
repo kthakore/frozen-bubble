@@ -2837,7 +2837,7 @@ sub smg_servers() {
 
 sub smg_choose_server(@) {
     my (@servers) = @_;
-    my $max_lines = 20;
+    my $max_lines = 18;
     erase_line($smg_starty_chat, $imgbin{back_netgame});     #- if we return from choose_game
     erase_line($smg_starty_players, $imgbin{back_netgame});  #-
 
@@ -2852,7 +2852,7 @@ sub smg_choose_server(@) {
         my $y = $smg_starty;
         foreach (1 .. $max_lines) {
             erase_line($y, $imgbin{back_netgame});
-            $y += $smg_lineheight;
+            $y += $smg_lineheight + 2;
         }
         $y = $smg_starty;
         foreach my $server (@sorted_servers) {
@@ -2863,7 +2863,7 @@ sub smg_choose_server(@) {
             print_('netdialogs', $app, $smg_startx + 34, $y, $server->{name});
             print_('netdialogs', $app, 340, $y, t("Available players:%s  Ping:%sms", $server->{players}, $server->{ping}));
                                                      
-            $y += $smg_lineheight;
+            $y += $smg_lineheight + 2;
         }
         $app->flip();
     };
