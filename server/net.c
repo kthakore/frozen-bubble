@@ -192,23 +192,28 @@ static void handle_incoming_data_generic(gpointer data, gpointer user_data, int 
                                 // prio e.g. in game
                                 process_msg_prio(fd, buf, len);
                                 prio_processed = 1;
+
                         } else {
                                 char * eol;
-                                char * line = buf;
-
                                 /* string operations will need a NULL conn_terminated string */
                                 buf[len] = '\0';
 
-                                /* loop (to handle case when network gives us several lines at once) */
-                                while ((eol = strchr(line, '\n'))) {
-                                        eol[0] = '\0';
-                                        if (strlen(line) > 0 && eol[-1] == '\r')
-                                                eol[-1] = '\0';
-                                        if (process_msg(fd, line)) {
-                                                conn_terminated(fd, "process_msg said to shutdown this connection");
-                                                return;
-                                        }
-                                        line = eol + 1;
+                                /* must handle only one message, because we might have multiple and subsequent might need to be
+                                   treated as prio message is the one before is about starting the game */
+                                eol = strchr(buf, '\n');  // we are sure there is a \n because of check 20 lines upper
+                                eol[0] = '\0';
+                                if (strlen(buf) > 0 && eol[-1] == '\r')  // let's try to behave in case of Windows and Mac ports
+                                        eol[-1] = '\0';
+                                if (process_msg(fd, buf)) {
+                                        conn_terminated(fd, "process_msg said to shutdown this connection");
+                                        return;
+                                }
+
+                                if (eol + 1 - buf < len) {
+                                        ssize_t remaining = len - (eol + 1 - buf);
+                                        l2(OUTPUT_TYPE_DEBUG, "multiple non-prio messages for %d, buffering (%d bytes)", fd, remaining);
+                                        memcpy(incoming_data_buffers[fd], eol + 1, remaining);
+                                        incoming_data_buffers_count[fd] = remaining;
                                 }
                         }
                 }
