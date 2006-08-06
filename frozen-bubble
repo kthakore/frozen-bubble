@@ -1468,11 +1468,13 @@ sub verify_if_end {
 
 sub print_hurry($;$) {
     my ($player, $dont_save_background) = @_;
+    $player = @PLAYERS == 2 && $player eq 'rp1' ? 'p2' : $player;
     my $t = switch_image_on_background($imgbin{hurry}{$player}, $POS{$player}{left_limit} + $POS{$player}{hurry}{x}, $POS{$player}{hurry}{'y'}, 1);
     $dont_save_background or $pdata{$player}{hurry_save_img} = $t;
 }
 sub remove_hurry($) {
     my ($player) = @_;
+    $player = @PLAYERS == 2 && $player eq 'rp1' ? 'p2' : $player;
     $pdata{$player}{hurry_save_img} and
       switch_image_on_background($pdata{$player}{hurry_save_img}, $POS{$player}{left_limit} + $POS{$player}{hurry}{x}, $POS{$player}{hurry}{'y'});
     $pdata{$player}{hurry_save_img} = undef;
