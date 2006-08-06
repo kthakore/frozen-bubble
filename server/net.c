@@ -530,19 +530,19 @@ static void handle_parameter(char command, char * param) {
         case 'a':
                 if (streq(param, "af") || streq(param, "ar") || streq(param, "az") || streq(param, "bg") || streq(param, "br")
                     || streq(param, "bs") || streq(param, "ca") || streq(param, "cs") || streq(param, "cy") || streq(param, "da")
-                    || streq(param, "el") || streq(param, "en") || streq(param, "eo") || streq(param, "eu") || streq(param, "fr")
-                    || streq(param, "ga") || streq(param, "gl") || streq(param, "hr") || streq(param, "hu") || streq(param, "id")
-                    || streq(param, "is") || streq(param, "it") || streq(param, "ja") || streq(param, "ko") || streq(param, "lt")
-                    || streq(param, "lv") || streq(param, "mk") || streq(param, "ms") || streq(param, "nl") || streq(param, "no")
-                    || streq(param, "pl") || streq(param, "pt_BR") || streq(param, "ro") || streq(param, "ru") || streq(param, "sk")
-                    || streq(param, "sl") || streq(param, "sq") || streq(param, "sv") || streq(param, "tg") || streq(param, "tr")
-                    || streq(param, "uk") || streq(param, "uz") || streq(param, "vi") || streq(param, "wa") || streq(param, "zh_CN")
-                    || streq(param, "zh_TW")) {
+                    || streq(param, "de") || streq(param, "el") || streq(param, "en") || streq(param, "eo") || streq(param, "eu")
+                    || streq(param, "fi") || streq(param, "fr") || streq(param, "ga") || streq(param, "gl") || streq(param, "hr")
+                    || streq(param, "hu") || streq(param, "id") || streq(param, "is") || streq(param, "it") || streq(param, "ja")
+                    || streq(param, "ko") || streq(param, "lt") || streq(param, "lv") || streq(param, "mk") || streq(param, "ms")
+                    || streq(param, "nl") || streq(param, "no") || streq(param, "pl") || streq(param, "pt_BR") || streq(param, "ro")
+                    || streq(param, "ru") || streq(param, "sk") || streq(param, "sl") || streq(param, "sq") || streq(param, "sv")
+                    || streq(param, "tg") || streq(param, "tr") || streq(param, "uk") || streq(param, "uz") || streq(param, "vi")
+                    || streq(param, "wa") || streq(param, "zh_CN") || streq(param, "zh_TW")) {
                         serverlanguage = strdup(param);
                         printf("-a: setting preferred language for users of the server to '%s'\n", serverlanguage);
                 } else {
                         fprintf(stderr, "-a: %s not a valid language, ignoring\n", param);
-                        fprintf(stderr, "    valid languages are: af, ar, az, bg, br, bs, ca, cs, cy, da, el, en, eo, eu, fr, ga, gl, hr, hu, id, is, it, ja, ko, lt, lv, mk, ms, nl, no, pl, pt_BR, ro, ru, sk, sl, sq, sv, tg, tr, uk, uz, vi, wa, zh_CN, zh_TW\n" );
+                        fprintf(stderr, "    valid languages are: af, ar, az, bg, br, bs, ca, cs, cy, da, de, el, en, eo, eu, fi, fr, ga, gl, hr, hu, id, is, it, ja, ko, lt, lv, mk, ms, nl, no, pl, pt_BR, ro, ru, sk, sl, sq, sv, tg, tr, uk, uz, vi, wa, zh_CN, zh_TW\n" );
                 }
                 break;
         case 'z':
