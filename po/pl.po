@@ -1,0 +1,250 @@
+# translation of frozen-bubble.po to Polish
+# This file is distributed under the same license as the PACKAGE package.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER.
+# Marcin Woloszczuk <zdebel@gmail.com>, 2006.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: frozen-bubble\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2006-06-19 21:47+0200\n"
+"PO-Revision-Date: 2006-08-06 22:06+0200\n"
+"Last-Translator: Marcin Woloszczuk <zdebel@gmail.com>\n"
+"Language-Team: Polish <pl@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: KBabel 1.10.2\n"
+
+#: ../frozen-bubble:2633
+msgid "Start 1-player game menu"
+msgstr "Pokaż menu dla jednego gracza "
+
+#: ../frozen-bubble:2735
+msgid "*** Please wait, probing for available servers on local network..."
+msgstr "*** Proszę czekać, wyszukiwanie dostępnych serwerów w sieci lokalnej... "
+
+#: ../frozen-bubble:2738
+msgid "*** Unable to probe for available servers on local network!"
+msgstr "*** Nie można sprawdzić dostępnych serwerów w sieci lokalnej!"
+
+#: ../frozen-bubble:2740
+msgid "*** Verify your network setup"
+msgstr "*** Sprawdź ustawienia swojej sieci"
+
+#: ../frozen-bubble:2749
+msgid "*** No server found, and could not start server"
+msgstr "*** Nie znaleziono żadnego serwera i nie udało się uruchomienie serwera"
+
+#: ../frozen-bubble:2750
+msgid "*** Verify your installation or contact your vendor"
+msgstr "*** Zweryfikuj swoją instalację, lub skontaktuj się ze swoim dostawcą"
+
+#: ../frozen-bubble:2757
+msgid "*** No server found, created server for local network game"
+msgstr "*** Żaden serwer nie został znaleziony, stworzono serwer dla sieci lokalnej"
+
+#: ../frozen-bubble:2773
+msgid "*** Contacting master server..."
+msgstr "*** Kontaktowanie się z głównym serwerem..."
+
+#: ../frozen-bubble:2784
+msgid "*** Server list received properly"
+msgstr "*** Lista serwerów odebrana prawidłowo"
+
+#: ../frozen-bubble:2786
+msgid "*** Unable to download server list from master server!"
+msgstr "*** Nie udało się ściągnąć listy serwerów z głównego serwera!"
+
+#: ../frozen-bubble:2787
+msgid "*** Verify your network setup or retry later"
+msgstr "*** Sprawdź swoją sieć, lub spróbuj później"
+
+#: ../frozen-bubble:2820
+#, perl-format
+msgid "Available players:%s  Ping:%sms"
+msgstr "Dostępni gracze:%s  Ping:%sms"
+
+#: ../frozen-bubble:2857
+msgid "*** No available game server"
+msgstr "*** Brak dostępnych serwerów"
+
+#: ../frozen-bubble:2858
+msgid "*** Please retry later or try a local network game (lan game)"
+msgstr "*** Proszę spróbować później, lub spróbuj gry w sieci lokalnej (gra LAN)"
+
+#: ../frozen-bubble:2865
+msgid "*** Please choose a server"
+msgstr "*** Proszę wybrać serwer"
+
+#: ../frozen-bubble:2926
+#, perl-format
+msgid "*** Connected to server '%s'"
+msgstr "*** Połączono się z serwerem '%s'"
+
+#: ../frozen-bubble:3042 ../frozen-bubble:3215 ../frozen-bubble:3314
+msgid "Chat"
+msgstr "Czat"
+
+#: ../frozen-bubble:3043
+msgid "Create new game"
+msgstr "Stwórz nową grę"
+
+#: ../frozen-bubble:3080
+msgid "Say: "
+msgstr "Powiedz:"
+
+#: ../frozen-bubble:3093
+#, perl-format
+msgid "Join game: %s"
+msgstr "Dołącz do gry: %s"
+
+#: ../frozen-bubble:3108
+#, perl-format
+msgid "Available Players: %s"
+msgstr "Dostępni gracze: %s"
+
+#: ../frozen-bubble:3132
+msgid "*** Leaving game..."
+msgstr "*** Opuszczanie gry..."
+
+#: ../frozen-bubble:3203
+msgid "*** Game created - now you need to wait for players to join"
+msgstr "*** Gra została stworzona - musisz teraz poczekać na graczy"
+
+#: ../frozen-bubble:3205
+msgid "*** Joined game"
+msgstr "*** Dołączono się do gry"
+
+#: ../frozen-bubble:3212
+msgid "*** Error: game just started or aborted"
+msgstr "*** Błąd: gra się właśnie zaczęła, lub została anulowana"
+
+#: ../frozen-bubble:3224
+#, perl-format
+msgid "*** Can't start game: '%s'"
+msgstr "*** Nie można zacząć gry: '%s'"
+
+#: ../frozen-bubble:3254
+#, perl-format
+msgid "*** %s joined the game!"
+msgstr "*** %s właśnie dołączył się do gry!"
+
+#: ../frozen-bubble:3257
+#, perl-format
+msgid "*** %s left the game..."
+msgstr "*** %s opuścił grę..."
+
+#: ../frozen-bubble:3300
+msgid "*** Lost connection to server, abandoning..."
+msgstr "*** Połaczenie z serwerem zostało stracone, opuszczanie..."
+
+#: ../frozen-bubble:3313
+#, perl-format
+msgid "Players in game: %s"
+msgstr "Liczba graczy: %s"
+
+#: ../frozen-bubble:3315
+msgid "Start game!"
+msgstr "Rozpocznij grę!"
+
+#: ../frozen-bubble:3327
+#, perl-format
+msgid "*** Game finished, because the following player(s) left: %s"
+msgstr "*** Gra została zakończona ponieważ następujący gracz(e) opuścił(li) %s"
+
+#: ../frozen-bubble:3331
+#, perl-format
+msgid "*** Winner: %s"
+msgstr "*** Zwycięzca: %s"
+
+#: ../frozen-bubble:3333
+msgid "*** Draw game!"
+msgstr "*** Remis!"
+
+#: ../frozen-bubble:3335
+#, perl-format
+msgid "*** Scores: %s"
+msgstr "*** Wyniki: %s"
+
+#: ../frozen-bubble:3383
+msgid "2-player game"
+msgstr "Gra dla dwóch graczy"
+
+#: ../frozen-bubble:3383
+msgid "Enable chain-reaction?"
+msgstr "Włączyć reakcję łańcuchową?"
+
+#: ../frozen-bubble:3384
+#, perl-format
+msgid "%s or %s?"
+msgstr "%s czy %s?"
+
+#: ../frozen-bubble:3385
+msgid "Enjoy the game!"
+msgstr "Udanej gry!"
+
+#: ../frozen-bubble:3423
+msgid "Congratulations!"
+msgstr "Gratulacje!"
+
+#: ../frozen-bubble:3423
+msgid "You have a highscore!"
+msgstr "Zdobyłeś najlepszy wynik!"
+
+#: ../frozen-bubble:3424
+msgid "Your name?"
+msgstr "Twoje imię?"
+
+#: ../frozen-bubble:3425
+msgid "Great game!"
+msgstr "Dobra gra!"
+
+#: ../frozen-bubble:3744
+msgid "Please enter new keys:"
+msgstr "Wprowadź nowe klawisze:"
+
+#: ../frozen-bubble:3746
+msgid "Player 1; turn left?"
+msgstr "Gracz 1; w lewo?"
+
+#: ../frozen-bubble:3747
+msgid "Player 1; turn right?"
+msgstr "Gracz 1; w prawo?"
+
+#: ../frozen-bubble:3748
+msgid "Player 1; fire?"
+msgstr "Gracz 1; strzał?"
+
+#: ../frozen-bubble:3749
+msgid "Player 1; center?"
+msgstr "Gracz 1; środek?"
+
+#: ../frozen-bubble:3751
+msgid "Player 2; turn left?"
+msgstr "Player 2; w lewo?"
+
+#: ../frozen-bubble:3752
+msgid "Player 2; turn right?"
+msgstr "Gracz 2; w prawo?"
+
+#: ../frozen-bubble:3753
+msgid "Player 2; fire?"
+msgstr "Gracz 2; strzał?"
+
+#: ../frozen-bubble:3754
+msgid "Player 2; center?"
+msgstr "Gracz 2; środek?"
+
+#: ../frozen-bubble:3756
+msgid "Toggle fullscreen?"
+msgstr "Włącz pełęn ekran?"
+
+#: ../frozen-bubble:3757
+msgid "Chat (net/lan game)?"
+msgstr "Czat (gra przez internet/lan)"
+
+#: ../frozen-bubble:3759
+msgid "Thanks!"
+msgstr "Dzięki!"
+
