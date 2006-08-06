@@ -414,7 +414,7 @@ static void help(void)
         printf("     -o outputtype             set the output type; can be DEBUG, INFO, CONNECT, ERROR; each level includes messages of next level; defaults to INFO\n");
         printf("     -d                        debug mode: do not daemonize, and log on STDERR rather than through syslog (implies -q)\n");
         printf("     -q                        \"quiet\" mode: don't automatically register the server to www.frozen-bubble.org\n");
-        printf("     -a                        set the preferred language of the server (it is just an indication used by players when choosing a server, so that they can chat using their native language - you can chose none with -z)\n");
+        printf("     -a                        set the preferred language of the server (it is just an indication used by players when choosing a server, so that they can chat using their native language - you can choose none with -z)\n");
         printf("     -z                        set that there is no preferred language for the server (see -a)\n");
         printf("     -q                        \"quiet\" mode: don't automatically register the server to www.frozen-bubble.org\n");
         printf("     -c conffile               specify the path of the configuration file\n");
