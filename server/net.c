@@ -200,7 +200,7 @@ static void handle_incoming_data_generic(gpointer data, gpointer user_data, int 
                                 buf[len] = '\0';
 
                                 /* must handle only one message, because we might have multiple and subsequent might need to be
-                                   treated as prio message is the one before is about starting the game */
+                                   treated as prio message if the one before is about starting the game */
                                 if (!(eol = strchr(buf, '\n'))) {
                                         // the bad bad guy sent a 0 byte before the \n
                                         send_line_log_push(fd, fl_client_nulbyte);
