@@ -456,17 +456,22 @@ static void handle_parameter(char command, char * param) {
                                         exit(EXIT_FAILURE);
                                 }
                         }
+                        printf("-n: setting servername to %s\n", param);
                         servername = strdup(param);
                 }
                 break;
         case 'o':
                 if (streq(param, "DEBUG")) {
+                        printf("-o: setting output type to DEBUG\n");
                         output_type = OUTPUT_TYPE_DEBUG;
                 } else if (streq(param, "INFO")) {
+                        printf("-o: setting output type to INFO\n");
                         output_type = OUTPUT_TYPE_INFO;
                 } else if (streq(param, "CONNECT")) {
+                        printf("-o: setting output type to CONNECT\n");
                         output_type = OUTPUT_TYPE_CONNECT;
                 } else if (streq(param, "ERROR")) {
+                        printf("-o: setting output type to ERROR\n");
                         output_type = OUTPUT_TYPE_ERROR;
                 }
                 break;
@@ -493,8 +498,8 @@ static void handle_parameter(char command, char * param) {
                 if (max_users != 0)
                         printf("-u: setting maximum users to %d\n", max_users);
                 else {
-                        max_users = DEFAULT_MAX_USERS;
                         fprintf(stderr, "-u: %s not convertible to int, ignoring\n", param);
+                        max_users = DEFAULT_MAX_USERS;
                 }
                 break;
         case 't':
@@ -502,8 +507,8 @@ static void handle_parameter(char command, char * param) {
                 if (max_transmission_rate != 0)
                         printf("-t: setting maximum transmission rate to %d bytes/sec\n", max_transmission_rate);
                 else {
-                        max_transmission_rate = DEFAULT_MAX_TRANSMISSION_RATE;
                         fprintf(stderr, "-t: %s not convertible to int, ignoring\n", param);
+                        max_transmission_rate = DEFAULT_MAX_TRANSMISSION_RATE;
                 }
                 break;
         case 'd':
@@ -523,8 +528,8 @@ static void handle_parameter(char command, char * param) {
                 if (external_port != 0)
                         printf("-P: setting port as seen from outside to %d\n", port);
                 else {
-                        external_port = -1;
                         fprintf(stderr, "-P: %s not convertible to int, ignoring\n", param);
+                        external_port = -1;
                 }
                 break;
         case 'a':
