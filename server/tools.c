@@ -100,6 +100,22 @@ void * memdup(void *src, size_t size)
         return r;
 }
 
+/** Should be using strlcat but could not find a GPL implementation.
+    Check http://www.courtesan.com/todd/papers/strlcpy.html it rulz. */
+size_t strconcat(char *dst, const char *src, size_t size)
+{
+        char *ptr = dst + strlen(dst);
+        while (ptr - dst < size - 1) {
+                *ptr = *src;
+                ptr++;
+                src++;
+                if (!*src)
+                        break;
+        }
+        *ptr = '\0';
+        return ptr - dst;
+}
+
 
 // is there a glist function to do that already?
 void * GListp2data(GList * elem)

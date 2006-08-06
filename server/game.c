@@ -105,9 +105,9 @@ static char* list_game(const struct game * g)
         char list_game_str[8192] = "";
         int i;
         for (i = 0; i < g->players_number; i++) {
-                strncat(list_game_str, g->players_nick[i], sizeof(list_game_str));
+                strconcat(list_game_str, g->players_nick[i], sizeof(list_game_str));
                 if (i < g->players_number - 1)
-                        strncat(list_game_str, ",", sizeof(list_game_str));
+                        strconcat(list_game_str, ",", sizeof(list_game_str));
         }
         return memdup(list_game_str, strlen(list_game_str) + 1);
 }
@@ -124,11 +124,11 @@ static void list_games_aux(gpointer data, gpointer user_data)
                 games_running++;
                 return;
         }
-        strncat(list_games_str, "[", sizeof(list_games_str));
+        strconcat(list_games_str, "[", sizeof(list_games_str));
         game = list_game(g);
-        strncat(list_games_str, game, sizeof(list_games_str));
+        strconcat(list_games_str, game, sizeof(list_games_str));
         free(game);
-        strncat(list_games_str, "]", sizeof(list_games_str));
+        strconcat(list_games_str, "]", sizeof(list_games_str));
 }
 void calculate_list_games(void)
 {
@@ -138,7 +138,7 @@ void calculate_list_games(void)
         games_running = 0;
         g_list_foreach(games, list_games_aux, NULL);
         free_players = asprintf_(" free:%d games:%d playing:%d", conns_nb() - players_in_game - 1, games_running, players_in_game);  // 1: don't count myself
-        strncat(list_games_str, free_players, sizeof(list_games_str));
+        strconcat(list_games_str, free_players, sizeof(list_games_str));
         free(free_players);
 }
 
@@ -225,9 +225,9 @@ static void real_start_game(struct game* g)
                         return;
                 mapping_str[len] = g->players_conn[i];
                 mapping_str[len+1] = '\0';
-                strncat(mapping_str, g->players_nick[i], sizeof(mapping_str));
+                strconcat(mapping_str, g->players_nick[i], sizeof(mapping_str));
                 if (i < g->players_number - 1)
-                        strncat(mapping_str, ",", sizeof(mapping_str));
+                        strconcat(mapping_str, ",", sizeof(mapping_str));
         }
         snprintf(can_start_msg, sizeof(can_start_msg), ok_can_start, mapping_str);
         for (i = 0; i < g->players_number; i++) {
@@ -435,6 +435,7 @@ int process_msg(int fd, char* msg)
         char * args;
         char * ptr, * ptr2;
         char * msg_orig;
+
         {
                 char buf[16384] = "";
                 int j;

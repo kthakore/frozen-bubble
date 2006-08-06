@@ -30,6 +30,7 @@ void * malloc_(size_t size);
 void * realloc_(void * ptr, size_t size);
 void * memdup(void *src, size_t size);
 char * memmem_(char *a, int sizea, char *b, int sizeb);
+size_t strconcat(char *dst, const char *src, size_t size);
 
 void * GListp2data(GList * elem);
 typedef gpointer (*GFoldFunc) (gpointer data, gpointer partial, gpointer user_data);
@@ -42,4 +43,3 @@ void daemonize();
 #define str_begins_static_str(pointer, static_str) \
         (!strncmp(pointer, static_str, sizeof(static_str) - 1))
 #define streq(a, b) (!strcmp(a, b))
-

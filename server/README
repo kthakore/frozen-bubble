@@ -44,13 +44,28 @@ Check the contents and README of directory 'init' for init tools.
 ]] Security
 
 C programs are ideal targets for crackers, essentially via format
-attacks. This is why the Frozen-Bubble server doesn't use
-arbitrary formats. Additionally, valgrind has been used to spot
-and fix any reported memory allocation problems. Yet the fact
-that the Frozen-Bubble server doesn't need root permissions for
-running is also a good protection against possible remaining
-problems. Consider also -fstack-protector for compiling the
-server if you're using a recent enough gcc.
+attacks. This is why the Frozen-Bubble server has undergone a
+couple of verifications to ensure it is quite secure and won't
+compromise your server:
+
+- it doesn't use arbitrary formats (the format string is always
+  a constant in the program)
+
+- valgrind has been used to spot and fix any reported memory
+  allocation problems to prevent leaks hosing the other services
+  of the server
+
+- random data has been fed to it, under which a complete
+  remaining stability has been witnessed
+
+- strcpy/strcat/strncpy/strncat are never used; a similar
+  function to OpenBSD's strlcat is used when strcat functionality
+  is needed
+
+- it doesn't need root permission to operate
+
+Consider also -fstack-protector for compiling the server if
+you're using a recent enough gcc.
 
 Because the security of your server is crucial, our advice is to
 create and use a special user to run it, in order to prevent from
