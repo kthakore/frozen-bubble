@@ -59,6 +59,7 @@ static char* serverlanguage = NULL;
 static char ok_generic[] = "OK";
 
 static char fl_client_nolf[] = "NO_LF_WITHIN_TOO_MUCH_DATA (I bet you're not a regular FB client, hu?)";
+static char fl_client_nulbyte[] = "NUL_BYTE_BEFORE_NEWLINE (I bet you're not a regular FB client, hu?)";
 static char fl_server_full[] = "SERVER_IS_FULL";
 static char fl_server_overloaded[] = "SERVER_IS_OVERLOADED";
 
@@ -200,7 +201,12 @@ static void handle_incoming_data_generic(gpointer data, gpointer user_data, int 
 
                                 /* must handle only one message, because we might have multiple and subsequent might need to be
                                    treated as prio message is the one before is about starting the game */
-                                eol = strchr(buf, '\n');  // we are sure there is a \n because of check 20 lines upper
+                                if (!(eol = strchr(buf, '\n'))) {
+                                        // the bad bad guy sent a 0 byte before the \n
+                                        send_line_log_push(fd, fl_client_nulbyte);
+                                        conn_terminated(fd, "NUL byte before newline");
+                                        return;
+                                }
                                 eol[0] = '\0';
                                 if (strlen(buf) > 0 && eol[-1] == '\r')  // let's try to behave in case of Windows and Mac ports
                                         eol[-1] = '\0';
