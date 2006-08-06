@@ -519,6 +519,7 @@ static void handle_parameter(char command, char * param) {
         case 'd':
                 printf("-d: debug mode on: will not daemonize and will display log messages on STDERR\n");
                 debug_mode = TRUE;
+                quiet = TRUE;
                 break;
         case 'q':
                 printf("-q: quiet mode: will not register to www.frozen-bubble.org\n");
