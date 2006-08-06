@@ -1,14 +1,14 @@
-# Translation of nn to Norwegian Nynorsk
+# Translation of nb to Norwegian Nynorsk
 # Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
 # This file is distributed under the same license as the PACKAGE package.
 #
 # Karl Ove Hufthammer <karl@huftis.org>, 2006.
 msgid ""
 msgstr ""
-"Project-Id-Version: nn\n"
+"Project-Id-Version: nb\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2006-06-19 21:47+0200\n"
-"PO-Revision-Date: 2006-08-06 19:55+0200\n"
+"PO-Revision-Date: 2006-08-06 20:11+0200\n"
 "Last-Translator: Karl Ove Hufthammer <karl@huftis.org>\n"
 "Language-Team: Norwegian Nynorsk <i18n-nn@lister.ping.uio.no>\n"
 "MIME-Version: 1.0\n"
@@ -19,69 +19,69 @@ msgstr ""
 
 #: ../frozen-bubble:2633
 msgid "Start 1-player game menu"
-msgstr "1-spelarspel"
+msgstr "1-spillerspill"
 
 #: ../frozen-bubble:2735
 msgid "*** Please wait, probing for available servers on local network..."
-msgstr "*** Søkjer etter tilgjengelege tenarar på lokalnettet. Vent litt …"
+msgstr "*** Søker etter tilgjengelige tjenere på lokalnettet. Vent litt …"
 
 #: ../frozen-bubble:2738
 msgid "*** Unable to probe for available servers on local network!"
-msgstr "*** Klarte ikkje søkja etter tilgjengelege tenarar på lokalnettet."
+msgstr "*** Klarte ikke søke etter tilgjengelige tjenere på lokalnettet."
 
 #: ../frozen-bubble:2740
 msgid "*** Verify your network setup"
-msgstr "*** Kontroller at nettverket er rett sett opp."
+msgstr "*** Kontroller at nettverket er riktig satt opp."
 
 #: ../frozen-bubble:2749
 msgid "*** No server found, and could not start server"
-msgstr "*** Fann ingen tenarar, og kunne ikkje starta tenar."
+msgstr "*** Fant ingen tjenere, og kunne ikke starte tjener."
 
 #: ../frozen-bubble:2750
 msgid "*** Verify your installation or contact your vendor"
-msgstr "*** Kontroller at alt er rett installert, eller kontakt leverandøren."
+msgstr "*** Kontroller at alt er riktig installert, eller kontakt leverandøren."
 
 #: ../frozen-bubble:2757
 msgid "*** No server found, created server for local network game"
-msgstr "*** Fann ingen tenarar. Starta derfor tenar for lokalnettspel."
+msgstr "*** Fant ingen tjenere. Startet derfor tjener for lokalnettspill."
 
 #: ../frozen-bubble:2773
 msgid "*** Contacting master server..."
-msgstr "*** Kopla til hovudtenar …"
+msgstr "*** Koblet til hovedtjener …"
 
 #: ../frozen-bubble:2784
 msgid "*** Server list received properly"
-msgstr "*** Tenaroversikta er motteken."
+msgstr "*** Tjeneroversikten er mottatt."
 
 #: ../frozen-bubble:2786
 msgid "*** Unable to download server list from master server!"
-msgstr "*** Klarte ikkje lasta ned tenaroversikt frå hovudtenaren."
+msgstr "*** Klarte ikke laste ned tjeneroversikt fra hovedtjeneren."
 
 #: ../frozen-bubble:2787
 msgid "*** Verify your network setup or retry later"
-msgstr "*** Kontroller at nettverket er rett sett opp, eller prøv på nytt seinare."
+msgstr "*** Kontroller at nettverket er riktig satt opp, eller prøv på nytt senere."
 
 #: ../frozen-bubble:2820
 #, perl-format
 msgid "Available players:%s  Ping:%sms"
-msgstr "Tilgjengelege spelarar: %s  Ping: %s ms"
+msgstr "Tilgjengelige spillere: %s  Ping: %s ms"
 
 #: ../frozen-bubble:2857
 msgid "*** No available game server"
-msgstr "*** Ingen speltenar tilgjengeleg."
+msgstr "*** Ingen spilltjener tilgjengelig."
 
 #: ../frozen-bubble:2858
 msgid "*** Please retry later or try a local network game (lan game)"
-msgstr "*** Prøv på nytt seinare, eller prøv eit lokalnettspel."
+msgstr "*** Prøv på nytt senere, eller prøv et lokalnettspill."
 
 #: ../frozen-bubble:2865
 msgid "*** Please choose a server"
-msgstr "*** Vel tenar."
+msgstr "*** Velg tjener."
 
 #: ../frozen-bubble:2926
 #, perl-format
 msgid "*** Connected to server '%s'"
-msgstr "*** Kopla til tenaren «%s»."
+msgstr "*** Koblet til tjeneren «%s»."
 
 #: ../frozen-bubble:3042 ../frozen-bubble:3215 ../frozen-bubble:3314
 msgid "Chat"
@@ -89,11 +89,11 @@ msgstr "Prat"
 
 #: ../frozen-bubble:3043
 msgid "Create new game"
-msgstr "Lag nytt spel"
+msgstr "Lag nytt spill"
 
 #: ../frozen-bubble:3080
 msgid "Say: "
-msgstr "Sei: "
+msgstr "Si: "
 
 #: ../frozen-bubble:3093
 #, perl-format
@@ -103,61 +103,61 @@ msgstr "Bli med: %s"
 #: ../frozen-bubble:3108
 #, perl-format
 msgid "Available Players: %s"
-msgstr "Tilgjengelege spelarar: %s"
+msgstr "Tilgjengelige spillere: %s"
 
 #: ../frozen-bubble:3132
 msgid "*** Leaving game..."
-msgstr "*** Koplar frå spel …"
+msgstr "*** Kobler fra spill …"
 
 #: ../frozen-bubble:3203
 msgid "*** Game created - now you need to wait for players to join"
-msgstr "*** Starta spel. Du må no venta på at andre spelarar skal verta med."
+msgstr "*** Startet spill. Du må nå vente på at andre spillere skal bli med."
 
 #: ../frozen-bubble:3205
 msgid "*** Joined game"
-msgstr "*** Kopla til spel."
+msgstr "*** Koblet til spill."
 
 #: ../frozen-bubble:3212
 msgid "*** Error: game just started or aborted"
-msgstr "*** Feil: Spelet er nett starta, eller er avbrote."
+msgstr "*** Feil: Spillet er nettopp startet, eller er avbrutt."
 
 #: ../frozen-bubble:3224
 #, perl-format
 msgid "*** Can't start game: '%s'"
-msgstr "*** Klarte ikkje starta spel: «%s»"
+msgstr "*** Klarte ikke starte spill: «%s»"
 
 #: ../frozen-bubble:3254
 #, perl-format
 msgid "*** %s joined the game!"
-msgstr "*** %s vart no med i spelet."
+msgstr "*** %s ble nå med i spillet."
 
 #: ../frozen-bubble:3257
 #, perl-format
 msgid "*** %s left the game..."
-msgstr "*** %s kopla no frå spelet …"
+msgstr "*** %s koblet nå fra spillet …"
 
 #: ../frozen-bubble:3300
 msgid "*** Lost connection to server, abandoning..."
-msgstr "*** Mista samband til tenar. Avsluttar …"
+msgstr "*** Mistet tilkobling til tjener. Avslutter …"
 
 #: ../frozen-bubble:3313
 #, perl-format
 msgid "Players in game: %s"
-msgstr "Spelarar i spelet: %s"
+msgstr "Spillere i spillet: %s"
 
 #: ../frozen-bubble:3315
 msgid "Start game!"
-msgstr "Start spel!"
+msgstr "Start spill!"
 
 #: ../frozen-bubble:3327
 #, perl-format
 msgid "*** Game finished, because the following player(s) left: %s"
-msgstr "*** Spel avslutta, då følgjande spelar(ar) kopla frå: %s"
+msgstr "*** Spill avsluttet, siden følgende spiller(e) koblet fra: %s"
 
 #: ../frozen-bubble:3331
 #, perl-format
 msgid "*** Winner: %s"
-msgstr "*** Vinnar: %s"
+msgstr "*** Vinner: %s"
 
 #: ../frozen-bubble:3333
 msgid "*** Draw game!"
@@ -170,11 +170,11 @@ msgstr "*** Poeng: %s"
 
 #: ../frozen-bubble:3383
 msgid "2-player game"
-msgstr "2-spelarspel"
+msgstr "2-spillerspill"
 
 #: ../frozen-bubble:3383
 msgid "Enable chain-reaction?"
-msgstr "Vil du slå på kjedereaksjonar?"
+msgstr "Vil du slå på kjedereaksjoner?"
 
 #: ../frozen-bubble:3384
 #, perl-format
@@ -191,51 +191,51 @@ msgstr "Gratulerer!"
 
 #: ../frozen-bubble:3423
 msgid "You have a highscore!"
-msgstr "Du fekk ny rekord!"
+msgstr "Du fikk ny rekord!"
 
 #: ../frozen-bubble:3424
 msgid "Your name?"
-msgstr "Namnet ditt:"
+msgstr "Navnet ditt:"
 
 #: ../frozen-bubble:3425
 msgid "Great game!"
-msgstr "Flott spelt!"
+msgstr "Flott spilt!"
 
 #: ../frozen-bubble:3744
 msgid "Please enter new keys:"
-msgstr "Vel nye speltastar"
+msgstr "Velg nye spilltaster"
 
 #: ../frozen-bubble:3746
 msgid "Player 1; turn left?"
-msgstr "Spelar 1 – venstre:"
+msgstr "Spiller 1 – venstre:"
 
 #: ../frozen-bubble:3747
 msgid "Player 1; turn right?"
-msgstr "Spelar 1 – høgre:"
+msgstr "Spiller 1 – høyre:"
 
 #: ../frozen-bubble:3748
 msgid "Player 1; fire?"
-msgstr "Spelar 1 – skyt:"
+msgstr "Spiller 1 – skyt:"
 
 #: ../frozen-bubble:3749
 msgid "Player 1; center?"
-msgstr "Spelar 1 – midtstill:"
+msgstr "Spiller 1 – midtstill:"
 
 #: ../frozen-bubble:3751
 msgid "Player 2; turn left?"
-msgstr "Spelar 2 – venstre:"
+msgstr "Spiller 2 – venstre:"
 
 #: ../frozen-bubble:3752
 msgid "Player 2; turn right?"
-msgstr "Spelar 2 – høgre:"
+msgstr "Spiller 2 – høyre:"
 
 #: ../frozen-bubble:3753
 msgid "Player 2; fire?"
-msgstr "Spelar 2 – skyt:"
+msgstr "Spiller 2 – skyt:"
 
 #: ../frozen-bubble:3754
 msgid "Player 2; center?"
-msgstr "Spelar 2 – midtstill:"
+msgstr "Spiller 2 – midtstill:"
 
 #: ../frozen-bubble:3756
 msgid "Toggle fullscreen?"
@@ -243,7 +243,7 @@ msgstr "Fullskjerm:"
 
 #: ../frozen-bubble:3757
 msgid "Chat (net/lan game)?"
-msgstr "Prat (i nettverksspel):"
+msgstr "Prat (i nettverksspill):"
 
 #: ../frozen-bubble:3759
 msgid "Thanks!"
