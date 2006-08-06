@@ -41,7 +41,7 @@ use vars qw($TARGET_ANIM_SPEED $BUBBLE_SIZE $ROW_SIZE $LAUNCHER_SPEED $BUBBLE_SP
             $background $background_orig @bubbles_images $gcwashere %bubbles_anim %launched_bubble %tobe_launched %next_bubble
             $shooter $sdl_flags $mixer $mixer_enabled $music_disabled $sfx_disabled @playlist %sound %music %pinguin %canon
             $graphics_level @update_rects $CANON_ROTATIONS_NB %malus_bubble %falling_bubble %exploding_bubble %malus_gfx %ttfonts
-            %sticking_bubble $version $time %imgbin $TIME_HURRY_WARN $TIME_HURRY_MAX $TIMEOUT_PINGUIN_SLEEP $FREE_FALL_CONSTANT
+            %sticking_bubble $time %imgbin $TIME_HURRY_WARN $TIME_HURRY_MAX $TIMEOUT_PINGUIN_SLEEP $FREE_FALL_CONSTANT
             $direct @PLAYERS @ALL_PLAYERS %levels $display_on_app_disabled $total_time $time_1pgame $fullscreen $rcfile $hiscorefile $HISCORES
             $lev_number $playermalus $loaded_levelset $direct_levelset $chainreaction %chains %history %img_mini $frame $sock $gameserver);
 
@@ -88,7 +88,6 @@ $HISCORES = [];
 $rcfile = "$ENV{HOME}/.fbrc";
 eval(cat_($rcfile));
 eval(cat_($hiscorefile = "$ENV{HOME}/.fbhighscores"));
-$version = '2.0.0';
 
 textdomain("frozen-bubble");
 bind_textdomain_codeset("frozen-bubble", "UTF-8");  #- we're going to use SDL-ttf functions using UTF-8 input
@@ -3387,7 +3386,6 @@ sub show_mp_scores() {
 sub setup_mp_game() {
     
     $imgbin{back_netgame}->blit($apprects{main}, $app, $apprects{main});
-    my $servers;
 
     if (!fb_net::isconnected()) {
         @smg_status_messages = ();
@@ -3397,15 +3395,14 @@ sub setup_mp_game() {
             fb_net::connect($host, $port);
             if (!fb_net::isconnected()) {
 		print STDERR "Cannot connect to specified gameserver, fallbacking to contacting master server\n";
-                goto master_server;
+                goto choose_server;
             }
         } else {
-          master_server:
+          choose_server:
             #- 1. get list of servers
-            $servers = smg_servers();
+            my $servers = smg_servers();
             defined $servers or return;
             
-          choose_server:
             #- 2. let user choose server
             smg_choose_server(@$servers) or return;
         }

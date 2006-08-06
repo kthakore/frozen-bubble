@@ -26,16 +26,15 @@ use strict;
 use IO::Socket;
 use Fcntl;
 use Errno qw(:POSIX);
+use POSIX qw(uname);
 use Time::HiRes qw(gettimeofday sleep);
 use fb_stuff;
-
 
 our $proto_major = '1';
 our $proto_minor = '0';
 our $timeout = 5;   #- in seconds
 
 my $udp_server_port = 1511;  #- a.k.a 0xF 0xB thx misc
-
 
 #- UDP discover LAN servers with broadcast
 
@@ -374,10 +373,11 @@ sub http_download($) {
     }
     $sock->autoflush;
 
-    my $bytes = syswrite($sock, join("\015\012" =>
+    my ($sysname, undef, undef, undef, $machine) = uname();
+    my $bytes = syswrite($sock, join("\r\n" =>
                                      "GET $path HTTP/1.0",
                                      "Host: $host:$port",
-                                     "User-Agent: Frozen-Bubble/$proto_major.$proto_minor",
+                                     "User-Agent: Frozen-Bubble client version $version (protocol version $proto_major.$proto_minor) on $sysname/$machine",
                                      "", ""));
     if (!$bytes) {
         disconnect();

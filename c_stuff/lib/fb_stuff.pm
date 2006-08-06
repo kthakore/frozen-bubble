@@ -26,12 +26,14 @@ package fb_stuff;
 use fb_c_stuff;
 use Locale::gettext;
 use vars qw(@ISA @EXPORT $FPATH $FLPATH $DEJAVUPATH $DEJAVUOBLIQUEPATH $SAZANAMIGOTHICPATH $FBLEVELS $colourblind %POS_1P %POS_2P %POS_MP $BUBBLE_SIZE $ROW_SIZE
-            $PI);
+            $PI $version);
 @ISA = qw(Exporter);
-@EXPORT = qw($FPATH $FLPATH $DEJAVUPATH $DEJAVUOBLIQUEPATH $SAZANAMIGOTHICPATH $colourblind $FBLEVELS %POS_1P %POS_2P %POS_MP $BUBBLE_SIZE $ROW_SIZE
+@EXPORT = qw($version $FPATH $FLPATH $DEJAVUPATH $DEJAVUOBLIQUEPATH $SAZANAMIGOTHICPATH $colourblind $FBLEVELS %POS_1P %POS_2P %POS_MP $BUBBLE_SIZE $ROW_SIZE
              $PI cat_ member difference2 any every even odd sqr to_bool to_int if_ chomp_
              fold_left output append_to_file min max backtrace basename cp_af all partition ssort
              sum put_in_hash mapn mapn_ t);
+
+$version = '2.0.0';
 
 $FPATH = '@DATADIR@/frozen-bubble';
 $FLPATH = '@LIBDIR@/frozen-bubble';
