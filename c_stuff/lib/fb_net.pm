@@ -301,11 +301,6 @@ sub connect($$) {
         disconnect();
         return { failure => 'Server is mad' };
     }
-    $flags = $sock->fcntl(F_SETFL, $flags|O_NONBLOCK);
-    if (!$flags) {
-        disconnect();
-        return { failure => 'Server is crazy' };
-    }
 
     my $msg = readline_();
     my ($remote_major, $remote_minor, $isready) = $msg =~ m|^FB/(\d+).(\d+) (.*)|;
@@ -343,6 +338,12 @@ sub connect($$) {
     }
 
     $ping = sprintf("%.1f", ($t1-$t0)*1000);
+
+    $flags = $sock->fcntl(F_SETFL, $flags|O_NONBLOCK);
+    if (!$flags) {
+        disconnect();
+        return { failure => 'Server is crazy' };
+    }
 
     $current_host = $host;
     $current_port = $port;
