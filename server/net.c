@@ -415,7 +415,7 @@ static void help(void)
         printf("Usage: fb-server [OPTION]...\n");
         printf("\n");
         printf("     -h                        display this help then exits\n");
-        printf("     -n name                   set the server name (mandatory)\n");
+        printf("     -n name                   set the server name presented to players (if unset, defaults to hostname)\n");
         printf("     -l                        LAN mode: create an UDP server (on port %d) to answer broadcasts of clients discovering where are the servers\n", DEFAULT_PORT);
         printf("     -L                        LAN/game mode: create an UDP server as above, but limit number of games to 1 (this is for an FB client hosting a LAN server)\n");
         printf("     -p port                   set the server port (defaults to %d)\n", DEFAULT_PORT);
@@ -428,7 +428,6 @@ static void help(void)
         printf("     -q                        \"quiet\" mode: don't automatically register the server to www.frozen-bubble.org\n");
         printf("     -a                        set the preferred language of the server (it is just an indication used by players when choosing a server, so that they can chat using their native language - you can choose none with -z)\n");
         printf("     -z                        set that there is no preferred language for the server (see -a)\n");
-        printf("     -q                        \"quiet\" mode: don't automatically register the server to www.frozen-bubble.org\n");
         printf("     -c conffile               specify the path of the configuration file\n");
 }
 
@@ -623,8 +622,25 @@ void create_server(int argc, char **argv)
                 external_port = port;
 
         if (!servername) {
-                fprintf(stderr, "Must give a name to the server with -n <name>.\n");
-                exit(EXIT_FAILURE);
+                // Fallback to hostname
+                char hostname[128];
+                if (!gethostname(hostname, 127)) {
+                        int i;
+                        hostname[127] = '\0';  // manpage says "It is unspecified whether the truncated hostname will be null-terminated"
+                        servername = g_strndup(hostname, 12);
+                        for (i = 0; i < strlen(servername); i++) {
+                                if (!((servername[i] >= 'a' && servername[i] <= 'z')
+                                      || (servername[i] >= 'A' && servername[i] <= 'Z')
+                                      || (servername[i] >= '0' && servername[i] <= '9')
+                                      || servername[i] == '-')) {
+                                        servername[i] = '.';
+                                }
+                        }
+                        printf("Notice: no -n parameter, using hostname as server name presented to players: %s\n", servername);
+                } else {
+                        fprintf(stderr, "gethostname: %s\n", strerror(errno));
+                        exit(EXIT_FAILURE);
+                }
         }
 
         if (!serverlanguage) {
