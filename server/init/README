@@ -11,9 +11,7 @@ This directory contains a suggested initscript and skeleton
 configuration file for automatic starting of the Frozen-Bubble
 server.
 
-Since the Frozen-Bubble server at least needs to know the name of
-the server (as displayed in the Frozen-Bubble clients which will
-have to choose between available servers), and the preferred
+Since the Frozen-Bubble server at least needs to know the preferred
 language for players (it is just an indication used by players
 when choosing a server, so that they can chat using their native
 language), a configuration file is best suited for this purpose.
@@ -25,13 +23,11 @@ location or name). You have to install and modify the skeleton
 configuration file specifying the name of your server to setup a
 unique server, and copy the file to a different name (and change
 option values) for all subsequent servers you can host. For first
-server you must at least set the servername (name must be 12
-characters long maximum and only contain characters in
-[a-z0-9.-]) and the language, and for all subsequent servers you
-must also specify a different port. Note: if you host multiple
-servers, it is probably a good idea to not use the same server
-name for each of them (even if languages are different) so that
-players can easily rendez-vous on the correct server.
+server you must at least set the language, and for all subsequent
+servers you must also specify a different port. Note: if you host
+multiple servers, it is probably a good idea to not use the same
+server name for each of them (even if languages are different) so
+that players can easily rendez-vous on the correct server.
 
 If needed, other configuration parameters can be set in the
 configuration file. Each configuration parameter must be on its

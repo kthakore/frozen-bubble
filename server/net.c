@@ -1,6 +1,6 @@
 /*******************************************************************************
  *
- * Copyright (c) 2004 Guillaume Cottenceau
+ * Copyright (c) 2004-2006 Guillaume Cottenceau
  *
  * Portions from Mandriva's stage1.
  *
@@ -404,14 +404,6 @@ void close_server() {
 
 static void help(void)
 {
-        printf("[[ Frozen-Bubble server ]]\n");
-        printf(" \n");
-        printf("Copyright (c) Guillaume Cottenceau, 2004.\n");
-        printf("\n");
-        printf("This program is free software; you can redistribute it and/or modify\n");
-        printf("it under the terms of the GNU General Public License version 2, as\n");
-        printf("published by the Free Software Foundation.\n");
-        printf(" \n");
         printf("Usage: fb-server [OPTION]...\n");
         printf("\n");
         printf("     -h                        display this help then exits\n");
