@@ -55,8 +55,8 @@ compromise your server:
   allocation problems to prevent leaks hosing the other services
   of the server
 
-- random data has been fed to it, under which a complete
-  remaining stability has been witnessed
+- random data has been fed to it ("fuzz testing"), under which a
+  complete remaining stability has been witnessed
 
 - strcpy/strcat/strncpy/strncat are never used; a similar
   function to OpenBSD's strlcat is used when strcat functionality
