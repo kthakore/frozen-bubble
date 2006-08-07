@@ -2979,7 +2979,7 @@ sub smg_choose_server(@) {
     my $y = $smg_starty;
     foreach (@servers) {
         erase_line($y, $imgbin{back_netgame});
-        $y += $smg_lineheight;
+        $y += $smg_lineheight + 2;
     }
 
     return 1;
