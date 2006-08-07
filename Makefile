@@ -46,7 +46,7 @@ dirs:
 
 install: $(ALL)
 	@for n in $(DIRS); do \
-		(cd $$n; $(MAKE) install) \
+		(cd $$n; $(MAKE) install DESTDIR=$(DESTDIR)) \
 	done
 	install -d $(BINDIR)
 	install frozen-bubble frozen-bubble-editor $(BINDIR)
