@@ -2869,54 +2869,44 @@ sub smg_choose_server(@) {
         $app->flip();
     };
 
-    my $reping;
-    my $ping = sub {
-        foreach my $server (@servers) {
-            if (!$server->{disabled}) {
-                my $ret = fb_net::connect($server->{host}, $server->{port});
-                if (!$ret->{ping}) {
-                    $server->{disabled} = $ret->{failure};
-                } else {
-                    ($server->{players}) = fb_net::list();
-                }
-                put_in_hash($server, $ret);
-                fb_net::disconnect();
+    my @scanned_servers;
+    foreach my $server (@servers) {
+        if (!$server->{disabled}) {
+            my $ret = fb_net::connect($server->{host}, $server->{port});
+            if (!$ret->{ping}) {
+                $server->{disabled} = $ret->{failure};
+            } else {
+                ($server->{players}) = fb_net::list();
+            }
+            put_in_hash($server, $ret);
+            fb_net::disconnect();
+            push @scanned_servers, $server;
+            my ($down, $available) = partition { $_->{disabled} } @scanned_servers;
+            @sorted_servers = sort { $a->{ping} <=> $b->{ping} } @$available;
+            if (@sorted_servers > $max_lines) {
+                $#sorted_servers = $max_lines - 1;
+                last;
+            } else {
+                $redraw->();
             }
         }
-        my ($down, $available) = partition { $_->{disabled} } @servers;
-        @sorted_servers = sort { $a->{ping} <=> $b->{ping} } @$available;
-        if (@sorted_servers > $max_lines) {
-            $#sorted_servers = $max_lines - 1;
-        }
-        foreach (difference2(\@servers, \@sorted_servers)) {
-            $_->{disabled} = 1;  #- disable slow servers if there are a lot of them
-        }
-        #- handle case when currently selected server gets down or out per too high ping
-        if (@sorted_servers && !any { $_->{selected} } @sorted_servers) {
-            $_->{selected} = 0 foreach @servers;
-            $sorted_servers[0]->{selected} = 1;
-        }
-            
-        $redraw->();
-    };
+    }
+    foreach (difference2(\@servers, \@sorted_servers)) {
+        $_->{disabled} = 1;  #- disable slow servers if there are a lot of them
+    }
 
-    $ping->();
     if (@servers == 0 || every { $_->{disabled} } @servers) {
         smg_add_status_msg(t("*** No available game server"),
                            t("*** Please retry later or try a local network game (lan game)"));
         grab_key();
         return 0;
     }
-    if (@sorted_servers && every { !$_->{selected} } @sorted_servers) {
-        $sorted_servers[0]->{selected} = 1;
-    }
+    $sorted_servers[0]->{selected} = 1;
+
     smg_add_status_msg(t("*** Please choose a server"));
     $redraw->();
 
     while (1) {
-        $reping++;
-        $reping % (30*50) == 0 and $ping->();
-
         $event->pump;
         if ($event->poll != 0) {
             if ($event->type == SDL_KEYDOWN) {
@@ -3412,17 +3402,8 @@ sub setup_mp_game() {
     }
 
     #- 3. let user choose/create game
-    if (!smg_choose_game()) {
-        if ($pdata{gametype} eq 'lan') {
-            return;
-        } else {
-            if ($gameserver) {
-                return;
-            } else {
-                goto choose_server;
-            }
-        }
-    }
+    smg_choose_game() or return;
+
     return 1;
 }
 
