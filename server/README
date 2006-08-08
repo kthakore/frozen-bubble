@@ -52,8 +52,8 @@ compromise your server:
   a constant in the program)
 
 - valgrind has been used to spot and fix any reported memory
-  allocation problems to prevent leaks hosing the other services
-  of the server
+  allocation/manipulation problems, to prevent from exploits and
+  leaks hosing the other services of the server
 
 - random data has been fed to it ("fuzz testing"), under which a
   complete remaining stability has been witnessed
