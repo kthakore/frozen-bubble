@@ -556,7 +556,7 @@ static void handle_parameter(char command, char * param) {
                         printf("-a: setting preferred language for users of the server to '%s'\n", serverlanguage);
                 } else {
                         fprintf(stderr, "-a: %s not a valid language, ignoring\n", param);
-                        fprintf(stderr, "    valid languages are: af, ar, az, bg, br, bs, ca, cs, cy, da, de, el, en, eo, eu, fi, fr, ga, gl, hr, hu, id, is, it, ja, ko, lt, lv, mk, ms, nl, no, pl, pt_BR, ro, ru, sk, sl, sq, sv, tg, tr, uk, uz, vi, wa, zh_CN, zh_TW\n" );
+                        fprintf(stderr, "    valid languages are: af, ar, az, bg, br, bs, ca, cs, cy, da, de, el, en, eo, eu, es, fi, fr, ga, gl, hr, hu, id, is, it, ja, ko, lt, lv, mk, ms, nl, no, pl, pt, pt_BR, ro, ru, sk, sl, sq, sv, tg, tr, uk, uz, vi, wa, zh_CN, zh_TW\n" );
                 }
                 break;
         case 'z':
