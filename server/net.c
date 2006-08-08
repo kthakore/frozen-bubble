@@ -867,7 +867,7 @@ void register_server() {
                         } else {
                                 char * ptr = doc;
                                 l2(OUTPUT_TYPE_ERROR, "Problem registering server (host:%s port:%d) to 'www.frozen-bubble.org'.", external_hostname, external_port);
-                                l2(OUTPUT_TYPE_ERROR, "Notice: for successful registering, using the said host and port from outside must reach this server!", external_hostname, external_port);
+                                l0(OUTPUT_TYPE_ERROR, "Notice: for successful registering, using the said host and port from outside must reach this server!");
                                 while ((ptr = strstr(doc, "FB_TAG_"))) {
                                         char * end = strchr(ptr, ' ');
                                         if (end) {
