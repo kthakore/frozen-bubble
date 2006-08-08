@@ -58,7 +58,8 @@ compromise your server:
 - random data has been fed to it ("fuzz testing"), under which a
   complete remaining stability has been witnessed; then
   additional or substituted random data has been fed at different
-  places of the protocol with the same goal
+  places of the protocol with the same goal; this should
+  hopefully reduce exposure to buffer overflows
 
 - strcpy/strcat/strncpy/strncat are never used; a similar
   function to OpenBSD's strlcat is used when strcat functionality
@@ -67,6 +68,10 @@ compromise your server:
 - flawfinder has been used and each spotted item checked/fixed
 
 - it doesn't need root permission to operate
+
+Please notice that no serious security guy has audited the code,
+thus the above described tasks are a mere attempt of the author
+to do his best, while remaining problems are possible.
 
 Consider also -fstack-protector for compiling the server if
 you're using a recent enough gcc.
@@ -82,13 +87,16 @@ ulimits.
 
 The Frozen-Bubble server is not scalable. It is not multi-
 threaded nor will fork to better handle a lot of parallel
-requests. Additionally, it is limited to 255 simultaneous
-players.
+requests (though it will handle network messages from players in
+game before messages from players in lounge, to provide the best
+gaming experience possible). Additionally, it is limited to 255
+simultaneous players.
 
 Due to its rather low upload and CPU consumption, administrators
 can host more than one logical server (multiple Frozen-Bubble
 server processes on a single machine), provided they use
-different TCP ports.
+different TCP ports. The initscript proposed in directory 'init'
+supports multiple Frozen-Bubble servers out of the box.
 
 
 ]] Server resource limits
