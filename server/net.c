@@ -100,7 +100,7 @@ static ssize_t send_line(int fd, char* msg)
         else 
                 size = snprintf(buf, sizeof(buf), "FB/%d.%d ???: %s\n", proto_major, proto_minor, msg);
         if (size > 0) {
-                return send(fd, buf, size, 0);
+                return send(fd, buf, size, MSG_NOSIGNAL);
         } else {
                 l2(OUTPUT_TYPE_ERROR, "[%d] Format failure, impossible to send message '%s'", fd, msg);
                 return 0;

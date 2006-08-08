@@ -613,10 +613,10 @@ void process_msg_prio(int fd, char* msg, ssize_t len)
                                                 strcat(buf, asprintf_("%d ", msg[j]));
                                         l1(OUTPUT_TYPE_DEBUG, "msg was: %s", buf);
                                 }
-                                retval = send(g->players_conn[i], synchro4self, sizeof(synchro4self) - 1, 0);
+                                retval = send(g->players_conn[i], synchro4self, sizeof(synchro4self) - 1, MSG_NOSIGNAL);
                                 if (retval != sizeof(synchro4self) - 1) {
                                         if (retval == -1) {
-                                                conn_terminated(fd, "peer shutdown on send");
+                                                conn_terminated(g->players_conn[i], "peer shutdown on send");
                                         } else {
                                                 l2(OUTPUT_TYPE_ERROR, "short send of %d instead of %d bytes :(", retval, sizeof(synchro4self) - 1);
                                         }
@@ -630,10 +630,11 @@ void process_msg_prio(int fd, char* msg, ssize_t len)
                                         int randval = rand_(50);
                                         ssize_t amount = min(randval, togo);
                                         l2(OUTPUT_TYPE_DEBUG, "Amount: %d togo: %d", amount, togo);
-                                        retval = send(g->players_conn[i], msg + (len - togo), amount, 0);
+                                        retval = send(g->players_conn[i], msg + (len - togo), amount, MSG_NOSIGNAL);
                                         if (retval != amount) {
                                                 if (retval == -1) {
-                                                        conn_terminated(fd, "peer shutdown on send");
+                                                        conn_terminated(g->players_conn[i], "peer shutdown on send");
+                                                        goto next_player;
                                                 } else {
                                                         l2(OUTPUT_TYPE_ERROR, "short send of %d instead of %d bytes :(", retval, amount);
                                                 }
@@ -651,6 +652,8 @@ void process_msg_prio(int fd, char* msg, ssize_t len)
                                 l0(OUTPUT_TYPE_DEBUG, "- done");
                                 amount_transmitted += len;
                         }
+                next_player:
+                        ;
                 }
         } else {
                 l1(OUTPUT_TYPE_ERROR, "Internal error: could not find game by fd: %d", fd);
