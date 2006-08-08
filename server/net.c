@@ -503,10 +503,10 @@ static void handle_parameter(char command, char * param) {
                 break;
         case 'u':
                 max_users = charstar_to_int(param);
-                if (max_users != 0)
+                if (max_users > 0 && max_users <= 255)
                         printf("-u: setting maximum users to %d\n", max_users);
                 else {
-                        fprintf(stderr, "-u: %s not convertible to int, ignoring\n", param);
+                        fprintf(stderr, "-u: %s not convertible to int or not in 1..255, ignoring\n", param);
                         max_users = DEFAULT_MAX_USERS;
                 }
                 break;
