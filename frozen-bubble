@@ -1216,6 +1216,10 @@ sub handle_game_events() {
         while (@messages) {
             my $m = shift @messages;
             my $player = $pdata{id2p}{$m->{id}};
+            if (!$player) {
+                printf "Network protocol error: player with id '%d' doesn't exist. You're not a regular Frozen-Bubble client, aren't you?\n", ord($m->{id});
+                die 'quit';
+            }
             if ($pdata{$player}{left}) {
                 print STDERR "$pdata{$player}{nick}: you don't exist, go away!\n";
                 next;
