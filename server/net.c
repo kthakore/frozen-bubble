@@ -146,6 +146,7 @@ static void fill_conns_set(gpointer data, gpointer user_data)
         FD_SET(GPOINTER_TO_INT(data), (fd_set *) user_data);
 }
 
+static int recalculate_list_games = 0;
 static GList * new_conns;
 void conn_terminated(int fd, char* reason)
 {
@@ -155,6 +156,7 @@ void conn_terminated(int fd, char* reason)
         player_part_game(fd);
         new_conns = g_list_remove(new_conns, GINT_TO_POINTER(fd));
         player_disconnects(fd);
+        recalculate_list_games = 1;
         if (lan_game_mode && g_list_length(new_conns) == 0 && udp_server_socket == -1) {
                 l0(OUTPUT_TYPE_INFO, "LAN game mode server exiting on last client exit.");
                 exit(EXIT_SUCCESS);
@@ -297,6 +299,10 @@ void connections_manager(void)
                 int retval;
                 fd_set conns_set;
 
+                if (recalculate_list_games)
+                        calculate_list_games();
+                recalculate_list_games = 0;
+
                 FD_ZERO(&conns_set);
                 g_list_foreach(conns, fill_conns_set, &conns_set);
                 g_list_foreach(conns_prio, fill_conns_set, &conns_set);
@@ -358,7 +364,7 @@ void connections_manager(void)
                                         incoming_data_buffers[fd] = malloc_(sizeof(char) * INCOMING_DATA_BUFSIZE);
                                         memset(incoming_data_buffers[fd], 0, sizeof(char) * INCOMING_DATA_BUFSIZE);  // force Linux to allocate now
                                         incoming_data_buffers_count[fd] = 0;
-                                        calculate_list_games();
+                                        recalculate_list_games = 1;
                                 }
                         }
                 }
