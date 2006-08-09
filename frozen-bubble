@@ -151,49 +151,6 @@ local $_ = "@ARGV";
 /-l\s*(\d+)/ || /-level\s*(\d+)/ and $levels{current} = $1, $direct = 1, @PLAYERS = ('p1');
 /-ms\s*(\S+)/ || /-masterserver\s*(\S+)/ and $fb_net::masterserver = $1;
 /-gs\s*(\S+):(\S+)/ || /-gameserver\s*(\S+):(\S+)/ and $gameserver = "$1:$2";
-/-mp\s*(\S+)\s+(\S+)\s+(\S+)/ and do {
-    my $mynick = $$;
-    my $nb = $3;
-    my $ret = fb_net::connect($1, $2);
-    if (!$ret->{ping}) {
-        die "Can't proceed: $ret->{failure}\n";
-    }
-    my ($free, undef, @games) = fb_net::list();
-    my $ok;
-    if (@games) {
-        $ok = fb_net::join($games[0][0], $mynick);
-    } else {
-        $ok = fb_net::create($mynick);
-    }
-    while (1) {
-        print "Waiting for $nb players before starting...\n";
-        sleep 1;
-        fb_net::send_('STATUS');
-        my @players = split /,/, fb_net::readline_();
-        last if @players == $nb;
-    }
-
-    fb_net::send_('START');
-
-    @PLAYERS = qw(p1);
-    my @mappings = fb_net::wait4start();
-    foreach my $m (@mappings) {
-        my $player;
-        if ($m->{nick} eq $mynick) {
-            $player = 'p1';
-        } else {
-            foreach my $p (qw(rp1 rp2 rp3 rp4)) {
-                exists $pdata{$p}{id} or $player ||= $p;
-            }
-            push @PLAYERS, $player;
-        }
-        $pdata{$player}{id} = $m->{id};
-        $pdata{$player}{nick} = $m->{nick};
-        $pdata{id2p}{$m->{id}} = $player;
-        print "$player is: $m->{nick}\n";
-    }
-    
-};
 
 
 #- ------------------------------------------------------------------------
@@ -2963,7 +2920,7 @@ sub smg_choose_server(@) {
   ok_smg_choose_server:
     foreach my $server (@servers) {
         if ($server->{selected}) {
-            fb_net::connect($server->{host}, $server->{port});
+            fb_net::connect($server);
             fb_net::isconnected() or return smg_choose_server(@servers);
             smg_add_status_msg(t("*** Connected to server '%s'", $server->{name}));
             last;

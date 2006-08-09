@@ -283,8 +283,23 @@ sub join($$) {
 }
 
 my ($current_host, $current_port);
-sub connect($$) {
+sub connect {
     my ($host, $port) = @_;
+
+    my $perform_ping = 1;
+    if (!defined $host) {
+        #- reconnect
+        $host = $current_host;
+        $port = $current_port;
+        $perform_ping = 0;
+    } elsif (!defined $port) {
+        #- first param was a hash
+        my $params = $host;
+        $host = $params->{host};
+        $port = $params->{port};
+        $ping = $params->{ping};
+        $perform_ping = 0;
+    }
 
     $current_host = $current_port = undef;
 
@@ -321,22 +336,36 @@ sub connect($$) {
         }
     }
 
-    $ping = 200;
-    my $t0 = gettimeofday;
-    send_('PING');
-    $msg = readline_();
-    my $t1 = gettimeofday;
-    if ($msg =~ /INCOMPATIBLE_PROTOCOL/) {
-        disconnect();
-        print STDERR "Dropping $host:$port: imcompatible Frozen-Bubble server\n";
-        return { failure => 'Incompatible server' };
-    } elsif ($msg !~ /PONG/) {
-        print STDERR "$host:$port answer to PING was not recognized. Server said:\n\t$msg\n";
-        disconnect();
-        return { failure => 'Incompatible server' };
-    }
+    if ($perform_ping) {
+        $ping = 200;
 
-    $ping = sprintf("%.1f", ($t1-$t0)*1000);
+        my @pings;
+        foreach (1..4) {
+            my $t0 = gettimeofday;
+            send_('PING');
+            $msg = readline_();
+            my $t1 = gettimeofday;
+            if ($msg =~ /INCOMPATIBLE_PROTOCOL/) {
+                disconnect();
+                print STDERR "Dropping $host:$port: imcompatible Frozen-Bubble server\n";
+                return { failure => 'Incompatible server' };
+            } elsif ($msg !~ /PONG/) {
+                print STDERR "$host:$port answer to PING was not recognized. Server said:\n\t$msg\n";
+                disconnect();
+                return { failure => 'Incompatible server' };
+            }
+            push @pings, ($t1-$t0) * 1000;
+            if ($_ == 2 && $pings[0] > 150 && $pings[1] > 150) {
+                #- don't wait too much on slower servers
+                last;
+            }
+        }
+
+        if (@pings > 2) {  #- keep 2 worst
+            @pings = difference2(\@pings, [ min(@pings) ]) while @pings > 2;
+        }
+        $ping = sprintf("%.1f", sum(@pings)/@pings);
+    }
 
     $flags = $sock->fcntl(F_SETFL, $flags|O_NONBLOCK);
     if (!$flags) {
@@ -355,7 +384,7 @@ sub reconnect() {
     if (defined($current_host) && defined($current_port)) {
         disconnect();
         @messages = ();
-        my $ret = fb_net::connect($current_host, $current_port);
+        my $ret = fb_net::connect();
         return exists $ret->{ping};
     }
 }
@@ -492,11 +521,11 @@ sub grecv() {
         my $id = substr($buf, 0, 1);
         $buf = substr($buf, 1);
 #            printf "extracted id: %d\n", ord($id);
-        if (ord($id) < 1 || ord($id) > 10) {     #- this test is temp and helps to find protocol problems as long as there are never more than 5 players on server
-            printf "****** ouch! id %d, buf now <$buf>\n", ord($id);
-            printf "\talready msg: <$_->{msg}> from %d\n", ord($_->{id}) foreach @msg;
-            $ouch = 1;
-        }
+#        if (ord($id) < 1 || ord($id) > 10) {     #- this test is temp and helps to find protocol problems as long as there are never more than 5 players on server
+#            printf "****** ouch! id %d, buf now <$buf>\n", ord($id);
+#            printf "\talready msg: <$_->{msg}> from %d\n", ord($_->{id}) foreach @msg;
+#            $ouch = 1;
+#        }
         #- match data of a frame (newline terminated)
         if (my ($msg, $rest) = $buf =~ /([^\n]+)\n(.*)?/s) {
             $buf = $rest;
@@ -535,7 +564,8 @@ sub grecv_get1msg() {
         alarm 0;
     };
     if ($@) {
-        print STDERR "Sorry, your computer or the network is too slow, giving up.\n";
+        print STDERR "Sorry, we are not received the expected message. If the other ends are legal Frozen-Bubble\n" .
+                     "clients, it means your computer or the network is too slow. Giving up.\n";
         die 'quit';
     } else {
         return shift @messages;
