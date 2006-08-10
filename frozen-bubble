@@ -2923,6 +2923,9 @@ sub smg_choose_server(@) {
             fb_net::connect($server);
             fb_net::isconnected() or return smg_choose_server(@servers);
             smg_add_status_msg(t("*** Connected to server '%s'", $server->{name}));
+            print "Notice! next time you start Frozen-Bubble, you may add the commandline parameter\n".
+                  "        -gs$server->{host}:$server->{port} to automatically select this game server\n".
+                  "        and save time not listing all available servers\n";
             last;
         }
     }
