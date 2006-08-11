@@ -407,19 +407,19 @@ inline void put_pixel(SDL_Surface * surf, int x, int y, Uint32 pixelvalue, int b
 
 SV* utf8key_(SDL_Event * e) {
         iconv_t cd;
-        char source[3];
-        char* retval = source;
+        char source[2];
+        char* retval = "";
         source[0] = e->key.keysym.unicode & 0xFF;
         source[1] = ( e->key.keysym.unicode & 0xFF00 ) >> 8;
-        source[2] = '\0';
-        cd = iconv_open("UTF8", "UTF16LE");  // shouldn't this be BE? :/
+        cd = iconv_open("UTF8", "UTF16LE");
         if (cd != (iconv_t) (-1)) {
-                // an utf8 char is maximum 4 chars long
+                // an utf8 char is maximum 4 bytes long
                 char dest[5];
                 char *src = source;
                 char *dst = dest;
                 size_t source_len = 2;
                 size_t dest_len = 4;
+                bzero(dest, 5);
                 if ((iconv(cd, &src, &source_len, &dst, &dest_len)) != (size_t) (-1)) {
                         *dst = 0;
                         retval = dest;
