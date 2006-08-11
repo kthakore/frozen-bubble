@@ -39,7 +39,7 @@ use strict;
 use vars qw($TARGET_ANIM_SPEED $BUBBLE_SIZE $ROW_SIZE $LAUNCHER_SPEED $BUBBLE_SPEED $MALUS_BUBBLE_SPEED $TIME_APPEARS_NEW_ROOT
             %POS %POS_1P %POS_2P %MENUPOS $KEYS %actions %angle %pdata $app %apprects $event %rects %sticked_bubbles %root_bubbles
             $background $background_orig @bubbles_images $gcwashere %bubbles_anim %launched_bubble %tobe_launched %next_bubble
-            $shooter $sdl_flags $mixer $mixer_enabled $music_disabled $sfx_disabled @playlist %sound %music %pinguin %canon
+            $shooter $sdl_flags $mixer $mixer_enabled $music_disabled $sfx_disabled $no_echo @playlist %sound %music %pinguin %canon
             $graphics_level @update_rects $CANON_ROTATIONS_NB %malus_bubble %falling_bubble %exploding_bubble %malus_gfx %ttfonts
             %sticking_bubble $time %imgbin $TIME_HURRY_WARN $TIME_HURRY_MAX $TIMEOUT_PINGUIN_SLEEP $FREE_FALL_CONSTANT
             $direct @PLAYERS @ALL_PLAYERS %levels $display_on_app_disabled $total_time $time_1pgame $fullscreen $rcfile $hiscorefile $HISCORES
@@ -131,7 +131,7 @@ local $_ = "@ARGV";
  -pm<#n>, --playermalus<#n>  add a malus of n to the left player (can be negative)
  -ls<name>, --levelset<name> directly start with the specified levelset name
  -gs<host:port>, --gameserver<host:port> in NET game, directly use this game server
-
+ -ne, --noecho               when sound is enabled, disable echoing each typed character with a typewriter sound
 ";
 
 /-fs/ || /-fu/ and $fullscreen = 1;
@@ -151,7 +151,7 @@ local $_ = "@ARGV";
 /-l\s*(\d+)/ || /-level\s*(\d+)/ and $levels{current} = $1, $direct = 1, @PLAYERS = ('p1');
 /-ms\s*(\S+)/ || /-masterserver\s*(\S+)/ and $fb_net::masterserver = $1;
 /-gs\s*(\S+):(\S+)/ || /-gameserver\s*(\S+):(\S+)/ and $gameserver = "$1:$2";
-
+/-ne/ || /-noe/ and $no_echo = 1;
 
 #- ------------------------------------------------------------------------
 
@@ -2383,7 +2383,7 @@ sub ask_from($) {
         if ($entry->{f} ne 'SPACE') {
             if ($entry->{f} eq 'ONE_CHAR') {
                 my $k = grab_key();
-                play_sound('typewriter');
+                $no_echo or play_sound('typewriter');
                 $k == SDLK_ESCAPE and $ok = 0, last entries;
                 $txt = $k;
                 print_('menu', $app, $x_echo, $ypos, keysym_to_char($k));
@@ -2967,37 +2967,37 @@ sub callback_entry {
             if ($position >= 1) {
                 splice @typed, $position - 1, 1;
                 $position--;
-                play_sound('typewriter');
+                $no_echo or play_sound('typewriter');
             } else {
                 play_sound('stick');
             }
         } elsif ($params->{event}->key_sym == SDLK_DELETE()) {
             if ($position < $#typed + 1) {
                 splice @typed, $position, 1;
-                play_sound('typewriter');
+                $no_echo or play_sound('typewriter');
             } else {
                 play_sound('stick');
             }
         } elsif ($params->{event}->key_sym == SDLK_LEFT()) {
             if ($position >= 1) {
                 $position--;
-                play_sound('typewriter');
+                $no_echo or play_sound('typewriter');
             } else {
                 play_sound('stick');
             }
         } elsif ($params->{event}->key_sym == SDLK_RIGHT()) {
             if ($position <= $#typed) {
                 $position++;
-                play_sound('typewriter');
+                $no_echo or play_sound('typewriter');
             } else {
                 play_sound('stick');
             }
         } elsif ($params->{event}->key_sym == SDLK_HOME()) {
             $position = 0;
-            play_sound('typewriter');
+            $no_echo or play_sound('typewriter');
         } elsif ($params->{event}->key_sym == SDLK_END()) {
             $position = $#typed + 1;
-            play_sound('typewriter');
+            $no_echo or play_sound('typewriter');
         } elsif (!member($params->{event}->key_sym, SDLK_TAB())) {
             my $utf8char = fb_c_stuff::utf8key($params->{event}{-event});
             if ($utf8char ne '') {
@@ -3007,15 +3007,9 @@ sub callback_entry {
                     play_sound('stick');
                 } else {
                     $position++;
-                    play_sound('typewriter');
-                }
-            } else {
-                if (!member($params->{event}->key_sym, SDLK_CAPSLOCK(), SDLK_NUMLOCK(), SDLK_LSHIFT(), SDLK_RSHIFT())) {
-                    play_sound('stick');
+                    $no_echo or play_sound('typewriter');
                 }
             }
-        } else {
-            play_sound('stick');
         }
     }
     if ($action eq 'gettext') {
