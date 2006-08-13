@@ -3799,16 +3799,8 @@ sub menu {
 			 'netgame'=> { pos => 4, type => 'rungame',
 				       run => sub { @PLAYERS = qw(p1 rp1); $pdata{gametype} = 'net';  $levels{current} = undef; } },
 			 'editor' => { pos => 5, type => 'run', run => sub { $launch_editor->(); } },
-#			 'fullscreen' => { pos => 4, type => 'toggle',
-#					   act => sub { $fullscreen = 1; $app->fullscreen },
-#					   unact => sub { $fullscreen = 0; $app->fullscreen },
-#					   value => $fullscreen },
 			 'graphics' => { pos => 6, type => 'range', valuemin => 1, valuemax => 3,
 					 change => sub { $graphics_level = $_[0] }, value => $graphics_level },
-#			 'sound' => { pos => 6, type => 'toggle',
-#				      act => sub { $menu_start_sound->() },
-#				      unact => sub { $menu_stop_sound->() },
-#				      value => $mixer_enabled },
 			 'keys' => { pos => 7, type => 'run',
 				     run => sub { $change_keys->() } },
 			 'highscores' => { pos => 8, type => 'run',
@@ -3823,7 +3815,6 @@ sub menu {
 	foreach my $m (keys %menu_entries) {
 	    member($menu_entries{$m}->{pos}, @menu_invalids) or next;
 	    my $txt = "txt_$m";
-	    $menu_entries{$m}->{type} eq 'toggle' && $menu_entries{$m}->{value} and $txt .= "_act";
 	    $menu_entries{$m}->{type} eq 'range' and $txt .= "_$menu_entries{$m}->{value}";
 	    $txt .= $menu_entries{$m}->{pos} == $current_pos ? '_over' : '_off';
 	    erase_image_from($imgbin{$txt}, $MENU_XPOS, $menu_ypos{$m}, $back_start);
@@ -3879,14 +3870,6 @@ sub menu {
 			    if ($menu_entries{$m}->{type} =~ /^run/) {
 				$menu_entries{$m}->{run}->();
 				$menu_entries{$m}->{type} eq 'rungame' and $start_game = 1;
-			    }
-			    if ($menu_entries{$m}->{type} eq 'toggle') {
-				$menu_entries{$m}->{value} = !$menu_entries{$m}->{value};
-				if ($menu_entries{$m}->{value}) {
-				    $menu_entries{$m}->{act}->() or $menu_entries{$m}->{value} = 0;
-				} else {
-				    $menu_entries{$m}->{unact}->() or $menu_entries{$m}->{value} = 1;
-				}
 			    }
 			    if ($menu_entries{$m}->{type} eq 'range') {
 				$menu_entries{$m}->{value}++;
