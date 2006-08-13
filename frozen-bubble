@@ -39,7 +39,7 @@ use strict;
 use vars qw($TARGET_ANIM_SPEED $BUBBLE_SIZE $ROW_SIZE $LAUNCHER_SPEED $BUBBLE_SPEED $MALUS_BUBBLE_SPEED $TIME_APPEARS_NEW_ROOT
             %POS %POS_1P %POS_2P %MENUPOS $KEYS %actions %angle %pdata $app %apprects $event %rects %sticked_bubbles %root_bubbles
             $background $background_orig @bubbles_images $gcwashere %bubbles_anim %launched_bubble %tobe_launched %next_bubble
-            $shooter $sdl_flags $mixer $mixer_enabled $music_disabled $sfx_disabled $no_echo @playlist %sound %music %pinguin %canon
+            $shooter $sdl_flags $mixer $mixer_enabled $music_disabled $sfx_disabled $no_echo $regularfont $italicfont @playlist %sound %music %pinguin %canon
             $graphics_level @update_rects $CANON_ROTATIONS_NB %malus_bubble %falling_bubble %exploding_bubble %malus_gfx %ttfonts
             %sticking_bubble $time %imgbin $TIME_HURRY_WARN $TIME_HURRY_MAX $TIMEOUT_PINGUIN_SLEEP $FREE_FALL_CONSTANT
             $direct @PLAYERS @ALL_PLAYERS %levels $display_on_app_disabled $total_time $time_1pgame $fullscreen $rcfile $hiscorefile $HISCORES
@@ -132,6 +132,8 @@ local $_ = "@ARGV";
  -ls<name>, --levelset<name> directly start with the specified levelset name
  -gs<host:port>, --gameserver<host:port> in NET game, directly use this game server
  -ne, --noecho               when sound is enabled, disable echoing each typed character with a typewriter sound
+ -rf<file>, --regularfont<file> use the specified font file instead of using fontconfig to detect the best regular font
+ -if<file>, --italicfont<file> use the specified font file instead of using fontconfig to detect the best italic font
 ";
 
 /-fs/ || /-fu/ and $fullscreen = 1;
@@ -152,6 +154,8 @@ local $_ = "@ARGV";
 /-ms\s*(\S+)/ || /-masterserver\s*(\S+)/ and $fb_net::masterserver = $1;
 /-gs\s*(\S+):(\S+)/ || /-gameserver\s*(\S+):(\S+)/ and $gameserver = "$1:$2";
 /-ne/ || /-noe/ and $no_echo = 1;
+/-rf\s*(\S+)/ || /-regularfont\s*(\S+)/ and $regularfont = $1; 
+/-if\s*(\S+)/ || /-italicfont\s*(\S+)/ and $italicfont = $1; 
 
 #- ------------------------------------------------------------------------
 
@@ -2051,41 +2055,37 @@ sub init_game() {
     $imgbin{backstartfull} = SDL::Surface->new(-name => "$FPATH/gfx/menu/back_start.png");
 
     print_step('.'); 
-    my $main_font = $DEJAVUPATH;
-    my $italic_font = $DEJAVUOBLIQUEPATH;
-    my $mode = SDL::TTF_UTF8_BLENDED();
+    $regularfont ||= fb_c_stuff::locatefont("sans");
+    $italicfont ||= fb_c_stuff::locatefont("sans:italic");
+    $regularfont or die "[*ERROR*] FontConfig didn't locate a regular TTF font. Please try specifying one with --regularfont<file>.\n";
+    $italicfont or die "[*ERROR*] FontConfig didn't locate an italic TTF font. Please try specifying one with --italicfont<file>.\n";
 
-    if ($ENV{LANGUAGE} =~ /^ja/) {
-        $main_font = $SAZANAMIGOTHICPATH;
-        $mode = SDL::TTF_UTF8_SOLID();
-    }
-
-    $ttfonts{netdialogs}{fg} = SDL::TTFont->new(-name => $main_font, -size => 12, -mode => $mode,
+    $ttfonts{netdialogs}{fg} = SDL::TTFont->new(-name => $regularfont, -size => 12, -mode => SDL::TTF_UTF8_BLENDED(),
                                                 -foreground => $SDL::Color::black);
-    $ttfonts{netdialogs}{bg} = SDL::TTFont->new(-name => $main_font, -size => 12, -mode => $mode,
+    $ttfonts{netdialogs}{bg} = SDL::TTFont->new(-name => $regularfont, -size => 12, -mode => SDL::TTF_UTF8_BLENDED(),
                                                 -foreground => $SDL::Color::white);
-    if ($ENV{LANGUAGE} =~ /^ja/) {
+    if ($ENV{LANGUAGE} =~ /^ja/ && $regularfont eq $italicfont) {
         $ttfonts{netdialogs_servermsg}{fg} = $ttfonts{netdialogs}{fg};  #- save 5M of RSS
         $ttfonts{netdialogs_servermsg}{bg} = $ttfonts{netdialogs}{bg};
     } else {
-        $ttfonts{netdialogs_servermsg}{fg} = SDL::TTFont->new(-name => $italic_font, -size => 12, -mode => $mode,
+        $ttfonts{netdialogs_servermsg}{fg} = SDL::TTFont->new(-name => $italicfont, -size => 12, -mode => SDL::TTF_UTF8_BLENDED(),
                                                               -foreground => $SDL::Color::black);
-        $ttfonts{netdialogs_servermsg}{bg} = SDL::TTFont->new(-name => $italic_font, -size => 12, -mode => $mode,
+        $ttfonts{netdialogs_servermsg}{bg} = SDL::TTFont->new(-name => $italicfont, -size => 12, -mode => SDL::TTF_UTF8_BLENDED(),
                                                               -foreground => $SDL::Color::white);
     }
-    $ttfonts{menu}{fg} = SDL::TTFont->new(-name => $main_font, -size => 16, -mode => $mode,
+    $ttfonts{menu}{fg} = SDL::TTFont->new(-name => $regularfont, -size => 16, -mode => SDL::TTF_UTF8_BLENDED(),
                                           -foreground => $SDL::Color::white);
     $ENV{LANGUAGE} =~ /^ja/ and print_step('.');  #- loading japanese font is much slower
-    $ttfonts{menu}{bg} = SDL::TTFont->new(-name => $main_font, -size => 16, -mode => $mode,
+    $ttfonts{menu}{bg} = SDL::TTFont->new(-name => $regularfont, -size => 16, -mode => SDL::TTF_UTF8_BLENDED(),
                                           -foreground => $SDL::Color::black);
-    $ttfonts{ingame}{fg} = SDL::TTFont->new(-name => $main_font, -size => 18, -mode => $mode,
+    $ttfonts{ingame}{fg} = SDL::TTFont->new(-name => $regularfont, -size => 18, -mode => SDL::TTF_UTF8_BLENDED(),
                                             -foreground => $SDL::Color::white);
-    $ttfonts{ingame}{bg} = SDL::TTFont->new(-name => $main_font, -size => 18, -mode => $mode,
+    $ttfonts{ingame}{bg} = SDL::TTFont->new(-name => $regularfont, -size => 18, -mode => SDL::TTF_UTF8_BLENDED(),
                                             -foreground => $SDL::Color::black);
     $ENV{LANGUAGE} =~ /^ja/ and print_step('.');
-    $ttfonts{ingame_small}{fg} = SDL::TTFont->new(-name => $main_font, -size => 10, -mode => $mode,
+    $ttfonts{ingame_small}{fg} = SDL::TTFont->new(-name => $regularfont, -size => 10, -mode => SDL::TTF_UTF8_BLENDED(),
                                                   -foreground => $SDL::Color::white);
-    $ttfonts{ingame_small}{bg} = SDL::TTFont->new(-name => $main_font, -size => 10, -mode => $mode,
+    $ttfonts{ingame_small}{bg} = SDL::TTFont->new(-name => $regularfont, -size => 10, -mode => SDL::TTF_UTF8_BLENDED(),
                                                   -foreground => $SDL::Color::black);
 
     print_step('.'); 

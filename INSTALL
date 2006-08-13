@@ -7,7 +7,7 @@
 SDL_mixer >= 1.2.2
 	http://www.libsdl.org/projects/SDL_mixer/
 
-SDL_ttf
+SDL_ttf >= 2.0.9
 	http://www.libsdl.org/projects/SDL_ttf/
 
 SDL perl >= 1.19.0
@@ -18,23 +18,11 @@ SDL perl >= 1.19.0
 ***                                                                     ***
 ***************************************************************************
 
+fontconfig
+        http://www.fontconfig.org/
+
 The glib is needed for the server (and the server is needed for
 easy automatic LAN games).
-
-Several true type fonts are needed. They are available in the
-'data' subdirectory though distributors would prefer to make a
-requirement on packages providing these fonts, to save diskspace.
-If you want to use the internal fonts, pass the options
-DEJAVUPATH=internal DEJAVUOBLIQUEPATH=internal
-SAZANAMIGOTHICPATH=internal to the main Makefile. If you want to
-use external fonts, make sure these are the standard and oblique
-DejaVu sans fonts (DejaVuSans.ttf and DejaVuSans-Oblique.ttf,
-from http://dejavu.sourceforge.net/), and the Sazanami Gothic
-font (sazanami-gothic.ttf from
-http://sourceforge.jp/projects/efont/) and then pass the full
-path to them as options to the main Makefile (for example
-SAZANAMIGOTHICPATH=/usr/share/fonts/ttf/japanese/sazanami-gothic.ttf
-etc).
 
 
                 Installation instructions
@@ -43,23 +31,17 @@ etc).
 [*] First, build Frozen-Bubble and provide the prefix where the
 game will be installed (most probably /usr or /usr/local).
 
-make OPTIMIZE="my_arch_opt_flags" PREFIX="my_prefix" DEJAVUPATH=... DEJAVUOBLIQUEPATH=... SAZANAMIGOTHICPATH=...
+make OPTIMIZE="my_arch_opt_flags" PREFIX="my_prefix"
 
 
 [*] Second, install the files on the system.
 
-   - if you're root (case when you build a Debian package, or
-     when you build it locally on your own machine), you will
-     choose the same prefix location than for previous step
+   - if you're root, you will choose the same prefix location
+     than for previous step
 
 make install PREFIX="my_prefix"
 
-
-   - if you're not root (case when you build a RPM package), you
-     need to install to a temporary directory where you have
-     write access
+   - if you're not root, you need to install to a temporary
+     directory where you have write access
 
 make install PREFIX="/home/my_home/tmp/my_buildroot"
-
-   Then an external program such as RPM will collect the
-   installed files and write the package.

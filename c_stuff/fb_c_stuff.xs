@@ -35,6 +35,8 @@
 #define UNICODE_SHADED  128
 #define UNICODE_BLENDED 256
 
+#include <fontconfig/fontconfig.h>
+
 const int XRES = 640;
 const int YRES = 480;
 
@@ -400,11 +402,6 @@ void shrink_(SDL_Surface * dest, SDL_Surface * orig, int xpos, int ypos, SDL_Rec
 }
 
 
-inline void put_pixel(SDL_Surface * surf, int x, int y, Uint32 pixelvalue, int bpp)
-{
-        memcpy(surf->pixels + x*bpp + y*surf->pitch, &pixelvalue, bpp);
-}
-
 SV* utf8key_(SDL_Event * e) {
         iconv_t cd;
         char source[2];
@@ -429,14 +426,48 @@ SV* utf8key_(SDL_Event * e) {
         return newSVpv(retval, 0);
 }
 
-void TTFPutSt_() {
-                printf("1\n");
-                SDL_GetTicks();
-                printf("1b\n");
-                SDL_Delay(10);
-                printf("1c\n");
-                TTF_Init();
-                printf("1d\n");
+SV* locatefont_(char *pattern) {
+        FcFontSet   *fs;
+        FcPattern   *pat;
+        FcPattern   *match;
+        FcResult    result;
+        SV* retval = NULL;
+
+        if (!FcInit()) {
+                fprintf(stderr, "Ouch, can't init font config library\n");
+                exit(1);
+        }
+
+        pat = FcNameParse((FcChar8 *) pattern);
+        if (!pat) {
+                fprintf(stderr, "Failed to parse pattern (%s)\n", pattern);
+                exit(1);
+        }
+
+        FcConfigSubstitute(0, pat, FcMatchPattern);
+        FcDefaultSubstitute(pat);
+        fs = FcFontSetCreate();
+        match = FcFontMatch(0, pat, &result);
+        if (match)
+            FcFontSetAdd(fs, match);
+        FcPatternDestroy(pat);
+
+        if (fs) {
+                if (fs->nfont > 0) {
+                        FcChar8 *file;
+                        if (FcPatternGetString(fs->fonts[0], FC_FONTFORMAT, 0, &file) == FcResultMatch) {
+                                if (!strcmp((char*)file, "TrueType")) {
+                                        if (FcPatternGetString(fs->fonts[0], FC_FILE, 0, &file) == FcResultMatch) {
+                                                retval = newSVpv((char*)file, 0);
+                                        }
+                                }
+                        }
+                }
+                FcFontSetDestroy(fs);
+        }
+        retval = NULL;
+
+        return retval;
 }
 
 /************************** Gateway to Perl ****************************/
@@ -536,6 +567,15 @@ utf8key(event)
   SDL_Event * event
   CODE:
   RETVAL = utf8key_(event);
+  OUTPUT:
+  RETVAL
+
+
+SV *
+locatefont(pattern)
+  char *pattern
+  CODE:
+  RETVAL = locatefont_(pattern);
   OUTPUT:
   RETVAL
 
