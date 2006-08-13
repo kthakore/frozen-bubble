@@ -109,6 +109,6 @@ better than using kernel shaping or an external tool such as
 trickle, because reaching the bandwidth limit wouldn't impair
 existing players.
 
-Note that server upload bandwidth use is typically between 100
-and 300 bytes/second per connected player, which should make a
-server never use more than 75 KB/sec upload.
+Note that server upload bandwidth use is typically between a
+couple of tens and 300 bytes/second per connected player, which
+should make a server never use more than 75 KB/sec upload.
