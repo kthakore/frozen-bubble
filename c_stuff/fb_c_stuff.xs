@@ -465,7 +465,6 @@ SV* locatefont_(char *pattern) {
                 }
                 FcFontSetDestroy(fs);
         }
-        retval = NULL;
 
         return retval;
 }
