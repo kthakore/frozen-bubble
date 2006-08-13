@@ -227,7 +227,7 @@ sub init_sound() {
     print "[Sound Init]\n";
     my @sounds = qw(stick destroy_group newroot newroot_solo lose hurry pause menu_change menu_selected rebound launch malus noh snore cancel typewriter applause chatted);
     foreach (@sounds) {
-	my $sound_path = "$FPATH/snd/$_.wav";
+	my $sound_path = "$FPATH/snd/$_.ogg";
 	$sound{$_} = SDL::Sound->new($sound_path);
 	if ($sound{$_}{-data}) {
 	    $sound{$_}->volume(80);
