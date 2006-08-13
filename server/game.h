@@ -20,8 +20,6 @@
 #include <stdlib.h>
 #include <stdarg.h>
 
-void game_init();
-
 void player_connects(int fd);
 void player_disconnects(int fd);
 

@@ -31,8 +31,6 @@ int main(int argc, char **argv)
         printf("warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n");
         printf("\n");
 
-        game_init();
-
         create_server(argc, argv);
         daemonize();
         connections_manager();

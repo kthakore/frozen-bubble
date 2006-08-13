@@ -469,6 +469,23 @@ sub setmyid($) {
 
 #- in game operations
 
+#- data is command:parameters
+#- supported commands:
+#-   ! (synchro)
+#-   a (angle)
+#-   b (bubble)
+#-   d (drop)
+#-   f (fire)
+#-   F (finished)
+#-   l (leave)
+#-   m (malus)
+#-   M (malusstick)
+#-   n (newgame)
+#-   N (nextbubble)
+#-   p (ping)
+#-   s (stick)
+#-   t (talk)
+#-   T (tobelaunchedbubble)
 sub gsend($) {
     my ($msg) = @_;
     if (defined($sock)) {

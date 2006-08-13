@@ -295,7 +295,7 @@ void player_part_game(int fd)
 
                 if (g->status == GAME_STATUS_PLAYING) {
                         // inform other players, playing state
-                        char leave_player_prio_msg[] = "?leave\n";
+                        char leave_player_prio_msg[] = "?l\n";
                         leave_player_prio_msg[0] = fd;
                         process_msg_prio(fd, leave_player_prio_msg, strlen(leave_player_prio_msg));
                 } else {
@@ -580,13 +580,6 @@ ssize_t get_reset_amount_transmitted(void)
 int rand_(double val) { return 1+(int) (val*rand()/(RAND_MAX+1.0)); }
 #define min(x, y) (x < y ? x : y)
 
-static char synchro_command[] = "!synchro\n";
-static size_t synchro_command_len;
-
-void game_init() {
-        synchro_command_len = strlen(synchro_command);
-}
-
 void process_msg_prio(int fd, char* msg, ssize_t len)
 {
         struct game * g = find_game_by_fd(fd);
@@ -601,8 +594,8 @@ void process_msg_prio(int fd, char* msg, ssize_t len)
                 int i;
                 for (i = 0; i < g->players_number; i++) {
                         // Emitter wants to receive synchro message as well
-                        if (g->players_conn[i] == fd && memmem_(msg, len, synchro_command, synchro_command_len)) {
-                                char synchro4self[] = "?!synchro\n";
+                        if (g->players_conn[i] == fd && len > 2 && msg[1] == '!') {
+                                char synchro4self[] = "?!\n";
                                 ssize_t retval;
                                 synchro4self[0] = fd;
                                 l1(OUTPUT_TYPE_DEBUG, "******* sending synchro to %d", g->players_conn[i]);
