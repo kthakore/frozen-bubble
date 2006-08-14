@@ -2976,9 +2976,6 @@ sub callback_entry {
     if ($action eq 'gettext') {
         return @typed;
     }
-    if ($action eq 'settext') {
-        @typed = @$params;
-    }
     if ($action eq 'print') {
         print_($params->{font}, $app, $params->{xpos}, $params->{ypos}, $params->{prefix} . join('', @typed));
         if ($echo_blink_counter > 25) {
@@ -3133,7 +3130,7 @@ sub smg_choose_game() {
                     if ($curaction->()->{action} eq 'CHAT' && callback_entry('gettext') > 0) {
                         play_sound('menu_selected');
                         fb_net::send_("TALK ($mynick) " . join('', callback_entry('gettext')));
-                        callback_entry('settext', []);
+                        callback_entry('reset');
                     }
 
                     if (member($curaction->()->{action}, 'CREATE', 'JOIN')) {
@@ -3658,7 +3655,6 @@ sub menu {
     my $back_start;
     my $display_menu = sub {
 	$back_start->blit($apprects{main}, $app, $apprects{main});
-	put_image($imgbin{version}, 17, 432);
     };
 
     if (!$from_intro || !$back_from_intro) {
@@ -3743,7 +3739,7 @@ sub menu {
 	$app->update($drect);
     };
 
-    my ($MENU_XPOS, $MENU_FIRSTY, $SPACING) = (56, 30, 51);
+    my ($MENU_XPOS, $MENU_FIRSTY, $SPACING) = (89, 14, 58);
     my %menu_ypos = ( '1pgame' =>      $MENU_FIRSTY,
 		      '2pgame' =>      $MENU_FIRSTY +     $SPACING,
 		      'langame'=>      $MENU_FIRSTY + 2 * $SPACING,
@@ -3795,7 +3791,7 @@ sub menu {
     $event->pump while ($event->poll != 0);
 
     my $start_game = 0;
-    my ($BANNER_START, $BANNER_SPACING) = (720, 80);
+    my ($BANNER_START, $BANNER_SPACING) = (1000, 80);
     my %banners = (artwork => $BANNER_START,
 		   soundtrack => $BANNER_START + $imgbin{banner_artwork}->width + $BANNER_SPACING,
 		   cpucontrol => $BANNER_START + $imgbin{banner_artwork}->width + $BANNER_SPACING
@@ -3803,7 +3799,7 @@ sub menu {
 		   leveleditor => $BANNER_START + $imgbin{banner_artwork}->width + $BANNER_SPACING
                                  + $imgbin{banner_soundtrack}->width + $BANNER_SPACING
                                  + $imgbin{banner_cpucontrol}->width + $BANNER_SPACING);
-    my ($BANNER_MINX, $BANNER_MAXX, $BANNER_Y) = (81, 292, 443);
+    my ($BANNER_MINX, $BANNER_MAXX, $BANNER_Y) = (304, 596, 243);
     my $banners_max = $banners{leveleditor} - (640 - ($BANNER_MAXX - $BANNER_MINX)) + $BANNER_SPACING;
     my $banner_rect = SDL::Rect->new(-width => $BANNER_MAXX-$BANNER_MINX, -height => 30, '-x' => $BANNER_MINX, '-y' => $BANNER_Y);
 
