@@ -72,9 +72,9 @@ $CANON_ROTATIONS_NB = 40;       # number of rotations of images for canon (shoul
 
 $TIMEOUT_PINGUIN_SLEEP = 200;
 $FREE_FALL_CONSTANT = 0.5;
-$KEYS = { p1 => { left => SDLK_x,    right => SDLK_v,     fire => SDLK_c,  center => SDLK_d },
-	  p2 => { left => SDLK_LEFT, right => SDLK_RIGHT, fire => SDLK_UP, center => SDLK_DOWN },
-	  misc => { fs => SDLK_f } };
+$KEYS = { p1 => { left => SDLK_LEFT, right => SDLK_RIGHT, fire => SDLK_UP, center => SDLK_DOWN },
+          p2 => { left => SDLK_x,    right => SDLK_v,     fire => SDLK_c,  center => SDLK_d },
+	  misc => { fs => SDLK_f, chat => SDLK_RETURN } };
 
 $sdl_flags = SDL_ANYFORMAT | SDL_HWSURFACE | SDL_DOUBLEBUF | SDL_HWACCEL | SDL_ASYNCBLIT;
 $mixer = 0;

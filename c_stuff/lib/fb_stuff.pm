@@ -51,7 +51,7 @@ $FLPATH = '@LIBDIR@/frozen-bubble';
             compressor_xpos => 321,
 	  );
 
-%POS_2P = ( p1 => { left_limit => 30, right_limit => 286, top_limit => 40, 'initial_bubble_y' => 390,
+%POS_2P = ( p2 => { left_limit => 30, right_limit => 286, top_limit => 40, 'initial_bubble_y' => 390,
                     canon => { x => 108, 'y' => 356 },
                     simpleshooter => { x => 157, 'y' => 405, diameter => 60 },
                     pinguin => { x => 168, 'y' => 437 },
@@ -63,7 +63,7 @@ $FLPATH = '@LIBDIR@/frozen-bubble';
                     nick => { x => 160, 'y' => 9 },
                     chatting => { x => 30, 'y' => 440 },
                   },
-	    p2 => { left_limit => 354, right_limit => 610, top_limit => 40, 'initial_bubble_y' => 390,
+	    p1 => { left_limit => 354, right_limit => 610, top_limit => 40, 'initial_bubble_y' => 390,
                     canon => { x => 432, 'y' => 356 },
                     simpleshooter => { x => 481, 'y' => 405, diameter => 60 },
                     pinguin => { x => 32,  'y' => 437 },
