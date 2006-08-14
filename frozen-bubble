@@ -2772,6 +2772,7 @@ sub smg_choose_server(@) {
             $y += $smg_lineheight + 2;
         }
         $y = $smg_starty;
+        my $details_pos = 280;
         foreach my $server (@sorted_servers) {
             if ($server->{selected}) {
                 put_image($malus_gfx{tomate}, $smg_startx - 24, $y);
@@ -2779,9 +2780,9 @@ sub smg_choose_server(@) {
             exists $imgbin{flag}{$server->{language}} and put_image($imgbin{flag}{$server->{language}}, $smg_startx, $y);
             print_('netdialogs', $app, $smg_startx + 34, $y, $server->{name});
             my $details = t("Available players:%s  Ping:%sms", $server->{players}, $server->{ping});
-            print_('netdialogs', $app, 340, $y, $details);
+            print_('netdialogs', $app, $details_pos, $y, $details);
             my $pingimg = $server->{ping} < 50 ? "ping_low" : $server->{ping} < 100 ? "ping_mid" : "ping_high";
-            put_image($imgbin{$pingimg}, 340 + width('netdialogs', $details), $y);
+            put_image($imgbin{$pingimg}, $details_pos + width('netdialogs', $details), $y);
                                                      
             $y += $smg_lineheight + 2;
         }
