@@ -2112,6 +2112,9 @@ sub init_game() {
     $imgbin{void_chat_small} = add_image('menu/void_chat_small.png');
     $imgbin{version} = add_image('menu/version.png');
     $imgbin{blink} = add_image('menu/blink.png');
+    $imgbin{ping_low} = add_image('menu/ping-low.png');
+    $imgbin{ping_mid} = add_image('menu/ping-mid.png');
+    $imgbin{ping_high} = add_image('menu/ping-high.png');
     $imgbin{left_mini} = add_image('left-mini.png');
     $imgbin{left} = add_image('left.png');
     $imgbin{mp_ready_newgame} = add_image('pinguins/mp_ready_newgame.png');
@@ -2775,7 +2778,10 @@ sub smg_choose_server(@) {
             }
             exists $imgbin{flag}{$server->{language}} and put_image($imgbin{flag}{$server->{language}}, $smg_startx, $y);
             print_('netdialogs', $app, $smg_startx + 34, $y, $server->{name});
-            print_('netdialogs', $app, 340, $y, t("Available players:%s  Ping:%sms", $server->{players}, $server->{ping}));
+            my $details = t("Available players:%s  Ping:%sms", $server->{players}, $server->{ping});
+            print_('netdialogs', $app, 340, $y, $details);
+            my $pingimg = $server->{ping} < 50 ? "ping_low" : $server->{ping} < 100 ? "ping_mid" : "ping_high";
+            put_image($imgbin{$pingimg}, 340 + width('netdialogs', $details), $y);
                                                      
             $y += $smg_lineheight + 2;
         }
@@ -3739,15 +3745,13 @@ sub menu {
 	$app->update($drect);
     };
 
-    my ($MENU_XPOS, $MENU_FIRSTY, $SPACING) = (89, 14, 58);
+    my ($MENU_XPOS, $MENU_FIRSTY, $SPACING) = (89, 14, 48);
     my %menu_ypos = ( '1pgame' =>      $MENU_FIRSTY,
 		      '2pgame' =>      $MENU_FIRSTY +     $SPACING,
 		      'langame'=>      $MENU_FIRSTY + 2 * $SPACING,
 		      'netgame'=>      $MENU_FIRSTY + 3 * $SPACING,
 		      'editor' =>      $MENU_FIRSTY + 4 * $SPACING,
-#		      'fullscreen' =>  $MENU_FIRSTY + 3 * $SPACING,
 		      'graphics' =>    $MENU_FIRSTY + 5 * $SPACING,
-#		      'sound' =>       $MENU_FIRSTY + 5 * $SPACING,
 		      'keys' =>        $MENU_FIRSTY + 6 * $SPACING,
 		      'highscores' =>  $MENU_FIRSTY + 7 * $SPACING,
 		  );
