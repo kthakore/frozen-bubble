@@ -2803,6 +2803,15 @@ sub smg_choose_server(@) {
                 $redraw->();
             }
         }
+        $event->pump;
+        if ($event->poll != 0) {
+            if ($event->type == SDL_QUIT) {
+                exit 0;
+            }
+            if ($event->type == SDL_KEYDOWN && $event->key_sym == SDLK_ESCAPE) {
+                return 0;
+            }
+        }
     }
     foreach (difference2(\@servers, \@sorted_servers)) {
         $_->{disabled} = 1;  #- disable slow servers if there are a lot of them
