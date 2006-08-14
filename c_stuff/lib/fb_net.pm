@@ -310,12 +310,6 @@ sub connect {
     }
     $sock->autoflush;
 
-    my $flags = $sock->fcntl(F_GETFL, 0);
-    if (!$flags) {
-        disconnect();
-        return { failure => 'Server is mad' };
-    }
-
     my $msg = readline_();
     my ($remote_major, $remote_minor, $isready) = $msg =~ m|^FB/(\d+).(\d+) (.*)|;
     my ($servername, $serverlanguage);
@@ -365,6 +359,12 @@ sub connect {
             @pings = difference2(\@pings, [ min(@pings) ]) while @pings > 2;
         }
         $ping = sprintf("%.1f", sum(@pings)/@pings);
+    }
+
+    my $flags = $sock->fcntl(F_GETFL, 0);
+    if (!$flags) {
+        disconnect();
+        return { failure => 'Server is mad' };
     }
 
     $flags = $sock->fcntl(F_SETFL, $flags|O_NONBLOCK);

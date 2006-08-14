@@ -2013,17 +2013,17 @@ sub init_game() {
     $italicfont or die "[*ERROR*] FontConfig didn't locate an italic TTF font. Please try specifying one with --italicfont<file>.\n";
 
     $ttfonts{netdialogs}{fg} = SDL::TTFont->new(-name => $regularfont, -size => 12, -mode => SDL::TTF_UTF8_BLENDED(),
-                                                -foreground => $SDL::Color::black);
-    $ttfonts{netdialogs}{bg} = SDL::TTFont->new(-name => $regularfont, -size => 12, -mode => SDL::TTF_UTF8_BLENDED(),
                                                 -foreground => $SDL::Color::white);
+    $ttfonts{netdialogs}{bg} = SDL::TTFont->new(-name => $regularfont, -size => 12, -mode => SDL::TTF_UTF8_BLENDED(),
+                                                -foreground => $SDL::Color::black);
     if ($ENV{LANGUAGE} =~ /^ja/ && $regularfont eq $italicfont) {
         $ttfonts{netdialogs_servermsg}{fg} = $ttfonts{netdialogs}{fg};  #- save 5M of RSS
         $ttfonts{netdialogs_servermsg}{bg} = $ttfonts{netdialogs}{bg};
     } else {
         $ttfonts{netdialogs_servermsg}{fg} = SDL::TTFont->new(-name => $italicfont, -size => 12, -mode => SDL::TTF_UTF8_BLENDED(),
-                                                              -foreground => $SDL::Color::black);
-        $ttfonts{netdialogs_servermsg}{bg} = SDL::TTFont->new(-name => $italicfont, -size => 12, -mode => SDL::TTF_UTF8_BLENDED(),
                                                               -foreground => $SDL::Color::white);
+        $ttfonts{netdialogs_servermsg}{bg} = SDL::TTFont->new(-name => $italicfont, -size => 12, -mode => SDL::TTF_UTF8_BLENDED(),
+                                                              -foreground => $SDL::Color::black);
     }
     $ttfonts{menu}{fg} = SDL::TTFont->new(-name => $regularfont, -size => 16, -mode => SDL::TTF_UTF8_BLENDED(),
                                           -foreground => $SDL::Color::white);
@@ -2639,7 +2639,7 @@ sub choose_1p_game_mode() {
 
 our $smg_startx = 78;
 our $smg_starty = 30;
-our $smg_starty_chat = 316;
+our $smg_starty_chat = 320;
 our $smg_starty_players = $smg_starty_chat + $smg_lineheight;
 our $smg_max_messages = 5;
 our $smg_statusx = 46;
@@ -2998,7 +2998,7 @@ sub callback_entry {
 sub smg_choose_game() {
     my @actions = ({ name => t("Chat"), action => 'CHAT', selected => 1 },
                    { name => t("Create new game"), action => 'CREATE' });
-    my $max_actions = 10;
+    my $max_actions = 18;
 
     my $curaction = sub {
         my $cur;
@@ -3154,6 +3154,9 @@ sub smg_choose_game() {
                                     $mynick .= $chars[rand(@chars)] foreach 1..4;
                                     $suffix = 1;
                                 }
+                            } elsif ($answer eq 'ALREADY_MAX_OPEN_GAMES') {
+                                smg_add_status_msg(t("*** Open games already full. Join an existing game, or select a different server."));
+                                goto not_in_game;
                             } else {
                                 if ($curaction->()->{action} eq 'CREATE') {
                                     $can_start = 1;
@@ -3174,6 +3177,7 @@ sub smg_choose_game() {
                             $need4update = 1;
                         }
                     }
+                  not_in_game:
                             
                     if ($curaction->()->{action} eq 'START') {
                         my $answer = smg_verify_command('START');
