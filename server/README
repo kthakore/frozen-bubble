@@ -110,5 +110,9 @@ trickle, because reaching the bandwidth limit wouldn't impair
 existing players.
 
 Note that server upload bandwidth use is typically between a
-couple of tens and 300 bytes/second per connected player, which
-should make a server never use more than 75 KB/sec upload.
+couple of tens and 1000 bytes/second per connected player (the
+more players in one game, the more bandwidth is needed per
+player).
+
+CPU use is not measurable (always stays at 0% on my p4 machine
+even when serving 100 simulated players producing high traffic).
