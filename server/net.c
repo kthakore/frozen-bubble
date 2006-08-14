@@ -37,6 +37,7 @@
 #include <netdb.h>
 #include <poll.h>
 #include <sys/utsname.h>
+#include <sys/time.h>
 
 #include <glib.h>
 
@@ -148,18 +149,22 @@ static void fill_conns_set(gpointer data, gpointer user_data)
 
 static int recalculate_list_games = 0;
 static GList * new_conns;
+static int interrupt_loop_processing = 0;
 void conn_terminated(int fd, char* reason)
 {
-        l2(OUTPUT_TYPE_CONNECT, "[%d] Closing connection: %s", fd, reason);
-        close(fd);
-        free(incoming_data_buffers[fd]);
-        player_part_game(fd);
-        new_conns = g_list_remove(new_conns, GINT_TO_POINTER(fd));
-        player_disconnects(fd);
-        recalculate_list_games = 1;
-        if (lan_game_mode && g_list_length(new_conns) == 0 && udp_server_socket == -1) {
-                l0(OUTPUT_TYPE_INFO, "LAN game mode server exiting on last client exit.");
-                exit(EXIT_SUCCESS);
+        if (g_list_find(new_conns, GINT_TO_POINTER(fd))) {  // we can be recursively called if two players disconnect at the exact same time
+                l2(OUTPUT_TYPE_CONNECT, "[%d] Closing connection: %s", fd, reason);
+                close(fd);
+                free(incoming_data_buffers[fd]);
+                new_conns = g_list_remove(new_conns, GINT_TO_POINTER(fd));
+                player_part_game(fd);                       // this is where the recursive call can come from (process_msg_prio with a failed send)
+                player_disconnects(fd);
+                recalculate_list_games = 1;
+                interrupt_loop_processing = 1;
+                if (lan_game_mode && g_list_length(new_conns) == 0 && udp_server_socket == -1) {
+                        l0(OUTPUT_TYPE_INFO, "LAN game mode server exiting on last client exit.");
+                        exit(EXIT_SUCCESS);
+                }
         }
 }
 
@@ -168,7 +173,7 @@ static void handle_incoming_data_generic(gpointer data, gpointer user_data, int 
 {
         int fd;
 
-        if (FD_ISSET((fd = GPOINTER_TO_INT(data)), (fd_set *) user_data)) {
+        if (!interrupt_loop_processing && FD_ISSET((fd = GPOINTER_TO_INT(data)), (fd_set *) user_data)) {
                 char buf[INCOMING_DATA_BUFSIZE];
                 ssize_t len;
                 ssize_t offset = incoming_data_buffers_count[fd];
@@ -302,6 +307,7 @@ void connections_manager(void)
                 if (recalculate_list_games)
                         calculate_list_games();
                 recalculate_list_games = 0;
+                //rip_dead_games();
 
                 FD_ZERO(&conns_set);
                 g_list_foreach(conns, fill_conns_set, &conns_set);
@@ -324,13 +330,14 @@ void connections_manager(void)
                         continue;
 
                 prio_processed = 0;
+                interrupt_loop_processing = 0;
                 new_conns = g_list_copy(conns_prio);
                 g_list_foreach(conns_prio, handle_incoming_data_prio, &conns_set);
                 g_list_free(conns_prio);
                 conns_prio = new_conns;
 
                 // prio has higher priority (astounding statement, eh?)
-                if (prio_processed)
+                if (prio_processed || interrupt_loop_processing)
                         continue;
 
                 new_conns = g_list_copy(conns);
