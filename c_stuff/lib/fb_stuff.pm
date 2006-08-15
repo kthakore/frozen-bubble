@@ -45,7 +45,7 @@ $FLPATH = '@LIBDIR@/frozen-bubble';
                     next_bubble => { x => 112, 'y' => 440 },
                     on_top_next_relpos => { x => -4, 'y' => -3 },
                     hurry => { x => 10, 'y' => 265 },
-                    scores => { x => 25, 'y' => 205 } },
+                    scores => { x => 74, 'y' => 103 } },
 	    centerpanel => { x => 149, 'y' => 190 },
 	    pause_clip => { x => 263, 'y' => 212 },
             compressor_xpos => 321,

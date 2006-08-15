@@ -1270,19 +1270,16 @@ sub handle_game_events() {
 sub print_scores($) {
     my ($surface) = @_;  
     iter_players_ {  #- sometimes called from within a iter_players so...
-        my $xpos = $POS{$::p_}{scores}{x} - width('ingame', $pdata{$::p_}{score})/2;
+        my $score = @PLAYERS == 1 ? ($pdata{$::p_}{score} eq 'RANDOM' ? t("Random level") : t("Level %s", $pdata{$::p_}{score}) ) : $pdata{$::p_}{score};
+        my $xpos = $POS{$::p_}{scores}{x} - width(mini_graphics($::p_) ? 'ingame_small' : 'ingame', $score)/2;
         my $drect = SDL::Rect->new(-width => 20, -height => mini_graphics($::p_) ? 12 : 24, -x => $xpos, '-y' => $POS{$::p_}{scores}{'y'});
         $background_orig->blit($drect, $surface, $drect);
         push @update_rects, $drect;
         if (mini_graphics($::p_)) {
-            print_('ingame_small', $surface, $xpos, $POS{$::p_}{scores}{'y'}, $pdata{$::p_}{score});
+            print_('ingame_small', $surface, $xpos, $POS{$::p_}{scores}{'y'}, $score);
             is_mp_game() and print_('ingame_small', $surface, $POS{$::p_}{nick}{x}, $POS{$::p_}{nick}{'y'}, $pdata{$::p_}{nick});
         } else {
-            if (@PLAYERS == 1) {
-                print_('ingame', $surface, $xpos, $POS{$::p_}{scores}{'y'}, t("Level %s", $pdata{$::p_}{score}));
-            } else {
-                print_('ingame', $surface, $xpos, $POS{$::p_}{scores}{'y'}, $pdata{$::p_}{score});
-            }
+            print_('ingame', $surface, $xpos, $POS{$::p_}{scores}{'y'}, $score);
             is_mp_game() and print_('ingame', $surface, $POS{$::p_}{nick}{x}, $POS{$::p_}{nick}{'y'}, $pdata{$::p_}{nick});
         }
     };
