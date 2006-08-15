@@ -433,11 +433,11 @@ sub is_distant_player($) {
 sub mp_propagate($$) {
     my ($key, $value) = @_;
     if (is_leader()) {
-        fb_net::gsend("$key:$value");
+        fb_net::gsend("$key$value");
         return $value;
     } else {
         my $m = fb_net::grecv_get1msg();
-        if ($m->{msg} !~ /^\Q$key:\E(.+)/) {
+        if ($m->{msg} !~ /^\Q$key\E(.+)/) {
             print "Network protocol error: waiting for $key, received $m->{msg}.\n";
             die 'quit';
         } else {
@@ -1059,7 +1059,7 @@ sub handle_game_events() {
             if (is_mp_game() && $pdata{p1}{chatting}) {
 
                 if (($keypressed == SDLK_RETURN() || $keypressed == SDLK_KP_ENTER()) && callback_entry('gettext') > 0) {
-                    fb_net::gsend('t:' . join('', callback_entry('gettext')));
+                    fb_net::gsend('t' . join('', callback_entry('gettext')));
                     cleanup_chatting();
                 } elsif (!member($keypressed, SDLK_RETURN(), SDLK_KP_ENTER(), SDLK_TAB())) {
                     callback_entry('keypressed', { event => $event, maxlen => $imgbin{void_chat}->width - 20, font => 'ingame' });
@@ -1185,7 +1185,7 @@ sub handle_game_events() {
                 print STDERR "$pdata{$player}{nick}: you don't exist, go away!\n";
                 next;
             }
-            my ($command, $params) = $m->{msg} =~ /^(\w+):?(.*)/;
+            my ($command, $params) = $m->{msg} =~ /^(.)(.*)/;
             if ($command eq 'p') {
                 $pdata{$player}{ping} = $frame;
             } elsif ($command eq 'l') {
@@ -1261,7 +1261,7 @@ sub handle_game_events() {
                 print STDERR "Dropping player $::p, doesn't ping us anymore for ages.\n";
                 $pdata{$::p}{left} = 1;
                 lose($::p);
-                fb_net::gsend("d:$pdata{$::p}{nick}");
+                fb_net::gsend("d$pdata{$::p}{nick}");
             }
         };
     }
@@ -1271,16 +1271,16 @@ sub print_scores($) {
     my ($surface) = @_;  
     iter_players_ {  #- sometimes called from within a iter_players so...
         my $score = @PLAYERS == 1 ? ($pdata{$::p_}{score} eq 'RANDOM' ? t("Random level") : t("Level %s", $pdata{$::p_}{score}) ) : $pdata{$::p_}{score};
-        my $xpos = $POS{$::p_}{scores}{x} - width(mini_graphics($::p_) ? 'ingame_small' : 'ingame', $score)/2;
-        my $drect = SDL::Rect->new(-width => 20, -height => mini_graphics($::p_) ? 12 : 24, -x => $xpos, '-y' => $POS{$::p_}{scores}{'y'});
+        is_mp_game() and $score = "$pdata{$::p_}{nick}: $score";
+        my $width = width(mini_graphics($::p_) ? 'ingame_small' : 'ingame', $score);
+        my $xpos = $POS{$::p_}{scores}{x} - $width/2;
+        my $drect = SDL::Rect->new(-width => $width, -height => mini_graphics($::p_) ? 12 : 24, -x => $xpos, '-y' => $POS{$::p_}{scores}{'y'});
         $background_orig->blit($drect, $surface, $drect);
         push @update_rects, $drect;
         if (mini_graphics($::p_)) {
             print_('ingame_small', $surface, $xpos, $POS{$::p_}{scores}{'y'}, $score);
-            is_mp_game() and print_('ingame_small', $surface, $POS{$::p_}{nick}{x}, $POS{$::p_}{nick}{'y'}, $pdata{$::p_}{nick});
         } else {
             print_('ingame', $surface, $xpos, $POS{$::p_}{scores}{'y'}, $score);
-            is_mp_game() and print_('ingame', $surface, $POS{$::p_}{nick}{x}, $POS{$::p_}{nick}{'y'}, $pdata{$::p_}{nick});
         }
     };
 }
@@ -1336,7 +1336,7 @@ sub lose {
                 #- tentatively suppose we've found the winner, but we need to confirm it by network
                 #- first, in rare case of two last players dying at the same time
                 my $winnernick = $pdata{$living[0]}{nick};
-                fb_net::gsend("F:$winnernick");
+                fb_net::gsend("F$winnernick");
                 $pdata{state} = "finished $living[0]:$winnernick 0";
             }
         }
@@ -1459,7 +1459,7 @@ sub decode_postgame_message($) {
     my ($msg) = @_;
     my $player = $pdata{id2p}{$msg->{id}};
     $player ||= 'UNKNOWN';
-    if ($msg->{msg} =~ /^\QF:\E(.*)/) {
+    if ($msg->{msg} =~ /^F(.*)/) {
         $pdata{$player}{still_game_messages} = 0;
         return "$player finished $1";
     } elsif ($pdata{$player}{still_game_messages}) {
@@ -1499,7 +1499,7 @@ sub update_game() {
                 ($angle{$::p} < 0.1) and $angle{$::p} = 0.1;
                 ($angle{$::p} > $PI-0.1) and $angle{$::p} = $PI-0.1;
                 if (is_mp_game() && ($actions{$::p}{left} || $actions{$::p}{right} || $actions{$::p}{center})) {
-                    fb_net::gsend(sprintf("a:%.2f", $angle{$::p}));
+                    fb_net::gsend(sprintf("a%.2f", $angle{$::p}));
                 }
                 $pdata{$::p}{hurry}++;
                 if ($pdata{$::p}{hurry} > $TIME_HURRY_WARN) {
@@ -1532,7 +1532,7 @@ sub update_game() {
                     if (is_mp_game()) {
                         if (is_local_player($::p)) {
                             $pdata{$::p}{nextcolor} = int(rand(@bubbles_images));
-                            fb_net::gsend(sprintf("f:%.3f:$pdata{$::p}{nextcolor}", $angle{$::p}));
+                            fb_net::gsend(sprintf("f%.3f:$pdata{$::p}{nextcolor}", $angle{$::p}));
                         }
                         $actions{$::p}{mp_fire} = 0;
                     } else {
@@ -1581,7 +1581,7 @@ sub update_game() {
                         my ($cx, $cy) = get_array_closest_pos($launched_bubble{$::p}->{x}, $launched_bubble{$::p}->{'y'}, $::p);
                         if (is_local_player($::p)) {
                             my $col = get_bubble_num($launched_bubble{$::p});
-                            is_mp_game() and fb_net::gsend("s:$cx:$cy:$col:@{$pdata{$::p}{nextcolors}}");
+                            is_mp_game() and fb_net::gsend("s$cx:$cy:$col:@{$pdata{$::p}{nextcolors}}");
                             stick_bubble($launched_bubble{$::p}, $cx, $cy, $::p, 1);
                             $launched_bubble{$::p} = undef;
                         } else {
@@ -1600,7 +1600,7 @@ sub update_game() {
                                                                       $::p);
                                 if (is_local_player($::p)) {
                                     my $col = get_bubble_num($launched_bubble{$::p});
-                                    is_mp_game() and fb_net::gsend("s:$cx:$cy:$col:@{$pdata{$::p}{nextcolors}}");
+                                    is_mp_game() and fb_net::gsend("s$cx:$cy:$col:@{$pdata{$::p}{nextcolors}}");
                                     stick_bubble($launched_bubble{$::p}, $cx, $cy, $::p, 1);
                                     $launched_bubble{$::p} = undef;
                                     
@@ -1636,7 +1636,7 @@ sub update_game() {
                                         my $shifting = 0;
                                         $_->{'y'} += ($shifting+=7)+int(rand(20)) foreach @{$malus_bubble{$::p}};
                                         if (is_mp_game()) {
-                                            fb_net::gsend("m:$_->{num}:$_->{cx}:$_->{cy}:$_->{stick_y}") foreach @{$malus_bubble{$::p}};
+                                            fb_net::gsend("m$_->{num}:$_->{cx}:$_->{cy}:$_->{stick_y}") foreach @{$malus_bubble{$::p}};
                                         }
                                     }
                                     
@@ -1845,7 +1845,7 @@ sub update_game() {
                     print "malus stick local at $b->{cx} $b->{stick_y}\n"; 
                     real_stick_bubble($b, $b->{'cx'}, $b->{'stick_y'}, $::p, 0, 'malus');
                     push @$malus_end, $b;
-                    fb_net::gsend("M:$b->{cx}:$b->{stick_y}");
+                    fb_net::gsend("M$b->{cx}:$b->{stick_y}");
                 } else {
                     $b->{freeze} = 1;
                 }
