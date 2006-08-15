@@ -2119,6 +2119,7 @@ sub init_game() {
     $imgbin{left} = add_image('left.png');
     $imgbin{mp_ready_newgame} = add_image('pinguins/mp_ready_newgame.png');
     $imgbin{mp_waiting_newgame} = add_image('pinguins/mp_waiting_newgame.png');
+    $imgbin{highlight_server} = add_image('menu/highlight-server.png');
 
     #- little flags
     foreach my $f (glob("$FPATH/gfx/flags/*")) {
@@ -2766,16 +2767,14 @@ sub smg_choose_server(@) {
 
     my @sorted_servers;
     my $redraw = sub {
+        my $drect = SDL::Rect->new(-width => 640, -height => $smg_statusy-$smg_lineheight*5, -x => 0, '-y' => 0);
+        $imgbin{back_netgame}->blit($drect, $app, $drect);
+
         my $y = $smg_starty;
-        foreach (1 .. $max_lines) {
-            erase_line($y, $imgbin{back_netgame});
-            $y += $smg_lineheight + 2;
-        }
-        $y = $smg_starty;
         my $details_pos = 280;
         foreach my $server (@sorted_servers) {
             if ($server->{selected}) {
-                put_image($malus_gfx{tomate}, $smg_startx - 24, $y);
+                put_image($imgbin{highlight_server}, 6, $y-1);
             }
             exists $imgbin{flag}{$server->{language}} and put_image($imgbin{flag}{$server->{language}}, $smg_startx, $y);
             print_('netdialogs', $app, $smg_startx + 34, $y, $server->{name});
@@ -3019,11 +3018,8 @@ sub smg_choose_game() {
     my $state = 'game_select';
 
     my $erase = sub {
-        my $y = $smg_starty;
-        foreach (1 .. $max_actions) {
-            erase_line($y, $imgbin{back_netgame});
-            $y += $smg_lineheight;
-        }
+        my $drect = SDL::Rect->new(-width => 640, -height => $smg_starty_players, -x => 0, '-y' => 0);
+        $imgbin{back_netgame}->blit($drect, $app, $drect);
     };
     callback_entry('reset');
     my $redraw = sub {
@@ -3031,7 +3027,7 @@ sub smg_choose_game() {
         my $y = $smg_starty;
         foreach my $action (@actions) {
             if ($action->{selected}) {
-                put_image($malus_gfx{tomate}, 56, $y);
+                put_image($imgbin{highlight_server}, 6, $y-1);
             }
             print_('netdialogs', $app, $smg_startx, $y, $action->{name});
             $y += $smg_lineheight;
