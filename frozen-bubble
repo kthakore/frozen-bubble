@@ -1084,7 +1084,6 @@ sub handle_game_events() {
                     callback_entry('reset');
                     $pdata{p1}{chatting} = 1;
                     $event->set_key_repeat(200, 50);
-                    print "p1 state: $pdata{p1}{state}\n";
                     put_image_to_background($imgbin{void_chat}, $POS{p1}{chatting}{x}, $POS{p1}{chatting}{'y'});
                 }
 
