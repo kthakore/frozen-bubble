@@ -70,7 +70,7 @@ $BUBBLE_SPEED = 10;		# speed of movement of launched bubbles
 $MALUS_BUBBLE_SPEED = 30;	# speed of movement of "malus" launched bubbles
 $CANON_ROTATIONS_NB = 40;       # number of rotations of images for canon (should be consistent with gfx/shoot/Makefile)
 
-$TIMEOUT_PINGUIN_SLEEP = 200;
+$TIMEOUT_PINGUIN_SLEEP = 20;
 $FREE_FALL_CONSTANT = 0.5;
 $KEYS = { p1 => { left => SDLK_LEFT, right => SDLK_RIGHT, fire => SDLK_UP, center => SDLK_DOWN },
           p2 => { left => SDLK_x,    right => SDLK_v,     fire => SDLK_c,  center => SDLK_d },
@@ -606,7 +606,7 @@ sub real_stick_bubble {
                                       $newstory->{row}, $newstory->{gamenum}, $newstory->{name}, join(',', map { "$_->{x}|$_->{y}|$_->{col}" } @{$newstory->{sticked}}));
 #            fb_net::gsend("stickstory:$pdata{$player}{nick}!$serialize");
         } else {
-            print "added local stickstory r$newstory->{row} $newstory->{stick}{x}|$newstory->{stick}{y}|$newstory->{stick}{col} $newstory->{name} n$pdata{gamenum}\n";
+            #print "added local stickstory r$newstory->{row} $newstory->{stick}{x}|$newstory->{stick}{y}|$newstory->{stick}{col} $newstory->{name} n$pdata{gamenum}\n";
         }
     }
     $bubble->{cx} = $xpos;
@@ -1662,17 +1662,35 @@ sub update_game() {
                     $pdata{$::p}{sleeping} = 0;
                     $pdata{$::p}{ping_right}{movelatency} = -20;
                 }
-                if ($pdata{$::p}{sleeping} > $TIMEOUT_PINGUIN_SLEEP) {
-                    $pdata{$::p}{ping_right}{state} = 'sleep';
-                } elsif ($pdata{$::p}{ping_right}{state} eq 'sleep') {
+                if ($pdata{$::p}{sleeping} > $TIMEOUT_PINGUIN_SLEEP && $pdata{$::p}{ping_right}{state} !~ /wait/) {
+                    $pdata{$::p}{ping_right}{state} = 'wait_to';
+                    $pdata{$::p}{ping_right}{img} = 0;
+                }
+                if ($pdata{$::p}{sleeping} <= $TIMEOUT_PINGUIN_SLEEP && $pdata{$::p}{ping_right}{state} =~ /wait/) {
                     $pdata{$::p}{ping_right}{state} = 'normal';
                 }
-                if ($pdata{$::p}{ping_right}{state} eq 'right' && !($actions{$::p}{right})
-                    || $pdata{$::p}{ping_right}{state} eq 'left' && !($actions{$::p}{left})) {
-                    $pdata{$::p}{ping_right}{state} = 'normal';
+                foreach my $direction ('left', 'right') {
+                    if ($pdata{$::p}{ping_right}{state} eq "${direction}_to" && !($actions{$::p}{$direction})) {
+                        $pdata{$::p}{ping_right}{state} = 'normal';
+                    }
+                    if ($pdata{$::p}{ping_right}{state} eq $direction && !($actions{$::p}{$direction})) {
+                        $pdata{$::p}{ping_right}{state} = "${direction}_from";
+                        $pdata{$::p}{ping_right}{img} = 0;
+                    }
+                    if ($actions{$::p}{$direction}) {
+                        if ($pdata{$::p}{ping_right}{state} eq "${direction}_to") {
+                            #- we're animating towards, nothing to do
+                        } elsif ($pdata{$::p}{ping_right}{state} eq $direction) {
+                            #- we're there, nothing to do
+                        } elsif ($pdata{$::p}{ping_right}{state} eq "${direction}_from") {
+                            #- we're coming from there, should not happen that much, flicker no big deal
+                            $pdata{$::p}{ping_right}{state} = $direction;
+                        } else {
+                            $pdata{$::p}{ping_right}{state} = "${direction}_to";
+                            $pdata{$::p}{ping_right}{img} = 0;
+                        }
+                    }
                 }
-                $actions{$::p}{right} and $pdata{$::p}{ping_right}{state} = 'right';
-                $actions{$::p}{left} and $pdata{$::p}{ping_right}{state} = 'left';
                 if ($actions{$::p}{hadfire}) {
                     $pdata{$::p}{ping_right}{state} = 'action';
                     $pdata{$::p}{ping_right}{img} = 0;
@@ -1916,12 +1934,27 @@ sub update_game() {
 	    $pdata{$::p}{ping_right}{img} == @{$pinguin{$::p}{$state}}
 	      and $pdata{$::p}{ping_right}{img} = $pinguin{$::p}{"$state".'_roll_back_index'};
 	}
-	if (member($pdata{$::p}{ping_right}{state}, qw(action))) {
-	    my $state = $pdata{$::p}{ping_right}{state};
+	if (member($pdata{$::p}{ping_right}{state}, qw(action right_to right_from left_to left_from))
+            || member($pdata{$::p}{ping_right}{state}, qw(wait_to wait))) {# && $pdata{$::p}{ping_right}{movelatency}++ > 0) {
+            $pdata{$::p}{ping_right}{movelatency} = 0;
 	    $pdata{$::p}{ping_right}{img}++;
-	    if ($pdata{$::p}{ping_right}{img} == @{$pinguin{$::p}{$state}}) {
-                $pdata{$::p}{ping_right}{state} = 'normal';
+            #print "...state $pdata{$::p}{ping_right}{state} image $pdata{$::p}{ping_right}{img}\n";
+	    if ($pdata{$::p}{ping_right}{img} == @{$pinguin{$::p}{$pdata{$::p}{ping_right}{state}}}) {
+                print "finish images of state $pdata{$::p}{ping_right}{state} (" . int(@{$pinguin{$::p}{$pdata{$::p}{ping_right}{state}}}) . ")\n";
+                if ($pdata{$::p}{ping_right}{state} eq 'right_to') {
+                    $pdata{$::p}{ping_right}{state} = 'right';
+                } elsif ($pdata{$::p}{ping_right}{state} eq 'left_to') {
+                    $pdata{$::p}{ping_right}{state} = 'left';
+                } elsif ($pdata{$::p}{ping_right}{state} eq 'wait_to') {
+                    $pdata{$::p}{ping_right}{state} = 'wait';
+                } elsif ($pdata{$::p}{ping_right}{state} eq 'wait') {
+                    #- wait loops, don't change state
+                    #$pdata{$::p}{ping_right}{movelatency} = -20;
+                } else {
+                    $pdata{$::p}{ping_right}{state} = 'normal';
+                }
                 $pdata{$::p}{ping_right}{img} = 0;
+                print "=> state $pdata{$::p}{ping_right}{state}\n";
             }
         }
 
@@ -2001,7 +2034,6 @@ sub init_game() {
     $imgbin{back_mp} = SDL::Surface->new(-name => "$FPATH/gfx/back_multiplayer.png");
     $background = SDL::Surface->new(-width => $app->width, -height => $app->height, -depth => 32, -Amask => '0 but true');
     $background_orig = SDL::Surface->new(-width => $app->width, -height => $app->height, -depth => 32, -Amask => '0 but true');
-    $imgbin{backstartfull} = SDL::Surface->new(-name => "$FPATH/gfx/menu/back_start.png");
 
     print_step('.'); 
     $regularfont ||= fb_c_stuff::locatefont("sans");
@@ -2076,6 +2108,8 @@ sub init_game() {
     $imgbin{compressor_main} = add_image('compressor_main.png');
     $imgbin{compressor_ext} = add_image('compressor_ext.png');
 
+    $imgbin{back_menu} = SDL::Surface->new(-name => "$FPATH/gfx/menu/back_start.png");
+    $imgbin{menu_logo} = add_image('menu/fblogo.png');
     $imgbin{txt_1pgame_off}  = add_image('menu/txt_1pgame_off.png');
     $imgbin{txt_1pgame_over} = add_image('menu/txt_1pgame_over.png');
     $imgbin{txt_2pgame_off}  = add_image('menu/txt_2pgame_off.png');
@@ -2108,7 +2142,6 @@ sub init_game() {
     $imgbin{void_chat} = add_image('menu/void_chat.png');
     $imgbin{void_chat_small} = add_image('menu/void_chat_small.png');
     $imgbin{version} = add_image('menu/version.png');
-    $imgbin{blink} = add_image('menu/blink.png');
     $imgbin{ping_low} = add_image('menu/ping-low.png');
     $imgbin{ping_mid} = add_image('menu/ping-mid.png');
     $imgbin{ping_high} = add_image('menu/ping-high.png');
@@ -2124,7 +2157,6 @@ sub init_game() {
         $imgbin{flag}{$1} = add_image_file($f);
     }
 
-    $pinguin{$::p}{action} = [ add_images("pinguins/action_$::p*.png") ];
     my @levelsets = sort glob("$FBLEVELS/*");
 
     #- scrolling banner
@@ -2174,6 +2206,18 @@ sub init_game() {
 	$imgbin{win}{$::p} = add_image("win_panel_$::p.png");
 	$pdata{$::p}{score} = 0;
     };
+
+    $pinguin{p1}{normal} = [ add_image("pinguins/anime-shooter_p1_0016.png") ];
+    $pinguin{p1}{action} = [ map { add_image("pinguins/anime-shooter_p1_00$_.png") } (17..35) ];
+    $pinguin{p1}{left_to} = [ map { add_image("pinguins/anime-shooter_p1_00$_.png") } reverse ('02'..'15') ];
+    $pinguin{p1}{left} = [ add_image("pinguins/anime-shooter_p1_0001.png") ];
+    $pinguin{p1}{left_from} = [ map { add_image("pinguins/anime-shooter_p1_00$_.png") } ('02'..'15') ];
+    $pinguin{p1}{right_to} = [ map { add_image("pinguins/anime-shooter_p1_00$_.png") } (36..52) ];
+    $pinguin{p1}{right} = [ add_image("pinguins/anime-shooter_p1_0053.png") ];
+    $pinguin{p1}{right_from} = [ map { add_image("pinguins/anime-shooter_p1_00$_.png") } reverse (36..52) ];
+    $pinguin{p1}{wait_to} = [ map { add_image("pinguins/wait_p1_00$_.png") } ('01'..'50') ];
+    $pinguin{p1}{wait} = [ map { add_image("pinguins/wait_p1_00$_.png") } (51..81) ];
+    
     print_step('] '); 
 
     $lev_number = 0;
@@ -2223,6 +2267,7 @@ sub grab_key {
     }
 }
 
+use Time::HiRes qw(gettimeofday sleep);
 sub display_highscores() {
 
     $imgbin{back_hiscores}->blit($apprects{main}, $app, $apprects{main});
@@ -2288,11 +2333,67 @@ sub display_highscores() {
 	$high_posy > 440 and last;
     }
     load_levelset($old_levelset);
+
+    my $angle = 0.2;
+
+    my $src = SDL::Surface->new(-width => 200, -height => 200, -depth => 32);
+    $app->blit(undef, $src, undef);
+#    my $nearest = SDL::Surface->new(-width => 200, -height => 200, -depth => 32);
+#    fb_c_stuff::rotate_nearest($nearest->{-surface}, $src->{-surface}, $angle);
+#    $nearest->blit(undef, $app, SDL::Rect->new(-x => 200, '-y' => 0));
+
+    my $bilinear = SDL::Surface->new(-width => 200, -height => 200, -depth => 32);
+    fb_c_stuff::rotate_bilinear($bilinear->{-surface}, $src->{-surface}, $angle);
+    $bilinear->blit(undef, $app, SDL::Rect->new(-x => 0, '-y' => 200));
+
+    my %bic;
+    $bic{catmull_rom} = SDL::Surface->new(-width => 200, -height => 200, -depth => 32);
+    fb_c_stuff::rotate_bicubic($bic{catmull_rom}->{-surface}, $src->{-surface}, $angle, 'catmull-rom');
+    $bic{catmull_rom}->blit(undef, $app, SDL::Rect->new(-x => 200, '-y' => 200));
+    $bic{b_spline} = SDL::Surface->new(-width => 200, -height => 200, -depth => 32);
+    fb_c_stuff::rotate_bicubic($bic{b_spline}->{-surface}, $src->{-surface}, $angle, 'b-spline');
+    $bic{b_spline}->blit(undef, $app, SDL::Rect->new(-x => 400, '-y' => 0));
+    $bic{simple_cubic} = SDL::Surface->new(-width => 200, -height => 200, -depth => 32);
+    fb_c_stuff::rotate_bicubic($bic{simple_cubic}->{-surface}, $src->{-surface}, $angle, 'simple-cubic');
+    $bic{simple_cubic}->blit(undef, $app, SDL::Rect->new(-x => 400, '-y' => 200));
+
+
+    my $s = add_image_file('/tmp/base.png');
+    my $img = SDL::Surface->new(-width => 100, -height => 100, -depth => 32);
+    $s->set_alpha(0, 0);  #- for RGBA->RGBA blits, SDL_SRCALPHA must be removed or destination alpha is preserved
+    $s->blit(undef, $img, undef);
+
+    $img->blit(undef, $app, SDL::Rect->new(-x => 100, '-y' => 120));
+    $img->blit(undef, $app, SDL::Rect->new(-x => 200, '-y' => 120));
+    my $bil = SDL::Surface->new(-width => 100, -height => 100, -depth => 32);
+    my $bic = SDL::Surface->new(-width => 100, -height => 100, -depth => 32);
+    fb_c_stuff::rotate_bilinear($bil->{-surface}, $img->{-surface}, $angle);
+#    $app->blit(undef, $app, SDL::Rect->new(-x => 500, '-y' => 50, -width => 100, -height => 100));
+    $bil->blit(undef, $app, SDL::Rect->new(-x => 290, '-y' => 120));
+    fb_c_stuff::rotate_bicubic($bic->{-surface}, $img->{-surface}, $angle, 'catmull-rom');
+#    $app->blit(undef, $app, SDL::Rect->new(-x => 500, '-y' => 200, -width => 100, -height => 100));
+    $bic->blit(undef, $app, SDL::Rect->new(-x => 350, '-y' => 120));
+    
+
     $app->flip;
     $display_on_app_disabled = 0;
 
     $event->pump while ($event->poll != 0);
     grab_key();
+
+#    sleep 0.5;
+#    $event->pump while ($event->poll != 0);
+#
+#    my $angle = 0;
+#    my $rect = SDL::Rect->new(-x => 0, '-y' => 240, -width => 240, -height => 240);
+#    while (1) {
+#        $event->pump;
+#        die if $event->poll != 0;
+#        my $bilinear = SDL::Surface->new(-width => 240, -height => 240, -depth => 32);
+#        fb_c_stuff::rotate_bilinear($bilinear->{-surface}, $src->{-surface}, $angle += 0.003);
+#        $bilinear->blit(undef, $app, $rect);
+#        $app->update($rect);
+#    }
 }
 
 sub keysym_to_char($) { my ($key) = @_; eval("$key eq SDLK_$_") and return uc($_) foreach @fbsyms::syms }
@@ -2396,7 +2497,6 @@ sub ask_from($) {
 }
 
 sub new_game() {
-    print "\n\tnew_game\n";
 
     $display_on_app_disabled = 1;
 
@@ -3642,6 +3742,9 @@ sub intro_plus_menu() {
 
 #- ----------- menu stuff -------------------------------------------------
 
+my $logo_candy_index = 0;
+my $logo_candy_method = int(rand(3));
+#$logo_candy_method = 2;
 sub menu {
     my ($from_intro, $back_from_intro) = @_;
 
@@ -3658,33 +3761,13 @@ sub menu {
     };
 
     if (!$from_intro || !$back_from_intro) {
-	$back_start = $imgbin{backstartfull};
+	$back_start = $imgbin{back_menu};
 	$display_menu->();
     } else {
 	$back_start = $back_from_intro;
     }
 
     my $invalidate_all;
-
-    my $menu_start_sound = sub {
-	if (!$mixer_enabled && !$mixer && !init_sound()) {
-	    return 0;
-	} else {
-	    $mixer_enabled = 1;
-	    play_music('intro', 8);
-	    return 1;
-	}
-    };
-
-    my $menu_stop_sound = sub {
-	if ($mixer_enabled && $mixer && $mixer->playing_music) {
-	    $app->delay(10) while $mixer->fading_music;   #- mikmod will deadlock if we try to fade_out while still fading in
-	    $mixer->playing_music and $mixer->fade_out_music(500); $app->delay(450);
-	    $app->delay(10) while $mixer->playing_music;  #- mikmod will segfault if we try to load a music while old one is still fading out
-	}
-	$mixer_enabled = undef;
-	return 1;
-    };
 
     my $menu_display_highscores = sub {
 	display_highscores();
@@ -3726,18 +3809,33 @@ sub menu {
         $invalidate_all->();
     };
 
-    my $doblink = sub {
-        my ($is_on) = @_;
-        my ($xpos, $ypos) = (557, 87);
-        my $img = $imgbin{blink};
-        my $drect = SDL::Rect->new(-width => $img->width, -height => $img->height, -x => $xpos, '-y' => $ypos);
-        if ($is_on) {
-            put_image($img, $xpos, $ypos);
+    my ($logox, $logoy) = (400, 15);
+    my $draw_logo = sub {
+        my ($no_update) = @_;
+        erase_image_from($imgbin{menu_logo}, $logox, $logoy, $back_start);
+        if ($graphics_level < 3) {
+            put_image($imgbin{menu_logo}, $logox, $logoy);
         } else {
-            $back_start->blit($drect, $app, $drect);
+            erase_image_from($imgbin{menu_logo}, $logox, $logoy, $back_start);
+            my $candy = SDL::Surface->new(-width => $imgbin{menu_logo}->width, -height => $imgbin{menu_logo}->height, -depth => 32);
+            
+            $logo_candy_method == 0 and fb_c_stuff::rotate_bilinear($candy->{-surface}, $imgbin{menu_logo}->{-surface}, sin($logo_candy_index/40)/20);
+            $logo_candy_method == 1 and fb_c_stuff::flipflop($candy->{-surface}, $imgbin{menu_logo}->{-surface}, $logo_candy_index);
+            $logo_candy_method == 2 and fb_c_stuff::enlighten($candy->{-surface}, $imgbin{menu_logo}->{-surface}, $logo_candy_index);
+            
+            $candy->blit(undef, $app, my $rect = SDL::Rect->new(-x => $logox, '-y' => $logoy));
+            if (!$no_update) {
+                $app->update($rect);
+            }
+            $logo_candy_index++;
         }
-	$app->update($drect);
+        if (!$no_update) {
+            $app->update(@update_rects);
+            @update_rects = ();
+        }
     };
+
+    my $speed_ok = 4;
 
     my ($MENU_XPOS, $MENU_FIRSTY, $SPACING) = (89, 14, 48);
     my %menu_ypos = ( '1pgame' =>      $MENU_FIRSTY,
@@ -3759,7 +3857,7 @@ sub menu {
 				       run => sub { @PLAYERS = qw(p1 rp1); $pdata{gametype} = 'net';  $levels{current} = undef; } },
 			 'editor' => { pos => 5, type => 'run', run => sub { $launch_editor->(); } },
 			 'graphics' => { pos => 6, type => 'range', valuemin => 1, valuemax => 3,
-					 change => sub { $graphics_level = $_[0] }, value => $graphics_level },
+					 change => sub { $graphics_level = $_[0]; $graphics_level < 3 and $draw_logo->() or $speed_ok = 4; }, value => $graphics_level },
 			 'keys' => { pos => 7, type => 'run',
 				     run => sub { $change_keys->() } },
 			 'highscores' => { pos => 8, type => 'run',
@@ -3780,12 +3878,14 @@ sub menu {
 	    put_image($imgbin{$txt}, $MENU_XPOS, $menu_ypos{$m});
 	}
 	@menu_invalids = ();
+        $draw_logo->('no-update');
 	$app->update(@update_rects);
+        @update_rects = ();
     };
-
-    $app->flip;
+    
     $invalidate_all->();
     $menu_update->();
+    $app->flip;
     $event->pump while ($event->poll != 0);
 
     my $start_game = 0;
@@ -3814,13 +3914,14 @@ sub menu {
 		    $current_pos++;
 		    push @menu_invalids, $current_pos-1, $current_pos;
 		    play_sound('menu_change');
+                    $menu_update->();
 		}
 		if (member($keypressed, (SDLK_UP, SDLK_LEFT)) && $current_pos > 1) {
 		    $current_pos--;
 		    push @menu_invalids, $current_pos, $current_pos+1;
 		    play_sound('menu_change');
+                    $menu_update->();
 		}
-
 		if (member($keypressed, (SDLK_RETURN, SDLK_SPACE, SDLK_KP_ENTER))) {
 		    play_sound('menu_selected');
 		    push @menu_invalids, $current_pos;
@@ -3838,16 +3939,17 @@ sub menu {
 			    }
 			}
 		    }
+                    $menu_update->();
 		}
 
                 if ($keypressed == SDLK_ESCAPE) {
 		    exit 0;
 		}
+                $synchro_ticks = $app->ticks;  #- avoid stopping candy
 	    }
             if ($event->type == SDL_QUIT) {
                 exit 0;
             }
-	    $menu_update->();
 	}
 
 	if ($graphics_level > 1) {
@@ -3868,26 +3970,26 @@ sub menu {
 	    $banner_pos++;
 	    $banner_pos >= $banners_max and $banner_pos = 1;
             $app->update($banner_rect);
-
-            my $blink if 0;
-            my $reblink if 0;
-            $reblink and $reblink--;
-            if (!$blink) {
-                if (rand() < 0.002 || $reblink == 1) {
-                    $doblink->(1);
-                    $blink = 4;
-                }
-            } else {
-                $blink--;
-                if ($blink == 0) {
-                    $doblink->(0);
-                    rand() < 0.25 and $reblink = 4;
-                }
-            }
 	}
 
+	if ($graphics_level > 2 && $speed_ok) {
+            $draw_logo->();
+        }
+
 	my $to_wait = $TARGET_ANIM_SPEED - ($app->ticks - $synchro_ticks);
-	$to_wait > 0 and $app->delay($to_wait);
+        #print "$to_wait\n";
+	if ($to_wait > 0) {
+            $app->delay($to_wait);
+            $speed_ok and $speed_ok = 4;
+        } else {
+            #- disable nice graphics artwork if computer is too slow
+            print "$to_wait\n";
+            $speed_ok and $speed_ok--;
+            if (!$speed_ok) {
+                print "disabled\n";
+                $draw_logo->();
+            }
+        }
     }
 
     #- for $KEYS, try hard to keep SDLK_<key> instead of integer value in rcfile

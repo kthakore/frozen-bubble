@@ -67,7 +67,7 @@ ccompile('#include <fontconfig/fontconfig.h>',
 
 WriteMakefile(
     'NAME'         => 'fb_c_stuff',
-    'LIBS'         => [ chomp_(`sdl-config --libs`) . ' -lSDL_mixer -lSDL_ttf ' . chomp_(`pkg-config fontconfig --libs`)],
+    'LIBS'         => [ '-lm ' . chomp_(`sdl-config --libs`) . ' -lSDL_mixer -lSDL_ttf ' . chomp_(`pkg-config fontconfig --libs`)],
     'VERSION_FROM' => 'fb_c_stuff.pm', # finds VERSION
     'OBJECT'       => 'fb_c_stuff.o',
     'INC'          => chomp_(`sdl-config --cflags`) . ' ' . chomp_(`pkg-config fontconfig --cflags`) . ' -I.',
