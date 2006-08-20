@@ -763,8 +763,9 @@ float sqr(float a) { return a*a; }
 void enlighten_(SDL_Surface * dest, SDL_Surface * orig, int offset)
 {
 	int Bpp = dest->format->BytesPerPixel;
-        Uint8 *ptr;
+        Uint8 *ptrdest, *ptrorig;
         int lightx, lighty;
+        float sqdistbase, sqdist, shading;
 	if (orig->format->BytesPerPixel != 4) {
                 printf("enlighten: orig surface must be 32bpp\n");
                 abort();
@@ -777,16 +778,27 @@ void enlighten_(SDL_Surface * dest, SDL_Surface * orig, int offset)
 	myLockSurface(dest);
         lightx = dest->w/(2.5+0.3*sin((float)offset/500)) * sin((float)offset/100) + dest->w/2;
         lighty = dest->h/(2.5+0.3*cos((float)offset/500)) * cos((float)offset/100) + dest->h/2 + 10;
-        for (x = 0; x < dest->w; x++) {
-                ptr = dest->pixels + x*Bpp;
-                for (y = 0; y < dest->h; y++) {
-                        float sqdist = sqr(x - lightx) + sqr(y - lighty);
-                        float shading = sqdist == 0 ? 50 : 1 + 20/sqdist;
-                        * ( ptr ) = CLAMP(*( (Uint8*) orig->pixels + x*Bpp + y*orig->pitch )*shading, 0, 255);
-                        * ( ptr + 1 ) = CLAMP(*( (Uint8*) orig->pixels + x*Bpp + y*orig->pitch + 1 )*shading, 0, 255);
-                        * ( ptr + 2 ) = CLAMP(*( (Uint8*) orig->pixels + x*Bpp + y*orig->pitch + 2 )*shading, 0, 255);
-                        * ( ptr + 3 ) = *( (Uint8*) orig->pixels + x*Bpp + y*orig->pitch + 3 );
-                        ptr += dest->pitch;
+        for (y = 0; y < dest->h; y++) {
+                ptrdest = dest->pixels + y*dest->pitch;
+                ptrorig = orig->pixels + y*orig->pitch;
+                sqdistbase = sqr(y - lighty) - 3;
+                if (y == lighty)
+                        sqdistbase -= 4;
+                for (x = 0; x < dest->w; x++) {
+                        sqdist = sqdistbase + sqr(x - lightx);
+                        if (x == lightx)
+                                sqdist -= 2;
+                        shading = sqdist <= 0 ? 50 : 1 + 20/sqdist;
+                        if (shading >= 1.03) {
+                                * ( ptrdest ) = CLAMP(*( ptrorig )*shading, 0, 255);
+                                * ( ptrdest + 1 ) = CLAMP(*( ptrorig + 1 )*shading, 0, 255);
+                                * ( ptrdest + 2 ) = CLAMP(*( ptrorig + 2 )*shading, 0, 255);
+                                * ( ptrdest + 3 ) = *( ptrorig + 3 );
+                        } else {
+                                * ( (Uint32*) ptrdest ) = *( (Uint32*) ptrorig );
+                        }
+                        ptrdest += Bpp;
+                        ptrorig += Bpp;
 		}
 	}
 	myUnlockSurface(orig);
