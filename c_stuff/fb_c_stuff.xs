@@ -789,8 +789,8 @@ void enlighten_(SDL_Surface * dest, SDL_Surface * orig, int offset)
                         if (x == lightx)
                                 sqdist -= 2;
                         shading = sqdist <= 0 ? 50 : 1 + 20/sqdist;
-                        if (shading >= 1.03) {
-                                * ( ptrdest ) = CLAMP(*( ptrorig )*shading, 0, 255);
+                        if (shading > 1.02) {
+                                * ( ptrdest )     = CLAMP(*( ptrorig )    *shading, 0, 255);
                                 * ( ptrdest + 1 ) = CLAMP(*( ptrorig + 1 )*shading, 0, 255);
                                 * ( ptrdest + 2 ) = CLAMP(*( ptrorig + 2 )*shading, 0, 255);
                                 * ( ptrdest + 3 ) = *( ptrorig + 3 );
