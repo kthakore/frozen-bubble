@@ -1053,7 +1053,7 @@ void waterize_(SDL_Surface * dest, SDL_Surface * orig, int offset)
 SV* utf8key_(SDL_Event * e) {
         iconv_t cd;
         char source[2];
-        char* retval = "";
+        SV* retval = NULL;
         source[0] = e->key.keysym.unicode & 0xFF;
         source[1] = ( e->key.keysym.unicode & 0xFF00 ) >> 8;
         cd = iconv_open("UTF8", "UTF16LE");
@@ -1067,11 +1067,20 @@ SV* utf8key_(SDL_Event * e) {
                 bzero(dest, 5);
                 if ((iconv(cd, &src, &source_len, &dst, &dest_len)) != (size_t) (-1)) {
                         *dst = 0;
-                        retval = dest;
+                        retval = newSVpv(dest, 0);
+                        /*
+                        {
+                          int i;
+                          char beuh[40];
+                          bzero(beuh, 40);
+                          for (i=0; i<strlen(dest); i++)
+                            strcat(beuh, asprintf_("%02X ", (unsigned char)dest[i]));
+                          printf("converted UTF16LE bytes: %02X %02X to a UTF8 string: %s (%s)\n", (unsigned char)source[0], (unsigned char)source[1], dest, beuh);
+                          }*/
                 }
         }
         iconv_close(cd);
-        return newSVpv(retval, 0);
+        return retval;
 }
 
 SV* locatefont_(char *pattern) {
