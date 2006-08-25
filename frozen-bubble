@@ -2350,14 +2350,8 @@ sub display_highscores() {
 
     my %bic;
     $bic{catmull_rom} = SDL::Surface->new(-width => 200, -height => 200, -depth => 32);
-    fb_c_stuff::rotate_bicubic($bic{catmull_rom}->{-surface}, $src->{-surface}, $angle, 'catmull-rom');
+    fb_c_stuff::rotate_bicubic($bic{catmull_rom}->{-surface}, $src->{-surface}, $angle);
     $bic{catmull_rom}->blit(undef, $app, SDL::Rect->new(-x => 200, '-y' => 200));
-    $bic{b_spline} = SDL::Surface->new(-width => 200, -height => 200, -depth => 32);
-    fb_c_stuff::rotate_bicubic($bic{b_spline}->{-surface}, $src->{-surface}, $angle, 'b-spline');
-    $bic{b_spline}->blit(undef, $app, SDL::Rect->new(-x => 400, '-y' => 0));
-    $bic{simple_cubic} = SDL::Surface->new(-width => 200, -height => 200, -depth => 32);
-    fb_c_stuff::rotate_bicubic($bic{simple_cubic}->{-surface}, $src->{-surface}, $angle, 'simple-cubic');
-    $bic{simple_cubic}->blit(undef, $app, SDL::Rect->new(-x => 400, '-y' => 200));
 
 
     my $s = add_image_file('/tmp/base.png');
@@ -2372,7 +2366,7 @@ sub display_highscores() {
     fb_c_stuff::rotate_bilinear($bil->{-surface}, $img->{-surface}, $angle);
 #    $app->blit(undef, $app, SDL::Rect->new(-x => 500, '-y' => 50, -width => 100, -height => 100));
     $bil->blit(undef, $app, SDL::Rect->new(-x => 290, '-y' => 120));
-    fb_c_stuff::rotate_bicubic($bic->{-surface}, $img->{-surface}, $angle, 'catmull-rom');
+    fb_c_stuff::rotate_bicubic($bic->{-surface}, $img->{-surface}, $angle);
 #    $app->blit(undef, $app, SDL::Rect->new(-x => 500, '-y' => 200, -width => 100, -height => 100));
     $bic->blit(undef, $app, SDL::Rect->new(-x => 350, '-y' => 120));
     

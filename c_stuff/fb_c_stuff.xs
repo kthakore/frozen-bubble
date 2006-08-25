@@ -448,9 +448,6 @@ void shrink_(SDL_Surface * dest, SDL_Surface * orig, int xpos, int ypos, SDL_Rec
 	myUnlockSurface(dest);
 }
 
-struct timeval tv1;
-struct timeval tv2;
-
 void rotate_nearest_(SDL_Surface * dest, SDL_Surface * orig, double angle)
 {
 	int bpp = dest->format->BytesPerPixel;
@@ -458,12 +455,11 @@ void rotate_nearest_(SDL_Surface * dest, SDL_Surface * orig, double angle)
         double cosval = cos(angle);
         double sinval = sin(angle);
 	if (orig->format->BytesPerPixel != dest->format->BytesPerPixel) {
-                printf("rotate_nearest: orig and dest surface must be of equal bpp\n");
+                fprintf(stderr, "rotate_nearest: orig and dest surface must be of equal bpp\n");
                 abort();
         }
 	myLockSurface(orig);
 	myLockSurface(dest);
-        gettimeofday(&tv1, NULL);
         for (x = 0; x < dest->w; x++) {
                 for (y = 0; y < dest->h; y++) {
                         x_ = (x - dest->w/2)*cosval - (y - dest->h/2)*sinval + dest->w/2;
@@ -476,8 +472,6 @@ void rotate_nearest_(SDL_Surface * dest, SDL_Surface * orig, double angle)
                                orig->pixels + x_*bpp + y_*orig->pitch, bpp);
                 }
         }
-        gettimeofday(&tv2, NULL);
-        printf("nearest: %ld usec (%.2f images/sec, %.2f Mpixels/sec)\n", tv2.tv_usec - tv1.tv_usec, 1/(((double)(tv2.tv_usec - tv1.tv_usec))/1000000), (dest->w*dest->h)/(((double)(tv2.tv_usec - tv1.tv_usec))/1000000)/1000000);
 	myUnlockSurface(orig);
 	myUnlockSurface(dest);
 }
@@ -492,16 +486,15 @@ void rotate_bilinear_(SDL_Surface * dest, SDL_Surface * orig, double angle)
         float cosval = cos(angle);
         float sinval = sin(angle);
 	if (orig->format->BytesPerPixel != 4) {
-                printf("rotate_bilinear: orig surface must be 32bpp\n");
+                fprintf(stderr, "rotate_bilinear: orig surface must be 32bpp\n");
                 abort();
         }
 	if (dest->format->BytesPerPixel != 4) {
-                printf("rotate_bilinear: dest surface must be 32bpp\n");
+                fprintf(stderr, "rotate_bilinear: dest surface must be 32bpp\n");
                 abort();
         }
 	myLockSurface(orig);
 	myLockSurface(dest);
-        gettimeofday(&tv1, NULL);
         for (y = 0; y < dest->h; y++) {
                 float x__ = - dest->w/2*cosval - (y - dest->h/2)*sinval + dest->w/2;
                 float y__ = (y - dest->h/2)*cosval - dest->w/2*sinval + dest->h/2;
@@ -540,7 +533,6 @@ void rotate_bilinear_(SDL_Surface * dest, SDL_Surface * orig, double angle)
                                         g = ( (getg(A) * geta(A) * ( 1 - dx ) + getg(B) * geta(B) * dx) * ( 1 - dy ) + (getg(C) * geta(C) * ( 1 - dx ) + getg(D) * geta(D) * dx) * dy ) / a;
                                         b = ( (getb(A) * geta(A) * ( 1 - dx ) + getb(B) * geta(B) * dx) * ( 1 - dy ) + (getb(C) * geta(C) * ( 1 - dx ) + getb(D) * geta(D) * dx) * dy ) / a;
                                 }
-//                                *ptr = (r << orig->format->Rshift) + (g << orig->format->Gshift) + (b << orig->format->Bshift) + (a << orig->format->Ashift);
                                 * ( ( (Uint8*) ptr ) ) = r;  // it is slightly faster to not recompose the 32-bit pixel - at least on my p4
                                 * ( ( (Uint8*) ptr ) + 1 ) = g;
                                 * ( ( (Uint8*) ptr ) + 2 ) = b;
@@ -551,51 +543,29 @@ void rotate_bilinear_(SDL_Surface * dest, SDL_Surface * orig, double angle)
                         ptr++;
 		}
 	}
-        gettimeofday(&tv2, NULL);
-//        printf("bilinear: %ld usec (%.2f images/sec, %.2f Mpixels/sec)\n", tv2.tv_usec - tv1.tv_usec, 1/(((double)(tv2.tv_usec - tv1.tv_usec))/1000000), (dest->w*dest->h)/(((double)(tv2.tv_usec - tv1.tv_usec))/1000000)/1000000);
 	myUnlockSurface(orig);
 	myUnlockSurface(dest);
 }
 
 #define CLAMP(x, low, high)  (((x) > (high)) ? (high) : (((x) < (low)) ? (low) : (x)))
 
-enum spline_type { CATMULL_ROM, B_SPLINE, LINEAR, SIMPLE_CUBIC };
-
 /* access interleaved pixels */
-#define CUBIC_ROW(dx, row, type) transform_cubic(dx, (row)[0], (row)[4], (row)[8], (row)[12], type)
+#define CUBIC_ROW(dx, row) transform_cubic(dx, (row)[0], (row)[4], (row)[8], (row)[12])
 
-#define CUBIC_SCALED_ROW(dx, row, arow, type) transform_cubic(dx, (arow)[0] * (row)[0], (arow)[4] * (row)[4], (arow)[8] * (row)[8], (arow)[12] * (row)[12], type)
+#define CUBIC_SCALED_ROW(dx, row, arow) transform_cubic(dx, (arow)[0] * (row)[0], (arow)[4] * (row)[4], (arow)[8] * (row)[8], (arow)[12] * (row)[12])
 
 static inline float
-transform_cubic (float dx, int jm1, int j, int jp1, int jp2, int type)
+transform_cubic (float dx, int jm1, int j, int jp1, int jp2)
 {
-        if (type == CATMULL_ROM) {
-                // Catmull-Rom yields the best results
-                return ((( (     - jm1 + 3 * j - 3 * jp1 + jp2 ) * dx +
-                           (   2 * jm1 - 5 * j + 4 * jp1 - jp2 ) ) * dx +
-                           (     - jm1             + jp1       ) ) * dx +
-                           (             2 * j                 ) ) / 2.0;
-        } else if (type == B_SPLINE) {
-                return ((( (     - jm1 + 3 * j - 3 * jp1 + jp2 ) * dx +
-                           (   3 * jm1 - 6 * j + 3 * jp1       ) ) * dx +
-                           ( - 3 * jm1         + 3 * jp1       ) ) * dx +
-                           (       jm1 + 4 * j     + jp1       ) ) / 6.0;
-        } else if (type == LINEAR) {
-                return  (( 
-                           
-                           (               - j     + jp1       ) ) * dx +
-                           (                 j                 ) );
-        } else if (type == SIMPLE_CUBIC) {
-                return ((( (             2 * j - 2 * jp1       ) * dx +
-                           (           - 3 * j + 3 * jp1       ) ) * dx  
-                                                                 ) * dx +
-                           (                 j                 ) );
-        } else {
-                return 0;
-        }
+        // http://news.povray.org/povray.binaries.tutorials/attachment/%3CXns91B880592482seed7@povray.org%3E/Splines.bas.txt
+        // Catmull-Rom yields the best results
+        return ((( (     - jm1 + 3 * j - 3 * jp1 + jp2 ) * dx +
+                   (   2 * jm1 - 5 * j + 4 * jp1 - jp2 ) ) * dx +
+                   (     - jm1             + jp1       ) ) * dx +
+                   (             2 * j                 ) ) / 2.0;
 }
 
-void rotate_bicubic_(SDL_Surface * dest, SDL_Surface * orig, double angle, char* type)
+void rotate_bicubic_(SDL_Surface * dest, SDL_Surface * orig, double angle)
 {
 	int Bpp = dest->format->BytesPerPixel;
         Uint8 *ptr;
@@ -605,30 +575,16 @@ void rotate_bicubic_(SDL_Surface * dest, SDL_Surface * orig, double angle, char*
         float a_val, a_recip;
         int   i;
         float dx, dy;
-        int itype;
-        if (!strcmp(type, "catmull-rom")) {
-                itype = CATMULL_ROM;
-        } else if (!strcmp(type, "b-spline")) {
-                itype = B_SPLINE;
-        } else if (!strcmp(type, "linear")) {
-                itype = LINEAR;
-        } else if (!strcmp(type, "simple-cubic")) {
-                itype = SIMPLE_CUBIC;
-        } else {
-                printf("rotate_bicubic: type not known\n");
-                abort();
-        }
 	if (orig->format->BytesPerPixel != 4) {
-                printf("rotate_bicubic: orig surface must be 32bpp\n");
+                fprintf(stderr, "rotate_bicubic: orig surface must be 32bpp\n");
                 abort();
         }
 	if (dest->format->BytesPerPixel != 4) {
-                printf("rotate_bicubic: dest surface must be 32bpp\n");
+                fprintf(stderr, "rotate_bicubic: dest surface must be 32bpp\n");
                 abort();
         }
 	myLockSurface(orig);
 	myLockSurface(dest);
-        gettimeofday(&tv1, NULL);
         for (y = 0; y < dest->h; y++) {
                 float x__ = - dest->w/2*cosval - (y - dest->h/2)*sinval + dest->w/2 - 1;
                 float y__ = (y - dest->h/2)*cosval - dest->w/2*sinval + dest->h/2 - 1;
@@ -636,10 +592,8 @@ void rotate_bicubic_(SDL_Surface * dest, SDL_Surface * orig, double angle, char*
                 for (x = 0; x < dest->w; x++) {
                         x_ = floor(x__);
                         y_ = floor(y__);
-                        if (x_ == 50 && y_ == 67)
-                                printf("pixel:%x\n", * ( (Uint32*) ( orig->pixels + x_*Bpp + y_*orig->pitch ) ));
                         if (x_ < 0 || x_ > orig->w - 4 || y_ < 0 || y_ > orig->h - 4) {
-                                //*( (Uint32*) ptr ) = orig->format->Amask;
+                                * ( (Uint32*) ptr ) = 0;
 
                         } else {
                                 Uint8* origptr = orig->pixels + x_*Bpp + y_*orig->pitch;
@@ -649,11 +603,10 @@ void rotate_bicubic_(SDL_Surface * dest, SDL_Surface * orig, double angle, char*
                                 dy = y__ - y_;
                                 /* calculate alpha of result */
                                 a_val = transform_cubic(dy,
-                                                        CUBIC_ROW(dx, origptr + 3, itype),
-                                                        CUBIC_ROW(dx, origptr + 3 + dest->pitch, itype),
-                                                        CUBIC_ROW(dx, origptr + 3 + dest->pitch * 2, itype),
-                                                        CUBIC_ROW(dx, origptr + 3 + dest->pitch * 3, itype),
-                                                        itype);
+                                                        CUBIC_ROW(dx, origptr + 3),
+                                                        CUBIC_ROW(dx, origptr + 3 + dest->pitch),
+                                                        CUBIC_ROW(dx, origptr + 3 + dest->pitch * 2),
+                                                        CUBIC_ROW(dx, origptr + 3 + dest->pitch * 3));
                                 if (a_val <= 0.0) {
                                         a_recip = 0.0; 
                                         *(ptr+3) = 0;
@@ -667,11 +620,10 @@ void rotate_bicubic_(SDL_Surface * dest, SDL_Surface * orig, double angle, char*
                                 /* for RGB, result = bicubic (c * alpha) / bicubic (alpha) */
                                 for (i = 0; i < 3; i++) { 
                                         int newval = a_recip * transform_cubic(dy,
-                                                                               CUBIC_SCALED_ROW (dx, origptr + i,                   origptr + 3, itype),
-                                                                               CUBIC_SCALED_ROW (dx, origptr + i + dest->pitch,     origptr + 3 + dest->pitch, itype),
-                                                                               CUBIC_SCALED_ROW (dx, origptr + i + dest->pitch * 2, origptr + 3 + dest->pitch * 2, itype),
-                                                                               CUBIC_SCALED_ROW (dx, origptr + i + dest->pitch * 3, origptr + 3 + dest->pitch * 3, itype),
-                                                                               itype);
+                                                                               CUBIC_SCALED_ROW (dx, origptr + i,                   origptr + 3),
+                                                                               CUBIC_SCALED_ROW (dx, origptr + i + dest->pitch,     origptr + 3 + dest->pitch),
+                                                                               CUBIC_SCALED_ROW (dx, origptr + i + dest->pitch * 2, origptr + 3 + dest->pitch * 2),
+                                                                               CUBIC_SCALED_ROW (dx, origptr + i + dest->pitch * 3, origptr + 3 + dest->pitch * 3));
                                         *(ptr+i) = CLAMP (newval, 0, 255);
                                 }
                         }
@@ -680,8 +632,6 @@ void rotate_bicubic_(SDL_Surface * dest, SDL_Surface * orig, double angle, char*
                         ptr += 4;
 		}
 	}
-        gettimeofday(&tv2, NULL);
-        printf("bicubic: %ld usec (%.2f images/sec, %.2f Mpixels/sec)\n", tv2.tv_usec - tv1.tv_usec, 1/(((double)(tv2.tv_usec - tv1.tv_usec))/1000000), (dest->w*dest->h)/(((double)(tv2.tv_usec - tv1.tv_usec))/1000000)/1000000);
 	myUnlockSurface(orig);
 	myUnlockSurface(dest);
 }
@@ -693,16 +643,15 @@ void flipflop_(SDL_Surface * dest, SDL_Surface * orig, int offset)
         int r, g, b, a;
         float dx;
 	if (orig->format->BytesPerPixel != 4) {
-                printf("flipflop: orig surface must be 32bpp\n");
+                fprintf(stderr, "flipflop: orig surface must be 32bpp\n");
                 abort();
         }
 	if (dest->format->BytesPerPixel != 4) {
-                printf("flipflop: dest surface must be 32bpp\n");
+                fprintf(stderr, "flipflop: dest surface must be 32bpp\n");
                 abort();
         }
 	myLockSurface(orig);
 	myLockSurface(dest);
-        gettimeofday(&tv1, NULL);
         for (x = 0; x < dest->w; x++) {
                 float sinval = sin((2*x+offset)/50.0)*5;
                 float shading = 1.1 + cos((2*x+offset)/50.0) / 10;  // based on sinval derivative
@@ -752,8 +701,6 @@ void flipflop_(SDL_Surface * dest, SDL_Surface * orig, int offset)
                         ptr += dest->pitch;
 		}
 	}
-        gettimeofday(&tv2, NULL);
-//        printf("bilinear: %ld usec (%.2f images/sec, %.2f Mpixels/sec)\n", tv2.tv_usec - tv1.tv_usec, 1/(((double)(tv2.tv_usec - tv1.tv_usec))/1000000), (dest->w*dest->h)/(((double)(tv2.tv_usec - tv1.tv_usec))/1000000)/1000000);
 	myUnlockSurface(orig);
 	myUnlockSurface(dest);
 }
@@ -767,11 +714,11 @@ void enlighten_(SDL_Surface * dest, SDL_Surface * orig, int offset)
         int lightx, lighty;
         float sqdistbase, sqdist, shading;
 	if (orig->format->BytesPerPixel != 4) {
-                printf("enlighten: orig surface must be 32bpp\n");
+                fprintf(stderr, "enlighten: orig surface must be 32bpp\n");
                 abort();
         }
 	if (dest->format->BytesPerPixel != 4) {
-                printf("enlighten: dest surface must be 32bpp\n");
+                fprintf(stderr, "enlighten: dest surface must be 32bpp\n");
                 abort();
         }
 	myLockSurface(orig);
@@ -814,16 +761,15 @@ void stretch_(SDL_Surface * dest, SDL_Surface * orig, int offset)
         float dx, dy;
         float sinval = sin(offset/50.0)/10 + 1;
 	if (orig->format->BytesPerPixel != 4) {
-                printf("stretch: orig surface must be 32bpp\n");
+                fprintf(stderr, "stretch: orig surface must be 32bpp\n");
                 abort();
         }
 	if (dest->format->BytesPerPixel != 4) {
-                printf("stretch: dest surface must be 32bpp\n");
+                fprintf(stderr, "stretch: dest surface must be 32bpp\n");
                 abort();
         }
 	myLockSurface(orig);
 	myLockSurface(dest);
-        gettimeofday(&tv1, NULL);
         for (x = 0; x < dest->w; x++) {
                 float x__ = (x - dest->w/2) * sinval + dest->w/2;
                 float cosfory = - sin(offset/50.0) * cos(M_PI*(x - dest->w/2)/dest->w) / sinval / 8 + 1;
@@ -835,7 +781,7 @@ void stretch_(SDL_Surface * dest, SDL_Surface * orig, int offset)
                         y_ = floor(y__);
                         if (x_ < 0 || x_ > orig->w - 2 || y_ < 0 || y_ > orig->h - 2) {
                                 // out of band
-                                *ptr = 0;
+                                * ( (Uint32*) ptr ) = 0;
 
                         } else {
                                 dx = x__ - x_;
@@ -871,8 +817,6 @@ void stretch_(SDL_Surface * dest, SDL_Surface * orig, int offset)
                         ptr += dest->pitch;
 		}
 	}
-        gettimeofday(&tv2, NULL);
-//        printf("bilinear: %ld usec (%.2f images/sec, %.2f Mpixels/sec)\n", tv2.tv_usec - tv1.tv_usec, 1/(((double)(tv2.tv_usec - tv1.tv_usec))/1000000), (dest->w*dest->h)/(((double)(tv2.tv_usec - tv1.tv_usec))/1000000)/1000000);
 	myUnlockSurface(orig);
 	myUnlockSurface(dest);
 }
@@ -886,16 +830,15 @@ void tilt_(SDL_Surface * dest, SDL_Surface * orig, int offset)
         float dx, dy;
         float shading;
 	if (orig->format->BytesPerPixel != 4) {
-                printf("tilt: orig surface must be 32bpp\n");
+                fprintf(stderr, "tilt: orig surface must be 32bpp\n");
                 abort();
         }
 	if (dest->format->BytesPerPixel != 4) {
-                printf("tilt: dest surface must be 32bpp\n");
+                fprintf(stderr, "tilt: dest surface must be 32bpp\n");
                 abort();
         }
 	myLockSurface(orig);
 	myLockSurface(dest);
-        gettimeofday(&tv1, NULL);
         shading = 1 - sin(offset/40.0)/10;  // shade as if a lightsource was on the left
         for (x = 0; x < dest->w; x++) {
                 float zoomfact = 1 + (x - dest->w/2) * sin(offset/40.0) / dest->w / 5;
@@ -908,7 +851,7 @@ void tilt_(SDL_Surface * dest, SDL_Surface * orig, int offset)
                         y_ = floor(y__);
                         if (x_ < 0 || x_ > orig->w - 2 || y_ < 0 || y_ > orig->h - 2) {
                                 // out of band
-                                *ptr = 0;
+                                * ( (Uint32*) ptr ) = 0;
 
                         } else {
                                 dx = x__ - x_;
@@ -947,33 +890,29 @@ void tilt_(SDL_Surface * dest, SDL_Surface * orig, int offset)
                         ptr += dest->pitch;
 		}
 	}
-        gettimeofday(&tv2, NULL);
-//        printf("bilinear: %ld usec (%.2f images/sec, %.2f Mpixels/sec)\n", tv2.tv_usec - tv1.tv_usec, 1/(((double)(tv2.tv_usec - tv1.tv_usec))/1000000), (dest->w*dest->h)/(((double)(tv2.tv_usec - tv1.tv_usec))/1000000)/1000000);
 	myUnlockSurface(orig);
 	myUnlockSurface(dest);
 }
 
-struct point { float x; float y; float angle; float rshade; float gshade; float bshade; };
+struct point { float x; float y; float angle; };
 
 #define min(a,b) ( (a) < (b) ? (a) : (b) )
 
 void points_(SDL_Surface * dest, SDL_Surface * orig, SDL_Surface * mask)
 {
 	int Bpp = dest->format->BytesPerPixel;
-        Uint8 *ptrdest, *ptrorig;
         static struct point * points = NULL;
         int i, amount = 200;
-        float sqdistbase, sqdist, shading;
 	if (orig->format->BytesPerPixel != 4) {
-                printf("mask: orig surface must be 32bpp\n");
+                fprintf(stderr, "points: orig surface must be 32bpp\n");
                 abort();
         }
 	if (dest->format->BytesPerPixel != 4) {
-                printf("mask: dest surface must be 32bpp\n");
+                fprintf(stderr, "points: dest surface must be 32bpp\n");
                 abort();
         }
 	if (mask->format->BytesPerPixel != 4) {
-                printf("mask: mask surface must be 32bpp\n");
+                fprintf(stderr, "points: mask surface must be 32bpp\n");
                 abort();
         }
         if (points == NULL) {
@@ -981,7 +920,6 @@ void points_(SDL_Surface * dest, SDL_Surface * orig, SDL_Surface * mask)
                 if (!points)
                         fb__out_of_memory();
                 for (i = 0; i < amount; i++) {
-                        int color;
                         while (1) {
                                 points[i].x = rand_(dest->w/2) + dest->w/4;
                                 points[i].y = rand_(dest->h/2) + dest->h/4;
@@ -989,20 +927,6 @@ void points_(SDL_Surface * dest, SDL_Surface * orig, SDL_Surface * mask)
                                         break;
                         }
                         points[i].angle = 2 * M_PI * rand() / RAND_MAX;
-                        color = rand_(3);
-                        if (color == 1) {
-                                points[i].rshade = 255;
-                                points[i].gshade = 0;
-                                points[i].bshade = 0;
-                        } else if (color == 2) {
-                                points[i].rshade = 0;
-                                points[i].gshade = 255;
-                                points[i].bshade = 0;
-                        } else {
-                                points[i].rshade = 0;
-                                points[i].gshade = 0;
-                                points[i].bshade = 255;
-                        }
                 }
         }
 	myLockSurface(orig);
@@ -1013,37 +937,6 @@ void points_(SDL_Surface * dest, SDL_Surface * orig, SDL_Surface * mask)
         for (i = 0; i < amount; i++) {
                 float angle_distance = 0;
                 
-                /*
-                for (y = (int) (points[i].y - 15); y < points[i].y + 15; y++) {
-                        sqdistbase = sqr(y - points[i].y);
-                        ptrorig = orig->pixels + y*orig->pitch + ((int)points[i].x - 15) * Bpp;
-                        ptrdest = dest->pixels + y*dest->pitch + ((int)points[i].x - 15) * Bpp;
-                        for (x = points[i].x - 15; x < points[i].x + 15; x++) {
-                                if (*( (Uint32*) ptrorig ) == 0xFFFFFFFF) {
-                                        sqdist = sqdistbase + sqr(x - points[i].x);
-                                        shading = sqdist <= 1 ? 0 : 1 - (3.9-sqrt(sqrt(sqdist)))/3.9;
-                                        shading = (x == (int)points[i].x) && (y == (int)points[i].y) ? 0 : 1;
-                                        if (shading < 0.99) {
-                                                if (*( (Uint32*) ptrdest ) == 0xFFFFFFFF) {
-                                                        * ( ptrdest )     = CLAMP(points[i].rshade + (255 - points[i].rshade) * shading, 0, 255);
-                                                        * ( ptrdest + 1 ) = CLAMP(points[i].gshade + (255 - points[i].gshade) * shading, 0, 255);
-                                                        * ( ptrdest + 2 ) = CLAMP(points[i].bshade + (255 - points[i].bshade) * shading, 0, 255);
-                                                } else {
-                                                        if (points[i].rshade > 0) {
-                                                                * ( ptrdest ) = CLAMP(points[i].rshade + (255 - points[i].rshade) * shading, 0, 255);
-                                                        } else if (points[i].gshade > 0) {
-                                                                * ( ptrdest + 1 ) = CLAMP(points[i].gshade + (255 - points[i].gshade) * shading, 0, 255);
-                                                        } else {
-                                                                * ( ptrdest + 2 ) = CLAMP(points[i].bshade + (255 - points[i].bshade) * shading, 0, 255);
-                                                        }
-                                                }
-                                        }
-                                }
-                                ptrdest += Bpp;
-                                ptrorig += Bpp;
-                        }
-                }
-                */
                 *( (Uint32*) ( dest->pixels + ((int)points[i].y)*dest->pitch + ((int)points[i].x)*Bpp ) ) = 0xFFCCCCCC;
 
                 points[i].x += cos(points[i].angle);
@@ -1089,14 +982,14 @@ void waterize_(SDL_Surface * dest, SDL_Surface * orig, int offset)
         float dx, dy;
         static float * precalc_cos = NULL, * precalc_sin = NULL;
 	if (orig->format->BytesPerPixel != 4) {
-                printf("waterize: orig surface must be 32bpp\n");
+                fprintf(stderr, "waterize: orig surface must be 32bpp\n");
                 abort();
         }
 	if (dest->format->BytesPerPixel != 4) {
-                printf("waterize: dest surface must be 32bpp\n");
+                fprintf(stderr, "waterize: dest surface must be 32bpp\n");
                 abort();
         }
-        if (precalc_cos == NULL) {  // this precalc nearly suppresses the x__ and y__ processing overhead
+        if (precalc_cos == NULL) {  // this precalc nearly suppresses the x__ and y__ processing overhead in innerloop
                 int i;
                 precalc_cos = malloc(200*sizeof(float));
                 precalc_sin = malloc(200*sizeof(float));
@@ -1104,11 +997,9 @@ void waterize_(SDL_Surface * dest, SDL_Surface * orig, int offset)
                         precalc_cos[i] = cos(i*2*M_PI/200.0) * 2;
                         precalc_sin[i] = sin(i*2*M_PI/150.0) * 2;
                 }
-                printf("ok\n");
         }
 	myLockSurface(orig);
 	myLockSurface(dest);
-        gettimeofday(&tv1, NULL);
         for (x = 0; x < dest->w; x++) {
                 ptr = dest->pixels + x*Bpp;
                 for (y = 0; y < dest->h; y++) {
@@ -1119,7 +1010,7 @@ void waterize_(SDL_Surface * dest, SDL_Surface * orig, int offset)
                         y_ = floor(y__);
                         if (x_ < 0 || x_ > orig->w - 2 || y_ < 0 || y_ > orig->h - 2) {
                                 // out of band
-                                *ptr = 0;
+                                * ( (Uint32*) ptr ) = 0;
 
                         } else {
                                 dx = x__ - x_;
@@ -1155,8 +1046,6 @@ void waterize_(SDL_Surface * dest, SDL_Surface * orig, int offset)
                         ptr += dest->pitch;
 		}
 	}
-        gettimeofday(&tv2, NULL);
-//        printf("bilinear: %ld usec (%.2f images/sec, %.2f Mpixels/sec)\n", tv2.tv_usec - tv1.tv_usec, 1/(((double)(tv2.tv_usec - tv1.tv_usec))/1000000), (dest->w*dest->h)/(((double)(tv2.tv_usec - tv1.tv_usec))/1000000)/1000000);
 	myUnlockSurface(orig);
 	myUnlockSurface(dest);
 }
@@ -1309,13 +1198,12 @@ rotate_bilinear(dest, orig, angle)
 		rotate_bilinear_(dest, orig, angle);
 
 void
-rotate_bicubic(dest, orig, angle, type)
+rotate_bicubic(dest, orig, angle)
         SDL_Surface * dest
         SDL_Surface * orig
         double angle
-        char* type
 	CODE:
-		rotate_bicubic_(dest, orig, angle, type);
+		rotate_bicubic_(dest, orig, angle);
 
 void
 flipflop(dest, orig, offset)
