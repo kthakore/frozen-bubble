@@ -41,7 +41,7 @@ $FLPATH = '@LIBDIR@/frozen-bubble';
 %POS_1P = ( p1 => { left_limit => 190, right_limit => 446, top_limit => 44, 'initial_bubble_y' => 390,
                     canon => { x => 268, 'y' => 356 },
                     simpleshooter => { x => 317, 'y' => 405, diameter => 60 },
-                    pinguin => { x => 165, 'y' => 425 },
+                    pinguin => { x => 165, 'y' => 420 },
                     next_bubble => { x => 112, 'y' => 440 },
                     on_top_next_relpos => { x => -3, 'y' => -3 },
                     hurry => { x => 10, 'y' => 265 },

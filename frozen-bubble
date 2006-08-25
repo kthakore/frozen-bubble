@@ -70,7 +70,7 @@ $BUBBLE_SPEED = 10;		# speed of movement of launched bubbles
 $MALUS_BUBBLE_SPEED = 30;	# speed of movement of "malus" launched bubbles
 $CANON_ROTATIONS_NB = 40;       # number of rotations of images for canon (should be consistent with gfx/shoot/Makefile)
 
-$TIMEOUT_PINGUIN_SLEEP = 20;
+$TIMEOUT_PINGUIN_SLEEP = 200;
 $FREE_FALL_CONSTANT = 0.5;
 $KEYS = { p1 => { left => SDLK_LEFT, right => SDLK_RIGHT, fire => SDLK_UP, center => SDLK_DOWN },
           p2 => { left => SDLK_x,    right => SDLK_v,     fire => SDLK_c,  center => SDLK_d },
@@ -1671,7 +1671,8 @@ sub update_game() {
                 }
                 foreach my $direction ('left', 'right') {
                     if ($pdata{$::p}{ping_right}{state} eq "${direction}_to" && !($actions{$::p}{$direction})) {
-                        $pdata{$::p}{ping_right}{state} = 'normal';
+                        $pdata{$::p}{ping_right}{state} = "${direction}_from";
+                        $pdata{$::p}{ping_right}{img} = @{$pinguin{$::p}{$pdata{$::p}{ping_right}{state}}} - $pdata{$::p}{ping_right}{img};
                     }
                     if ($pdata{$::p}{ping_right}{state} eq $direction && !($actions{$::p}{$direction})) {
                         $pdata{$::p}{ping_right}{state} = "${direction}_from";
@@ -1938,7 +1939,7 @@ sub update_game() {
             || member($pdata{$::p}{ping_right}{state}, qw(wait_to wait))) {# && $pdata{$::p}{ping_right}{movelatency}++ > 0) {
             $pdata{$::p}{ping_right}{movelatency} = 0;
 	    $pdata{$::p}{ping_right}{img}++;
-            #print "...state $pdata{$::p}{ping_right}{state} image $pdata{$::p}{ping_right}{img}\n";
+            print "...state $pdata{$::p}{ping_right}{state} image $pdata{$::p}{ping_right}{img}\n";
 	    if ($pdata{$::p}{ping_right}{img} == @{$pinguin{$::p}{$pdata{$::p}{ping_right}{state}}}) {
                 print "finish images of state $pdata{$::p}{ping_right}{state} (" . int(@{$pinguin{$::p}{$pdata{$::p}{ping_right}{state}}}) . ")\n";
                 if ($pdata{$::p}{ping_right}{state} eq 'right_to') {
@@ -2206,18 +2207,18 @@ sub init_game() {
 	$pinguin{$::p}{walkright} = [ map { add_image("pinguins/$::p"."_dg_walk_0$_.png") } qw(1 2 3 4 5 6) ];
 	$imgbin{win}{$::p} = add_image("win_panel_$::p.png");
 	$pdata{$::p}{score} = 0;
-    };
 
-    $pinguin{p1}{normal} = [ add_image("pinguins/anime-shooter_p1_0016.png") ];
-    $pinguin{p1}{action} = [ map { add_image("pinguins/anime-shooter_p1_00$_.png") } (17..35) ];
-    $pinguin{p1}{left_to} = [ map { add_image("pinguins/anime-shooter_p1_00$_.png") } reverse ('02'..'15') ];
-    $pinguin{p1}{left} = [ add_image("pinguins/anime-shooter_p1_0001.png") ];
-    $pinguin{p1}{left_from} = [ map { add_image("pinguins/anime-shooter_p1_00$_.png") } ('02'..'15') ];
-    $pinguin{p1}{right_to} = [ map { add_image("pinguins/anime-shooter_p1_00$_.png") } (36..52) ];
-    $pinguin{p1}{right} = [ add_image("pinguins/anime-shooter_p1_0053.png") ];
-    $pinguin{p1}{right_from} = [ map { add_image("pinguins/anime-shooter_p1_00$_.png") } reverse (36..52) ];
-    $pinguin{p1}{wait_to} = [ map { add_image("pinguins/wait_p1_00$_.png") } ('01'..'50') ];
-    $pinguin{p1}{wait} = [ map { add_image("pinguins/wait_p1_00$_.png") } (51..81) ];
+        $pinguin{$::p}{normal} = [ add_image("pinguins/anime-shooter_p1_0020.png") ];
+        $pinguin{$::p}{action} = [ map { add_image("pinguins/anime-shooter_p1_00$_.png") } (21..50) ];
+        $pinguin{$::p}{left_to} = [ map { add_image("pinguins/anime-shooter_p1_00$_.png") } reverse ('02'..'19') ];
+        $pinguin{$::p}{left} = [ add_image("pinguins/anime-shooter_p1_0001.png") ];
+        $pinguin{$::p}{left_from} = [ map { add_image("pinguins/anime-shooter_p1_00$_.png") } ('02'..'19') ];
+        $pinguin{$::p}{right_to} = [ map { add_image("pinguins/anime-shooter_p1_00$_.png") } (51..70) ];
+        $pinguin{$::p}{right} = [ add_image("pinguins/anime-shooter_p1_0071.png") ];
+        $pinguin{$::p}{right_from} = [ map { add_image("pinguins/anime-shooter_p1_00$_.png") } reverse (51..71) ];
+        $pinguin{$::p}{wait_to} = [ map { add_image("pinguins/wait_p1_00$_.png") } ('01'..'64') ];
+        $pinguin{$::p}{wait} = [ map { add_image("pinguins/wait_p1_00$_.png") } (65..80) ];
+    };
     
     print_step('] '); 
 
