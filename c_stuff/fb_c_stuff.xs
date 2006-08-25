@@ -476,6 +476,8 @@ void rotate_nearest_(SDL_Surface * dest, SDL_Surface * orig, double angle)
 	myUnlockSurface(dest);
 }
 
+#define CLAMP(x, low, high)  (((x) > (high)) ? (high) : (((x) < (low)) ? (low) : (x)))
+
 void rotate_bilinear_(SDL_Surface * dest, SDL_Surface * orig, double angle)
 {
 	int Bpp = dest->format->BytesPerPixel;
@@ -533,9 +535,9 @@ void rotate_bilinear_(SDL_Surface * dest, SDL_Surface * orig, double angle)
                                         g = ( (getg(A) * geta(A) * ( 1 - dx ) + getg(B) * geta(B) * dx) * ( 1 - dy ) + (getg(C) * geta(C) * ( 1 - dx ) + getg(D) * geta(D) * dx) * dy ) / a;
                                         b = ( (getb(A) * geta(A) * ( 1 - dx ) + getb(B) * geta(B) * dx) * ( 1 - dy ) + (getb(C) * geta(C) * ( 1 - dx ) + getb(D) * geta(D) * dx) * dy ) / a;
                                 }
-                                * ( ( (Uint8*) ptr ) ) = r;  // it is slightly faster to not recompose the 32-bit pixel - at least on my p4
-                                * ( ( (Uint8*) ptr ) + 1 ) = g;
-                                * ( ( (Uint8*) ptr ) + 2 ) = b;
+                                * ( ( (Uint8*) ptr ) ) = CLAMP(r, 0, 255);  // it is slightly faster to not recompose the 32-bit pixel - at least on my p4
+                                * ( ( (Uint8*) ptr ) + 1 ) = CLAMP(g, 0, 255);
+                                * ( ( (Uint8*) ptr ) + 2 ) = CLAMP(b, 0, 255);
                                 * ( ( (Uint8*) ptr ) + 3 ) = a;
                         }
                         x__ += cosval;
@@ -546,8 +548,6 @@ void rotate_bilinear_(SDL_Surface * dest, SDL_Surface * orig, double angle)
 	myUnlockSurface(orig);
 	myUnlockSurface(dest);
 }
-
-#define CLAMP(x, low, high)  (((x) > (high)) ? (high) : (((x) < (low)) ? (low) : (x)))
 
 /* access interleaved pixels */
 #define CUBIC_ROW(dx, row) transform_cubic(dx, (row)[0], (row)[4], (row)[8], (row)[12])
@@ -576,7 +576,7 @@ void rotate_bicubic_(SDL_Surface * dest, SDL_Surface * orig, double angle)
         int   i;
         float dx, dy;
 	if (orig->format->BytesPerPixel != 4) {
-                fprintf(stderr, "rotate_bicubic: orig surface must be 32bpp\n");
+                fprintf(stderr, "rotate_bicubic: orig surface must be 32bpp (bytes per pixel = %d)\n", orig->format->BytesPerPixel);
                 abort();
         }
 	if (dest->format->BytesPerPixel != 4) {
