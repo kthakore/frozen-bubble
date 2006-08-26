@@ -601,9 +601,9 @@ sub real_stick_bubble {
         push @{$pdata{$player}{stickstory}}, $newstory;
         #    my $msg = "stick[$pdata{$player}{stickstoryrow}]: $xpos:$ypos c" . get_bubble_num($bubble);
         if (!is_local_player($player)) {
-            print "sending stickstory r$newstory->{row} of $pdata{$player}{nick} n$pdata{gamenum}\n";
-            my $serialize = join('-', $newstory->{stick}{x}, $newstory->{stick}{y}, $newstory->{stick}{col},
-                                      $newstory->{row}, $newstory->{gamenum}, $newstory->{name}, join(',', map { "$_->{x}|$_->{y}|$_->{col}" } @{$newstory->{sticked}}));
+#            print "sending stickstory r$newstory->{row} of $pdata{$player}{nick} n$pdata{gamenum}\n";
+#            my $serialize = join('-', $newstory->{stick}{x}, $newstory->{stick}{y}, $newstory->{stick}{col},
+#                                      $newstory->{row}, $newstory->{gamenum}, $newstory->{name}, join(',', map { "$_->{x}|$_->{y}|$_->{col}" } @{$newstory->{sticked}}));
 #            fb_net::gsend("stickstory:$pdata{$player}{nick}!$serialize");
         } else {
             #print "added local stickstory r$newstory->{row} $newstory->{stick}{x}|$newstory->{stick}{y}|$newstory->{stick}{col} $newstory->{name} n$pdata{gamenum}\n";
@@ -1217,7 +1217,9 @@ sub handle_game_events() {
                         goto ok_malusstick;
                     }
                 }
-                die "could not find malus bubble to malusstick!\n";
+                if ($pdata{$player}{state} eq 'ingame') {  #- if player just lost, malus bubbles are cleaned up
+                    die "could not find malus bubble to malusstick!\n";
+                }
               ok_malusstick:                    
             } elsif ($command eq 'm') {
                 my ($num, $cx, $cy, $sticky) = $params =~ /(.+):(.+):(.+):(.+)/;
@@ -1235,7 +1237,7 @@ sub handle_game_events() {
                 };
             } elsif ($command eq 'F') {
                 #- this is coming too soon. it needs to be collected in the algo to restart a game.
-                print "********************** finished coming too soon **************** infinite? **************\n";
+                print "finished coming a little soon. delay and hope we're not in infinite loop.\n";
                 unshift @messages, $m;
                 last;
             } elsif ($command eq 't') {
@@ -1570,7 +1572,7 @@ sub update_game() {
                         if (defined($pdata{$::p}{localstickcx})) {
                             print "<<< mp_stick: $pdata{$::p}{stickcx}:$pdata{$::p}{stickcy} <-> $pdata{$::p}{localstickcx}:$pdata{$::p}{localstickcy}\n";
                             if ($pdata{$::p}{stickcx} != $pdata{$::p}{localstickcx} || $pdata{$::p}{stickcy} != $pdata{$::p}{localstickcy}) {
-                                print ">>>>>>>>>>>>>>>>> stick inconsistency!\n";
+                                print ">>>>>>>>>>>>>>>>> stick inconsistency (between locally and remotely calculated stick position -> normally not a problem)\n";
                             }
                             $pdata{$::p}{localstickcx} = $pdata{$::p}{localstickcy} = undef;
                         }
