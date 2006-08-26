@@ -560,7 +560,7 @@ void process_msg_prio_(int fd, char* msg, ssize_t len, struct game* g)
                                         if (retval == -1) {
                                                 conn_to_terminate = g_list_append(conn_to_terminate, GINT_TO_POINTER(g->players_conn[i]));
                                         } else {
-                                                l4(OUTPUT_TYPE_ERROR, "[%d] short send of %d instead of %d bytes from %d :(", g->players_conn[i],
+                                                l4(OUTPUT_TYPE_ERROR, "[%d] short send of %zd instead of %d bytes from %d :(", g->players_conn[i],
                                                                       retval, sizeof(synchro4self) - 1, fd);
                                         }
                                 }
@@ -579,7 +579,7 @@ void process_msg_prio_(int fd, char* msg, ssize_t len, struct game* g)
                                                         conn_to_terminate = g_list_append(conn_to_terminate, GINT_TO_POINTER(g->players_conn[i]));
                                                         goto next_player;
                                                 } else {
-                                                        l4(OUTPUT_TYPE_ERROR, "[%d] short send of %d instead of %d bytes from %d :(", g->players_conn[i],
+                                                        l4(OUTPUT_TYPE_ERROR, "[%d] short send of %zd instead of %d bytes from %d :(", g->players_conn[i],
                                                                               retval, amount, fd);
                                                 }
                                         }
