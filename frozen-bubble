@@ -39,7 +39,7 @@ use strict;
 use vars qw($TARGET_ANIM_SPEED $BUBBLE_SIZE $ROW_SIZE $LAUNCHER_SPEED $BUBBLE_SPEED $MALUS_BUBBLE_SPEED $TIME_APPEARS_NEW_ROOT
             %POS %POS_1P %POS_2P %MENUPOS $KEYS %actions %angle %pdata $app %apprects $event %rects %sticked_bubbles %root_bubbles
             $background $background_orig @bubbles_images $gcwashere %bubbles_anim %launched_bubble %tobe_launched %next_bubble
-            $shooter $sdl_flags $mixer $mixer_enabled $music_disabled $sfx_disabled $no_echo $regularfont $italicfont @playlist %sound %music %pinguin %canon
+            $shooter_mini $sdl_flags $mixer $mixer_enabled $music_disabled $sfx_disabled $no_echo $regularfont $italicfont @playlist %sound %music %pinguin %canon
             $graphics_level @update_rects $CANON_ROTATIONS_NB %malus_bubble %falling_bubble %exploding_bubble %malus_gfx %ttfonts
             %sticking_bubble $time %imgbin $TIME_HURRY_WARN $TIME_HURRY_MAX $TIMEOUT_PINGUIN_SLEEP $FREE_FALL_CONSTANT
             $direct @PLAYERS @ALL_PLAYERS %levels $display_on_app_disabled $total_time $time_1pgame $fullscreen $rcfile $hiscorefile $HISCORES
@@ -68,7 +68,7 @@ $TARGET_ANIM_SPEED = 20;        # number of milliseconds that should last betwee
 $LAUNCHER_SPEED = 0.03;	        # speed of rotation of launchers
 $BUBBLE_SPEED = 10;		# speed of movement of launched bubbles
 $MALUS_BUBBLE_SPEED = 30;	# speed of movement of "malus" launched bubbles
-$CANON_ROTATIONS_NB = 40;       # number of rotations of images for canon (should be consistent with gfx/shoot/Makefile)
+$CANON_ROTATIONS_NB = 100;       # number of rotations of images for canon (should be consistent with gfx/shoot/Makefile)
 
 $TIMEOUT_PINGUIN_SLEEP = 200;
 $FREE_FALL_CONSTANT = 0.5;
@@ -887,10 +887,10 @@ sub handle_graphics($) {
         if ($graphics_level > 1) {
             my $num = int($angle{$::p}*$CANON_ROTATIONS_NB/($PI/2) + 0.5)-$CANON_ROTATIONS_NB;
                 $fun->($canon{img}{$num},
-                       $POS{$::p}{canon}{x} + $canon{mini_graphics($::p) ? 'data_mini' : 'data'}{$num}->[0],
-                       $POS{$::p}{canon}{'y'} + $canon{mini_graphics($::p) ? 'data_mini' : 'data'}{$num}->[1]);
+                       $POS{$::p}{canon}{x},# + $canon{mini_graphics($::p) ? 'data_mini' : 'data'}{$num}->[0],
+                       $POS{$::p}{canon}{'y'});# + $canon{mini_graphics($::p) ? 'data_mini' : 'data'}{$num}->[1]);
         } else {
-            $fun->($shooter,
+            $fun->($shooter_mini,
                    $POS{$::p}{simpleshooter}{x} + $POS{$::p}{simpleshooter}{diameter}*cos($angle{$::p}),
                    $POS{$::p}{simpleshooter}{'y'} - $POS{$::p}{simpleshooter}{diameter}*sin($angle{$::p}));
         }
@@ -2070,7 +2070,6 @@ sub init_game() {
     $ttfonts{ingame_small}{bg} = SDL::TTFont->new(-name => $regularfont, -size => 10, -mode => SDL::TTF_UTF8_BLENDED(),
                                                   -foreground => $SDL::Color::black);
 
-    print_step('.'); 
     foreach my $ball (1..8) {
         my $img = add_bubble_image('balls/bubble-'.($colourblind && 'colourblind-')."$ball.gif");
         $img_mini{$img} = add_image('balls/bubble-'.($colourblind && 'colourblind-')."${ball}-mini.png");
@@ -2086,22 +2085,36 @@ sub init_game() {
         $img_mini{$img} = add_image("balls/stick_effect_${step}-mini.png")
     }
 
-    $shooter = add_image("shoot/shooter.png");
+    print_step('.'); 
+    $shooter_mini = add_image("shooter-mini.png");
+    my $shooter = add_image("shooter.png");
+    #- make a surface with RGBA order suitable for hardcoded values in rotate_bicubic
+#    my $replace = SDL::Surface->new(-width => $shooter->width, -height => $shooter->height, -depth => 32,
+#                                    -Rmask => 0x000000FF, -Gmask => 0x0000FF00, -Bmask => 0x00FF0000, -Amask => 0xFF000000);
+#    $shooter->set_alpha(0, 0);  #- for RGBA->RGBA blits, SDL_SRCALPHA must be removed or destination alpha is preserved
+#    $shooter->blit(undef, $replace, undef);
+#    $shooter = $replace;
     foreach my $number (-$CANON_ROTATIONS_NB..$CANON_ROTATIONS_NB) {
-        $canon{img}{$number} = add_image("shoot/base_$number.png");
-        $img_mini{$canon{img}{$number}} = add_image("shoot/mini/base_${number}.png") ;
+        my $angle = $number*($PI/2)/$CANON_ROTATIONS_NB;
+        $canon{img}{$number} = SDL::Surface->new(-width => $shooter->width, -height => $shooter->height, -depth => 32,
+                                                 -Rmask => 0x000000FF, -Gmask => 0x0000FF00, -Bmask => 0x00FF0000, -Amask => 0xFF000000);
+        fb_c_stuff::rotate_bicubic($canon{img}{$number}->{-surface}, $shooter->{-surface}, $angle);
+        add_default_rect($canon{img}{$number});
+        #TODO $img_mini{$canon{img}{$number}} = add_image("shoot/mini/base_${number}.png") ;
+
+        $number eq 0 and print_step('.'); 
     }
 
     #- quantity of shifting needed (because of crop reduction)
-    /(\S+) (\S+) (\S+)/ and $canon{data}{$1} = [ $2, $3 ] foreach cat_("$FPATH/gfx/shoot/data");
-    /(\S+) (\S+) (\S+)/ and $canon{data_mini}{$1} = [ $2, $3 ] foreach cat_("$FPATH/gfx/shoot/mini/data");
+    #/(\S+) (\S+) (\S+)/ and $canon{data}{$1} = [ $2, $3 ] foreach cat_("$FPATH/gfx/shoot/data");
+    #/(\S+) (\S+) (\S+)/ and $canon{data_mini}{$1} = [ $2, $3 ] foreach cat_("$FPATH/gfx/shoot/mini/data");
 
+    print_step('.'); 
     $malus_gfx{banane} = add_image('banane.png');
     $img_mini{$malus_gfx{banane}} = add_image('banane-mini.png');
     $malus_gfx{tomate} = add_image('tomate.png');
     $img_mini{$malus_gfx{tomate}} = add_image('tomate-mini.png');
 
-    print_step('.'); 
     $imgbin{back_paused} = add_image('back_paused.png');
     push @{$imgbin{paused}}, add_image("pause_$_.png") foreach 1..10;
     $imgbin{lose} = add_image('lose_panel.png');
@@ -2219,7 +2232,15 @@ sub init_game() {
         $pinguin{$::p}{wait_to} = [ map { add_image("pinguins/wait_p1_00$_.png") } ('01'..'64') ];
         $pinguin{$::p}{wait} = [ map { add_image("pinguins/wait_p1_00$_.png") } (65..80) ];
     };
-    
+
+    #- the RGBA effects algorithms assume little endian RGBA surfaces
+    my $replace = SDL::Surface->new(-width => $imgbin{menu_logo}->width, -height => $imgbin{menu_logo}->height, -depth => 32,
+                                    -Rmask => 0x000000FF, -Gmask => 0x0000FF00, -Bmask => 0x00FF0000, -Amask => 0xFF000000);
+    $imgbin{menu_logo}->set_alpha(0, 0);  #- for RGBA->RGBA blits, SDL_SRCALPHA must be removed or destination alpha is preserved
+    $imgbin{menu_logo}->blit(undef, $replace, undef);
+    $imgbin{menu_logo} = $replace;
+    add_default_rect($replace);
+
     print_step('] '); 
 
     $lev_number = 0;
@@ -2334,42 +2355,7 @@ sub display_highscores() {
 	$high_posx > 550 and $high_posx = $initial_high_posx, $high_posy += 175;
 	$high_posy > 440 and last;
     }
-    load_levelset($old_levelset);
-
-    my $angle = 0.2;
-
-    my $src = SDL::Surface->new(-width => 200, -height => 200, -depth => 32);
-    $app->blit(undef, $src, undef);
-#    my $nearest = SDL::Surface->new(-width => 200, -height => 200, -depth => 32);
-#    fb_c_stuff::rotate_nearest($nearest->{-surface}, $src->{-surface}, $angle);
-#    $nearest->blit(undef, $app, SDL::Rect->new(-x => 200, '-y' => 0));
-
-    my $bilinear = SDL::Surface->new(-width => 200, -height => 200, -depth => 32);
-    fb_c_stuff::rotate_bilinear($bilinear->{-surface}, $src->{-surface}, $angle);
-    $bilinear->blit(undef, $app, SDL::Rect->new(-x => 0, '-y' => 200));
-
-    my %bic;
-    $bic{catmull_rom} = SDL::Surface->new(-width => 200, -height => 200, -depth => 32);
-    fb_c_stuff::rotate_bicubic($bic{catmull_rom}->{-surface}, $src->{-surface}, $angle);
-    $bic{catmull_rom}->blit(undef, $app, SDL::Rect->new(-x => 200, '-y' => 200));
-
-
-    my $s = add_image_file('/tmp/base.png');
-    my $img = SDL::Surface->new(-width => 100, -height => 100, -depth => 32);
-    $s->set_alpha(0, 0);  #- for RGBA->RGBA blits, SDL_SRCALPHA must be removed or destination alpha is preserved
-    $s->blit(undef, $img, undef);
-
-    $img->blit(undef, $app, SDL::Rect->new(-x => 100, '-y' => 120));
-    $img->blit(undef, $app, SDL::Rect->new(-x => 200, '-y' => 120));
-    my $bil = SDL::Surface->new(-width => 100, -height => 100, -depth => 32);
-    my $bic = SDL::Surface->new(-width => 100, -height => 100, -depth => 32);
-    fb_c_stuff::rotate_bilinear($bil->{-surface}, $img->{-surface}, $angle);
-#    $app->blit(undef, $app, SDL::Rect->new(-x => 500, '-y' => 50, -width => 100, -height => 100));
-    $bil->blit(undef, $app, SDL::Rect->new(-x => 290, '-y' => 120));
-    fb_c_stuff::rotate_bicubic($bic->{-surface}, $img->{-surface}, $angle);
-#    $app->blit(undef, $app, SDL::Rect->new(-x => 500, '-y' => 200, -width => 100, -height => 100));
-    $bic->blit(undef, $app, SDL::Rect->new(-x => 350, '-y' => 120));
-    
+    load_levelset($old_levelset);    
 
     $app->flip;
     $display_on_app_disabled = 0;
@@ -3547,6 +3533,7 @@ sub maingame() {
     @update_rects = ();
 
     my $to_wait = $TARGET_ANIM_SPEED - ($app->ticks - $synchro_ticks);
+    print "$to_wait\n";
     $to_wait > 0 and fb_c_stuff::fbdelay($to_wait);
 }
 
@@ -3741,7 +3728,8 @@ sub intro_plus_menu() {
 my $logo_candy_index = 0;
 my $logo_candy_method = int(rand(7));
 my ($logox, $logoy) = (400, 15);
-#$logo_candy_method = 5;
+$logo_candy_method = 7;
+my $candy;
 
 sub menu {
     my ($from_intro, $back_from_intro) = @_;
@@ -3836,7 +3824,11 @@ sub menu {
             put_image($imgbin{menu_logo}, $logox, $logoy);
         } else {
             erase_image_from($imgbin{menu_logo}, $logox, $logoy, $back_start);
-            my $candy = SDL::Surface->new(-width => $imgbin{menu_logo}->width, -height => $imgbin{menu_logo}->height, -depth => 32);
+
+            if (!defined($candy)) {
+                $candy = SDL::Surface->new(-width => $imgbin{menu_logo}->width, -height => $imgbin{menu_logo}->height, -depth => 32,
+                                           -Rmask => 0x000000FF, -Gmask => 0x0000FF00, -Bmask => 0x00FF0000, -Amask => 0xFF000000);
+            }
             
             $logo_candy_method == 0 and fb_c_stuff::rotate_bilinear($candy->{-surface}, $imgbin{menu_logo}->{-surface}, sin($logo_candy_index/40)/20);
             $logo_candy_method == 1 and fb_c_stuff::flipflop($candy->{-surface}, $imgbin{menu_logo}->{-surface}, $logo_candy_index);
@@ -3845,6 +3837,7 @@ sub menu {
             $logo_candy_method == 4.1 and fb_c_stuff::tilt($candy->{-surface}, $imgbin{menu_logo}->{-surface}, $logo_candy_index);
             $logo_candy_method == 5 and fb_c_stuff::points($candy->{-surface}, $imgbin{menu_logo}->{-surface}, $imgbin{menu_logo_mask}->{-surface});
             $logo_candy_method == 6 and fb_c_stuff::waterize($candy->{-surface}, $imgbin{menu_logo}->{-surface}, $logo_candy_index);
+            $logo_candy_method == 7 and fb_c_stuff::metavision($candy->{-surface}, $imgbin{menu_logo}->{-surface}, $logo_candy_index);
             
             $candy->blit(undef, $app, my $rect = SDL::Rect->new(-x => $logox, '-y' => $logoy));
             if (!$no_update) {
