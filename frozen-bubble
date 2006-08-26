@@ -1968,7 +1968,7 @@ sub update_game() {
 #- ----------- init stuff -------------------------------------------------
 
 sub restart_app() {
-    $app = SDL::App->new(-icon => "$FPATH/gfx/pinguins/window_icon_penguin.png", -flags => $sdl_flags | ($fullscreen ? SDL_FULLSCREEN : 0), -title => 'Frozen-Bubble', -width => 640, -height => 480);
+    $app = SDL::App->new(-icon => "$FPATH/gfx/pinguins/window_icon_penguin.png", -flags => $sdl_flags | ($fullscreen ? SDL_FULLSCREEN : 0), -title => 'Frozen-Bubble 2', -width => 640, -height => 480);
 }
 
 sub print_step($) {
@@ -3860,7 +3860,7 @@ sub menu {
 
     my $speed_ok = 4;
 
-    my ($MENU_XPOS, $MENU_FIRSTY, $SPACING) = (89, 14, 48);
+    my ($MENU_XPOS, $MENU_FIRSTY, $SPACING) = (89, 14, 56);
     my %menu_ypos = ( '1pgame' =>      $MENU_FIRSTY,
 		      '2pgame' =>      $MENU_FIRSTY +     $SPACING,
 		      'langame'=>      $MENU_FIRSTY + 2 * $SPACING,
