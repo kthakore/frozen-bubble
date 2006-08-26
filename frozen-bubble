@@ -2125,6 +2125,10 @@ sub init_game() {
     $imgbin{compressor_ext} = add_image('compressor_ext.png');
 
     $imgbin{back_menu} = SDL::Surface->new(-name => "$FPATH/gfx/menu/back_start.png");
+    $imgbin{menu_closedeye_green_left} = add_image('menu/backgrnd-closedeye-left-green.png');
+    $imgbin{menu_closedeye_green_right} = add_image('menu/backgrnd-closedeye-right-green.png');
+    $imgbin{menu_closedeye_purple_left} = add_image('menu/backgrnd-closedeye-left-purple.png');
+    $imgbin{menu_closedeye_purple_right} = add_image('menu/backgrnd-closedeye-right-purple.png');
     $imgbin{menu_logo} = add_image('menu/fblogo.png');
     $imgbin{menu_logo_mask} = add_image('menu/fblogo-mask.png');
     $imgbin{txt_1pgame_off}  = add_image('menu/txt_1pgame_off.png');
@@ -3732,6 +3736,7 @@ my $logo_candy_method = int(rand(8));
 my ($logox, $logoy) = (400, 15);
 #$logo_candy_method = 7;
 my $candy;
+my ($blink_green, $blink_purple);
 
 sub menu {
     my ($from_intro, $back_from_intro) = @_;
@@ -3988,6 +3993,72 @@ sub menu {
 	    $banner_pos++;
 	    $banner_pos >= $banners_max and $banner_pos = 1;
             $app->update($banner_rect);
+
+            my $blink_green_left = [ 411, 385 ];
+            my $blink_green_right = [ 434, 378 ];
+            my $green_left = SDL::Rect->new(-x => $blink_green_left->[0], '-y' => $blink_green_left->[1],
+                                            -width => $imgbin{menu_closedeye_green_left}->width, -height => $imgbin{menu_closedeye_green_left}->height);
+            my $green_right = SDL::Rect->new(-x => $blink_green_right->[0], '-y' => $blink_green_right->[1],
+                                             -width => $imgbin{menu_closedeye_green_right}->width, -height => $imgbin{menu_closedeye_green_right}->height);
+            my $blink_purple_left = [ 522, 356 ];
+            my $blink_purple_right = [ 535, 356 ];
+            my $purple_left = SDL::Rect->new(-x => $blink_purple_left->[0], '-y' => $blink_purple_left->[1],
+                                            -width => $imgbin{menu_closedeye_purple_left}->width, -height => $imgbin{menu_closedeye_purple_left}->height);
+            my $purple_right = SDL::Rect->new(-x => $blink_purple_right->[0], '-y' => $blink_purple_right->[1],
+                                             -width => $imgbin{menu_closedeye_purple_right}->width, -height => $imgbin{menu_closedeye_purple_right}->height);
+            if ($blink_green > 0) {
+                $blink_green--;
+                if (!$blink_green) {
+                    $back_start->blit($green_left, $app, $green_left);
+                    $back_start->blit($green_right, $app, $green_right);
+                    $app->update($green_left, $green_right);
+                    if (rand(3) <= 1) {  #- reblink
+                        $blink_green = -5;
+                    }
+                }
+            } elsif ($blink_green < 0) {
+                $blink_green++;
+                if (!$blink_green) {
+                    $blink_green = 3;
+                    $imgbin{menu_closedeye_green_left}->blit(undef, $app, $green_left);
+                    $imgbin{menu_closedeye_green_right}->blit(undef, $app, $green_right);
+                    $app->update($green_left, $green_right);
+                }
+            } else {
+                if (rand(200) <= 1) {
+                    $blink_green = 3;
+                    $imgbin{menu_closedeye_green_left}->blit(undef, $app, $green_left);
+                    $imgbin{menu_closedeye_green_right}->blit(undef, $app, $green_right);
+                    $app->update($green_left, $green_right);
+                }
+            }
+            if ($blink_purple > 0) {
+                $blink_purple--;
+                if (!$blink_purple) {
+                    $back_start->blit($purple_left, $app, $purple_left);
+                    $back_start->blit($purple_right, $app, $purple_right);
+                    $app->update($purple_left, $purple_right);
+                    if (rand(3) <= 1) {  #- reblink
+                        $blink_purple = -5;
+                    }
+                }
+            } elsif ($blink_purple < 0) {
+                $blink_purple++;
+                if (!$blink_purple) {
+                    $blink_purple = 3;
+                    $imgbin{menu_closedeye_purple_left}->blit(undef, $app, $purple_left);
+                    $imgbin{menu_closedeye_purple_right}->blit(undef, $app, $purple_right);
+                    $app->update($purple_left, $purple_right);
+                }
+            } else {
+                if (rand(200) <= 1) {
+                    $blink_purple = 3;
+                    $imgbin{menu_closedeye_purple_left}->blit(undef, $app, $purple_left);
+                    $imgbin{menu_closedeye_purple_right}->blit(undef, $app, $purple_right);
+                    $app->update($purple_left, $purple_right);
+                }
+            }
+            
 	}
 
 	if ($graphics_level > 2 && $speed_ok) {
