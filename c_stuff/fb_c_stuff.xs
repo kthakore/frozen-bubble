@@ -1050,6 +1050,48 @@ void waterize_(SDL_Surface * dest, SDL_Surface * orig, int offset)
 	myUnlockSurface(dest);
 }
 
+void brokentv_(SDL_Surface * dest, SDL_Surface * orig, int offset)
+{
+	int Bpp = dest->format->BytesPerPixel;
+        Uint8 *ptrdest, *ptrorig;
+        float throughness, throughness_base = 0.9 + cos(offset/50.0)*0.1;
+        static int pixelize = 0;
+        if (pixelize == 0) {
+                if (rand_(100) == 1) {
+                        pixelize = 15 + 5*cos(offset);
+                }
+        } else {
+                pixelize--;
+        }
+	if (orig->format->BytesPerPixel != 4) {
+                fprintf(stderr, "brokentv: orig surface must be 32bpp\n");
+                abort();
+        }
+	if (dest->format->BytesPerPixel != 4) {
+                fprintf(stderr, "brokentv: dest surface must be 32bpp\n");
+                abort();
+        }
+	myLockSurface(orig);
+	myLockSurface(dest);
+        for (y = 0; y < dest->h; y++) {
+                ptrdest = dest->pixels + y*dest->pitch;
+                ptrorig = orig->pixels + y*orig->pitch;
+                throughness = CLAMP(sin(y/(12.0+2*sin(offset/50.0))+offset/10.0+sin(offset/100.0)*5) > 0 ? throughness_base : throughness_base + cos(offset/30.0)*0.2, 0, 1);
+                for (x = 0; x < dest->w; x++) {
+                        if (pixelize)
+                                throughness = 0.2 + rand_(100)/100.0;
+                        * ( ptrdest ) = *( ptrorig );
+                        * ( ptrdest + 1 ) = *( ptrorig + 1 );
+                        * ( ptrdest + 2 ) = *( ptrorig + 2 );
+                        * ( ptrdest + 3 ) = *( ptrorig + 3 ) * throughness;
+                        ptrdest += Bpp;
+                        ptrorig += Bpp;
+		}
+	}
+	myUnlockSurface(orig);
+	myUnlockSurface(dest);
+}
+
 SV* utf8key_(SDL_Event * e) {
         iconv_t cd;
         char source[2];
@@ -1261,6 +1303,14 @@ waterize(dest, orig, offset)
         int offset
 	CODE:
 		waterize_(dest, orig, offset);
+
+void
+brokentv(dest, orig, offset)
+        SDL_Surface * dest
+        SDL_Surface * orig
+        int offset
+	CODE:
+		brokentv_(dest, orig, offset);
 
 void
 _exit(status)

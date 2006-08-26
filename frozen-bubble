@@ -3726,9 +3726,9 @@ sub intro_plus_menu() {
 #- ----------- menu stuff -------------------------------------------------
 
 my $logo_candy_index = 0;
-my $logo_candy_method = int(rand(7));
+my $logo_candy_method = int(rand(8));
 my ($logox, $logoy) = (400, 15);
-$logo_candy_method = 7;
+#$logo_candy_method = 7;
 my $candy;
 
 sub menu {
@@ -3837,7 +3837,7 @@ sub menu {
             $logo_candy_method == 4.1 and fb_c_stuff::tilt($candy->{-surface}, $imgbin{menu_logo}->{-surface}, $logo_candy_index);
             $logo_candy_method == 5 and fb_c_stuff::points($candy->{-surface}, $imgbin{menu_logo}->{-surface}, $imgbin{menu_logo_mask}->{-surface});
             $logo_candy_method == 6 and fb_c_stuff::waterize($candy->{-surface}, $imgbin{menu_logo}->{-surface}, $logo_candy_index);
-            $logo_candy_method == 7 and fb_c_stuff::metavision($candy->{-surface}, $imgbin{menu_logo}->{-surface}, $logo_candy_index);
+            $logo_candy_method == 7 and fb_c_stuff::brokentv($candy->{-surface}, $imgbin{menu_logo}->{-surface}, $logo_candy_index);
             
             $candy->blit(undef, $app, my $rect = SDL::Rect->new(-x => $logox, '-y' => $logoy));
             if (!$no_update) {
