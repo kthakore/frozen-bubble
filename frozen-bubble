@@ -1211,16 +1211,20 @@ sub handle_game_events() {
                 @{$pdata{$player}{nextcolors}} = split / /, $newrootcols;
             } elsif ($command eq 'M') {
                 my ($cx, $sticky) = $params =~ /(.+):(.+)/;
-                foreach (@{$malus_bubble{$player}}) {
-                    if ($_->{cx} == $cx && $_->{'stick_y'} == $sticky) {
-                        $_->{mp_stick} = 1;
-                        goto ok_malusstick;
+                #- if network cuts several malussticks in two parts, it's possible that
+                #- one malusstick from the first part trigger a lose; at next game run,
+                #- the player has lost and his malus bubbles were cleaned up, so malusstick
+                #- is not possible, but this is no big deal
+                if ($pdata{$player}{state} eq 'ingame') {
+                    foreach (@{$malus_bubble{$player}}) {
+                        if ($_->{cx} == $cx && $_->{'stick_y'} == $sticky) {
+                            $_->{mp_stick} = 1;
+                            goto ok_malusstick;
+                        }
                     }
-                }
-                if ($pdata{$player}{state} eq 'ingame') {  #- if player just lost, malus bubbles are cleaned up
                     die "could not find malus bubble to malusstick!\n";
+                  ok_malusstick:                    
                 }
-              ok_malusstick:                    
             } elsif ($command eq 'm') {
                 my ($num, $cx, $cy, $sticky) = $params =~ /(.+):(.+):(.+):(.+)/;
                 my $b = create_bubble_given_img_num($num);
