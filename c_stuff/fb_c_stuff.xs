@@ -549,6 +549,73 @@ void rotate_bilinear_(SDL_Surface * dest, SDL_Surface * orig, double angle)
 	myUnlockSurface(dest);
 }
 
+AV* autopseudocrop_(SDL_Surface * orig)
+{
+        int x_ = -1, y_ = -1, w = -1, h = -1;
+        Uint8 *ptr;
+        AV* ret;
+	if (orig->format->BytesPerPixel != 4) {
+                fprintf(stderr, "autocrop: orig surface must be 32bpp\n");
+                abort();
+        }
+	myLockSurface(orig);
+        y = 0;
+        while (y_ == -1) {
+                ptr = orig->pixels + y*orig->pitch;
+                for (x = 0; x < orig->w; x++) {
+                        if (*(ptr+3) != 0) {
+                                y_ = y;
+                                break;
+                        }
+                        ptr += 4;
+                }
+                y++;
+        }
+        y = orig->h - 1;
+        while (h == -1) {
+                ptr = orig->pixels + y*orig->pitch;
+                for (x = 0; x < orig->w; x++) {
+                        if (*(ptr+3) != 0) {
+                                h = y - y_ + 1;
+                                break;
+                        }
+                        ptr += 4;
+                }
+                y--;
+        }
+        x = 0;
+        while (x_ == -1) {
+                ptr = orig->pixels + x*4;
+                for (y = 0; y < orig->h; y++) {
+                        if (*(ptr+3) != 0) {
+                                x_ = x;
+                                break;
+                        }
+                        ptr += orig->pitch;
+                }
+                x++;
+        }
+        x = orig->w - 1;
+        while (w == -1) {
+                ptr = orig->pixels + x*4;
+                for (y = 0; y < orig->h; y++) {
+                        if (*(ptr+3) != 0) {
+                                w = x - x_ + 1;
+                                break;
+                        }
+                        ptr += orig->pitch;
+                }
+                x--;
+        }
+	myUnlockSurface(orig);
+        ret = newAV();
+        av_push(ret, newSViv(x_));
+        av_push(ret, newSViv(y_));
+        av_push(ret, newSViv(w));
+        av_push(ret, newSViv(h));
+        return ret;
+}
+
 /* access interleaved pixels */
 #define CUBIC_ROW(dx, row) transform_cubic(dx, (row)[0], (row)[4], (row)[8], (row)[12])
 
@@ -1247,6 +1314,14 @@ rotate_bilinear(dest, orig, angle)
         double angle
 	CODE:
 		rotate_bilinear_(dest, orig, angle);
+
+AV*
+autopseudocrop(orig)
+        SDL_Surface * orig
+	CODE:
+		RETVAL = autopseudocrop_(orig);
+	OUTPUT:
+		RETVAL
 
 void
 rotate_bicubic(dest, orig, angle)
