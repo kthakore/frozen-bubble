@@ -47,7 +47,7 @@ msgstr "*** Conectando a server principal..."
 
 #: ../frozen-bubble:2784
 msgid "*** Server list received properly"
-msgstr *** "Lista de server recebida com sucesso"
+msgstr "*** Lista de server recebida com sucesso"
 
 #: ../frozen-bubble:2786
 msgid "*** Unable to download server list from master server!"
