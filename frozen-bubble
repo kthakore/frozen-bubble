@@ -3235,7 +3235,7 @@ sub smg_choose_game() {
                     }
 
                     if (member($curaction->()->{action}, 'CREATE', 'JOIN')) {
-                        my $suffix = 9;
+                        my $suffix = 1;
                         my $answer;
                         while (1) {
                             my $message = $curaction->()->{action} eq 'CREATE' ? $mynick
@@ -3244,6 +3244,7 @@ sub smg_choose_game() {
                             if ($answer eq 'NICK_IN_USE') {
                                 if ($suffix < 9) {
                                     $suffix++;
+                                    $suffix > 2 and $mynick =~ s/.$//;  #- remove suffix added last loop
                                     $mynick = substr($mynick, 0, 9) . $suffix;
                                 } else {
                                     #- try to find something that will be accepted, even if it sux
