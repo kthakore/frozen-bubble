@@ -12,7 +12,8 @@ What's new in version 2:
          penguin eyecandy
 
        - full joystick support: just move your joystick(s) or
-         push buttons in the "change keys" dialog[1]
+         push buttons in the "change keys" dialog[1] (analog
+         joysticks handled as digital for fair play)         
 
        - realtime graphical effects in the menu screen (if your
          computer is fast enough)
