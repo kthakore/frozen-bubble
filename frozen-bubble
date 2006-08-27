@@ -1976,16 +1976,14 @@ sub update_game() {
 	    }
 	}
 
-	if (member($pdata{$::p}{ping_right}{state}, qw(win lose)) && ($pdata{$::p}{ping_right}{movelatency}++ > 5)) {
+	if (member($pdata{$::p}{ping_right}{state}, qw(lose)) && ($pdata{$::p}{ping_right}{movelatency}++ > 5)) {
 	    my $state = $pdata{$::p}{ping_right}{state};
 	    $pdata{$::p}{ping_right}{movelatency} = 0;
 	    $pdata{$::p}{ping_right}{img}++;
 	    $pdata{$::p}{ping_right}{img} == @{$pinguin{$::p}{$state}}
 	      and $pdata{$::p}{ping_right}{img} = $pinguin{$::p}{"$state".'_roll_back_index'};
 	}
-	if (member($pdata{$::p}{ping_right}{state}, qw(action right_to right_from left_to left_from))
-            || member($pdata{$::p}{ping_right}{state}, qw(wait_to wait))) {# && $pdata{$::p}{ping_right}{movelatency}++ > 0) {
-            $pdata{$::p}{ping_right}{movelatency} = 0;
+	if (member($pdata{$::p}{ping_right}{state}, qw(action right_to right_from left_to left_from wait_to wait win))) {
 	    $pdata{$::p}{ping_right}{img}++;
 #            print "...state $pdata{$::p}{ping_right}{state} image $pdata{$::p}{ping_right}{img}\n";
 	    if ($pdata{$::p}{ping_right}{img} == @{$pinguin{$::p}{$pdata{$::p}{ping_right}{state}}}) {
@@ -1998,9 +1996,12 @@ sub update_game() {
                     $pdata{$::p}{ping_right}{state} = 'wait';
                 } elsif ($pdata{$::p}{ping_right}{state} eq 'wait') {
                     #- wait loops, don't change state
-                    #$pdata{$::p}{ping_right}{movelatency} = -20;
                 } else {
-                    $pdata{$::p}{ping_right}{state} = 'normal';
+                    if ($pdata{$::p}{ping_right}{state} eq 'win') {
+                        #- simple loop, don't change state
+                    } else {
+                        $pdata{$::p}{ping_right}{state} = 'normal';
+                    }
                 }
                 $pdata{$::p}{ping_right}{img} = 0;
 #                print "=> state $pdata{$::p}{ping_right}{state}\n";
@@ -2269,8 +2270,6 @@ sub init_game() {
 	$pinguin{$::p}{left} = [ add_image("pinguins/move_left_$::p.png") ];
 	$pinguin{$::p}{right} = [ add_image("pinguins/move_right_$::p.png") ];
 	$pinguin{$::p}{action} = [ add_images("pinguins/action_$::p*.png") ];
-	$pinguin{$::p}{win} = [ map { add_image("pinguins/$::p"."_win_$_.png") } qw(1 2 3 4 5 6 7 8 6) ];
-	$pinguin{$::p}{win_roll_back_index} = 4;
 	$pinguin{$::p}{lose} = [ map { add_image("pinguins/$::p"."_loose_$_.png") } qw(1 2 3 4 5 6 7 8 9) ];
 	$pinguin{$::p}{lose_roll_back_index} = 5;
 	$pinguin{$::p}{win} = [ map { add_image("pinguins/$::p"."_win_$_.png") } qw(1 2 3 4 5 6 7 8 6) ];
@@ -2288,6 +2287,7 @@ sub init_game() {
         $pinguin{$::p}{right_from} = [ map { add_image("pinguins/anime-shooter_p1_00$_.png") } reverse (51..71) ];
         $pinguin{$::p}{wait_to} = [ map { add_image("pinguins/wait_p1_00$_.png") } ('01'..'74') ];
         $pinguin{$::p}{wait} = [ map { add_image("pinguins/wait_p1_00$_.png") } (75..97) ];
+        $pinguin{$::p}{win} = [ map { add_image("pinguins/win_p1_00$_.png") } ('01'..'57') ];
     };
 
     #- the RGBA effects algorithms assume little endian RGBA surfaces
