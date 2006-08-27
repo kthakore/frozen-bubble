@@ -2218,6 +2218,7 @@ sub init_game() {
     $imgbin{ping_low} = add_image('menu/ping-low.png');
     $imgbin{ping_mid} = add_image('menu/ping-mid.png');
     $imgbin{ping_high} = add_image('menu/ping-high.png');
+    $imgbin{menu_cursor} = [ map { add_image("menu/lan_p1_00$_.png") } ('01'..'30') ];
     $imgbin{left_mini} = add_image('left-mini.png');
     $imgbin{left} = add_image('left.png');
     $imgbin{mp_ready_newgame} = add_image('pinguins/mp_ready_newgame.png');
@@ -3825,6 +3826,8 @@ our ($logox, $logoy) = (400, 15);
 #$logo_candy_method = 7;
 our $candy;
 our ($blink_green, $blink_purple);
+our $cursor_img = -1;
+our $cursor_save_bg;
 
 sub menu {
     my ($from_intro, $back_from_intro) = @_;
@@ -3994,6 +3997,7 @@ sub menu {
         $draw_logo->('no-update');
 	$app->update(@update_rects);
         @update_rects = ();
+        $cursor_save_bg = undef;
     };
     
     $invalidate_all->();
@@ -4084,6 +4088,23 @@ sub menu {
 	    $banner_pos >= $banners_max and $banner_pos = 1;
             $app->update($banner_rect);
 
+            foreach my $m (keys %menu_entries) {
+                if ($menu_entries{$m}->{pos} == $current_pos) {
+                    $cursor_img++;
+                    $cursor_img == @{$imgbin{menu_cursor}} and $cursor_img = 0;
+                    my $cursor_rect = SDL::Rect->new(-x => 250, '-y' => $menu_ypos{$m} + 6,
+                                                     -width => $imgbin{menu_cursor}[$cursor_img]->width, -height => $imgbin{menu_cursor}[$cursor_img]->height);
+                    if (!defined($cursor_save_bg)) {
+                        $cursor_save_bg = SDL::Surface->new(-width => $imgbin{menu_cursor}[0]->width, -height => $imgbin{menu_cursor}[0]->height, -depth => 32);
+                        $app->blit($cursor_rect, $cursor_save_bg, SDL::Rect->new(-x => 0, -y => 0, -width => $imgbin{menu_cursor}[0]->width, -height => $imgbin{menu_cursor}[0]->height));
+                    }
+                    $cursor_save_bg->blit(undef, $app, $cursor_rect);
+                    $imgbin{menu_cursor}[$cursor_img]->blit(undef, $app, $cursor_rect);
+                    $app->update($cursor_rect);
+                }
+            }
+            
+            #- blinking handling follows
             my $blink_green_left = [ 411, 385 ];
             my $blink_green_right = [ 434, 378 ];
             my $green_left = SDL::Rect->new(-x => $blink_green_left->[0], '-y' => $blink_green_left->[1],
