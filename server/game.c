@@ -568,7 +568,7 @@ void process_msg_prio_(int fd, char* msg, ssize_t len, struct game* g)
                         } else if (g->players_conn[i] != fd) {
                                 ssize_t retval;
                                 ssize_t togo = len;
-                                l3(OUTPUT_TYPE_DEBUG, "Sending total: %d bytes to %d (from %d)", togo, g->players_conn[i], fd);
+                                l3(OUTPUT_TYPE_DEBUG, "Sending total: %zd bytes to %d (from %d)", togo, g->players_conn[i], fd);
                                 while (togo) {
                                         int randval = rand_(50);
                                         ssize_t amount = min(randval, togo);
