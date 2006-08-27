@@ -1,0 +1,32 @@
+What's new in version 2:
+
+       - network (Internet) game: up to 5 players in a game (net
+         game system has logic able to transparently handle
+         players behind a NAT)
+
+       - LAN game: similar to network game except that no
+         connection to Internet is made, substituted by polling
+         the local network
+
+       - fully revamped graphics, including now 3d-based smooth
+         penguin eyecandy
+
+       - full joystick support: just move your joystick(s) or
+         push buttons in the "change keys" dialog[1]
+
+       - realtime graphical effects in the menu screen (if your
+         computer is fast enough)
+
+       - anti-aliased+shaded localized messages
+
+
+Ref: 
+[1] when trying to used your joystick in Frozen-Bubble, if
+    nothing comes up, most probably your joystick isn't
+    configured correctly (or supported in Linux), use -ji
+    commandline switch to verify your joystick is detected
+    properly; if it is not, try to load the proper kernel modules
+    etc - for example, "joydev" is needed, but it is sometimes
+    not automatically loaded when plugging in a joystick (even in
+    modern distros and with USB joysticks)
+
