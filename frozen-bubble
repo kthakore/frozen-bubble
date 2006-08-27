@@ -2187,7 +2187,7 @@ sub init_game() {
     $imgbin{highlight_server} = add_image('menu/highlight-server.png');
 
     #- little flags
-    foreach my $f (glob("$FPATH/gfx/flags/*")) {
+    foreach my $f (glob("$FPATH/gfx/flags/*.png")) {
         $f =~ /flag-(\S+)\.png/;
         $imgbin{flag}{$1} = add_image_file($f);
     }
