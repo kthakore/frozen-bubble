@@ -41,7 +41,7 @@ use vars qw($TARGET_ANIM_SPEED $BUBBLE_SIZE $ROW_SIZE $LAUNCHER_SPEED $BUBBLE_SP
             $background $background_orig @bubbles_images $gcwashere %bubbles_anim %launched_bubble %tobe_launched %next_bubble
             $shooter_mini $sdl_flags $mixer $mixer_enabled $music_disabled $sfx_disabled $no_echo $regularfont $italicfont @playlist %sound %music %pinguin %canon
             $graphics_level @update_rects $CANON_ROTATIONS_NB %malus_bubble %falling_bubble %exploding_bubble %malus_gfx %ttfonts
-            %sticking_bubble $time %imgbin $TIME_HURRY_WARN $TIME_HURRY_MAX $TIMEOUT_PINGUIN_SLEEP $FREE_FALL_CONSTANT
+            %sticking_bubble $time %imgbin $TIME_HURRY_WARN $TIME_HURRY_MAX $TIMEOUT_PINGUIN_SLEEP $FREE_FALL_CONSTANT @joysticks $joysticksinfo
             $direct @PLAYERS @ALL_PLAYERS %levels $display_on_app_disabled $total_time $time_1pgame $fullscreen $rcfile $hiscorefile $HISCORES
             $lev_number $playermalus $loaded_levelset $direct_levelset $chainreaction %chains %history %img_mini $frame $sock $gameserver $mynick);
 
@@ -132,6 +132,7 @@ local $_ = "@ARGV";
  -ls<name>, --levelset<name> directly start with the specified levelset name
  -gs<host:port>, --gameserver<host:port> in NET game, directly use this game server
  -ne, --noecho               when sound is enabled, disable echoing each typed character with a typewriter sound
+ -ji, --joysticksinfo        print information about detected joystick(s) on startup
  -mn<nick>, --mynick<nick>   for net/lan games, use this nick instead of username (max 10 chars, ASCII alphanumeric plus dash and underscore only)
  -rf<file>, --regularfont<file> use the specified font file instead of using fontconfig to detect the best regular font
  -if<file>, --italicfont<file> use the specified font file instead of using fontconfig to detect the best italic font
@@ -158,6 +159,7 @@ local $_ = "@ARGV";
 /-mn\s*(\S+)/ || /-mynick\s*(\S+)/ and $mynick = substr($1, 0, 10);
 /-rf\s*(\S+)/ || /-regularfont\s*(\S+)/ and $regularfont = $1; 
 /-if\s*(\S+)/ || /-italicfont\s*(\S+)/ and $italicfont = $1; 
+/-ji/ || /-joysticksinfo/ and $joysticksinfo = 1;
 
 $mynick ||= substr($ENV{USER}, 0, 10);
 $mynick =~ s/[^a-zA-Z0-9_-]//g;  #- sanitize
@@ -1058,13 +1060,22 @@ sub cleanup_chatting {
 
 sub handle_game_events() {
     $event->pump;
-    if ($event->poll != 0) {
+    while ($event->poll != 0) {
+        my $keypressed;
 	if ($event->type == SDL_KEYDOWN) {
-	    my $keypressed = $event->key_sym;
+	    $keypressed = $event->key_sym;
+	} elsif ($event->type == SDL::JOYAXISMOTION() || $event->type() == SDL::JOYBUTTONDOWN()) {
+	    $keypressed = translate_joystick_tokey($event);
+            if ($keypressed =~ /^joystick\|axisvalue\|\d+\|\d+\|0$/) {  #- we treat position at 0 as KEYUP
+                $keypressed = undef;
+            }
+        }
+
+        if ($keypressed) {
 
             if (is_mp_game() && $pdata{p1}{chatting}) {
 
-                if (($keypressed == SDLK_RETURN() || $keypressed == SDLK_KP_ENTER()) && callback_entry('gettext') > 0) {
+                if (($keypressed eq SDLK_RETURN() || $keypressed eq SDLK_KP_ENTER()) && callback_entry('gettext') > 0) {
                     fb_net::gsend('t' . join('', callback_entry('gettext')));
                     cleanup_chatting();
                 } elsif (!member($keypressed, SDLK_RETURN(), SDLK_KP_ENTER(), SDLK_TAB())) {
@@ -1077,23 +1088,23 @@ sub handle_game_events() {
             } else {
                 iter_local_players {
                     foreach (qw(left right fire center)) {
-                        $keypressed == $KEYS->{$::p}{$_} and $actions{$::p}{$_} = 1, last;
+                        $keypressed eq $KEYS->{$::p}{$_} and $actions{$::p}{$_} = 1, last;
                     }
                 };
                 
-                if ($keypressed == $KEYS->{misc}{fs}) {
+                if ($keypressed eq $KEYS->{misc}{fs}) {
                     $fullscreen = !$fullscreen;
                     $app->fullscreen;
                 }
 
-                if ($keypressed == $KEYS->{misc}{chat} && is_mp_game()) {
+                if ($keypressed eq $KEYS->{misc}{chat} && is_mp_game()) {
                     callback_entry('reset');
                     $pdata{p1}{chatting} = 1;
                     $event->set_key_repeat(200, 50);
                     put_image_to_background($imgbin{void_chat}, $POS{p1}{chatting}{x}, $POS{p1}{chatting}{'y'});
                 }
 
-                if ($keypressed == SDLK_PAUSE && !is_mp_game()) {
+                if ($keypressed eq SDLK_PAUSE && !is_mp_game()) {
                     my $time_pause = $app->ticks;
                     play_sound('pause');
                     $mixer_enabled && $mixer and $mixer->pause_music;
@@ -1108,10 +1119,12 @@ sub handle_game_events() {
                             foreach (1..30) {
                                 $app->delay(20);
                                 $event->pump;
-                                if ($event->poll != 0 && $event->type == SDL_KEYDOWN) {
-                                    last pause_label if $event->key_sym != $KEYS->{misc}{fs};
-                                    $fullscreen = !$fullscreen;
-                                    $app->fullscreen;
+                                while ($event->poll != 0) {
+                                    if ($event->type != SDL_KEYUP && $event->type != SDL::JOYBUTTONUP) {
+                                        last pause_label if $event->key_sym != $KEYS->{misc}{fs};
+                                        $fullscreen = !$fullscreen;
+                                        $app->fullscreen;
+                                    }
                                 }
                             }
                             rand() < 0.1 and play_sound('snore');
@@ -1133,12 +1146,27 @@ sub handle_game_events() {
             }
         }
 
+        $keypressed = undef;
 	if ($event->type == SDL_KEYUP) {
-	    my $keypressed = $event->key_sym;
+	    $keypressed = $event->key_sym;
+	} elsif ($event->type == SDL::JOYAXISMOTION() || $event->type() == SDL::JOYBUTTONUP) {
+	    $keypressed = translate_joystick_tokey($event);
+            if ($event->type == SDL::JOYAXISMOTION() && $keypressed !~ /^joystick\|axisvalue\|\d+\|\d+\|0$/) {  #- we treat position at 0 as KEYUP
+                $keypressed = undef;
+            }
+            $keypressed =~ s/^joystick\|buttonup/joystick|buttondown/;
+        }
 
+        if ($keypressed) {
 	    iter_local_players {
 		foreach (qw(left right fire center)) {
-		    $keypressed == $KEYS->{$::p}{$_} and $actions{$::p}{$_} = 0, last;
+		    if ($keypressed eq $KEYS->{$::p}{$_}) {
+                        $actions{$::p}{$_} = 0;
+                        last;
+                    } elsif ($keypressed =~ /^joystick\|axisvalue\|(\d+)\|(\d+)\|0$/ && $KEYS->{$::p}{$_} =~ /^joystick\|axisvalue\|$1\|$2\|/) {
+                        $actions{$::p}{$_} = 0;
+                        #- no last, there might be two values of the same axis
+                    }
 		}
 	    }
 	}
@@ -1432,7 +1460,9 @@ sub update_lost {
     } else {
         if (!is_mp_game()) {
             $event->pump;
-            die 'new_game' if $event->poll != 0 && $event->type == SDL_KEYDOWN;
+            while ($event->poll != 0) {
+                $event->type == SDL_KEYDOWN || $event->type == SDL::JOYBUTTONUP and die 'new_game';
+            }
         }
     }
 
@@ -1827,23 +1857,27 @@ sub update_game() {
                         die 'new_game';
                       still_waiting:
                         $event->pump;
-                        if ($event->poll != 0 && $event->type == SDL_KEYDOWN && $event->key_sym == SDLK_ESCAPE()) {
-                            die 'quit';
+                        while ($event->poll != 0) {
+                            if ($event->type == SDL_KEYDOWN && $event->key_sym == SDLK_ESCAPE()) {
+                                die 'quit';
+                            }
                         }
                         check_mp_connection();
                         fb_c_stuff::fbdelay($TARGET_ANIM_SPEED);
                     }
                 };
 
-                if ($event->poll != 0 && $event->type == SDL_KEYDOWN) {
-                    print "key pressed in won state\n";
-                    if ($event->key_sym == SDLK_ESCAPE()) {
-                        die 'quit';
-                    }
-                    if (is_mp_game()) {
-                        $mp_newgame->();
-                    } else {
-                        die 'new_game';
+                while ($event->poll != 0) {
+                    if ($event->type == SDL_KEYDOWN) {
+                        print "key pressed in won state\n";
+                        if ($event->key_sym == SDLK_ESCAPE()) {
+                            die 'quit';
+                        }
+                        if (is_mp_game()) {
+                            $mp_newgame->();
+                        } else {
+                            die 'new_game';
+                        }
                     }
                 }
 
@@ -1953,9 +1987,9 @@ sub update_game() {
             || member($pdata{$::p}{ping_right}{state}, qw(wait_to wait))) {# && $pdata{$::p}{ping_right}{movelatency}++ > 0) {
             $pdata{$::p}{ping_right}{movelatency} = 0;
 	    $pdata{$::p}{ping_right}{img}++;
-            print "...state $pdata{$::p}{ping_right}{state} image $pdata{$::p}{ping_right}{img}\n";
+#            print "...state $pdata{$::p}{ping_right}{state} image $pdata{$::p}{ping_right}{img}\n";
 	    if ($pdata{$::p}{ping_right}{img} == @{$pinguin{$::p}{$pdata{$::p}{ping_right}{state}}}) {
-                print "finish images of state $pdata{$::p}{ping_right}{state} (" . int(@{$pinguin{$::p}{$pdata{$::p}{ping_right}{state}}}) . ")\n";
+#                print "finish images of state $pdata{$::p}{ping_right}{state} (" . int(@{$pinguin{$::p}{$pdata{$::p}{ping_right}{state}}}) . ")\n";
                 if ($pdata{$::p}{ping_right}{state} eq 'right_to') {
                     $pdata{$::p}{ping_right}{state} = 'right';
                 } elsif ($pdata{$::p}{ping_right}{state} eq 'left_to') {
@@ -1969,7 +2003,7 @@ sub update_game() {
                     $pdata{$::p}{ping_right}{state} = 'normal';
                 }
                 $pdata{$::p}{ping_right}{img} = 0;
-                print "=> state $pdata{$::p}{ping_right}{state}\n";
+#                print "=> state $pdata{$::p}{ping_right}{state}\n";
             }
         }
 
@@ -1980,10 +2014,6 @@ sub update_game() {
 }
 
 #- ----------- init stuff -------------------------------------------------
-
-sub restart_app() {
-    $app = SDL::App->new(-icon => "$FPATH/gfx/pinguins/window_icon_penguin.png", -flags => $sdl_flags | ($fullscreen ? SDL_FULLSCREEN : 0), -title => 'Frozen-Bubble 2', -width => 640, -height => 480);
-}
 
 sub print_step($) {
     my ($txt) = @_;
@@ -2030,7 +2060,14 @@ sub init_game() {
 			    foreach qw(gfx snd data);
 
     print '[SDL Init] ';
-    restart_app();
+    $app = SDL::App->new(-icon => "$FPATH/gfx/pinguins/window_icon_penguin.png", -flags => $sdl_flags | ($fullscreen ? SDL_FULLSCREEN : 0), -title => 'Frozen-Bubble 2', -width => 640, -height => 480);
+
+    my $joys = SDL::NumJoysticks();
+    $joysticksinfo and print "\nfound $joys joystick(s)\n";
+    for (my $i = 0; $i < $joys; $i++) {
+	push @joysticks, SDL::JoystickOpen($i);
+        $joysticksinfo and print "\t" . ($i + 1) . ': ' . (SDL::JoystickName(SDL::JoystickIndex($joysticks[$i])) || 'unknown joystick') . "\n";
+    }
     $frame = 0;
 
     $apprects{main} = SDL::Rect->new(-width => $app->width, -height => $app->height);
@@ -2292,6 +2329,26 @@ sub open_level($) {
     }
 }
 
+sub translate_joystick_tokey($) {
+    my ($event) = @_;
+    my $which =  SDL::JoyAxisEventWhich($event->{-event});
+    if ($event->type == SDL::JOYAXISMOTION()) {
+        my $axis = SDL::JoyAxisEventAxis($event->{-event});
+        my $value = fb_c_stuff::JoyAxisEventValue($event->{-event});
+        if ($value <= -32767 || $value >= 32767) {  #- theoretically, it should work properly with analog joysticks this way
+            return "joystick|axisvalue|$which|$axis|$value";
+        } else {
+            return "joystick|axisvalue|$which|$axis|0";
+        }
+    } elsif ($event->type() == SDL::JOYBUTTONDOWN()) {
+        my $button = SDL::JoyButtonEventButton($event->{-event});
+        return "joystick|buttondown|$which|$button";
+    } elsif ($event->type() == SDL::JOYBUTTONUP()) {
+        my $button = SDL::JoyButtonEventButton($event->{-event});
+        return "joystick|buttonup|$which|$button";
+    }
+}
+
 sub grab_key {
     my $keyp;
 
@@ -2299,8 +2356,10 @@ sub grab_key {
 	$event->wait;
 	if ($event->type == SDL_KEYDOWN) {
 	    $keyp = $event->key_sym;
-	}
-    } while ($event->type != SDL_KEYDOWN);
+	} elsif ($event->type == SDL::JOYAXISMOTION() || $event->type() == SDL::JOYBUTTONDOWN()) {
+	    $keyp = translate_joystick_tokey($event);
+        }
+    } while (!defined($keyp));
 
     #- so that using "capital" letter should work
     if (member($keyp, SDLK_LSHIFT(), SDLK_RSHIFT())) {
@@ -2380,7 +2439,7 @@ sub display_highscores() {
     $app->flip;
     $display_on_app_disabled = 0;
 
-    $event->pump while ($event->poll != 0);
+    $event->pump while $event->poll != 0;
     grab_key();
 
 #    sleep 0.5;
@@ -2438,11 +2497,27 @@ sub ask_from($) {
 	my $txt;
         if ($entry->{f} ne 'SPACE') {
             if ($entry->{f} eq 'ONE_CHAR') {
-                my $k = grab_key();
+                my $k;
+                while (!defined($k)) {
+                    $k = grab_key();
+                    if ($k =~ /^joystick\|axisvalue\|\d+\|\d+\|0$/) {  #- we treat position at 0 as KEYUP
+                        $k = undef;
+                    }
+                }
                 $no_echo or play_sound('typewriter');
                 $k == SDLK_ESCAPE and $ok = 0, last entries;
                 $txt = $k;
-                print_('menu', $app, $x_echo, $ypos, keysym_to_char($k));
+                if ($k =~ /^joystick\|axisvalue\|(\d+)\|(\d+)\|([-\d]+)/) {
+                    my $num = @joysticks > 1 ? $1 + 1 : '';
+                    $k = "joy$num-" . (even($2) ? ($3 < 0 ? t("left") : t("right")) : ($3 < 0 ? t("up") : t("down")));
+                } elsif ($k =~ /^joystick\|buttondown\|(\d+)\|(\d+)/) {
+                    my $num = @joysticks > 1 ? $1 + 1 : '';
+                    my $button = $2 + 1;
+                    $k = "joy$num-" . t("button") . $2;
+                } else {
+                    $k = keysym_to_char($k);
+                }
+                print_('menu', $app, $x_echo, $ypos, $k);
             } else {
                 callback_entry('reset');
                 while (1) {
@@ -2452,7 +2527,7 @@ sub ask_from($) {
                     }
                     $app->flip;
                     $event->pump;
-                    if ($event->poll != 0) {
+                    while ($event->poll != 0) {
                         if ($event->type == SDL_KEYDOWN) {
                             my $k = $event->key_sym;
                             if ($k == SDLK_ESCAPE()) {
@@ -2468,9 +2543,8 @@ sub ask_from($) {
                                 callback_entry('print', { xpos => $x_echo, ypos => $ypos, font => 'menu' });
                             }
                         }
-                    } else {
-                        fb_c_stuff::fbdelay($TARGET_ANIM_SPEED);
                     }
+                    fb_c_stuff::fbdelay($TARGET_ANIM_SPEED);
                 }
             }
 	}
@@ -2493,7 +2567,7 @@ sub ask_from($) {
 
     exists $w->{erase_background} and erase_image_from($imgbin{void_panel}, $MENUPOS{xpos_panel}, $MENUPOS{ypos_panel}, $w->{erase_background});
     $app->flip;
-    $event->pump while ($event->poll != 0);
+    $event->pump while $event->poll != 0;
 
     return $ok;
 }
@@ -2615,7 +2689,7 @@ sub new_game() {
 
     $display_on_app_disabled = 0;
 
-    $event->pump while ($event->poll != 0);
+    $event->pump while $event->poll != 0;
     $pdata{state} = 'game';
 
     $direct = undef;
@@ -2706,7 +2780,7 @@ sub choose_1p_game_mode() {
     while (1) {
         $redraw->();
         $event->pump;
-        if ($event->poll != 0) {
+        while ($event->poll != 0) {
             if ($event->type == SDL_KEYDOWN) {
                 my $k = $event->key_sym;
                 if ($k == SDLK_RETURN() || $k == SDLK_KP_ENTER()) {
@@ -2909,7 +2983,7 @@ sub smg_choose_server(@) {
             }
         }
         $event->pump;
-        if ($event->poll != 0) {
+        while ($event->poll != 0) {
             if ($event->type == SDL_QUIT) {
                 exit 0;
             }
@@ -2935,7 +3009,7 @@ sub smg_choose_server(@) {
 
     while (1) {
         $event->pump;
-        if ($event->poll != 0) {
+        while ($event->poll != 0) {
             if ($event->type == SDL_KEYDOWN) {
                 my $k = $event->key_sym;
 
@@ -2978,9 +3052,8 @@ sub smg_choose_server(@) {
                 }
             }
             $redraw->();
-        } else {
-            fb_c_stuff::fbdelay($TARGET_ANIM_SPEED);
         }
+        fb_c_stuff::fbdelay($TARGET_ANIM_SPEED);
     }
 
   ok_smg_choose_server:
@@ -3178,7 +3251,7 @@ sub smg_choose_game() {
         callback_entry('ping') and $redraw->();
 
         $event->pump;
-        if ($event->poll != 0) {
+        while ($event->poll != 0) {
             if ($event->type == SDL_KEYDOWN) {
                 my $k = $event->key_sym;
 
@@ -3300,9 +3373,8 @@ sub smg_choose_game() {
             }
             callback_entry('moved');
             $redraw->();
-        } else {
-            fb_c_stuff::fbdelay($TARGET_ANIM_SPEED);
         }
+        fb_c_stuff::fbdelay($TARGET_ANIM_SPEED);
 
         while (my $msg = fb_net::readline_ifdata()) {
             my ($command, $message) = fb_net::decode_msg($msg);
@@ -3553,7 +3625,7 @@ sub maingame() {
     @update_rects = ();
 
     my $to_wait = $TARGET_ANIM_SPEED - ($app->ticks - $synchro_ticks);
-    print "$to_wait\n";
+#    print "$to_wait\n";
     $to_wait > 0 and fb_c_stuff::fbdelay($to_wait);
 }
 
@@ -3726,9 +3798,11 @@ sub intro_plus_menu() {
 	    }
 
 	    $event->pump;
-	    $event->poll != 0 && $event->type == SDL_KEYDOWN && member($event->key_sym, (SDLK_RETURN, SDLK_SPACE, SDLK_KP_ENTER, SDLK_ESCAPE))
-		and $start_menu = 2;
-
+	    while ($event->poll != 0) {
+                if ($event->type == SDL_KEYDOWN && member($event->key_sym, (SDLK_RETURN, SDLK_SPACE, SDLK_KP_ENTER, SDLK_ESCAPE))) {
+                    $start_menu = 2;
+                }
+            }
 	}
     }
 
@@ -3804,6 +3878,8 @@ sub menu {
 		   erase_background => $back_start
 		 });
 	$invalidate_all->();
+#        print Data::Dumper->Dump([$KEYS], [qw(KEYS)]), "\n";
+#        die;
     };
 
     my $launch_editor = sub {
@@ -3923,7 +3999,7 @@ sub menu {
     $invalidate_all->();
     $menu_update->();
     $app->flip;
-    $event->pump while ($event->poll != 0);
+    $event->pump while $event->poll != 0;
 
     my $start_game = 0;
     my ($BANNER_START, $BANNER_SPACING) = (1000, 80);
@@ -3944,7 +4020,7 @@ sub menu {
 	$graphics_level > 1 and $back_start->blit($banner_rect, $app, $banner_rect);
 
 	$event->pump;
-	if ($event->poll != 0) {
+	while ($event->poll != 0) {
 	    if ($event->type == SDL_KEYDOWN) {
 		my $keypressed = $event->key_sym;
 		if (member($keypressed, (SDLK_DOWN, SDLK_RIGHT)) && $current_pos < max(map { $menu_entries{$_}->{pos} } keys %menu_entries)) {
@@ -4101,7 +4177,11 @@ sub menu {
     my $KEYS_;
     foreach my $p (keys %$KEYS) {
 	foreach my $k (keys %{$KEYS->{$p}}) {
-	    eval("$KEYS->{$p}->{$k} eq SDLK_$_") and $KEYS_->{$p}->{$k} = "SDLK_$_" foreach @fbsyms::syms;
+            if ($KEYS->{$p}{$k} =~ /^\d+$/) {
+                eval("$KEYS->{$p}{$k} eq SDLK_$_") and $KEYS_->{$p}{$k} = "SDLK_$_" foreach @fbsyms::syms;
+            } else {
+                $KEYS_->{$p}{$k} = $KEYS->{$p}{$k};
+            }
 	}
     }
     my $dump = Data::Dumper->Dump([$fullscreen, $graphics_level, $KEYS_], [qw(fullscreen graphics_level KEYS)]);

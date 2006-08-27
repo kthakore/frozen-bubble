@@ -1523,3 +1523,12 @@ TTFPutString ( font, mode, surface, x, y, fg, bg, text )
 		}
 	OUTPUT:
 		RETVAL
+
+
+Sint16
+JoyAxisEventValue ( e )
+        SDL_Event *e
+        CODE:
+                RETVAL = e->jaxis.value;   // buggy up to 2.1.2
+        OUTPUT: 
+                RETVAL
