@@ -159,18 +159,19 @@ local $_ = "@ARGV";
 
 #- ------------------------------------------------------------------------
 
-END {
-    if ($app) {
-	$total_time = ($app->ticks - $total_time)/1000;
-	my $h = int($total_time/3600);
-	my $m = int(($total_time-$h*3600)/60);
-	my $s = int($total_time-$h*3600-$m*60);
-	print "\nAddicted for ", $h ? "$h"."h " : "", $m ? "$m"."m " : "", "$s"."s.\n";
-    }
+sub format_addiction($) {
+    my ($seconds) = @_;
+    my $h = int($seconds/3600);
+    my $m = int(($seconds-$h*3600)/60);
+    my $s = int($seconds-$h*3600-$m*60);
+    return ($h ? "${h}h " : '') . ($m ? sprintf('%'.($h ? '02' : '').'dm ', $m) : '') . sprintf('%'.($m ? '02' : '').'ds', $s);
 }
 
-#- it doesn't keep ordering (but I don't care)
-sub fastuniq { my %l; @l{@_} = @_; values %l }
+END {
+    if ($app) {
+	print "\nAddicted for ", format_addiction(($app->ticks - $total_time)/1000), "\n";
+    }
+}
 
 
 #- ----------- sound related stuff ----------------------------------------
@@ -1088,6 +1089,7 @@ sub handle_game_events() {
                 }
 
                 if ($keypressed == SDLK_PAUSE && !is_mp_game()) {
+                    my $time_pause = $app->ticks;
                     play_sound('pause');
                     $mixer_enabled && $mixer and $mixer->pause_music;
                     my $back_saved = switch_image_on_background($imgbin{back_paused}, 0, 0, 1);
@@ -1120,6 +1122,7 @@ sub handle_game_events() {
                     $mixer_enabled && $mixer and $mixer->resume_music;
                     $event->pump while $event->poll != 0;
                     $app->flip;
+                    $total_time += $app->ticks - $time_pause;
                 }
                 
             }
@@ -3737,12 +3740,12 @@ sub intro_plus_menu() {
 
 #- ----------- menu stuff -------------------------------------------------
 
-my $logo_candy_index = 0;
-my $logo_candy_method = int(rand(8));
-my ($logox, $logoy) = (400, 15);
+our $logo_candy_index = 0;
+our $logo_candy_method = int(rand(8));
+our ($logox, $logoy) = (400, 15);
 #$logo_candy_method = 7;
-my $candy;
-my ($blink_green, $blink_purple);
+our $candy;
+our ($blink_green, $blink_purple);
 
 sub menu {
     my ($from_intro, $back_from_intro) = @_;
