@@ -43,7 +43,7 @@ use vars qw($TARGET_ANIM_SPEED $BUBBLE_SIZE $ROW_SIZE $LAUNCHER_SPEED $BUBBLE_SP
             $graphics_level @update_rects $CANON_ROTATIONS_NB %malus_bubble %falling_bubble %exploding_bubble %malus_gfx %ttfonts
             %sticking_bubble $time %imgbin $TIME_HURRY_WARN $TIME_HURRY_MAX $TIMEOUT_PINGUIN_SLEEP $FREE_FALL_CONSTANT
             $direct @PLAYERS @ALL_PLAYERS %levels $display_on_app_disabled $total_time $time_1pgame $fullscreen $rcfile $hiscorefile $HISCORES
-            $lev_number $playermalus $loaded_levelset $direct_levelset $chainreaction %chains %history %img_mini $frame $sock $gameserver);
+            $lev_number $playermalus $loaded_levelset $direct_levelset $chainreaction %chains %history %img_mini $frame $sock $gameserver $mynick);
 
 use Data::Dumper;
 use Locale::gettext;
@@ -132,6 +132,7 @@ local $_ = "@ARGV";
  -ls<name>, --levelset<name> directly start with the specified levelset name
  -gs<host:port>, --gameserver<host:port> in NET game, directly use this game server
  -ne, --noecho               when sound is enabled, disable echoing each typed character with a typewriter sound
+ -mn<nick>, --mynick<nick>   for net/lan games, use this nick instead of username (max 10 chars, ASCII alphanumeric plus dash and underscore only)
  -rf<file>, --regularfont<file> use the specified font file instead of using fontconfig to detect the best regular font
  -if<file>, --italicfont<file> use the specified font file instead of using fontconfig to detect the best italic font
 ";
@@ -154,8 +155,12 @@ local $_ = "@ARGV";
 /-ms\s*(\S+)/ || /-masterserver\s*(\S+)/ and $fb_net::masterserver = $1;
 /-gs\s*(\S+):(\S+)/ || /-gameserver\s*(\S+):(\S+)/ and $gameserver = "$1:$2";
 /-ne/ || /-noe/ and $no_echo = 1;
+/-mn\s*(\S+)/ || /-mynick\s*(\S+)/ and $mynick = substr($1, 0, 10);
 /-rf\s*(\S+)/ || /-regularfont\s*(\S+)/ and $regularfont = $1; 
 /-if\s*(\S+)/ || /-italicfont\s*(\S+)/ and $italicfont = $1; 
+
+$mynick ||= substr($ENV{USER}, 0, 10);
+$mynick =~ s/[^a-zA-Z0-9_-]//g;  #- sanitize
 
 #- ------------------------------------------------------------------------
 
@@ -415,10 +420,10 @@ sub is_mp_game() { any { /rp/ } @PLAYERS }
 sub is_2p_game() { @PLAYERS == 2 && !is_mp_game() }
 
 sub is_leader() {
-    my $mynick = $pdata{p1}{nick};
+    my $me = $pdata{p1}{nick};
     my $is_leader = 1;
     iter_players_but_first {
-        $is_leader &&= $pdata{$::p}{nick} gt $mynick;
+        $is_leader &&= $pdata{$::p}{nick} gt $me;
     };
     return $is_leader;
 }
@@ -2813,7 +2818,7 @@ sub smg_servers() {
                         return [ { host => 'localhost', port => 1511 } ];
                     } else {
                         %ttfonts = undef;  #- close related file descriptors
-                        unless (exec $fb_server, '-L', '-p', '1511', '-d', '-n', 'lan-' . substr($ENV{USER}, 0, 8), '-z') {
+                        unless (exec $fb_server, '-L', '-p', '1511', '-d', '-n', "lan-$mynick", '-z') {
                             print STDERR "Could not create server limited to lan game: $!\n";
                             POSIX::_exit(1);
                         }
@@ -3160,7 +3165,6 @@ sub smg_choose_game() {
         $redraw->();
     };
 
-    my $mynick = $ENV{USER} = substr($ENV{USER}, 0, 8);
     my $need4update;
     my $relist;
     my $players_in_game = '';
@@ -3231,7 +3235,7 @@ sub smg_choose_game() {
                     }
 
                     if (member($curaction->()->{action}, 'CREATE', 'JOIN')) {
-                        my $suffix = 1;
+                        my $suffix = 9;
                         my $answer;
                         while (1) {
                             my $message = $curaction->()->{action} eq 'CREATE' ? $mynick
@@ -3240,12 +3244,12 @@ sub smg_choose_game() {
                             if ($answer eq 'NICK_IN_USE') {
                                 if ($suffix < 9) {
                                     $suffix++;
-                                    $mynick = "$ENV{USER}$suffix";
+                                    $mynick = substr($mynick, 0, 9) . $suffix;
                                 } else {
                                     #- try to find something that will be accepted, even if it sux
-                                    $mynick = substr($ENV{USER}, 0, 4);
-                                    my @chars = 'a' .. 'z';
-                                    $mynick .= $chars[rand(@chars)] foreach 1..4;
+                                    $mynick = substr($mynick, 0, 7);
+                                    my @chars = ('a' .. 'z', 'A' .. 'Z');
+                                    $mynick .= $chars[rand(@chars)] foreach 1..3;
                                     $suffix = 1;
                                 }
                             } elsif ($answer eq 'ALREADY_MAX_OPEN_GAMES') {
