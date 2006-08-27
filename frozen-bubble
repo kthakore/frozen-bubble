@@ -4088,6 +4088,7 @@ sub menu {
 	    $banner_pos >= $banners_max and $banner_pos = 1;
             $app->update($banner_rect);
 
+            #- animate cursor
             foreach my $m (keys %menu_entries) {
                 if ($menu_entries{$m}->{pos} == $current_pos) {
                     $cursor_img++;
@@ -4096,7 +4097,8 @@ sub menu {
                                                      -width => $imgbin{menu_cursor}[$cursor_img]->width, -height => $imgbin{menu_cursor}[$cursor_img]->height);
                     if (!defined($cursor_save_bg)) {
                         $cursor_save_bg = SDL::Surface->new(-width => $imgbin{menu_cursor}[0]->width, -height => $imgbin{menu_cursor}[0]->height, -depth => 32);
-                        $app->blit($cursor_rect, $cursor_save_bg, SDL::Rect->new(-x => 0, -y => 0, -width => $imgbin{menu_cursor}[0]->width, -height => $imgbin{menu_cursor}[0]->height));
+                        $app->blit($cursor_rect, $cursor_save_bg, SDL::Rect->new('-x' => 0, '-y' => 0,
+                                                                                 -width => $imgbin{menu_cursor}[0]->width, -height => $imgbin{menu_cursor}[0]->height));
                     }
                     $cursor_save_bg->blit(undef, $app, $cursor_rect);
                     $imgbin{menu_cursor}[$cursor_img]->blit(undef, $app, $cursor_rect);
