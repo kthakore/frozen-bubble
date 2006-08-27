@@ -42,7 +42,7 @@ use vars qw($TARGET_ANIM_SPEED $BUBBLE_SIZE $ROW_SIZE $LAUNCHER_SPEED $BUBBLE_SP
             $shooter_mini $sdl_flags $mixer $mixer_enabled $music_disabled $sfx_disabled $no_echo $regularfont $italicfont @playlist %sound %music %pinguin %canon
             $graphics_level @update_rects $CANON_ROTATIONS_NB %malus_bubble %falling_bubble %exploding_bubble %malus_gfx %ttfonts
             %sticking_bubble $time %imgbin $TIME_HURRY_WARN $TIME_HURRY_MAX $TIMEOUT_PINGUIN_SLEEP $FREE_FALL_CONSTANT @joysticks $joysticksinfo
-            $direct @PLAYERS @ALL_PLAYERS %levels $display_on_app_disabled $total_time $time_1pgame $fullscreen $rcfile $hiscorefile $HISCORES
+            $direct @PLAYERS @ALL_PLAYERS %levels $display_on_app_disabled $total_time $time_1pgame $time_netgame $fullscreen $rcfile $hiscorefile $HISCORES
             $lev_number $playermalus $loaded_levelset $direct_levelset $chainreaction %chains %history %img_mini $frame $sock $gameserver $mynick);
 
 use Data::Dumper;
@@ -1141,6 +1141,7 @@ sub handle_game_events() {
                     $event->pump while $event->poll != 0;
                     $app->flip;
                     $total_time += $app->ticks - $time_pause;
+                    is_1p_game() and $time_1pgame += $app->ticks - $time_pause;
                 }
                 
             }
@@ -3251,6 +3252,7 @@ sub smg_choose_game() {
         $relist % (3*20) == 0 and $list->();
         callback_entry('ping') and $redraw->();
 
+        my $need_redraw;
         $event->pump;
         while ($event->poll != 0) {
             if ($event->type == SDL_KEYDOWN) {
@@ -3304,7 +3306,13 @@ sub smg_choose_game() {
                 } elsif ($k == SDLK_RETURN() || $k == SDLK_KP_ENTER()) {
                     if ($curaction->()->{action} eq 'CHAT' && callback_entry('gettext') > 0) {
                         play_sound('menu_selected');
-                        fb_net::send_("TALK ($mynick) " . join('', callback_entry('gettext')));
+                        my $text = join('', callback_entry('gettext'));
+                        if ($text =~ m|^(/me )(.*)| || $text =~ m|^(/action )(.*)|) {
+                            $text = "* $mynick $2";
+                        } else {
+                            $text = "<$mynick> $text";
+                        }
+                        fb_net::send_("TALK $text");
                         callback_entry('reset');
                     }
 
@@ -3371,7 +3379,10 @@ sub smg_choose_game() {
                     }
                 }
 
+                $need_redraw = 1;
             }
+        }
+        if ($need_redraw) {
             callback_entry('moved');
             $redraw->();
         }
@@ -3459,6 +3470,7 @@ sub show_mp_scores() {
     if (any { $pdata{$_}{left} } @PLAYERS) {
         smg_add_status_msg(t("*** Game finished, because the following player(s) left: %s", join(', ', map { if_($pdata{$_}{left}, $pdata{$_}{nick}) } @PLAYERS)));
     }
+    smg_add_status_msg(t("*** Addicted for: %s", format_addiction(($app->ticks - $time_netgame)/1000)));
     @PLAYERS = reverse ssort { $pdata{$_}{score} } @PLAYERS;
     if ($pdata{$PLAYERS[0]}{score} > $pdata{$PLAYERS[1]}{score}) {
         smg_add_status_msg(t("*** Winner: %s", $pdata{$PLAYERS[0]}{nick}));
@@ -3499,6 +3511,7 @@ sub setup_mp_game() {
     #- 3. let user choose/create game
     smg_choose_game() or return;
 
+    $time_netgame = $app->ticks;
     return 1;
 }
 
