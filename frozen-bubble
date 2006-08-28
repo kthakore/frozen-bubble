@@ -1035,7 +1035,7 @@ sub mp_disconnect_with_reason {
     }
     $app->flip;
     play_sound('cancel');
-    fb_c_stuff::fbdelay(3000);
+    fb_c_stuff::fbdelay(2000);
     $event->pump while $event->poll != 0;
     grab_key();
     die 'quit';
@@ -2928,6 +2928,7 @@ sub smg_servers() {
     }
 }
 
+our $forget_because_kicked;
 sub smg_choose_server(@) {
     my (@servers) = @_;
     my $max_lines = 18;
@@ -3062,7 +3063,10 @@ sub smg_choose_server(@) {
     foreach my $server (@servers) {
         if ($server->{selected}) {
             fb_net::connect($server);
-            fb_net::isconnected() or return smg_choose_server(@servers);
+            if (!fb_net::isconnected()) {
+                smg_add_status_msg(t("*** Impossible to connect to specified server, going back to server list"));
+                return smg_choose_server(@servers);
+            }
             smg_add_status_msg(t("*** Connected to server '%s'", $server->{name}));
             print "Notice! next time you start Frozen-Bubble, you may add the commandline parameter\n".
                   "        -gs$server->{host}:$server->{port} to automatically select this game server\n".
@@ -3082,7 +3086,17 @@ sub smg_choose_server(@) {
 
 sub smg_verify_command($;$) {
     my ($command, $rest) = @_;
-    my $answer = fb_net::send_and_receive($command, $rest);
+    my $answer;
+    eval {
+        $answer = fb_net::send_and_receive($command, $rest);
+    };
+    if ($@) {
+        smg_add_status_msg(t("*** Sorry, your computer or the network is too slow, giving up - press any key"));
+        $app->flip;
+        $event->pump while $event->poll != 0;
+        grab_key();
+        die 'quit';
+    }
     if ($answer ne 'OK') {
         return $answer;
     } else {
@@ -3215,12 +3229,16 @@ sub smg_choose_game() {
 
     my $list = sub {
         $state eq 'game_select' or return;
-        my ($free, undef, @games) = fb_net::list();
+        my ($free, @games);
+        eval {
+            ($free, undef, @games) = fb_net::list();
+        };
+        $@ and return;
         my ($join, $rest) = partition { $_->{action} eq 'JOIN' } @actions;
         $_->{ok} = 0 foreach @$join;
       listgames:
         foreach my $players (@games) {
-            if (@$players < 5) {
+            if (@$players < 5 && $players->[0] ne $forget_because_kicked) {
                 my $name = t("Join game: %s", join(', ', @$players));
                 foreach my $line (@$join) {
                     if ($line->{name} eq $name) {
@@ -3245,6 +3263,7 @@ sub smg_choose_game() {
     my $players_in_game = '';
     my $ingame = 0;
     my $can_start = 0;
+    my $joined_leader;
     $list->();
 
     while (1) {
@@ -3309,10 +3328,33 @@ sub smg_choose_game() {
                         my $text = join('', callback_entry('gettext'));
                         if ($text =~ m|^(/me )(.*)| || $text =~ m|^(/action )(.*)|) {
                             $text = "* $mynick $2";
-                        } else {
-                            $text = "<$mynick> $text";
+                        } elsif ($text =~ m|^/kick (.*)| && $can_start) {
+                            my $kicked = $1;
+                            if ($kicked eq $mynick) {
+                                my $rand = int(rand(3));
+                                $rand == 0 and smg_add_status_msg(t("*** Sado-masochist, hmm?"));
+                                $rand == 1 and smg_add_status_msg(t("*** You like when it hurts, don't you?"));
+                                $rand == 2 and smg_add_status_msg(t("*** Your butt already hurts enough! Stop that!"));
+                            } else {
+                                my $answer = smg_verify_command('KICK', $kicked);
+                                if ($answer eq 'NO_SUCH_PLAYER') {
+                                    smg_add_status_msg(t("*** Can't kick %s: no such player in game", $kicked));
+                                } elsif ($answer) {
+                                    smg_add_status_msg(t("*** Can't kick %s: '%s'", $kicked, $answer));
+                                }
+                            }
+                            $text = undef;
+                        } elsif ($text =~ m|^/help|) {
+                            smg_add_status_msg(t("*** Available commands: %s",
+                                                 join(', ', t("%s <action>", '/me'), if_($can_start, t("%s <nick>", '/kick')))));
+                            $text = undef;
+                        } elsif ($text =~ m|^/|) {
+                            smg_add_status_msg(t("*** Unknown command. Try %s for help.", '/help'));
+                            $text = undef;
                         }
-                        fb_net::send_("TALK $text");
+                        if ($text) {
+                            fb_net::send_("TALK $text");
+                        }
                         callback_entry('reset');
                     }
 
@@ -3338,11 +3380,15 @@ sub smg_choose_game() {
                             } elsif ($answer eq 'ALREADY_MAX_OPEN_GAMES') {
                                 smg_add_status_msg(t("*** Open games already full. Join an existing game, or select a different server."));
                                 goto not_in_game;
+                            } elsif ($answer) {
+                                smg_add_status_msg(t("*** Failure: '%s'", $answer));
+                                goto not_in_game;
                             } else {
                                 if ($curaction->()->{action} eq 'CREATE') {
                                     $can_start = 1;
                                     smg_add_status_msg(t("*** Game created - now you need to wait for players to join"));
                                 } else {
+                                    $joined_leader = $curaction->()->{join};
                                     smg_add_status_msg(t("*** Joined game"));
                                 }
                                 $ingame = 1;
@@ -3400,6 +3446,15 @@ sub smg_choose_game() {
                 } elsif ($message =~ /^PARTED: (.*)/) {
                     smg_add_status_msg(t("*** %s left the game...", $1));
                     play_sound('newroot_solo');
+                } elsif ($message =~ /^KICKED: (.*)/) {
+                    smg_add_status_msg(t("*** %s was kicked out of the game...", $1));
+                    play_sound('newroot_solo');
+                } elsif ($message =~ /^KICKED$/) {
+                    $forget_because_kicked = $joined_leader;
+                    smg_add_status_msg(t("*** You were kicked out of the game...", $1));
+                    play_sound('cancel');
+                    fb_net::reconnect();
+                    return smg_choose_game();
                 } elsif ($message =~ /^GAME_CAN_START: (.*)/) {
                     fb_net::send_("OK_GAME_START");
                     @PLAYERS = qw(p1);
@@ -3441,11 +3496,12 @@ sub smg_choose_game() {
         }
 
         if (!fb_net::isconnected()) {
-            smg_add_status_msg(t("*** Lost connection to server, abandoning..."));
+            smg_add_status_msg(t("*** Lost connection to server, abandoning - press any key"));
             @actions = ();
             $redraw->();
             play_sound('cancel');
-            fb_c_stuff::fbdelay(2000);
+            $event->pump while $event->poll != 0;
+            grab_key();
             $erase->();
             return 0;
         }
@@ -3491,6 +3547,7 @@ sub setup_mp_game() {
             my ($host, $port) = $gameserver =~ /(\S+):(\S+)/;
             fb_net::connect($host, $port);
             if (!fb_net::isconnected()) {
+                smg_add_status_msg(t("*** Cannot connect to specified gameserver, fallbacking to contacting master server"));
 		print STDERR "Cannot connect to specified gameserver, fallbacking to contacting master server\n";
                 goto choose_server;
             }
@@ -3509,6 +3566,7 @@ sub setup_mp_game() {
     }
 
     #- 3. let user choose/create game
+    $forget_because_kicked = undef;
     smg_choose_game() or return;
 
     $time_netgame = $app->ticks;
@@ -3530,8 +3588,16 @@ sub new_game_once {
         }
         if (is_mp_game()) {
             $event->set_key_repeat(200, 50);
-            setup_mp_game() or return;
+            my $ok_game;
+            eval {
+                $ok_game = setup_mp_game();
+            };
+            my $failure = $@;
             $event->set_key_repeat(0, 0);
+            if ($failure && $failure ne 'quit') {
+                die $failure;
+            }
+            $failure || !$ok_game and return;
             $pdata{gamenum} = 0;
         }
     }

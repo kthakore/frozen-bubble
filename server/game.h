@@ -26,6 +26,7 @@ void player_disconnects(int fd);
 void calculate_list_games(void);
 
 void player_part_game(int fd);
+void player_part_game_(int fd, char* reason);
 
 int process_msg(int fd, char* msg);
 

@@ -1,5 +1,5 @@
 
-CFLAGS ?= -Wall -Werror -pipe `glib-config --cflags`
+CFLAGS ?= -g -Wall -Werror -pipe `glib-config --cflags`
 LIBS ?= `glib-config --libs`
 
 ALLSRC = fb-server.c log.c tools.c game.c net.c

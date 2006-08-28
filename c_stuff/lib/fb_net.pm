@@ -459,6 +459,7 @@ sub get_server_list() {
         my $serverlist = http_download($_);
         defined $serverlist and return $serverlist;
     }
+    return;
 }
 
 our $myid;

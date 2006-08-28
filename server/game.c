@@ -58,6 +58,7 @@ static ssize_t amount_transmitted = 0;
 static char ok_pong[] = "PONG";
 static char ok_player_joined[] = "JOINED: %s";
 static char ok_player_parted[] = "PARTED: %s";
+static char ok_player_kicked[] = "KICKED: %s";
 static char ok_talk[] = "TALK: %s";
 static char ok_stop[] = "STOP: %s";
 static char ok_can_start[] = "GAME_CAN_START: %s";
@@ -74,6 +75,7 @@ static char wn_already_ok_started[] = "ALREADY_OK_STARTED";
 static char wn_not_in_game[] = "NOT_IN_GAME";
 static char wn_alone_in_the_dark[] = "ALONE_IN_THE_DARK";
 static char wn_not_creator[] = "NOT_CREATOR";
+static char wn_no_such_player[] = "NO_SUCH_PLAYER";
 
 static char fl_line_unrecognized[] = "MISSING_FB_PROTOCOL_TAG";
 static char fl_proto_mismatch[] = "INCOMPATIBLE_PROTOCOL";
@@ -291,6 +293,20 @@ static void ok_start_game(int fd)
         }
 }
 
+static void kick_player(int fd, struct game * g, char * nick)
+{
+        int i;
+        for (i = 0; i < g->players_number; i++) {
+                if (g->players_conn[i] != fd && streq(g->players_nick[i], nick)) {
+                        send_ok(fd, "KICK");
+                        send_line_log_push(g->players_conn[i], "KICKED");
+                        player_part_game_(g->players_conn[i], ok_player_kicked);
+                        return;
+                }
+        }
+        send_line_log(fd, wn_no_such_player, "KICK");
+}
+
 static void stop_game(int fd)
 {
         struct game * g = find_game_by_fd(fd);
@@ -469,6 +485,27 @@ int process_msg(int fd, char* msg)
                                         send_line_log(fd, wn_game_full, msg_orig);
                         }
                 }
+        } else if (streq(current_command, "KICK")) {
+                if (!args) {
+                        send_line_log(fd, wn_missing_arguments, msg_orig);
+                } else {
+                        if ((ptr = strchr(args, ' ')))
+                                *ptr = '\0';
+                        if (strlen(args) > 10)
+                                args[10] = '\0';
+                        if (!already_in_game(fd)) {
+                                send_line_log(fd, wn_not_in_game, msg_orig);
+                        } else if (!already_in_game(fd)) {
+                                send_line_log(fd, wn_not_creator, msg_orig);
+                        } else {
+                                struct game * g = find_game_by_fd(fd);
+                                if (g->players_conn[0] != fd) {
+                                        send_line_log(fd, wn_not_creator, msg_orig);
+                                } else {
+                                        kick_player(fd, g, args);
+                                }
+                        }
+                }
         } else if (streq(current_command, "PART")) {
                 if (!already_in_game(fd)) {
                         send_line_log(fd, wn_not_in_game, msg_orig);
@@ -608,16 +645,23 @@ void process_msg_prio(int fd, char* msg, ssize_t len)
 
 void player_part_game(int fd)
 {
+        player_part_game_(fd, NULL);
+}
+
+void player_part_game_(int fd, char* reason)
+{
         struct game * g = find_game_by_fd(fd);
         if (g) {
+                char * save_nick;
                 int j;
                 int i = find_player_number(g, fd);
 
                 // remove parting player from game
-                free(g->players_nick[i]);
+                save_nick = g->players_nick[i];
                 for (j = i; j < g->players_number - 1; j++) {
                         g->players_conn[j] = g->players_conn[j + 1];
                         g->players_nick[j] = g->players_nick[j + 1];
+                        g->players_started[j] = g->players_started[j + 1];
                 }
                 g->players_number--;
                 
@@ -639,12 +683,13 @@ void player_part_game(int fd)
                         } else {
                                 char parted_msg[1000];
                                 // inform other players, non-playing state
-                                snprintf(parted_msg, sizeof(parted_msg), ok_player_parted, g->players_nick[i]);
+                                snprintf(parted_msg, sizeof(parted_msg), reason ? reason : ok_player_parted, save_nick);
                                 for (j = 0; j < g->players_number; j++)
                                         send_line_log_push(g->players_conn[j], parted_msg);
                         }
                         calculate_list_games();
                 }
+                free(save_nick);
 
                 open_players = g_list_append(open_players, GINT_TO_POINTER(fd));
         }
