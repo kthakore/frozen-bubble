@@ -3162,7 +3162,7 @@ sub callback_entry {
             $no_echo or play_sound('typewriter');
         } elsif (!member($params->{event}->key_sym, SDLK_TAB())) {
             my $utf8char = fb_c_stuff::utf8key($params->{event}{-event});
-            if ($utf8char ne '') {
+            if ($utf8char ne '' && $utf8char ne "\n") {
                 splice @typed, $position, 0, $utf8char;
                 if (width($params->{font}, $params->{prefix} . join('', @typed)) >= $params->{maxlen}) {
                     splice @typed, $position, 1;
@@ -3358,6 +3358,8 @@ sub smg_choose_game() {
                         } elsif ($text =~ m|^/|) {
                             smg_add_status_msg(t("*** Unknown command. Try %s for help.", '/help'));
                             $text = undef;
+                        } else {
+                            $text = "<$mynick> $text";
                         }
                         if ($text) {
                             fb_net::send_("TALK $text");

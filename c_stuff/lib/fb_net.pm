@@ -310,6 +310,7 @@ sub connect {
     }
     $sock->autoflush;
 
+    $buffered_line = undef;
     my $msg = readline_();
     my ($remote_major, $remote_minor, $isready) = $msg =~ m|^FB/(\d+).(\d+) (.*)|;
     my ($servername, $serverlanguage);
@@ -545,7 +546,7 @@ sub grecv() {
 #            $ouch = 1;
 #        }
         #- match data of a frame (newline terminated)
-        if (my ($msg, $rest) = $buf =~ /([^\n]+)\n(.*)?/s) {
+        if (my ($msg, $rest) = $buf =~ /([^\n]+)\n(.*)?/s) {  #-?
             $buf = $rest;
             push @msg, { id => $id, msg => $msg };
             print "\trecv-msg:", ord($id), ":$msg\n";
