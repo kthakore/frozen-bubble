@@ -3444,8 +3444,15 @@ sub smg_choose_game() {
                     smg_add_status_msg(t("*** %s joined the game!", $1));
                     play_sound('newroot_solo');
                 } elsif ($message =~ /^PARTED: (.*)/) {
-                    smg_add_status_msg(t("*** %s left the game...", $1));
-                    play_sound('newroot_solo');
+                    if ($1 eq $joined_leader) {
+                        smg_add_status_msg(t("*** Game creator left the game..."));
+                        play_sound('cancel');
+                        fb_net::reconnect();
+                        return smg_choose_game()
+                    } else {
+                        smg_add_status_msg(t("*** %s left the game...", $1));
+                        play_sound('newroot_solo');
+                    }
                 } elsif ($message =~ /^KICKED: (.*)/) {
                     smg_add_status_msg(t("*** %s was kicked out of the game...", $1));
                     play_sound('newroot_solo');
