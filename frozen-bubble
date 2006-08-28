@@ -1455,9 +1455,11 @@ sub update_lost {
             }
         }
         
-        if (!@{$sticked_bubbles{$player}}) {
-            $event->pump while $event->poll != 0;
+        $event->pump;
+        while ($event->poll != 0) {
+            $event->type == SDL_KEYDOWN && $event->key_sym == SDLK_ESCAPE and die 'new_game';
         }
+
     } else {
         if (!is_mp_game()) {
             $event->pump;
@@ -1525,7 +1527,7 @@ sub decode_postgame_message($) {
 sub update_game() {
 
     if ($pdata{state} eq 'game') {
-	handle_game_events();
+        handle_game_events();
 	iter_players {
             if ($pdata{$::p}{state} eq 'lost') {
                 update_lost($::p);
@@ -1763,6 +1765,7 @@ sub update_game() {
         is_2p_game() and update_won($loser eq 'p1' ? 'p2' : 'p1');
         
     } elsif ($pdata{state} =~ /^finished (\S+):(\S+) (\S+)/) {
+        $event->pump while $event->poll != 0;
         print "$pdata{state}\n";
         #- mp game only state when we're trying to figure out if this is not a draw game
 
@@ -1818,6 +1821,7 @@ sub update_game() {
     } elsif ($pdata{state} =~ /^won (.*)/) {
         #- mp and 1p game only state
 
+        my $events_pumped;
         my $winner = $1;
         if (is_mp_game()) {
             $winner and update_won($winner);
@@ -1836,6 +1840,7 @@ sub update_game() {
             };
             if (!$still_needwait) {
                 $event->pump;
+                $events_pumped = 1;
 
                 my $mp_newgame = sub {
                     iter_players {
@@ -1869,11 +1874,9 @@ sub update_game() {
                 };
 
                 while ($event->poll != 0) {
-                    if ($event->type == SDL_KEYDOWN) {
-                        print "key pressed in won state\n";
-                        if ($event->key_sym == SDLK_ESCAPE()) {
-                            die 'quit';
-                        }
+                    if ($event->type == SDL_KEYDOWN && $event->key_sym == SDLK_ESCAPE()) {
+                        die 'quit';
+                    } elsif ($event->type == SDL_KEYDOWN || $event->type == SDL::JOYBUTTONUP) {
                         if (is_mp_game()) {
                             $mp_newgame->();
                         } else {
@@ -1896,6 +1899,9 @@ sub update_game() {
                     check_mp_connection();
                 }
             }
+        }
+        if (!$events_pumped) {
+            $event->pump while $event->poll != 0;
         }
 
     } else {
@@ -2486,7 +2492,7 @@ sub ask_from($) {
 
     my $ok = 1;
     $event->set_key_repeat(200, 50);
-  entries:
+  ask_from_entries:
     foreach my $entry (@{$w->{entries}}) {
 	$xpos = (640-$imgbin{void_panel}->width)/2 + 120 - width('menu', $entry->{'q'})/2;
 	print_('menu', $app, $xpos, $ypos, $entry->{'q'});
@@ -2507,7 +2513,7 @@ sub ask_from($) {
                     }
                 }
                 $no_echo or play_sound('typewriter');
-                $k == SDLK_ESCAPE and $ok = 0, last entries;
+                $k == SDLK_ESCAPE and $ok = 0, last ask_from_entries;
                 $txt = $k;
                 if ($k =~ /^joystick\|axisvalue\|(\d+)\|(\d+)\|([-\d]+)/) {
                     my $num = @joysticks > 1 ? $1 + 1 : '';
@@ -2522,6 +2528,7 @@ sub ask_from($) {
                 print_('menu', $app, $x_echo, $ypos, $k);
             } else {
                 callback_entry('reset');
+              ask_from_main_loop:
                 while (1) {
                     if (callback_entry('ping')) {
                         $imgbin{void_panel}->blit($srect_mulchar_redraw, $app, $drect_mulchar_redraw);
@@ -2534,10 +2541,10 @@ sub ask_from($) {
                             my $k = $event->key_sym;
                             if ($k == SDLK_ESCAPE()) {
                                 $ok = 0;
-                                last entries;
+                                last ask_from_entries;
                             } elsif ($k == SDLK_RETURN() || $k == SDLK_KP_ENTER()) {
                                 $txt = join('', callback_entry('gettext'));
-                                last;
+                                last ask_from_main_loop;
                             } else {
                                 callback_entry('keypressed', { event => $event, maxlen => 100, font => 'menu' });
                                 $imgbin{void_panel}->blit($srect_mulchar_redraw, $app, $drect_mulchar_redraw);
@@ -3712,7 +3719,7 @@ sub maingame() {
     @update_rects = ();
 
     my $to_wait = $TARGET_ANIM_SPEED - ($app->ticks - $synchro_ticks);
-#    print "$to_wait\n";
+    print "$to_wait\n";
     $to_wait > 0 and fb_c_stuff::fbdelay($to_wait);
 }
 
