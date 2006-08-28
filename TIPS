@@ -1,0 +1,9 @@
+During net/lan game choose, there is a chat system. Here are the
+available keys and tips:
+
+- page up and page down allow you to navigate in history as in
+  IRC programs
+
+- use /help to view the available commands; notice that some
+  commands are specific (for example /kick is available once a
+  game has been created, to game creator)
