@@ -4153,8 +4153,16 @@ sub menu {
 
 	$event->pump;
 	while ($event->poll != 0) {
-	    if ($event->type == SDL_KEYDOWN) {
-		my $keypressed = $event->key_sym;
+            my $keypressed;
+            if ($event->type == SDL_KEYDOWN) {
+                $keypressed = $event->key_sym;
+            } elsif ($event->type == SDL::JOYAXISMOTION() || $event->type() == SDL::JOYBUTTONDOWN()) {
+                $keypressed = translate_joystick_tokey($event);
+                if ($keypressed =~ /^joystick\|axisvalue\|\d+\|\d+\|0$/) {  #- we treat position at 0 as KEYUP
+                    $keypressed = undef;
+                }
+            }
+            if ($keypressed) {
 		if (member($keypressed, (SDLK_DOWN, SDLK_RIGHT)) && $current_pos < max(map { $menu_entries{$_}->{pos} } keys %menu_entries)) {
 		    $current_pos++;
 		    push @menu_invalids, $current_pos-1, $current_pos;
@@ -4186,6 +4194,10 @@ sub menu {
 		    }
                     $menu_update->();
 		}
+                if ($keypressed eq $KEYS->{misc}{fs}) {
+                    $fullscreen = !$fullscreen;
+                    $app->fullscreen;
+                }
 
                 if ($keypressed == SDLK_ESCAPE) {
 		    exit 0;
