@@ -609,7 +609,7 @@ void process_msg_prio_(int fd, char* msg, ssize_t len, struct game* g)
                                 while (togo) {
                                         int randval = rand_(50);
                                         ssize_t amount = min(randval, togo);
-                                        l2(OUTPUT_TYPE_DEBUG, "Amount: %d togo: %d", amount, togo);
+                                        l2(OUTPUT_TYPE_DEBUG, "Amount: %zd togo: %zd", amount, togo);
                                         retval = send(g->players_conn[i], msg + (len - togo), amount, MSG_NOSIGNAL|MSG_DONTWAIT);
                                         if (retval != amount) {
                                                 if (retval == -1) {
