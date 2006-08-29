@@ -2234,6 +2234,7 @@ sub init_game() {
     $imgbin{txt_highscores_off}  = add_image('menu/txt_highscores_off.png');
     $imgbin{txt_highscores_over} = add_image('menu/txt_highscores_over.png');
     $imgbin{void_panel} = add_image('menu/void_panel.png');
+    $imgbin{'1p_panel'} = add_image('menu/1p_panel.png');
     $imgbin{void_chat} = add_image('menu/void_chat.png');
     $imgbin{void_chat_small} = add_image('menu/void_chat_small.png');
     $imgbin{version} = add_image('menu/version.png');
@@ -2761,9 +2762,9 @@ sub choose_1p_game_mode() {
     my $active_menu = 0;
 
     my $redraw = sub {
-        my $menu_ypos_spacer = $imgbin{txt_1pmenu_play_all_levels_over}->height + 15;
-        my $menu_xpos = $MENUPOS{xpos_panel} + ($imgbin{void_panel}->width - $imgbin{txt_1pmenu_play_all_levels_over}->width)/2; 
-        my $menu_ypos = $MENUPOS{ypos_panel} + 75;
+        my $menu_ypos_spacer = $imgbin{txt_1pmenu_play_all_levels_over}->height + 10;
+        my $menu_xpos = $MENUPOS{xpos_panel} + ($imgbin{'1p_panel'}->width - $imgbin{txt_1pmenu_play_all_levels_over}->width)/2; 
+        my $menu_ypos = $MENUPOS{ypos_panel} + 122;
 
         my $draw_element = sub {
             my ($name, $mode) = @_;
@@ -2774,7 +2775,7 @@ sub choose_1p_game_mode() {
             put_image($imgbin{$img_name}, $menu_xpos, $name2ypos{$name});
         };
 
-        my $img = $imgbin{void_panel};
+        my $img = $imgbin{'1p_panel'};
         my $save if 0;
         my $drect = SDL::Rect->new(-width => $img->width, -height => $img->height,
                                    -x => $MENUPOS{xpos_panel}, '-y' => $MENUPOS{ypos_panel});
@@ -2788,7 +2789,7 @@ sub choose_1p_game_mode() {
         put_image($img, $MENUPOS{xpos_panel}, $MENUPOS{ypos_panel});
 
         my $title = t("Start 1-player game menu");
-        my $ypos = $MENUPOS{ypos_panel} + 10;
+        my $ypos = $MENUPOS{ypos_panel} + 16;
         my $xpos = (640 - width('menu', $title)) / 2;
         print_('menu', $app, $xpos, $ypos, $title);
 
@@ -2801,8 +2802,8 @@ sub choose_1p_game_mode() {
         $app->flip();
     };
 
+    $redraw->();
     while (1) {
-        $redraw->();
         $event->pump;
         while ($event->poll != 0) {
             if ($event->type == SDL_KEYDOWN) {
@@ -2832,8 +2833,10 @@ sub choose_1p_game_mode() {
                         play_sound('menu_change');
                     }
                 }
+                $redraw->();
             }
         }
+        fb_c_stuff::fbdelay($TARGET_ANIM_SPEED);
     }
 }
 
