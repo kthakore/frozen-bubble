@@ -116,33 +116,35 @@ local $_ = "@ARGV";
 /-h/ and die "Usage: ", basename($0), " [OPTION]...
   -h, --help                 display this help screen
  -fs, --fullscreen           start in fullscreen mode
+ -nofs, --nofullscreen       don't start in fullscreen mode
  -ns, --nosound              don't try to start any sound stuff
  -nm, --nomusic              disable music (only)
  -nfx, --nosfx               disable sound effects (only)
-      --playlist<file>       use all files listed in the given file as music files and play them
-      --playlist<directory>  use all files inside the given directory as music files and play them
+ -pl<file>, --playlist<file> use all files listed in the given file as music files and play them
+ -Pl<dir>, --playlist<directory> use all files inside the given directory as music files and play them
  -sl, --slow_machine         enable slow machine mode (disable a few animations)
  -vs, --very_slow_machine    enable very slow machine mode (disable all that can be disabled)
- -di, --direct               directly start (2p) game (don't display menu)
  -so, --solo                 directly start solo (1p) game, with random levels if no -l<#n> is given
- -cr, --chain_reaction       enable chain-reaction
- -l<#n>, --level<#n>         directly start the n-th level
- -cb, --colourblind          use bubbles for colourblind people
- -pm<#n>, --playermalus<#n>  add a malus of n to the left player (can be negative)
+ -di, --direct               directly start (2p) game (don't display menu)
+ -gs<host:port>, --gameserver<host:port> directly start NET/LAN game connecting to this game server
+ -l<#n>, --level<#n>         directly start the n-th level (implies -so)
  -ls<name>, --levelset<name> directly start with the specified levelset name
- -gs<host:port>, --gameserver<host:port> in NET game, directly use this game server
- -ne, --noecho               when sound is enabled, disable echoing each typed character with a typewriter sound
+ -cr, --chain_reaction       enable chain-reaction (if you use NET/LAN game, pay attention that all players do so!)
+ -pm<#n>, --playermalus<#n>  add a malus of n to the left player (can be negative)
+ -cb, --colourblind          use bubbles for colourblind people
  -ji, --joysticksinfo        print information about detected joystick(s) on startup
+ -ne, --noecho               when sound is enabled, disable echoing each typed character with a typewriter sound
  -mn<nick>, --mynick<nick>   for net/lan games, use this nick instead of username (max 10 chars, ASCII alphanumeric plus dash and underscore only)
  -rf<file>, --regularfont<file> use the specified font file instead of using fontconfig to detect the best regular font
  -if<file>, --italicfont<file> use the specified font file instead of using fontconfig to detect the best italic font
 ";
 
 /-fs/ || /-fu/ and $fullscreen = 1;
+/-nofs/ || /-nofullscreen/ and $fullscreen = 0;
 /-ns/ || /-noso/ and $mixer = 'SOUND_DISABLED';
 /-nm/ || /-nom/ and $music_disabled = 1;
 /-nfx/ || /-nosf/ and $sfx_disabled = 1;
-/-playlist\s*(\S+)/ and @playlist = -d $1 ? glob("$1/*") : cat_($1);
+/-pl\s*(\S+)/ || /-playlist\s*(\S+)/ and @playlist = -d $1 ? glob("$1/*") : cat_($1);
 /-sl/ and $graphics_level = 2;
 /-vs/ || /-ve/ and $graphics_level = 1;
 /-srand/ and srand 0;
@@ -154,7 +156,7 @@ local $_ = "@ARGV";
 /-ls\s*(\S+)/ || /-levelset\s*(\S+)/ and $levels{current} = 1, $direct = 1, @PLAYERS = ('p1'), $direct_levelset = $1;
 /-l\s*(\d+)/ || /-level\s*(\d+)/ and $levels{current} = $1, $direct = 1, @PLAYERS = ('p1');
 /-ms\s*(\S+)/ || /-masterserver\s*(\S+)/ and $fb_net::masterserver = $1;
-/-gs\s*(\S+):(\S+)/ || /-gameserver\s*(\S+):(\S+)/ and $gameserver = "$1:$2";
+/-gs\s*(\S+):(\S+)/ || /-gameserver\s*(\S+):(\S+)/ and $direct = 1, @PLAYERS = qw(p1 rp1), $pdata{gametype} = 'net', $gameserver = "$1:$2";
 /-ne/ || /-noe/ and $no_echo = 1;
 /-mn\s*(\S+)/ || /-mynick\s*(\S+)/ and $mynick = substr($1, 0, 10);
 /-rf\s*(\S+)/ || /-regularfont\s*(\S+)/ and $regularfont = $1; 
@@ -576,7 +578,7 @@ sub img2numb { my ($i, $f) = @_; each_index { $i eq $_ and $f = $::i } @bubbles_
 
 sub bubble_next_to($$$$$) {
     my ($x1, $y1, $x2, $y2, $player) = @_;
-    $x1 == $x2 && $y1 == $y2 and die "bubble_next_to: assert failed -- same bubbles ($x1:$y1;$player)" . backtrace();
+    $x1 == $x2 && $y1 == $y2 and die "bubble_next_to: assert failed -- same bubbles ($x1:$y1;$player)\n(are you using chain-reaction with network partners not doing so on their side too?)\n" . backtrace();
 #    $x1 == $x2 && $y1 == $y2 and history($player), die "bubble_next_to: assert failed -- same bubbles ($x1:$y1;$player)" . backtrace();
     return to_bool((sqr($x1+odd($y1+$pdata{$player}{oddswap})*0.5 - ($x2+odd($y2+$pdata{$player}{oddswap})*0.5)) + sqr($y1 - $y2)) < 3);
 }
@@ -3602,20 +3604,20 @@ sub new_game_once {
                        outro => t("Enjoy the game!") }) or return;
             $chainreaction = $answ == SDLK_y; #;;
         }
-        if (is_mp_game()) {
-            $event->set_key_repeat(200, 50);
-            my $ok_game;
-            eval {
-                $ok_game = setup_mp_game();
-            };
-            my $failure = $@;
-            $event->set_key_repeat(0, 0);
-            if ($failure && $failure ne 'quit') {
-                die $failure;
-            }
-            $failure || !$ok_game and return;
-            $pdata{gamenum} = 0;
+    }
+    if (is_mp_game()) {
+        $event->set_key_repeat(200, 50);
+        my $ok_game;
+        eval {
+            $ok_game = setup_mp_game();
+        };
+        my $failure = $@;
+        $event->set_key_repeat(0, 0);
+        if ($failure && $failure ne 'quit') {
+            die $failure;
         }
+        $failure || !$ok_game and return;
+        $pdata{gamenum} = 0;
     }
     play_music(is_1p_game() ? 'main1p' : 'main2p');
     return 1;

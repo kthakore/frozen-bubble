@@ -32,7 +32,7 @@ use fb_stuff;
 
 our $proto_major = '1';
 our $proto_minor = '0';
-our $timeout = 5;   #- in seconds
+our $timeout = 3;   #- in seconds
 
 my $udp_server_port = 1511;  #- a.k.a 0xF 0xB thx misc
 
@@ -140,6 +140,7 @@ sub readline_() {
     };
     if ($@) {
         print STDERR "Sorry, your computer or the network is too slow, giving up.\n";
+        disconnect();
         die 'quit';
     } else {
         return $results;
