@@ -2843,10 +2843,11 @@ our @smg_status_messages;
 our $smg_status_message_offsetpage = 1;
 
 sub smg_printstatus {
+    my $drect = SDL::Rect->new(-x => 0, '-y' => $smg_statusy - $smg_max_messages * $smg_lineheight, -width => 640, -height => 480);
+    $imgbin{back_netgame}->blit($drect, $app, $drect);
     my $y = $smg_statusy;
     my $i = $smg_status_message_offsetpage;
     while ($i < $smg_max_messages + $smg_status_message_offsetpage && @smg_status_messages >= $i) {
-        erase_line($y, $imgbin{back_netgame});
         if ($smg_status_messages[-$i]) {
             my $kind = $smg_status_messages[-$i] =~ /^\*\*\*/ ? 'netdialogs_servermsg' : 'netdialogs';
             print_($kind, $app, $smg_statusx, $y, $smg_status_messages[-$i]);
