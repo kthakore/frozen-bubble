@@ -1122,8 +1122,20 @@ sub handle_game_events() {
                                 $app->delay(20);
                                 $event->pump;
                                 while ($event->poll != 0) {
-                                    if ($event->type != SDL_KEYUP && $event->type != SDL::JOYBUTTONUP) {
-                                        last pause_label if $event->key_sym != $KEYS->{misc}{fs};
+                                    if ($event->type == SDL_QUIT) {
+                                        exit 0;
+                                    }
+                                    my $keypressed;
+                                    if ($event->type == SDL_KEYDOWN) {
+                                        $keypressed = $event->key_sym;
+                                    } elsif ($event->type == SDL::JOYAXISMOTION() || $event->type() == SDL::JOYBUTTONDOWN()) {
+                                        $keypressed = translate_joystick_tokey($event);
+                                        if ($keypressed =~ /^joystick\|axisvalue\|\d+\|\d+\|0$/) {  #- we treat position at 0 as KEYUP
+                                            $keypressed = undef;
+                                        }
+                                    }
+                                    if ($keypressed) {
+                                        last pause_label if $event->key_sym ne $KEYS->{misc}{fs};
                                         $fullscreen = !$fullscreen;
                                         $app->fullscreen;
                                     }
@@ -1386,9 +1398,8 @@ sub lose {
             }
         }
         if ($pdata{$player}{left}) {
-            put_image_to_background(mini_graphics($player) ? $imgbin{left_mini} : $imgbin{left},
-                                    $POS{$player}{left_limit} + 2,
-                                    $POS{$player}{top_limit}); #- TOFIX
+            put_image_to_background(mini_graphics($player) ? $imgbin{"left_${player}_mini"} : $imgbin{left_rp1},
+                                    $POS{$player}{left}{x}, $POS{$player}{left}{y}); #}}
             @{$sticked_bubbles{$player}} = ();
             play_sound('cancel');
         } else {
@@ -2228,8 +2239,8 @@ sub init_game() {
     $imgbin{ping_mid} = add_image('menu/ping-mid.png');
     $imgbin{ping_high} = add_image('menu/ping-high.png');
     $imgbin{menu_cursor} = [ map { add_image("menu/lan_p1_00$_.png") } ('01'..'30') ];
-    $imgbin{left_mini} = add_image('left-mini.png');
-    $imgbin{left} = add_image('left.png');
+    $imgbin{left_rp1} = add_image('left-rp1.png');
+    $imgbin{"left_${_}_mini"} = add_image("left-${_}-mini.png") foreach qw(rp1 rp2 rp3 rp4);
     $imgbin{mp_ready_newgame} = add_image('pinguins/mp_ready_newgame.png');
     $imgbin{mp_waiting_newgame} = add_image('pinguins/mp_waiting_newgame.png');
     $imgbin{highlight_server} = add_image('menu/highlight-server.png');
@@ -3023,13 +3034,20 @@ sub smg_choose_server(@) {
     while (1) {
         $event->pump;
         while ($event->poll != 0) {
+            if ($event->type == SDL_QUIT) {
+                exit 0;
+            }
+            my $k;
             if ($event->type == SDL_KEYDOWN) {
-                my $k = $event->key_sym;
-
-                if ($k == SDLK_ESCAPE()) {
+                $k = $event->key_sym;
+            } elsif ($event->type == SDL::JOYAXISMOTION() || $event->type() == SDL::JOYBUTTONDOWN()) {
+                $k = translate_joystick_tokey($event);
+            }
+            if ($k) {
+                if ($k eq SDLK_ESCAPE()) {
                     return 0;
 
-                } elsif ($k == SDLK_DOWN()) {
+                } elsif ($k eq SDLK_DOWN()) {
                     if (@sorted_servers) {
                         each_index {
                             if ($sorted_servers[$::i]->{selected}
@@ -3044,7 +3062,7 @@ sub smg_choose_server(@) {
                       done:
                     }
 
-                } elsif ($k == SDLK_UP()) {
+                } elsif ($k eq SDLK_UP()) {
                     if (@sorted_servers && !$sorted_servers[0]->{selected}) {
                         each_index {
                             if ($sorted_servers[$::i]->{selected}) {
@@ -3055,11 +3073,11 @@ sub smg_choose_server(@) {
                         } @sorted_servers;
                     }
 
-                } elsif ($k == $KEYS->{misc}{fs}) {
+                } elsif ($k eq $KEYS->{misc}{fs}) {
                     $fullscreen = !$fullscreen;
                     $app->fullscreen;
 
-                } elsif ($k == SDLK_RETURN() || $k == SDLK_KP_ENTER()) {
+                } elsif ($k eq SDLK_RETURN() || $k eq SDLK_KP_ENTER()) {
                     play_sound('menu_selected');
                     goto ok_smg_choose_server;
                 }
@@ -3284,10 +3302,17 @@ sub smg_choose_game() {
         my $need_redraw;
         $event->pump;
         while ($event->poll != 0) {
+            if ($event->type == SDL_QUIT) {
+                exit 0;
+            }
+            my $k;
             if ($event->type == SDL_KEYDOWN) {
-                my $k = $event->key_sym;
-
-                if ($k == SDLK_ESCAPE()) {
+                $k = $event->key_sym;
+            } elsif ($curaction->()->{action} ne 'CHAT' && ($event->type == SDL::JOYAXISMOTION() || $event->type() == SDL::JOYBUTTONDOWN())) {
+                $k = translate_joystick_tokey($event);
+            }
+            if ($k) {
+                if ($k eq SDLK_ESCAPE()) {
                     if ($ingame) {
                         smg_add_status_msg(t("*** Leaving game..."));
                         fb_net::reconnect();
@@ -3298,18 +3323,18 @@ sub smg_choose_game() {
                         return 0;
                     }
 
-                } elsif ($k == SDLK_PAGEUP()) {
+                } elsif ($k eq SDLK_PAGEUP()) {
                     $smg_status_message_offsetpage += 4;
                     $smg_status_message_offsetpage >= @smg_status_messages - $smg_max_messages and $smg_status_message_offsetpage = @smg_status_messages - $smg_max_messages + 1;
                     $smg_status_message_offsetpage < 1 and $smg_status_message_offsetpage = 1;
                     $redraw->();
 
-                } elsif ($k == SDLK_PAGEDOWN()) {
+                } elsif ($k eq SDLK_PAGEDOWN()) {
                     $smg_status_message_offsetpage -= 4;
                     $smg_status_message_offsetpage < 1 and $smg_status_message_offsetpage = 1;
                     $redraw->();
 
-                } elsif ($k == SDLK_DOWN()) {
+                } elsif ($k eq SDLK_DOWN()) {
                     each_index {
                         if ($actions[$::i]->{selected}
                             && $::i < @actions - 1) {
@@ -3321,7 +3346,7 @@ sub smg_choose_game() {
                     } @actions;
                   done2:
 
-                } elsif ($k == SDLK_UP()) {
+                } elsif ($k eq SDLK_UP()) {
                     if (!$actions[0]->{selected}) {
                         each_index {
                             if ($actions[$::i]->{selected}) {
@@ -3332,7 +3357,7 @@ sub smg_choose_game() {
                         } @actions;
                     }
 
-                } elsif ($k == SDLK_RETURN() || $k == SDLK_KP_ENTER()) {
+                } elsif ($k eq SDLK_RETURN() || $k eq SDLK_KP_ENTER()) {
                     if ($curaction->()->{action} eq 'CHAT' && callback_entry('gettext') > 0) {
                         play_sound('menu_selected');
                         my $text = join('', callback_entry('gettext'));
@@ -3431,7 +3456,7 @@ sub smg_choose_game() {
                     if ($curaction->()->{action} eq 'CHAT') {
                         callback_entry('keypressed', { event => $event, maxlen => 480, font => 'netdialogs' });
                     
-                    } elsif ($k == $KEYS->{misc}{fs}) {
+                    } elsif ($k eq $KEYS->{misc}{fs}) {
                         $fullscreen = !$fullscreen;
                         $app->fullscreen;
                     }
