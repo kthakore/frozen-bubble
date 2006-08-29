@@ -1470,9 +1470,11 @@ sub update_lost {
             }
         }
         
-        $event->pump;
-        while ($event->poll != 0) {
-            $event->type == SDL_KEYDOWN && $event->key_sym == SDLK_ESCAPE and die 'new_game';
+        if (!is_mp_game()) {
+            $event->pump;
+            while ($event->poll != 0) {
+                $event->type == SDL_KEYDOWN && $event->key_sym == SDLK_ESCAPE and die 'new_game';
+            }
         }
 
     } else {
