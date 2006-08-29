@@ -1370,13 +1370,15 @@ sub lose {
     print "lose($player)\n".backtrace();
     $pdata{$player}{ping_right}{state} = 'lose';
     $pdata{$player}{ping_right}{img} = 0;
-    foreach ($launched_bubble{$player}, $tobe_launched{$player}, @{$malus_bubble{$player}}) {
-        $_ or next;
-        $_->{img} = $bubbles_anim{lose};
-        $_->{'x'}--;
-        $_->{'y'}--;
+    if (!$pdata{$player}{left}) {
+        foreach ($launched_bubble{$player}, $tobe_launched{$player}, @{$malus_bubble{$player}}) {
+            $_ or next;
+            $_->{img} = $bubbles_anim{lose};
+            $_->{'x'}--;
+            $_->{'y'}--;
+        }
+        print_next_bubble($bubbles_anim{lose}, $player, 1);
     }
-    print_next_bubble($bubbles_anim{lose}, $player, 1);
     cleanup_player_bubbles($player);
     
     if (is_mp_game()) {
