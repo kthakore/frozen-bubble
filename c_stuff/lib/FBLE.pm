@@ -1015,7 +1015,6 @@ sub save_file {
 }
 
 sub create_play_levelset_dialog {
-	
     my ($chooseStartingLevel, $defaultLevel) = @_;
     
     #initialize the start level to the default level 
@@ -1355,6 +1354,10 @@ sub display_levelset_list_browser {
 	    }
         }
         $list_browser_highlight_offset = $file_highlight_offset;
+        if (is_ok_select_start_value($start_level) == 0) {
+            $start_level = $file_browser_levelsets_num_levels[$list_browser_highlight_offset];	
+            show_selected_level();
+        }
         display_levelset_screenshot();
     } else {
         $list_browser_highlight_offset = $file_highlight_offset;
@@ -2130,6 +2133,8 @@ sub init_app {
         $levelset_name = 'default-levelset';
         $curr_level = 1;
     }
+
+    $font = new SDL::Font("$FPATH/gfx/font.png");
 
     # background image
     $background = SDL::Surface->new(-name => "$FPATH/gfx/level_editor.png");
