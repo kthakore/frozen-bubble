@@ -63,16 +63,19 @@ static char fl_client_nolf[] = "NO_LF_WITHIN_TOO_MUCH_DATA (I bet you're not a r
 static char fl_client_nulbyte[] = "NUL_BYTE_BEFORE_NEWLINE (I bet you're not a regular FB client, hu?)";
 static char fl_server_full[] = "SERVER_IS_FULL";
 static char fl_server_overloaded[] = "SERVER_IS_OVERLOADED";
+static char fl_client_noactivity[] = "NO_ACTIVITY_WITHIN_GRACETIME";
 
-static double date_amount_transmitted_reset;
+static time_t date_amount_transmitted_reset;
 
 #define DEFAULT_PORT 1511  // a.k.a 0xF 0xB thx misc
 #define DEFAULT_MAX_USERS 200
 #define DEFAULT_MAX_TRANSMISSION_RATE 100000
 #define DEFAULT_OUTPUT "CONNECT"
+#define DEFAULT_GRACETIME 900
 static int port = DEFAULT_PORT;
 static int max_users = DEFAULT_MAX_USERS;
 static int max_transmission_rate = DEFAULT_MAX_TRANSMISSION_RATE;
+static int gracetime = DEFAULT_GRACETIME;
 
 static int lan_game_mode = 0;
 
@@ -90,6 +93,7 @@ static GList * conns_prio = NULL;
 #define INCOMING_DATA_BUFSIZE 16384
 static char * incoming_data_buffers[256];
 static int incoming_data_buffers_count[256];
+static time_t last_data_in[256];
 
 /* send line adding the protocol in front of the supplied msg */
 static ssize_t send_line(int fd, char* msg)
@@ -169,6 +173,7 @@ void conn_terminated(int fd, char* reason)
 }
 
 static int prio_processed;
+static time_t current_time;
 static void handle_incoming_data_generic(gpointer data, gpointer user_data, int prio)
 {
         int fd;
@@ -185,7 +190,9 @@ static void handle_incoming_data_generic(gpointer data, gpointer user_data, int 
                                 l2(OUTPUT_TYPE_DEBUG, "[%d] System error on recv: %s", fd, strerror(errno));
                         conn_terminated(fd, "peer shutdown on recv");
                         return;
+
                 } else {
+                        last_data_in[fd] = current_time;
                         len += offset;
                         // If we don't have a newline, it means we are seeing a partial send. Buffer
                         // them, since we can't synchronously wait for newline now or else we'd offer a
@@ -246,6 +253,19 @@ static void handle_incoming_data(gpointer data, gpointer user_data)
 static void handle_incoming_data_prio(gpointer data, gpointer user_data)
 {
         handle_incoming_data_generic(data, user_data, 1);
+}
+
+static void rip_idle_connections(gpointer data)
+{
+        int fd = GPOINTER_TO_INT(data);
+        if (current_time - last_data_in[fd] > gracetime) {
+                send_line_log_push(fd, fl_client_noactivity);
+                conn_terminated(fd, "no activity within gracetime");
+        }
+}
+static void rip_idle_connections_helper(gpointer data, gpointer user_data)
+{
+        rip_idle_connections(data);
 }
 
 static void handle_udp_request(void)
@@ -329,6 +349,7 @@ void connections_manager(void)
                 if (!retval)
                         continue;
 
+                current_time = get_current_time();  // a bit of caching
                 prio_processed = 0;
                 interrupt_loop_processing = 0;
                 new_conns = g_list_copy(conns_prio);
@@ -348,36 +369,42 @@ void connections_manager(void)
                 if (tcp_server_socket != -1 && FD_ISSET(tcp_server_socket, &conns_set)) {
                         if ((fd = accept(tcp_server_socket, (struct sockaddr *) &client_addr, (socklen_t *) &len)) == -1) {
                                 l1(OUTPUT_TYPE_ERROR, "accept: %s", strerror(errno));
-                                continue;
-                        }
-                        l2(OUTPUT_TYPE_CONNECT, "Accepted connection from %s: fd %d", inet_ntoa(client_addr.sin_addr), fd);
-                        if (fd > 255 || conns_nb() >= max_users || (lan_game_mode && g_list_length(conns_prio) > 0)) {
-                                send_line_log_push(fd, fl_server_full);
-                                l1(OUTPUT_TYPE_CONNECT, "[%d] Closing connection (server full)", fd);
-                                close(fd);
+
                         } else {
-                                double now = get_current_time();
-                                double rate = get_reset_amount_transmitted() / (now - date_amount_transmitted_reset);
-                                l1(OUTPUT_TYPE_DEBUG, "Transmission rate: %.2f bytes/sec", rate);
-                                date_amount_transmitted_reset = now;
-                                if (rate > max_transmission_rate) {
-                                        send_line_log_push(fd, fl_server_overloaded);
-                                        l1(OUTPUT_TYPE_CONNECT, "[%d] Closing connection (maximum transmission rate reached)", fd);
+                                l2(OUTPUT_TYPE_CONNECT, "Accepted connection from %s: fd %d", inet_ntoa(client_addr.sin_addr), fd);
+                                if (fd > 255 || conns_nb() >= max_users || (lan_game_mode && g_list_length(conns_prio) > 0)) {
+                                        send_line_log_push(fd, fl_server_full);
+                                        l1(OUTPUT_TYPE_CONNECT, "[%d] Closing connection (server full)", fd);
                                         close(fd);
                                 } else {
-                                        send_line_log_push(fd, greets_msg);
-                                        conns = g_list_append(conns, GINT_TO_POINTER(fd));
-                                        player_connects(fd);
-                                        incoming_data_buffers[fd] = malloc_(sizeof(char) * INCOMING_DATA_BUFSIZE);
-                                        memset(incoming_data_buffers[fd], 0, sizeof(char) * INCOMING_DATA_BUFSIZE);  // force Linux to allocate now
-                                        incoming_data_buffers_count[fd] = 0;
-                                        recalculate_list_games = 1;
+                                        double rate = get_reset_amount_transmitted() / (current_time - date_amount_transmitted_reset);
+                                        l1(OUTPUT_TYPE_DEBUG, "Transmission rate: %.2f bytes/sec", rate);
+                                        date_amount_transmitted_reset = current_time;
+                                        if (rate > max_transmission_rate) {
+                                                send_line_log_push(fd, fl_server_overloaded);
+                                                l1(OUTPUT_TYPE_CONNECT, "[%d] Closing connection (maximum transmission rate reached)", fd);
+                                                close(fd);
+                                        } else {
+                                                last_data_in[fd] = current_time;
+                                                send_line_log_push(fd, greets_msg);
+                                                conns = g_list_append(conns, GINT_TO_POINTER(fd));
+                                                player_connects(fd);
+                                                incoming_data_buffers[fd] = malloc_(sizeof(char) * INCOMING_DATA_BUFSIZE);
+                                                memset(incoming_data_buffers[fd], 0, sizeof(char) * INCOMING_DATA_BUFSIZE);  // force Linux to allocate now
+                                                incoming_data_buffers_count[fd] = 0;
+                                                recalculate_list_games = 1;
+                                        }
                                 }
                         }
                 }
 
                 if (udp_server_socket != -1 && FD_ISSET(udp_server_socket, &conns_set))
                         handle_udp_request();
+
+                new_conns = g_list_copy(conns);
+                g_list_foreach(conns, rip_idle_connections_helper, NULL);
+                g_list_free(conns);
+                conns = new_conns;
         }
 }
 
@@ -434,6 +461,7 @@ static void help(void)
         printf("     -a lang                   set the preferred language of the server (it is just an indication used by players when choosing a server, so that they can chat using their native language - you can choose none with -z)\n");
         printf("     -z                        set that there is no preferred language for the server (see -a)\n");
         printf("     -c conffile               specify the path of the configuration file\n");
+        printf("     -g gracetime              set the gracetime after which a client with no network activity is terminated (in seconds, defaults to %d)\n", DEFAULT_GRACETIME);
 }
 
 static void create_udp_server(void)
@@ -576,6 +604,15 @@ static void handle_parameter(char command, char * param) {
                 printf("-z: no preferred language for users of the server\n");
                 serverlanguage = "zz";
                 break;
+        case 'g':
+                gracetime = charstar_to_int(param);
+                if (gracetime != 0)
+                        printf("-g: setting gracetime to %d seconds (%d minutes)\n", gracetime, gracetime/60);
+                else {
+                        fprintf(stderr, "-g: %s not convertible to int, ignoring\n", param);
+                        gracetime = DEFAULT_GRACETIME;
+                }
+                break;
         default:
                 fprintf(stderr, "unrecognized option %c, ignoring\n", command);
         }
@@ -587,7 +624,7 @@ void create_server(int argc, char **argv)
         int valone = 1;
 
         while (1) {
-                int c = getopt(argc, argv, "hn:lLp:u:t:o:c:dqH:P:a:z");
+                int c = getopt(argc, argv, "hn:lLp:u:t:o:c:dqH:P:a:zg:");
                 if (c == -1)
                         break;
                 

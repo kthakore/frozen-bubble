@@ -20,7 +20,7 @@
 #ifndef _LOG_H_
 #define _LOG_H_
 
-double get_current_time(void);
+time_t get_current_time(void);
 
 extern char current_date[50];
 char* get_current_date(void);

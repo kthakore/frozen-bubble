@@ -37,7 +37,15 @@
 int output_type = OUTPUT_TYPE_INFO;
 int debug_mode = FALSE;
 
-double get_current_time(void) 
+time_t get_current_time(void) 
+{
+    struct timezone tz;
+    struct timeval now;
+    gettimeofday(&now, &tz);
+    return now.tv_sec;
+}
+
+static double get_current_time_exact(void) 
 {
     struct timezone tz;
     struct timeval now;
@@ -50,7 +58,7 @@ char* get_current_date(void)
 {
     struct tm * lt;
     char buf[50];
-    double time = get_current_time();
+    double time = get_current_time_exact();
     time_t seconds = (time_t)time;
     lt = localtime(&seconds);
     strftime(buf, sizeof(buf), "%Y-%m-%d %H:%M:%S", lt);
