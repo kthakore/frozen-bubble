@@ -65,12 +65,12 @@ static char fl_server_full[] = "SERVER_IS_FULL";
 static char fl_server_overloaded[] = "SERVER_IS_OVERLOADED";
 static char fl_client_noactivity[] = "NO_ACTIVITY_WITHIN_GRACETIME";
 
-static time_t date_amount_transmitted_reset;
+static double date_amount_transmitted_reset;
 
 #define DEFAULT_PORT 1511  // a.k.a 0xF 0xB thx misc
 #define DEFAULT_MAX_USERS 200
 #define DEFAULT_MAX_TRANSMISSION_RATE 100000
-#define DEFAULT_OUTPUT "CONNECT"
+#define DEFAULT_OUTPUT "INFO"
 #define DEFAULT_GRACETIME 900
 static int port = DEFAULT_PORT;
 static int max_users = DEFAULT_MAX_USERS;
@@ -317,7 +317,7 @@ void connections_manager(void)
         if (!greets_msg)   // C sux
                 greets_msg = asprintf_(greets_msg_base, servername, serverlanguage);
 
-        date_amount_transmitted_reset = get_current_time();
+        date_amount_transmitted_reset = get_current_time_exact();
 
         while (1) {
                 int fd;
@@ -377,9 +377,16 @@ void connections_manager(void)
                                         l1(OUTPUT_TYPE_CONNECT, "[%d] Closing connection (server full)", fd);
                                         close(fd);
                                 } else {
-                                        double rate = get_reset_amount_transmitted() / (current_time - date_amount_transmitted_reset);
-                                        l1(OUTPUT_TYPE_DEBUG, "Transmission rate: %.2f bytes/sec", rate);
-                                        date_amount_transmitted_reset = current_time;
+                                        double now = get_current_time_exact();
+                                        double delta = now - date_amount_transmitted_reset;
+                                        double rate;
+                                        if (delta > 0) {
+                                                rate = get_reset_amount_transmitted() / delta;
+                                                l1(OUTPUT_TYPE_DEBUG, "Transmission rate: %.2f bytes/sec", rate);
+                                        } else {
+                                                rate = 0;
+                                        }
+                                        date_amount_transmitted_reset = now;
                                         if (rate > max_transmission_rate) {
                                                 send_line_log_push(fd, fl_server_overloaded);
                                                 l1(OUTPUT_TYPE_CONNECT, "[%d] Closing connection (maximum transmission rate reached)", fd);
@@ -455,7 +462,7 @@ static void help(void)
         printf("     -P port                   set the server port as seen from outside (defaults to the port specified with -p)\n");
         printf("     -u max_users              set the maximum of connected users (defaults to %d, physical maximum 255 in non debug mode)\n", DEFAULT_MAX_USERS);
         printf("     -t max_transmission_rate  set the maximum transmission rate, in bytes per second (defaults to %d)\n", DEFAULT_MAX_TRANSMISSION_RATE);
-        printf("     -o outputtype             set the output type; can be DEBUG, INFO, CONNECT, ERROR; each level includes messages of next level; defaults to INFO\n");
+        printf("     -o outputtype             set the output type; can be DEBUG, CONNECT, INFO, ERROR; each level includes messages of next level; defaults to INFO\n");
         printf("     -d                        debug mode: do not daemonize, and log on STDERR rather than through syslog (implies -q)\n");
         printf("     -q                        \"quiet\" mode: don't automatically register the server to www.frozen-bubble.org\n");
         printf("     -a lang                   set the preferred language of the server (it is just an indication used by players when choosing a server, so that they can chat using their native language - you can choose none with -z)\n");
@@ -513,12 +520,12 @@ static void handle_parameter(char command, char * param) {
                 if (streq(param, "DEBUG")) {
                         printf("-o: setting output type to DEBUG\n");
                         output_type = OUTPUT_TYPE_DEBUG;
-                } else if (streq(param, "INFO")) {
-                        printf("-o: setting output type to INFO\n");
-                        output_type = OUTPUT_TYPE_INFO;
                 } else if (streq(param, "CONNECT")) {
                         printf("-o: setting output type to CONNECT\n");
                         output_type = OUTPUT_TYPE_CONNECT;
+                } else if (streq(param, "INFO")) {
+                        printf("-o: setting output type to INFO\n");
+                        output_type = OUTPUT_TYPE_INFO;
                 } else if (streq(param, "ERROR")) {
                         printf("-o: setting output type to ERROR\n");
                         output_type = OUTPUT_TYPE_ERROR;

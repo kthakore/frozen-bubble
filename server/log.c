@@ -45,12 +45,12 @@ time_t get_current_time(void)
     return now.tv_sec;
 }
 
-static double get_current_time_exact(void) 
+double get_current_time_exact(void) 
 {
     struct timezone tz;
     struct timeval now;
     gettimeofday(&now, &tz);
-    return (double) now.tv_sec + now.tv_usec / 1e6;
+    return (double) now.tv_sec + now.tv_usec / 1e6;  // bad bad idea to use float as precision is not down to the seconds then
 }
 
 char current_date[50];
@@ -76,9 +76,11 @@ void sigterm_catcher(int signum) {
 void logging_init(int portnum) {
         openlog(asprintf_("fb-server[TCP%d]", portnum), LOG_PID, LOG_DAEMON);
         if (output_type == OUTPUT_TYPE_DEBUG) {
-                l0(OUTPUT_TYPE_INFO, "Starting log. Messages displayed: DEBUG, INFO, CONNECT, ERROR.");
+                l0(OUTPUT_TYPE_INFO, "Starting log. Messages displayed: DEBUG, CONNECT, INFO, ERROR.");
+        } else if (output_type == OUTPUT_TYPE_CONNECT) {
+                l0(OUTPUT_TYPE_INFO, "Starting log. Messages displayed: CONNECT, INFO, ERROR.");
         } else if (output_type == OUTPUT_TYPE_INFO) {
-                l0(OUTPUT_TYPE_INFO, "Starting log. Messages displayed: INFO, CONNECT, ERROR.");
+                l0(OUTPUT_TYPE_INFO, "Starting log. Messages displayed: INFO, ERROR.");
         }
         signal(SIGTERM, sigterm_catcher);
 }
@@ -94,10 +96,10 @@ void l_(int wanted_output_type, char* file, long line, const char* func, char* f
             va_end(args);
             if (wanted_output_type == OUTPUT_TYPE_DEBUG) {
                     level = LOG_DEBUG;
-            } else if (wanted_output_type == OUTPUT_TYPE_INFO) {
-                    level = LOG_INFO;
             } else if (wanted_output_type == OUTPUT_TYPE_CONNECT) {
                     level = LOG_NOTICE;
+            } else if (wanted_output_type == OUTPUT_TYPE_INFO) {
+                    level = LOG_INFO;
             } else if (wanted_output_type == OUTPUT_TYPE_ERROR) {
                     level = LOG_ERR;
             }
