@@ -549,6 +549,7 @@ void rotate_bilinear_(SDL_Surface * dest, SDL_Surface * orig, double angle)
 	myUnlockSurface(dest);
 }
 
+/* assumes the surface is not totally transparent */
 AV* autopseudocrop_(SDL_Surface * orig)
 {
         int x_ = -1, y_ = -1, w = -1, h = -1;

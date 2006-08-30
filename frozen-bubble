@@ -39,7 +39,7 @@ use strict;
 use vars qw($TARGET_ANIM_SPEED $BUBBLE_SIZE $ROW_SIZE $LAUNCHER_SPEED $BUBBLE_SPEED $MALUS_BUBBLE_SPEED $TIME_APPEARS_NEW_ROOT
             %POS %POS_1P %POS_2P %MENUPOS $KEYS %actions %angle %pdata $app %apprects $event %rects %sticked_bubbles %root_bubbles
             $background $background_orig @bubbles_images $gcwashere %bubbles_anim %launched_bubble %tobe_launched %next_bubble
-            $shooter_mini $sdl_flags $mixer $mixer_enabled $music_disabled $sfx_disabled $no_echo $regularfont $italicfont @playlist %sound %music %pinguin %canon
+            $shooter_lowgfx $sdl_flags $mixer $mixer_enabled $music_disabled $sfx_disabled $no_echo $regularfont $italicfont @playlist %sound %music %pinguin %canon
             $graphics_level @update_rects $CANON_ROTATIONS_NB %malus_bubble %falling_bubble %exploding_bubble %malus_gfx %ttfonts
             %sticking_bubble $time %imgbin $TIME_HURRY_WARN $TIME_HURRY_MAX $TIMEOUT_PINGUIN_SLEEP $FREE_FALL_CONSTANT @joysticks $joysticksinfo
             $direct @PLAYERS @ALL_PLAYERS %levels $display_on_app_disabled $total_time $time_1pgame $time_netgame $fullscreen $rcfile $hiscorefile $HISCORES
@@ -896,11 +896,11 @@ sub handle_graphics($) {
 	#- shooter
         if ($graphics_level > 1) {
             my $num = int($angle{$::p}*$CANON_ROTATIONS_NB/($PI/2) + 0.5)-$CANON_ROTATIONS_NB;
-            $fun->($canon{img}{$num},
+            $fun->($canon{mini_graphics($::p) ? 'img_mini' : 'img'}{$num},
                    $POS{$::p}{canon}{x} + $canon{mini_graphics($::p) ? 'data_mini' : 'data'}{$num}->[0],
                    $POS{$::p}{canon}{'y'} + $canon{mini_graphics($::p) ? 'data_mini' : 'data'}{$num}->[1]);
         } else {
-            $fun->($shooter_mini,
+            $fun->($shooter_lowgfx,
                    $POS{$::p}{simpleshooter}{x} + $POS{$::p}{simpleshooter}{diameter}*cos($angle{$::p}),
                    $POS{$::p}{simpleshooter}{'y'} - $POS{$::p}{simpleshooter}{diameter}*sin($angle{$::p}));
         }
@@ -1474,7 +1474,17 @@ sub update_lost {
     if (!is_mp_game()) {
         $event->pump;
         while ($event->poll != 0) {
-            $event->type == SDL_KEYDOWN || $event->type == SDL::JOYBUTTONUP and die 'new_game';
+            if ($event->type == SDL_QUIT) {
+                exit 0;
+            }
+            if ($event->type == SDL_KEYDOWN && $event->key_sym == SDLK_ESCAPE) {
+                die 'new_game';
+            }
+            if (!@{$sticked_bubbles{$player}}) {
+                if ($event->type == SDL_KEYDOWN || $event->type == SDL::JOYBUTTONUP) {
+                    die 'new_game';
+                }
+            }
         }
     }
 
@@ -2154,7 +2164,7 @@ sub init_game() {
     }
 
     print_step('.'); 
-    $shooter_mini = add_image("shooter-mini.png");
+    $shooter_lowgfx = add_image("shooter-lowgfx.png");
     my $shooter = add_image("shooter.png");
     #- make a surface with RGBA order suitable for hardcoded values in rotate_bicubic
     my $replace = SDL::Surface->new(-width => $shooter->width, -height => $shooter->height, -depth => 32,
@@ -2162,8 +2172,15 @@ sub init_game() {
     $shooter->set_alpha(0, 0);  #- for RGBA->RGBA blits, SDL_SRCALPHA must be removed or destination alpha is preserved
     $shooter->blit(undef, $replace, undef);
     $shooter = $replace;
+    my $shooter_mini = add_image("shooter-mini.png");
+    my $replace_mini = SDL::Surface->new(-width => $shooter_mini->width, -height => $shooter_mini->height, -depth => 32,
+                                         -Rmask => 0x000000FF, -Gmask => 0x0000FF00, -Bmask => 0x00FF0000, -Amask => 0xFF000000);
+    $shooter_mini->set_alpha(0, 0);  #- for RGBA->RGBA blits, SDL_SRCALPHA must be removed or destination alpha is preserved
+    $shooter_mini->blit(undef, $replace_mini, undef);
+    $shooter_mini = $replace_mini;
     foreach my $number (-$CANON_ROTATIONS_NB..$CANON_ROTATIONS_NB) {
         my $angle = $number*($PI/2)/$CANON_ROTATIONS_NB;
+
         $canon{img}{$number} = SDL::Surface->new(-width => $shooter->width, -height => $shooter->height, -depth => 32,
                                                  -Rmask => 0x000000FF, -Gmask => 0x0000FF00, -Bmask => 0x00FF0000, -Amask => 0xFF000000);
         fb_c_stuff::rotate_bicubic($canon{img}{$number}->{-surface}, $shooter->{-surface}, $angle);
@@ -2175,8 +2192,22 @@ sub init_game() {
                                                   -width => $canon{data}{$number}[2], -height => $canon{data}{$number}[3]), $replace, undef);
         $canon{img}{$number} = $replace;
         add_default_rect($canon{img}{$number});
-        #TODO $img_mini{$canon{img}{$number}} = add_image("shoot/mini/base_${number}.png") ;
+
+        $canon{img_mini}{$number} = SDL::Surface->new(-width => $shooter_mini->width, -height => $shooter_mini->height, -depth => 32,
+                                                      -Rmask => 0x000000FF, -Gmask => 0x0000FF00, -Bmask => 0x00FF0000, -Amask => 0xFF000000);
+        fb_c_stuff::rotate_bicubic($canon{img_mini}{$number}->{-surface}, $shooter_mini->{-surface}, $angle);
+        $canon{data_mini}{$number} = fb_c_stuff::autopseudocrop($canon{img_mini}{$number}->{-surface});
+        #- now crop (and use native RGBA ordering)
+        my $replace = SDL::Surface->new(-width => $canon{data_mini}{$number}[2], -height => $canon{data_mini}{$number}[3], -depth => 32);
+        $canon{img_mini}{$number}->set_alpha(0, 0);
+        $canon{img_mini}{$number}->blit(SDL::Rect->new('-x' => $canon{data_mini}{$number}[0], '-y' => $canon{data_mini}{$number}[1],
+                                                       -width => $canon{data_mini}{$number}[2], -height => $canon{data_mini}{$number}[3]), $replace, undef);
+        $canon{img_mini}{$number} = $replace;
+        add_default_rect($canon{img_mini}{$number});
+
+        $number eq -$CANON_ROTATIONS_NB/2 and print_step('.'); 
         $number eq 0 and print_step('.'); 
+        $number eq $CANON_ROTATIONS_NB/2 and print_step('.'); 
     }
 
     print_step('.'); 
@@ -2306,6 +2337,7 @@ sub init_game() {
         $pinguin{$::p}{wait_to} = [ map { add_image("pinguins/wait_p1_00$_.png") } ('01'..'74') ];
         $pinguin{$::p}{wait} = [ map { add_image("pinguins/wait_p1_00$_.png") } (75..97) ];
         $pinguin{$::p}{win} = [ map { add_image("pinguins/win_p1_00$_.png") } ('01'..'57') ];
+        print_step('.'); 
     };
 
     #- the RGBA effects algorithms assume little endian RGBA surfaces
