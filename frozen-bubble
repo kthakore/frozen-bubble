@@ -3212,7 +3212,12 @@ sub callback_entry {
         } elsif ($params->{event}->key_sym == SDLK_END()) {
             $position = $#typed + 1;
             $no_echo or play_sound('typewriter');
-        } elsif (!member($params->{event}->key_sym, SDLK_TAB())) {
+        } elsif ($params->{event}->key_sym == SDLK_TAB()) {
+            if (my $completion = $params->{completion}) {
+                @typed = $completion->(@typed);
+                $position = $#typed + 1;
+            }
+        } else {
             my $utf8char = fb_c_stuff::utf8key($params->{event}{-event});
             if ($utf8char ne '' && $utf8char ne "\n") {
                 splice @typed, $position, 0, $utf8char;
@@ -3323,6 +3328,7 @@ sub smg_choose_game() {
     my $ingame = 0;
     my $can_start = 0;
     my $joined_leader;
+    my @wholist;
     $list->();
 
     while (1) {
@@ -3454,6 +3460,7 @@ sub smg_choose_game() {
                             } else {
                                 if ($curaction->()->{action} eq 'CREATE') {
                                     $can_start = 1;
+                                    @wholist = $mynick;
                                     smg_add_status_msg(t("*** Game created - now you need to wait for players to join"));
                                 } else {
                                     $joined_leader = $curaction->()->{join};
@@ -3485,7 +3492,28 @@ sub smg_choose_game() {
 
                 } else {
                     if ($curaction->()->{action} eq 'CHAT') {
-                        callback_entry('keypressed', { event => $event, maxlen => 480, font => 'netdialogs' });
+                        callback_entry('keypressed', { event => $event, maxlen => 480, font => 'netdialogs',
+                                                       completion => sub {
+                                                           my @typed = @_;
+                                                           my $end;
+                                                           while (1) {
+                                                               last if !@typed;
+                                                               my $c = pop @typed;
+                                                               if ($c eq ' ') {
+                                                                   $end or return @_;
+                                                                   push @typed, $c;
+                                                                   last;
+                                                               }
+                                                               $end = "$c$end";
+                                                           }
+                                                           foreach my $nick (@wholist) {
+                                                               if (substr($nick, 0, length($end)) eq $end) {
+                                                                   my $colon = !@typed ? ': ' : ' ';
+                                                                   return @typed, split '', "$nick$colon";
+                                                               }
+                                                           }
+                                                           return @_;
+                                                       } });
                     
                     } elsif ($k eq $KEYS->{misc}{fs}) {
                         $fullscreen = !$fullscreen;
@@ -3510,6 +3538,7 @@ sub smg_choose_game() {
                     play_sound('typewriter');
                 } elsif ($message =~ /^JOINED: (.*)/) {
                     smg_add_status_msg(t("*** %s joined the game!", $1));
+                    push @wholist, $1;
                     play_sound('newroot_solo');
                 } elsif ($message =~ /^PARTED: (.*)/) {
                     if ($1 eq $joined_leader) {
@@ -3519,10 +3548,12 @@ sub smg_choose_game() {
                         return smg_choose_game()
                     } else {
                         smg_add_status_msg(t("*** %s left the game...", $1));
+                        @wholist = difference2(\@wholist, [ $1 ]);
                         play_sound('newroot_solo');
                     }
                 } elsif ($message =~ /^KICKED: (.*)/) {
                     smg_add_status_msg(t("*** %s was kicked out of the game...", $1));
+                    @wholist = difference2(\@wholist, [ $1 ]);
                     play_sound('newroot_solo');
                 } elsif ($message =~ /^KICKED$/) {
                     $forget_because_kicked = $joined_leader;
@@ -3584,6 +3615,7 @@ sub smg_choose_game() {
         if ($need4update) {
             if ($state ne 'game_select') {
                 $players_in_game = fb_net::send_and_receive('STATUS');
+                @wholist = split /,/, $players_in_game;
                 erase_line($smg_starty_players, $imgbin{back_netgame});
                 print_('netdialogs', $app, $smg_startx, $smg_starty_players, t("Players in game: %s", $players_in_game));
                 @actions = { name => t("Chat"), action => 'CHAT', selected => 1 };
