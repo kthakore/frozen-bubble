@@ -1368,7 +1368,7 @@ sub win {
 sub lose {
     my ($player) = @_;
     print "lose($player)\n".backtrace();
-    $pdata{$player}{ping_right}{state} = 'lose';
+    $pdata{$player}{ping_right}{state} = 'lose_to';
     $pdata{$player}{ping_right}{img} = 0;
     if (!$pdata{$player}{left}) {
         foreach ($launched_bubble{$player}, $tobe_launched{$player}, @{$malus_bubble{$player}}) {
@@ -2002,14 +2002,7 @@ sub update_game() {
 	    }
 	}
 
-	if (member($pdata{$::p}{ping_right}{state}, qw(lose)) && ($pdata{$::p}{ping_right}{movelatency}++ > 5)) {
-	    my $state = $pdata{$::p}{ping_right}{state};
-	    $pdata{$::p}{ping_right}{movelatency} = 0;
-	    $pdata{$::p}{ping_right}{img}++;
-	    $pdata{$::p}{ping_right}{img} == @{$pinguin{$::p}{$state}}
-	      and $pdata{$::p}{ping_right}{img} = $pinguin{$::p}{"$state".'_roll_back_index'};
-	}
-	if (member($pdata{$::p}{ping_right}{state}, qw(action right_to right_from left_to left_from wait_to wait win))) {
+	if (member($pdata{$::p}{ping_right}{state}, qw(action right_to right_from left_to left_from wait_to wait win lose_to lose))) {
 	    $pdata{$::p}{ping_right}{img}++;
 #            print "...state $pdata{$::p}{ping_right}{state} image $pdata{$::p}{ping_right}{img}\n";
 	    if ($pdata{$::p}{ping_right}{img} == @{$pinguin{$::p}{$pdata{$::p}{ping_right}{state}}}) {
@@ -2022,12 +2015,14 @@ sub update_game() {
                     $pdata{$::p}{ping_right}{state} = 'wait';
                 } elsif ($pdata{$::p}{ping_right}{state} eq 'wait') {
                     #- wait loops, don't change state
+                } elsif ($pdata{$::p}{ping_right}{state} eq 'win') {
+                    #- simple loop, don't change state
+                } elsif ($pdata{$::p}{ping_right}{state} eq 'lose_to') {
+                    $pdata{$::p}{ping_right}{state} = 'lose';
+                } elsif ($pdata{$::p}{ping_right}{state} eq 'lose') {
+                    #- lose loops, don't change state
                 } else {
-                    if ($pdata{$::p}{ping_right}{state} eq 'win') {
-                        #- simple loop, don't change state
-                    } else {
-                        $pdata{$::p}{ping_right}{state} = 'normal';
-                    }
+                    $pdata{$::p}{ping_right}{state} = 'normal';
                 }
                 $pdata{$::p}{ping_right}{img} = 0;
 #                print "=> state $pdata{$::p}{ping_right}{state}\n";
@@ -2337,6 +2332,8 @@ sub init_game() {
         $pinguin{$::p}{wait_to} = [ map { add_image("pinguins/wait_p1_00$_.png") } ('01'..'74') ];
         $pinguin{$::p}{wait} = [ map { add_image("pinguins/wait_p1_00$_.png") } (75..97) ];
         $pinguin{$::p}{win} = [ map { add_image("pinguins/win_p1_00$_.png") } ('01'..'57') ];
+        $pinguin{$::p}{lose_to} = [ map { add_image("pinguins/loose_p1_00$_.png") } ('01'..'55') ];
+        $pinguin{$::p}{lose} = [ map { add_image("pinguins/loose_p1_00$_.png") } ('56'..'75') ];
         print_step('.'); 
     };
 
