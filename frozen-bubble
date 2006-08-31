@@ -2331,9 +2331,9 @@ sub init_game() {
         $pinguin{$::p}{right_from} = [ map { add_image("pinguins/anime-shooter_p1_00$_.png") } reverse (51..71) ];
         $pinguin{$::p}{wait_to} = [ map { add_image("pinguins/wait_p1_00$_.png") } ('01'..'74') ];
         $pinguin{$::p}{wait} = [ map { add_image("pinguins/wait_p1_00$_.png") } (75..97) ];
-        $pinguin{$::p}{win} = [ map { add_image("pinguins/win_p1_00$_.png") } ('01'..'57') ];
+        $pinguin{$::p}{win} = [ map { add_image("pinguins/win_p1_00$_.png") } ('01'..'94') ];
         $pinguin{$::p}{lose_to} = [ map { add_image("pinguins/loose_p1_00$_.png") } ('01'..'55') ];
-        $pinguin{$::p}{lose} = [ map { add_image("pinguins/loose_p1_00$_.png") } ('56'..'75') ];
+        $pinguin{$::p}{lose} = [ map { add_image("pinguins/loose_p1_0$_.png") } ('056'..'158') ];
         print_step('.'); 
     };
 
