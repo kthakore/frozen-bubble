@@ -245,7 +245,7 @@ sub send_and_receive($;$) {
 
 sub list() {
     my $msg = send_and_receive('LIST');
-    if ($msg =~ /(\S+) (\S*) free:(\d+) games:(\d+)/) {
+    if ($msg =~ /(\S*) (\S*) free:(\d+) games:(\d+)/) {
         my $freenicks = $1;
         my $freegames = $2;
         my $free = $3;
