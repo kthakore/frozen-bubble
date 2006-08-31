@@ -210,7 +210,7 @@ static void handle_incoming_data_generic(gpointer data, gpointer user_data, int 
                                         conn_terminated(fd, "too much data without LF");
                                         return;
                                 }
-                                l2(OUTPUT_TYPE_DEBUG, "[%d] ****** buffering %d bytes", fd, len);
+                                l2(OUTPUT_TYPE_DEBUG, "[%zd] ****** buffering %d bytes", fd, len);
                                 memcpy(incoming_data_buffers[fd], buf, len);
                                 incoming_data_buffers_count[fd] = len;
                                 return;
@@ -244,7 +244,7 @@ static void handle_incoming_data_generic(gpointer data, gpointer user_data, int 
 
                                 if (eol + 1 - buf < len) {
                                         ssize_t remaining = len - (eol + 1 - buf);
-                                        l2(OUTPUT_TYPE_DEBUG, "multiple non-prio messages for %d, buffering (%d bytes)", fd, remaining);
+                                        l2(OUTPUT_TYPE_DEBUG, "multiple non-prio messages for %d, buffering (%zd bytes)", fd, remaining);
                                         memcpy(incoming_data_buffers[fd], eol + 1, remaining);
                                         incoming_data_buffers_count[fd] = remaining;
                                 }
@@ -890,7 +890,7 @@ static char * http_get(char * host, int port, char * path)
                         close(sock);
                         return buf;
                 } else {
-                        l1(OUTPUT_TYPE_DEBUG, "HTTP_GET: read %d bytes", bytes);
+                        l1(OUTPUT_TYPE_DEBUG, "HTTP_GET: read %zd bytes", bytes);
                         dlsize += bytes;
                         ptr = buf + dlsize;
                         if (size > -1 && dlsize == size) {
