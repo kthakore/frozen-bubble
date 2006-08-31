@@ -3248,6 +3248,8 @@ sub callback_entry {
 }
 
 sub smg_choose_game() {
+    fb_net::send_and_receive('NICK', $mynick);
+
     my @actions = ({ name => t("Chat"), action => 'CHAT', selected => 1 },
                    { name => t("Create new game"), action => 'CREATE' });
     my $max_actions = 18;
@@ -3288,11 +3290,13 @@ sub smg_choose_game() {
         smg_printstatus();
     };
 
+    my @wholist;
     my $list = sub {
         $state eq 'game_select' or return;
         my ($free, @games);
         eval {
-            ($free, undef, @games) = fb_net::list();
+            ($free, undef, my $freenicks, @games) = fb_net::list();
+            @wholist = split ',', $freenicks;
         };
         $@ and return;
         my ($join, $rest) = partition { $_->{action} eq 'JOIN' } @actions;
@@ -3325,12 +3329,11 @@ sub smg_choose_game() {
     my $ingame = 0;
     my $can_start = 0;
     my $joined_leader;
-    my @wholist;
     $list->();
 
     while (1) {
         $relist++;
-        $relist % (3*20) == 0 and $list->();
+        $relist % (3*50) == 0 and $list->();
         callback_entry('ping') and $redraw->();
 
         my $need_redraw;
@@ -3397,6 +3400,19 @@ sub smg_choose_game() {
                         my $text = join('', callback_entry('gettext'));
                         if ($text =~ m|^(/me )(.*)| || $text =~ m|^(/action )(.*)|) {
                             $text = "* $mynick $2";
+                        } elsif ($text =~ m|^/list| && !$ingame) {
+                            my @list = sort @wholist;
+                            my $send = t("*** Available players: ");
+                            while (@list) {
+                                $send .= shift @list;
+                                if (!@list || width('netdialogs', $send) >= 520) {
+                                    smg_add_status_msg($send);
+                                    $send = '*** ';
+                                } else {
+                                    $send .= ',';
+                                }
+                            }
+                            $text = undef;
                         } elsif ($text =~ m|^/kick (.*)| && $can_start) {
                             my $kicked = $1;
                             if ($kicked eq $mynick) {
@@ -3415,7 +3431,7 @@ sub smg_choose_game() {
                             $text = undef;
                         } elsif ($text =~ m|^/help|) {
                             smg_add_status_msg(t("*** Available commands: %s",
-                                                 join(', ', t("%s <action>", '/me'), if_($can_start, t("%s <nick>", '/kick')))));
+                                                 join(', ', t("%s <action>", '/me'), if_($can_start, t("%s <nick>", '/kick')), if_(!$ingame, '/list'))));
                             $text = undef;
                         } elsif ($text =~ m|^/|) {
                             smg_add_status_msg(t("*** Unknown command. Try %s for help.", '/help'));

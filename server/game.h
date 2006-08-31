@@ -34,3 +34,5 @@ ssize_t get_reset_amount_transmitted(void);
 void process_msg_prio(int fd, char* msg, ssize_t len);
 
 void rip_dead_games();
+
+extern char * nick[256];

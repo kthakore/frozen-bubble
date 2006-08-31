@@ -94,16 +94,20 @@ static GList * conns_prio = NULL;
 static char * incoming_data_buffers[256];
 static int incoming_data_buffers_count[256];
 static time_t last_data_in[256];
+static char buf[16384] __attribute__((aligned(4096)));
 
 /* send line adding the protocol in front of the supplied msg */
 static ssize_t send_line(int fd, char* msg)
 {
-        char buf[1000];
         int size;
         if (current_command)
                 size = snprintf(buf, sizeof(buf), "FB/%d.%d %s: %s\n", proto_major, proto_minor, current_command, msg);
         else 
                 size = snprintf(buf, sizeof(buf), "FB/%d.%d ???: %s\n", proto_major, proto_minor, msg);
+        if (size > sizeof(buf)-1) {
+                size = sizeof(buf)-1;
+                buf[sizeof(buf)-2] = '\n';
+        }
         if (size > 0) {
                 return send(fd, buf, size, MSG_NOSIGNAL);
         } else {
@@ -160,6 +164,9 @@ void conn_terminated(int fd, char* reason)
                 l2(OUTPUT_TYPE_CONNECT, "[%d] Closing connection: %s", fd, reason);
                 close(fd);
                 free(incoming_data_buffers[fd]);
+                if (nick[fd] != NULL) {
+                        free(nick[fd]);
+                }
                 new_conns = g_list_remove(new_conns, GINT_TO_POINTER(fd));
                 player_part_game(fd);                       // this is where the recursive call can come from (process_msg_prio with a failed send)
                 player_disconnects(fd);
@@ -374,7 +381,7 @@ void connections_manager(void)
                                 l2(OUTPUT_TYPE_CONNECT, "Accepted connection from %s: fd %d", inet_ntoa(client_addr.sin_addr), fd);
                                 if (fd > 255 || conns_nb() >= max_users || (lan_game_mode && g_list_length(conns_prio) > 0)) {
                                         send_line_log_push(fd, fl_server_full);
-                                        l1(OUTPUT_TYPE_CONNECT, "[%d] Closing connection (server full)", fd);
+                                        l1(OUTPUT_TYPE_INFO, "[%d] Closing connection (server full)", fd);
                                         close(fd);
                                 } else {
                                         double now = get_current_time_exact();
@@ -389,10 +396,11 @@ void connections_manager(void)
                                         date_amount_transmitted_reset = now;
                                         if (rate > max_transmission_rate) {
                                                 send_line_log_push(fd, fl_server_overloaded);
-                                                l1(OUTPUT_TYPE_CONNECT, "[%d] Closing connection (maximum transmission rate reached)", fd);
+                                                l1(OUTPUT_TYPE_INFO, "[%d] Closing connection (maximum transmission rate reached)", fd);
                                                 close(fd);
                                         } else {
                                                 last_data_in[fd] = current_time;
+                                                nick[fd] = NULL;
                                                 send_line_log_push(fd, greets_msg);
                                                 conns = g_list_append(conns, GINT_TO_POINTER(fd));
                                                 player_connects(fd);

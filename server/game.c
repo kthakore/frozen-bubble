@@ -37,10 +37,9 @@
 #include "log.h"
 #include "game.h"
 
-#define MAX_PLAYERS_PER_GAME 5
-
 enum game_status { GAME_STATUS_OPEN, GAME_STATUS_PLAYING };
 
+#define MAX_PLAYERS_PER_GAME 5
 struct game
 {
         enum game_status status;
@@ -65,6 +64,7 @@ static char ok_can_start[] = "GAME_CAN_START: %s";
 
 static char wn_unknown_command[] = "UNKNOWN_COMMAND";
 static char wn_missing_arguments[] = "MISSING_ARGUMENTS";
+static char wn_nick_invalid[] = "INVALID_NICK";
 static char wn_nick_in_use[] = "NICK_IN_USE";
 static char wn_no_such_game[] = "NO_SUCH_GAME";
 static char wn_game_full[] = "GAME_FULL";
@@ -80,27 +80,7 @@ static char wn_no_such_player[] = "NO_SUCH_PLAYER";
 static char fl_line_unrecognized[] = "MISSING_FB_PROTOCOL_TAG";
 static char fl_proto_mismatch[] = "INCOMPATIBLE_PROTOCOL";
 
-#ifdef DEBUG
-static void show_games_aux(gpointer data, gpointer user_data)
-{
-        const struct game* g = data;
-        int i;
-        printf("game:%p;status:%s;nbplayers:%d[",
-               g,
-               g->status == GAME_STATUS_OPEN ? "open" : g->status == GAME_STATUS_PLAYING ? "playing" : "???",
-               g->players_number);
-        for (i = 0; i < g->players_number; i++) {
-                printf("%d-%s", g->players_conn[i], g->players_nick[i]);
-                if (i < g->players_number - 1)
-                        printf(",");
-        }
-        printf("]\n");
-}
-void show_games(void)
-{
-        g_list_foreach(games, show_games_aux, games);
-}
-#endif
+char * nick[256];
 
 // calculate the list of players for a given game
 static char* list_game(const struct game * g)
@@ -115,10 +95,18 @@ static char* list_game(const struct game * g)
         return memdup(list_game_str, strlen(list_game_str) + 1);
 }
 
-static char list_games_str[8192] __attribute__((aligned(4096))) = "";
+static char list_games_str[16384] __attribute__((aligned(4096))) = "";
 static int players_in_game;
 static int games_open;
 static int games_running;
+static void list_open_nicks_aux(gpointer data, gpointer user_data)
+{
+        char* n = nick[GPOINTER_TO_INT(data)];
+        if (n != NULL) {
+                strconcat(list_games_str, n, sizeof(list_games_str));
+                strconcat(list_games_str, ",", sizeof(list_games_str));
+        }
+}
 static void list_games_aux(gpointer data, gpointer user_data)
 {
         const struct game* g = data;
@@ -143,6 +131,8 @@ void calculate_list_games(void)
         players_in_game = 0;
         games_open = 0;
         games_running = 0;
+        g_list_foreach(open_players, list_open_nicks_aux, NULL);
+        strconcat(list_games_str, " ", sizeof(list_games_str));
         g_list_foreach(games, list_games_aux, NULL);
         free_players = asprintf_(" free:%d games:%d playing:%d", conns_nb() - players_in_game - 1, games_running, players_in_game);  // 1: don't count myself
         strconcat(list_games_str, free_players, sizeof(list_games_str));
@@ -157,8 +147,8 @@ static void create_game(int fd, char* nick)
         g->players_nick[0] = nick;
         g->status = GAME_STATUS_OPEN;
         games = g_list_append(games, g);
-        calculate_list_games();
         open_players = g_list_remove(open_players, GINT_TO_POINTER(fd));
+        calculate_list_games();
 }
 
 static int add_player(struct game * g, int fd, char* nick)
@@ -174,8 +164,8 @@ static int add_player(struct game * g, int fd, char* nick)
                 g->players_conn[g->players_number] = fd;
                 g->players_nick[g->players_number] = nick;
                 g->players_number++;
-                calculate_list_games();
                 open_players = g_list_remove(open_players, GINT_TO_POINTER(fd));
+                calculate_list_games();
                 return 1;
         } else {
                 return 0;
@@ -403,7 +393,21 @@ static int already_in_game(int fd)
         return g_list_any(games, already_in_game_aux, GINT_TO_POINTER(fd));
 }
 
-
+static int is_nick_ok(char* nick)
+{
+        int i;
+        if (strlen(nick) > 10)
+                return 0;
+        for (i = 0; i < strlen(nick); i++) {
+                if (!((nick[i] >= 'a' && nick[i] <= 'z')
+                      || (nick[i] >= 'A' && nick[i] <= 'Z')
+                      || (nick[i] >= '0' && nick[i] <= '9')
+                      || nick[i] == '-' || nick[i] == '-')) {
+                        return 0;
+                }
+        }
+        return 1;
+}
 
 /* true return value indicates that connection must be closed */
 int process_msg(int fd, char* msg)
@@ -442,6 +446,25 @@ int process_msg(int fd, char* msg)
 
         if (streq(current_command, "PING")) {
                 send_line_log(fd, ok_pong, msg_orig);
+        } else if (streq(current_command, "NICK")) {
+                if (!args) {
+                        send_line_log(fd, wn_missing_arguments, msg_orig);
+                } else {
+                        if ((ptr = strchr(args, ' ')))
+                                *ptr = '\0';
+                        if (strlen(args) > 10)
+                                args[10] = '\0';
+                        if (!is_nick_ok(args)) {
+                                send_line_log(fd, wn_nick_invalid, msg_orig);
+                        } else {
+                                if (nick[fd] != NULL) {
+                                        free(nick[fd]);
+                                }
+                                nick[fd] = strdup(args);
+                                calculate_list_games();
+                                send_ok(fd, msg_orig);
+                        }
+                }
         } else if (streq(current_command, "CREATE")) {
                 if (!args) {
                         send_line_log(fd, wn_missing_arguments, msg_orig);
@@ -450,7 +473,9 @@ int process_msg(int fd, char* msg)
                                 *ptr = '\0';
                         if (strlen(args) > 10)
                                 args[10] = '\0';
-                        if (!nick_available(args)) {
+                        if (!is_nick_ok(args)) {
+                                send_line_log(fd, wn_nick_invalid, msg_orig);
+                        } else if (!nick_available(args)) {
                                 send_line_log(fd, wn_nick_in_use, msg_orig);
                         } else if (already_in_game(fd)) {
                                 send_line_log(fd, wn_already_in_game, msg_orig);
@@ -472,7 +497,9 @@ int process_msg(int fd, char* msg)
                                 *ptr2 = '\0';
                         if (strlen(nick) > 10)
                                 nick[10] = '\0';
-                        if (!nick_available(nick)) {
+                        if (!is_nick_ok(nick)) {
+                                send_line_log(fd, wn_nick_invalid, msg_orig);
+                        } else if (!nick_available(nick)) {
                                 send_line_log(fd, wn_nick_in_use, msg_orig);
                         } else if (already_in_game(fd)) {
                                 send_line_log(fd, wn_already_in_game, msg_orig);

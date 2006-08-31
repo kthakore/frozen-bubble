@@ -245,15 +245,16 @@ sub send_and_receive($;$) {
 
 sub list() {
     my $msg = send_and_receive('LIST');
-    if ($msg =~ /(.*) free:(\d+) games:(\d+)/) {
-        my $freegames = $1;
-        my $free = $2;
-        my $games = $3;
+    if ($msg =~ /(\S+) (\S*) free:(\d+) games:(\d+)/) {
+        my $freenicks = $1;
+        my $freegames = $2;
+        my $free = $3;
+        my $games = $4;
         my @games;
         while ($freegames =~ /\[([^\]]+)\]/g) {
             push @games, [ split /,/, $1 ];
         }
-        return ($free, $games, @games);
+        return ($free, $games, $freenicks, @games);
     } else {
         return;
     }
@@ -312,7 +313,9 @@ sub connect {
     $sock->autoflush;
 
     $buffered_line = undef;
-    my $msg = readline_();
+    my $msg;
+    eval { $msg = readline_(); };
+    $@ and return { failure => 'Server or computer too slow' };
     my ($remote_major, $remote_minor, $isready) = $msg =~ m|^FB/(\d+).(\d+) (.*)|;
     my ($servername, $serverlanguage);
     if ($isready =~ /^PUSH: SERVER_READY (.*) (.*)/) {
@@ -339,7 +342,8 @@ sub connect {
         foreach (1..4) {
             my $t0 = gettimeofday;
             send_('PING');
-            $msg = readline_();
+            eval { $msg = readline_(); };
+            $@ and return { failure => 'Server or computer too slow' };
             my $t1 = gettimeofday;
             if ($msg =~ /INCOMPATIBLE_PROTOCOL/) {
                 disconnect();
