@@ -403,7 +403,6 @@ void connections_manager(void)
                                                 conns = g_list_append(conns, GINT_TO_POINTER(fd));
                                                 player_connects(fd);
                                                 incoming_data_buffers[fd] = malloc_(sizeof(char) * INCOMING_DATA_BUFSIZE);
-                                                memset(incoming_data_buffers[fd], 0, sizeof(char) * INCOMING_DATA_BUFSIZE);  // force Linux to allocate now
                                                 incoming_data_buffers_count[fd] = 0;
                                                 recalculate_list_games = 1;
                                         }
