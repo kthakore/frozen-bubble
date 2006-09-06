@@ -1044,7 +1044,7 @@ sub mp_disconnect_with_reason {
 }
 
 sub check_mp_connection {
-    fb_net::isconnected() or mp_disconnect_with_reason('Lost connection to server!');
+    fb_net::isconnected() or mp_disconnect_with_reason(t("Lost connection to server!"), '', t("Your lag is too high,"), t("or network was interrupted."));
 }
 
 sub update_say_mp {
@@ -1302,25 +1302,12 @@ sub handle_game_events() {
                 push @update_rects, $apprects{main};
                 play_sound('chatted');
                 $pdata{$player}{chat_msg_delay} = 500;
-            } elsif ($command eq 'd') {
-                if ($params eq $pdata{p1}{nick}) {
-                    #- ouch, someone dropped me. bad bad guy :(. but let's cooperate.
-                    mp_disconnect_with_reason('You were dropped!', '', 'Your lag is too high or', 'network was interrupted');
-                }
             } else {
                 print STDERR "****** Unrecognized command: $m->{msg}\n";
             }
         }
         fb_net::gdelay_messages(@messages);
-        $frame % 25 == 0 and fb_net::gsend('p');
-        iter_distant_players {
-            if ($pdata{$::p}{state} eq 'ingame' && $pdata{$::p}{ping} + 200 < $frame) {
-                print STDERR "Dropping player $::p, doesn't ping us anymore for ages.\n";
-                $pdata{$::p}{left} = 1;
-                lose($::p);
-                fb_net::gsend("d$pdata{$::p}{nick}");
-            }
-        };
+        $frame % 50 == 0 and fb_net::gsend('p');
     }
 }
 
@@ -1825,6 +1812,7 @@ sub update_game() {
                 fb_net::gdelay_messages($msg);
             }
             print "\tstate: $pdata{state}\n";
+
         } else {
             check_mp_connection();
             #- timeout for receiving the winners. it could happen when a client is badly killed.
@@ -1836,6 +1824,7 @@ sub update_game() {
                 $pdata{state} = "finished $supposed_winner_player:$supposed_winner_nick $timeout_counter";
             }
         }
+        $frame % 50 == 0 and fb_net::gsend('p');
 
     } elsif ($pdata{state} =~ /^won (.*)/) {
         #- mp and 1p game only state
@@ -1850,6 +1839,7 @@ sub update_game() {
                 }
             };
             check_mp_connection();
+            $frame % 50 == 0 and fb_net::gsend('p');
         }
 	if (!$winner || @{$exploding_bubble{$winner}} == 0) {
             my $still_needwait = 0;
@@ -2331,9 +2321,9 @@ sub init_game() {
         $pinguin{$::p}{right_from} = [ map { add_image("pinguins/anime-shooter_p1_00$_.png") } reverse (51..71) ];
         $pinguin{$::p}{wait_to} = [ map { add_image("pinguins/wait_p1_00$_.png") } ('01'..'74') ];
         $pinguin{$::p}{wait} = [ map { add_image("pinguins/wait_p1_00$_.png") } (75..97) ];
-        $pinguin{$::p}{win} = [ map { add_image("pinguins/win_p1_00$_.png") } ('01'..'94') ];
-        $pinguin{$::p}{lose_to} = [ map { add_image("pinguins/loose_p1_00$_.png") } ('01'..'55') ];
-        $pinguin{$::p}{lose} = [ map { add_image("pinguins/loose_p1_0$_.png") } ('056'..'158') ];
+        $pinguin{$::p}{win} = [ map { add_image("pinguins/win_p1_00$_.png") } ('01'..'68') ];
+        $pinguin{$::p}{lose_to} = [ map { add_image("pinguins/loose_p1_00$_.png") } ('01'..'64') ];
+        $pinguin{$::p}{lose} = [ map { add_image("pinguins/loose_p1_0$_.png") } ('065'..'158') ];
         print_step('.'); 
     };
 

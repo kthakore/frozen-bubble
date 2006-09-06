@@ -481,7 +481,6 @@ sub setmyid($) {
 #-   ! (synchro)
 #-   a (angle)
 #-   b (bubble)
-#-   d (drop)
 #-   f (fire)
 #-   F (finished)
 #-   l (leave)

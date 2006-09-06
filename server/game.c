@@ -613,8 +613,12 @@ void process_msg_prio_(int fd, char* msg, ssize_t len, struct game* g)
         if (g) {
                 int i;
                 for (i = 0; i < g->players_number; i++) {
+                        // Pings are for the server only. Don't broadcast them to save bandwidth.
+                        if (len == 3 && msg[1] == 'p') {
+                                // nada
+
                         // Emitter wants to receive synchro message as well
-                        if (g->players_conn[i] == fd && len > 2 && msg[1] == '!') {
+                        } else if (g->players_conn[i] == fd && len > 2 && msg[1] == '!') {
                                 char synchro4self[] = "?!\n";
                                 ssize_t retval;
                                 synchro4self[0] = fd;

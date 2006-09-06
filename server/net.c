@@ -250,6 +250,18 @@ static void handle_incoming_data_generic(gpointer data, gpointer user_data, int 
                                 }
                         }
                 }
+                return;
+        }
+        if (prio) {
+                // 5 seconds is in game gracetime after which player is kicked out
+                if (current_time - last_data_in[fd] > 5) {
+                        conn_terminated(fd, "no activity within gracetime");
+                }
+        } else {
+                if (current_time - last_data_in[fd] > gracetime) {
+                        send_line_log_push(fd, fl_client_noactivity);
+                        conn_terminated(fd, "no activity within gracetime");
+                }
         }
 }
 
@@ -260,19 +272,6 @@ static void handle_incoming_data(gpointer data, gpointer user_data)
 static void handle_incoming_data_prio(gpointer data, gpointer user_data)
 {
         handle_incoming_data_generic(data, user_data, 1);
-}
-
-static void rip_idle_connections(gpointer data)
-{
-        int fd = GPOINTER_TO_INT(data);
-        if (current_time - last_data_in[fd] > gracetime) {
-                send_line_log_push(fd, fl_client_noactivity);
-                conn_terminated(fd, "no activity within gracetime");
-        }
-}
-static void rip_idle_connections_helper(gpointer data, gpointer user_data)
-{
-        rip_idle_connections(data);
 }
 
 static void handle_udp_request(void)
@@ -334,7 +333,6 @@ void connections_manager(void)
                 if (recalculate_list_games)
                         calculate_list_games();
                 recalculate_list_games = 0;
-                //rip_dead_games();
 
                 FD_ZERO(&conns_set);
                 g_list_foreach(conns, fill_conns_set, &conns_set);
@@ -415,11 +413,6 @@ void connections_manager(void)
 
                 if (udp_server_socket != -1 && FD_ISSET(udp_server_socket, &conns_set))
                         handle_udp_request();
-
-                new_conns = g_list_copy(conns);
-                g_list_foreach(conns, rip_idle_connections_helper, NULL);
-                g_list_free(conns);
-                conns = new_conns;
         }
 }
 
