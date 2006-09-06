@@ -94,11 +94,11 @@ static GList * conns_prio = NULL;
 static char * incoming_data_buffers[256];
 static int incoming_data_buffers_count[256];
 static time_t last_data_in[256];
-static char buf[16384] __attribute__((aligned(4096)));
 
 /* send line adding the protocol in front of the supplied msg */
 static ssize_t send_line(int fd, char* msg)
 {
+        static char buf[16384] __attribute__((aligned(4096)));
         int size;
         if (current_command)
                 size = snprintf(buf, sizeof(buf), "FB/%d.%d %s: %s\n", proto_major, proto_minor, current_command, msg);
