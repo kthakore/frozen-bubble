@@ -68,7 +68,7 @@ static char fl_client_noactivity[] = "NO_ACTIVITY_WITHIN_GRACETIME";
 static double date_amount_transmitted_reset;
 
 #define DEFAULT_PORT 1511  // a.k.a 0xF 0xB thx misc
-#define DEFAULT_MAX_USERS 200
+#define DEFAULT_MAX_USERS 255
 #define DEFAULT_MAX_TRANSMISSION_RATE 100000
 #define DEFAULT_OUTPUT "INFO"
 #define DEFAULT_GRACETIME 900
