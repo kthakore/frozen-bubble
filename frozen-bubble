@@ -163,8 +163,8 @@ local $_ = "@ARGV";
 /-if\s*(\S+)/ || /-italicfont\s*(\S+)/ and $italicfont = $1; 
 /-ji/ || /-joysticksinfo/ and $joysticksinfo = 1;
 
-$mynick ||= substr($ENV{USER}, 0, 10);
-$mynick =~ s/[^a-zA-Z0-9_-]//g;  #- sanitize
+$mynick ||= $ENV{USER};
+$mynick = sanitize_nick($mynick);
 
 #- ------------------------------------------------------------------------
 
@@ -2910,6 +2910,13 @@ sub clean_server {
 
 END { clean_server(); }
 
+sub sanitize_nick {
+    my ($nick) = @_;
+    $nick = substr($nick, 0, 10);
+    $nick =~ s/[^a-zA-Z0-9_-]//g;
+    return $nick;
+}
+
 sub smg_servers() {
 
     if ($pdata{gametype} eq 'lan') {
@@ -3320,6 +3327,20 @@ sub smg_choose_game() {
         $redraw->();
     };
 
+    my $list_players = sub {
+        my @list = sort @wholist;
+        my $send = t("*** Players listening: ");
+        while (@list) {
+            $send .= shift @list;
+            if (!@list || width('netdialogs', $send) >= 520) {
+                smg_add_status_msg($send);
+                $send = '*** ';
+            } else {
+                $send .= ',';
+            }
+        }
+    };
+
     my $need4update;
     my $relist;
     my $players_in_game = '';
@@ -3327,6 +3348,7 @@ sub smg_choose_game() {
     my $can_start = 0;
     my $joined_leader;
     $list->();
+    @wholist > 1 and $list_players->();
 
     while (1) {
         $relist++;
@@ -3395,20 +3417,21 @@ sub smg_choose_game() {
                     if ($curaction->()->{action} eq 'CHAT' && callback_entry('gettext') > 0) {
                         play_sound('menu_selected');
                         my $text = join('', callback_entry('gettext'));
-                        if ($text =~ m|^(/me )(.*)| || $text =~ m|^(/action )(.*)|) {
-                            $text = "* $mynick $2";
-                        } elsif ($text =~ m|^/list| && !$ingame) {
-                            my @list = sort @wholist;
-                            my $send = t("*** Available players: ");
-                            while (@list) {
-                                $send .= shift @list;
-                                if (!@list || width('netdialogs', $send) >= 520) {
-                                    smg_add_status_msg($send);
-                                    $send = '*** ';
-                                } else {
-                                    $send .= ',';
-                                }
+                        if ($text =~ m|^/me (.*)| || $text =~ m|^/action (.*)|) {
+                            $text = "* $mynick $1";
+                        } elsif ($text =~ m|^/nick (.*)| && !$ingame) {
+                            my $save_mynick = $mynick;
+                            $mynick = sanitize_nick($1);
+                            if ($mynick) {
+                                smg_add_status_msg(t("*** You are now known as %s", $mynick));
+                                fb_net::send_and_receive('NICK', $mynick);
+                            } else {
+                                smg_add_status_msg(t("*** Erroneous nickname"));
+                                $mynick = $save_mynick;
                             }
+                            $text = undef;
+                        } elsif ($text =~ m|^/list| && !$ingame) {
+                            $list_players->();
                             $text = undef;
                         } elsif ($text =~ m|^/kick (.*)| && $can_start) {
                             my $kicked = $1;
@@ -3428,7 +3451,8 @@ sub smg_choose_game() {
                             $text = undef;
                         } elsif ($text =~ m|^/help|) {
                             smg_add_status_msg(t("*** Available commands: %s",
-                                                 join(', ', t("%s <action>", '/me'), if_($can_start, t("%s <nick>", '/kick')), if_(!$ingame, '/list'))));
+                                                 join(', ', t("%s <action>", '/me'), if_($can_start, t("%s <nick>", '/kick')), if_(!$ingame, '/list'),
+                                                      if_(!$ingame, t("%s <new_nick>", '/nick')))));
                             $text = undef;
                         } elsif ($text =~ m|^/|) {
                             smg_add_status_msg(t("*** Unknown command. Try %s for help.", '/help'));
