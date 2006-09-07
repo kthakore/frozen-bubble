@@ -2328,7 +2328,7 @@ sub init_game() {
         $pinguin{$::p}{right_from} = [ map { add_image("pinguins/anime-shooter_p1_00$_.png") } reverse (51..71) ];
         $pinguin{$::p}{wait_to} = [ map { add_image("pinguins/wait_p1_00$_.png") } ('01'..'74') ];
         $pinguin{$::p}{wait} = [ map { add_image("pinguins/wait_p1_00$_.png") } (75..97) ];
-        $pinguin{$::p}{win} = [ map { add_image("pinguins/win_p1_00$_.png") } ('01'..'68') ];
+        $pinguin{$::p}{win} = [ map { add_image("pinguins/win_p1_00$_.png") } ('01'..'90') ];
         $pinguin{$::p}{lose_to} = [ map { add_image("pinguins/loose_p1_00$_.png") } ('01'..'64') ];
         $pinguin{$::p}{lose} = [ map { add_image("pinguins/loose_p1_0$_.png") } ('065'..'158') ];
         print_step('.'); 
@@ -4089,6 +4089,7 @@ sub menu {
         $invalidate_all->();
     };
 
+    my $speed_ok = 4;
     if ($logo_candy_method == 3) {
         #- stretch needs a bit more room
         my $newlogosurface = SDL::Surface->new(-width => $imgbin{menu_logo}->width * 1.1, -height => $imgbin{menu_logo}->height * 1.1, -depth => 32);
@@ -4113,8 +4114,8 @@ sub menu {
     }
     my $draw_logo = sub {
         my ($no_update) = @_;
-        erase_image_from($imgbin{menu_logo}, $logox, $logoy, $back_start);
-        if ($graphics_level < 3) {
+        if ($graphics_level < 3 || !$speed_ok) {
+            erase_image_from($imgbin{menu_logo}, $logox, $logoy, $back_start);
             put_image($imgbin{menu_logo}, $logox, $logoy);
         } else {
             erase_image_from($imgbin{menu_logo}, $logox, $logoy, $back_start);
@@ -4144,8 +4145,6 @@ sub menu {
             @update_rects = ();
         }
     };
-
-    my $speed_ok = 4;
 
     my ($MENU_XPOS, $MENU_FIRSTY, $SPACING) = (89, 14, 56);
     my %menu_ypos = ( '1pgame' =>      $MENU_FIRSTY,
