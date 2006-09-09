@@ -1053,7 +1053,7 @@ sub mp_disconnect_with_reason {
 }
 
 sub check_mp_connection {
-    fb_net::isconnected() or mp_disconnect_with_reason(t("Lost connection to server!"), '', t("Your lag is too high,"), t("or network was interrupted."));
+    fb_net::isconnected() or mp_disconnect_with_reason(t("Lost connection to server!"), '', t("Your lag is probably too high."));
 }
 
 sub update_say_mp {
@@ -1360,7 +1360,7 @@ sub win {
 
 sub lose {
     my ($player) = @_;
-    print "lose($player)\n".backtrace();
+    print "lose($player)\n";
     $pdata{$player}{ping_right}{state} = 'lose_to';
     $pdata{$player}{ping_right}{img} = 0;
     if (!$pdata{$player}{left}) {
@@ -1823,9 +1823,8 @@ sub update_game() {
             check_mp_connection();
             #- timeout for receiving the winners. it could happen when a client is badly killed.
             $timeout_counter++;
-            if ($timeout_counter > $fb_net::timeout * (1000/$TARGET_ANIM_SPEED) ) {
-                win($supposed_winner_player);
-                $pdata{state} = "won $supposed_winner_player";
+            if ($timeout_counter > 2 * $fb_net::timeout * (1000/$TARGET_ANIM_SPEED) ) {
+                mp_disconnect_with_reason(t("Lost synchronization!"));
             } else {
                 $pdata{state} = "finished $supposed_winner_player:$supposed_winner_nick $timeout_counter";
             }
@@ -1861,6 +1860,7 @@ sub update_game() {
                         $pdata{$::p}{left} and die 'quit';
                     };
                     fb_net::gsend('n');
+                    my $timeout_counter;
 
                     while (1) {
                         if (my $msg = fb_net::grecv_get1msg_ifdata()) {
@@ -1886,6 +1886,10 @@ sub update_game() {
                         fb_c_stuff::fbdelay($TARGET_ANIM_SPEED);
                         $frame++;
                         $frame % (1000/$TARGET_ANIM_SPEED) == 0 and fb_net::gsend('p');
+                        $timeout_counter++;
+                        if ($timeout_counter > 2 * $fb_net::timeout * (1000/$TARGET_ANIM_SPEED) ) {
+                            mp_disconnect_with_reason(t("Lost synchronization!"));
+                        }
                     }
                 };
 
