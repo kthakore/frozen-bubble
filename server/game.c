@@ -267,7 +267,7 @@ static void ok_start_game(int fd)
                                 if (g->players_conn[i] == fd) {
                                         if (!g->players_started[i]) {
                                                 g->players_started[i] = 1;
-                                                l1(OUTPUT_TYPE_DEBUG, "%d entering prio mode", g->players_conn[i]);
+                                                l1(OUTPUT_TYPE_DEBUG, "[%d] entering prio mode", g->players_conn[i]);
                                                 add_prio(g->players_conn[i]);
                                         } else {
                                                 send_line_log(fd, wn_already_ok_started, "OK_GAME_START");
@@ -590,9 +590,6 @@ ssize_t get_reset_amount_transmitted(void)
         return ret;
 }
 
-int rand_(double val) { return 1+(int) (val*rand()/(RAND_MAX+1.0)); }
-#define min(x, y) (x < y ? x : y)
-
 static void conn_to_terminate_helper(gpointer data, gpointer user_data)
 {
         conn_terminated(GPOINTER_TO_INT(data), "system error on send (probably peer shutdown or try again)");
@@ -618,39 +615,29 @@ void process_msg_prio_(int fd, char* msg, ssize_t len, struct game* g)
                                 l1(OUTPUT_TYPE_DEBUG, "[%d] sending self synchro", g->players_conn[i]);
                                 retval = send(g->players_conn[i], synchro4self, sizeof(synchro4self) - 1, MSG_NOSIGNAL|MSG_DONTWAIT);
                                 if (retval != sizeof(synchro4self) - 1) {
-                                        if (retval == -1) {
-                                                conn_to_terminate = g_list_append(conn_to_terminate, GINT_TO_POINTER(g->players_conn[i]));
-                                        } else {
-                                                l4(OUTPUT_TYPE_ERROR, "[%d] short send of %zd instead of %zd bytes from %d :(", g->players_conn[i],
-                                                                      retval, sizeof(synchro4self) - 1, fd);
+                                        if (retval != -1) {
+                                                l4(OUTPUT_TYPE_INFO, "[%d] short send of %zd instead of %zd bytes from %d - destination is not reading data "
+                                                                     "(illegal FB client) or our upload bandwidth is saturated - sorry, cannot continue serving "
+                                                                     "this client in this situation, closing connection",
+                                                                     g->players_conn[i], retval, sizeof(synchro4self) - 1, fd);
                                         }
+                                        conn_to_terminate = g_list_append(conn_to_terminate, GINT_TO_POINTER(g->players_conn[i]));
                                 }
 
                         } else if (g->players_conn[i] != fd) {
                                 ssize_t retval;
-                                ssize_t togo = len;
-                                l3(OUTPUT_TYPE_DEBUG, "Sending total: %zd bytes to %d (from %d)", togo, g->players_conn[i], fd);
-                                while (togo) {
-                                        int randval = rand_(50);
-                                        ssize_t amount = min(randval, togo);
-                                        l2(OUTPUT_TYPE_DEBUG, "Amount: %zd togo: %zd", amount, togo);
-                                        retval = send(g->players_conn[i], msg + (len - togo), amount, MSG_NOSIGNAL|MSG_DONTWAIT);
-                                        if (retval != amount) {
-                                                if (retval == -1) {
-                                                        conn_to_terminate = g_list_append(conn_to_terminate, GINT_TO_POINTER(g->players_conn[i]));
-                                                        goto next_player;
-                                                } else {
-                                                        l4(OUTPUT_TYPE_ERROR, "[%d] short send of %zd instead of %zd bytes from %d :(", g->players_conn[i],
-                                                                              retval, amount, fd);
-                                                }
+                                l3(OUTPUT_TYPE_DEBUG, "[%d] sending %zd bytes to %d", fd, len, g->players_conn[i]);
+                                retval = send(g->players_conn[i], msg, len, MSG_NOSIGNAL|MSG_DONTWAIT);
+                                if (retval != len) {
+                                        if (retval != -1) {
+                                                l4(OUTPUT_TYPE_INFO, "[%d] short send of %zd instead of %zd bytes from %d - destination is not reading data "
+                                                                     "(illegal FB client) or our upload bandwidth is saturated - sorry, cannot continue serving "
+                                                                     "this client in this situation, closing connection",
+                                                                     g->players_conn[i], retval, len, fd);
                                         }
-                                        togo -= amount;
+                                        conn_to_terminate = g_list_append(conn_to_terminate, GINT_TO_POINTER(g->players_conn[i]));
                                 }
-                                l0(OUTPUT_TYPE_DEBUG, "- done");
-                                amount_transmitted += len;
                         }
-                next_player:
-                        ;
                 }
                 if (conn_to_terminate) {
                         g_list_foreach(conn_to_terminate, conn_to_terminate_helper, NULL);
