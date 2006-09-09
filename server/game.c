@@ -572,13 +572,6 @@ int process_msg(int fd, char* msg)
                 } else {
                         ok_start_game(fd);
                 }
-#ifdef DEBUG
-        } else if (streq(current_command, "DEBUG")) {
-                show_games();
-                net_debug();
-        } else if (streq(current_command, "HALT")) {
-                exit(EXIT_SUCCESS);
-#endif
         } else {
                 send_line_log(fd, wn_unknown_command, msg);
         }

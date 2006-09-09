@@ -478,7 +478,7 @@ sub setmyid($) {
 
 #- data is command:parameters
 #- supported commands:
-#-   ! (synchro)
+#-   ! (synchro)      [this one is special, server propagates also to emitter]
 #-   a (angle)
 #-   b (bubble)
 #-   f (fire)
@@ -488,7 +488,7 @@ sub setmyid($) {
 #-   M (malusstick)
 #-   n (newgame)
 #-   N (nextbubble)
-#-   p (ping)
+#-   p (ping)         [this one is special, server doesn't propagate back]
 #-   s (stick)
 #-   t (talk)
 #-   T (tobelaunchedbubble)
@@ -532,24 +532,11 @@ sub grecv() {
     my @ascii = unpack("C*", $buf);
     print "bytes in buf: @ascii\n";
     
-    #- if previous receive was partial and was cut between \n and \0, we
-    #- have a NULL in front of the message now
-#    if (substr($buf, 0, 1) eq "\0") {
-#        print "********************************************* partial cut between LF and NULL?\n";
-#        $buf = substr($buf, 1);
-#    }
-        
     while ($buf) {
         #- first byte of a "frame" is the id of the sender
         my $id = substr($buf, 0, 1);
         $buf = substr($buf, 1);
-#            printf "extracted id: %d\n", ord($id);
-#        if (ord($id) < 1 || ord($id) > 10) {     #- this test is temp and helps to find protocol problems as long as there are never more than 5 players on server
-#            printf "****** ouch! id %d, buf now <$buf>\n", ord($id);
-#            printf "\talready msg: <$_->{msg}> from %d\n", ord($_->{id}) foreach @msg;
-#            $ouch = 1;
-#        }
-        #- match data of a frame (newline terminated)
+        #- match data of a frame (NUL terminated)
         if (my ($msg, $rest) = $buf =~ /([^\n]+)\n(.*)?/s) {  #-?
             $buf = $rest;
             push @msg, { id => $id, msg => $msg };
@@ -576,7 +563,7 @@ sub grecv_get1msg_ifdata() {
     return $msg;
 }
 
-sub grecv_get1msg() {
+sub grecv_get1msg {
     eval {
         local $SIG{ALRM} = sub { die "alarm\n" };
         alarm $timeout;
@@ -587,7 +574,7 @@ sub grecv_get1msg() {
         alarm 0;
     };
     if ($@) {
-        print STDERR "Sorry, we are not received the expected message. If the other ends are legal Frozen-Bubble\n" .
+        print STDERR "Sorry, we are not receiving the expected message. If the other ends are legal Frozen-Bubble\n" .
                      "clients, it means your computer or the network is too slow. Giving up.\n";
         die 'quit';
     } else {

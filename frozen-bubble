@@ -440,13 +440,22 @@ sub is_distant_player($) {
     $player =~ /rp/;
 }
 
-sub mp_propagate($$) {
-    my ($key, $value) = @_;
+sub mp_ping_if_needed {
+    my ($ticks) = @_;
+    if ($app->ticks - $$ticks > 1000) {
+        fb_net::gsend('p');
+        $$ticks = $app->ticks;
+    }
+}
+
+sub mp_propagate {
+    my ($key, $value, $ticks) = @_;
     if (is_leader()) {
         fb_net::gsend("$key$value");
         return $value;
     } else {
         my $m = fb_net::grecv_get1msg();
+        mp_ping_if_needed($ticks);
         if ($m->{msg} !~ /^\Q$key\E(.+)/) {
             print "Network protocol error: waiting for $key, received $m->{msg}.\n";
             die 'quit';
@@ -1237,9 +1246,7 @@ sub handle_game_events() {
                 next;
             }
             my ($command, $params) = $m->{msg} =~ /^(.)(.*)/;
-            if ($command eq 'p') {
-                $pdata{$player}{ping} = $frame;
-            } elsif ($command eq 'l') {
+            if ($command eq 'l') {
                 print "rcv leave from $player\n";
                 iter_players { #- need iter_players to get the small graphics change for free
                     if ($::p eq $player) {
@@ -1307,7 +1314,6 @@ sub handle_game_events() {
             }
         }
         fb_net::gdelay_messages(@messages);
-        $frame % 50 == 0 and fb_net::gsend('p');
     }
 }
 
@@ -1824,7 +1830,6 @@ sub update_game() {
                 $pdata{state} = "finished $supposed_winner_player:$supposed_winner_nick $timeout_counter";
             }
         }
-        $frame % 50 == 0 and fb_net::gsend('p');
 
     } elsif ($pdata{state} =~ /^won (.*)/) {
         #- mp and 1p game only state
@@ -1839,7 +1844,7 @@ sub update_game() {
                 }
             };
             check_mp_connection();
-            $frame % 50 == 0 and fb_net::gsend('p');
+            $frame % (1000/$TARGET_ANIM_SPEED) == 0 and fb_net::gsend('p');
         }
 	if (!$winner || @{$exploding_bubble{$winner}} == 0) {
             my $still_needwait = 0;
@@ -1855,7 +1860,7 @@ sub update_game() {
                     iter_players {
                         $pdata{$::p}{left} and die 'quit';
                     };
-                    fb_net::gsend("n");
+                    fb_net::gsend('n');
 
                     while (1) {
                         if (my $msg = fb_net::grecv_get1msg_ifdata()) {
@@ -1879,6 +1884,8 @@ sub update_game() {
                         }
                         check_mp_connection();
                         fb_c_stuff::fbdelay($TARGET_ANIM_SPEED);
+                        $frame++;
+                        $frame % (1000/$TARGET_ANIM_SPEED) == 0 and fb_net::gsend('p');
                     }
                 };
 
@@ -1917,6 +1924,9 @@ sub update_game() {
 	die "oops unhandled game state ($pdata{state})\n";
     }
 
+    if (is_mp_game()) {
+        $frame % (1000/$TARGET_ANIM_SPEED) == 0 and fb_net::gsend('p');
+    }
 
     #- things that need to be updated in all states of the game
     iter_players {
@@ -2253,12 +2263,14 @@ sub init_game() {
     $imgbin{ping_high} = add_image('menu/ping-high.png');
     $imgbin{menu_cursor}{'1pgame'} = [ map { add_image("menu/anims/1pgame_00$_.png") } ('01'..'30') ];
     $imgbin{menu_cursor}{'2pgame'} = [ map { add_image("menu/anims/p1p2_00$_.png") } ('01'..'30') ];
-    $imgbin{menu_cursor}{langame} = [ map { add_image("menu/anims/p1p2_00$_.png") } ('01'..'30') ];
-    $imgbin{menu_cursor}{netgame} = [ map { add_image("menu/anims/netgame_00$_.png") } ('01'..'40') ];
-    $imgbin{menu_cursor}{editor} = [ map { add_image("menu/anims/p1p2_00$_.png") } ('01'..'30') ];
-    $imgbin{menu_cursor}{graphics} = [ map { add_image("menu/anims/p1p2_00$_.png") } ('01'..'30') ];
-    $imgbin{menu_cursor}{keys} = [ map { add_image("menu/anims/p1p2_00$_.png") } ('01'..'30') ];
-    $imgbin{menu_cursor}{highscores} = [ map { add_image("menu/anims/p1p2_00$_.png") } ('01'..'30') ];
+    $imgbin{menu_cursor}{langame} = [ map { add_image("menu/anims/langame_00$_.png") } ('01'..'70') ];
+    $imgbin{menu_cursor}{netgame} = [ map { add_image("menu/anims/netgame_00$_.png") } ('01'..'89') ];
+    $imgbin{menu_cursor}{editor} = [ map { add_image("menu/anims/editor_00$_.png") } ('01'..'67') ];
+    $imgbin{menu_cursor}{graphics3} = [ map { add_image("menu/anims/gfx-l1_00$_.png") } ('01'..'30') ];
+    $imgbin{menu_cursor}{graphics2} = [ map { add_image("menu/anims/gfx-l2_00$_.png") } ('01'..'30') ];
+    $imgbin{menu_cursor}{graphics1} = [ add_image("menu/anims/gfx-l3_0001.png") ];
+    $imgbin{menu_cursor}{keys} = [ map { add_image("menu/anims/keys_00$_.png") } ('01'..'80') ];
+    $imgbin{menu_cursor}{highscores} = [ map { add_image("menu/anims/highscore_00$_.png") } ('01'..'89') ];
     $imgbin{left_rp1} = add_image('left-rp1.png');
     $imgbin{"left_${_}_mini"} = add_image("left-${_}-mini.png") foreach qw(rp1 rp2 rp3 rp4);
     $imgbin{mp_ready_newgame} = add_image('pinguins/mp_ready_newgame.png');
@@ -2619,6 +2631,7 @@ sub ask_from($) {
 
 sub new_game() {
 
+    my $ticks = $app->ticks;
     $display_on_app_disabled = 1;
 
     $TIME_APPEARS_NEW_ROOT = 11;
@@ -2690,7 +2703,7 @@ sub new_game() {
                 my $num = int(rand(@bubbles_images));
                 if (is_mp_game()) {
                     check_mp_connection();
-                    $num = mp_propagate("b|$cx|$cy", $num);
+                    $num = mp_propagate("b|$cx|$cy", $num, \$ticks);
                 }
                 my $b = create_bubble_given_img_num($num);
                 real_stick_bubble($b, $cx, $cy, $PLAYERS[0], 0, 'randomlevel/1p', 'nostory');
@@ -2713,8 +2726,8 @@ sub new_game() {
     do { $tobe_num = int(rand(@bubbles_images)) } while (!validate_nextcolor($tobe_num, $PLAYERS[0]));
     if (is_mp_game()) {
         check_mp_connection();
-        $next_num = mp_propagate("N", $next_num);
-        $tobe_num = mp_propagate("T", $tobe_num);
+        $next_num = mp_propagate("N", $next_num, \$ticks);
+        $tobe_num = mp_propagate("T", $tobe_num, \$ticks);
     }
     $next_bubble{$PLAYERS[0]} = create_bubble_given_img_num($next_num);
     generate_new_bubble($PLAYERS[0], $tobe_num);
@@ -2740,25 +2753,50 @@ sub new_game() {
     $direct = undef;
 
     if (is_mp_game()) {
-        fb_c_stuff::fbdelay(200);  #- synchronizing is of no use if receivers will still be processing previous stuff
-        if (is_leader()) {
-            fb_net::gsend('!');
-        }
-        check_mp_connection();
-        #- at this point, we can receive first commands of quickies instead of synchro
+        mp_ping_if_needed(\$ticks);
+
         eval {
+            #- 1. first wait on a common barrier with others, so that everyone has finished previous things
+            fb_net::gsend('n');
+            check_mp_connection();
+            iter_distant_players {
+                $pdata{$::p}{barrier4newgame} = 0;
+            };
+
+            #- at this point, we can receive first commands of quickies instead of synchro
             local $SIG{ALRM} = sub { die "alarm\n" };
             alarm 5;  #- seconds
             my @keep_messages;
             while (1) {
-                my $m = fb_net::grecv_get1msg();
+                my $m = fb_net::grecv_get1msg();  #- blocking
+                mp_ping_if_needed(\$ticks);
+                if ($m->{msg} eq 'n') {
+                    $pdata{$pdata{id2p}{$m->{id}}}{barrier4newgame} = 1;
+                    iter_distant_players {
+                        $pdata{$::p}{barrier4newgame} == 0 and goto still_waiting;
+                    };
+                    last;
+                  still_waiting:
+                } else {
+                    push @keep_messages, $m;
+                }
+            }
+
+            #- 2. now that we're all ready to synchronize, let a unique synchro message be sent, the leader and others will all wait on
+            is_leader() and fb_net::gsend('!');
+            check_mp_connection();
+
+            alarm 5;
+            while (1) {
+                my $m = fb_net::grecv_get1msg();  #- blocking
+                mp_ping_if_needed(\$ticks);
                 if ($m->{msg} eq '!') {
-                    print "Got synchro, carrying on\n";
                     last;
                 } else {
                     push @keep_messages, $m;
                 }
             }
+
             fb_net::gdelay_messages(@keep_messages);
             alarm 0;
         };
@@ -2770,9 +2808,6 @@ sub new_game() {
                 die;
             }
         }
-        iter_distant_players {
-            $pdata{$::p}{ping} = $frame;
-        };
     }
 }
 
@@ -3352,7 +3387,7 @@ sub smg_choose_game() {
 
     while (1) {
         $relist++;
-        $relist % (3*50) == 0 and $list->();
+        $relist % (3*(1000/$TARGET_ANIM_SPEED)) == 0 and $list->();
         callback_entry('ping') and $redraw->();
 
         my $need_redraw;
@@ -4170,6 +4205,7 @@ sub menu {
         }
     };
 
+    $imgbin{menu_cursor}{graphics} = $imgbin{menu_cursor}{"graphics$graphics_level"};
     my ($MENU_XPOS, $MENU_FIRSTY, $SPACING) = (89, 14, 56);
     my %menu_ypos = ( '1pgame' =>      $MENU_FIRSTY,
 		      '2pgame' =>      $MENU_FIRSTY +     $SPACING,
@@ -4190,7 +4226,13 @@ sub menu {
 				       run => sub { @PLAYERS = qw(p1 rp1); $pdata{gametype} = 'net';  $levels{current} = undef; } },
 			 'editor' => { pos => 5, type => 'run', run => sub { $launch_editor->(); } },
 			 'graphics' => { pos => 6, type => 'range', valuemin => 1, valuemax => 3,
-					 change => sub { $graphics_level = $_[0]; $graphics_level < 3 and $draw_logo->() or $speed_ok = 4; }, value => $graphics_level },
+					 change => sub {
+                                             $graphics_level = $_[0];
+                                             if ($graphics_level < 3) { $draw_logo->() } else { $speed_ok = 4; }
+                                             $imgbin{menu_cursor}{graphics} = $imgbin{menu_cursor}{"graphics$graphics_level"};
+                                             $pdata{cursor_img}{graphics} >= @{$imgbin{menu_cursor}{graphics}} and $pdata{cursor_img}{graphics} = 0;
+                                         },
+                                         value => $graphics_level },
 			 'keys' => { pos => 7, type => 'run',
 				     run => sub { $change_keys->() } },
 			 'highscores' => { pos => 8, type => 'run',
@@ -4202,7 +4244,7 @@ sub menu {
 
     my $display_cursor = sub {
         my ($m) = @_;
-        my $cursor_rect = SDL::Rect->new(-x => 250, '-y' => $menu_ypos{$m} + 6,
+        my $cursor_rect = SDL::Rect->new(-x => 248, '-y' => $menu_ypos{$m} + 8,
                                          -width => $imgbin{menu_cursor}{$m}[$pdata{cursor_img}{$m}]->width,
                                          -height => $imgbin{menu_cursor}{$m}[$pdata{cursor_img}{$m}]->height);
         if (!defined($cursor_save_bg{$m})) {
@@ -4336,7 +4378,7 @@ sub menu {
             foreach my $m (keys %menu_entries) {
                 if ($menu_entries{$m}->{pos} == $current_pos) {
                     $pdata{cursor_img}{$m}++;
-                    $pdata{cursor_img}{$m} == @{$imgbin{menu_cursor}{$m}} and $pdata{cursor_img}{$m} = 0;
+                    $pdata{cursor_img}{$m} >= @{$imgbin{menu_cursor}{$m}} and $pdata{cursor_img}{$m} = 0;
                     my $cursor_rect = $display_cursor->($m);
                     $app->update($cursor_rect);
                 }

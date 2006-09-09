@@ -183,9 +183,9 @@ static int prio_processed;
 static time_t current_time;
 static void handle_incoming_data_generic(gpointer data, gpointer user_data, int prio)
 {
-        int fd;
+        int fd = GPOINTER_TO_INT(data);
 
-        if (!interrupt_loop_processing && FD_ISSET((fd = GPOINTER_TO_INT(data)), (fd_set *) user_data)) {
+        if (!interrupt_loop_processing && FD_ISSET(fd, (fd_set *) user_data)) {
                 char buf[INCOMING_DATA_BUFSIZE];
                 ssize_t len;
                 ssize_t offset = incoming_data_buffers_count[fd];
@@ -199,6 +199,9 @@ static void handle_incoming_data_generic(gpointer data, gpointer user_data, int 
                         return;
 
                 } else {
+                        char* ptr;
+                        char* eol;
+
                         last_data_in[fd] = current_time;
                         len += offset;
                         // If we don't have a newline, it means we are seeing a partial send. Buffer
@@ -216,37 +219,47 @@ static void handle_incoming_data_generic(gpointer data, gpointer user_data, int 
                                 return;
                         }
 
-                        if (prio) {
-                                // prio e.g. in game
-                                process_msg_prio(fd, buf, len);
-                                prio_processed = 1;
+                        /* string operations will need a NULL conn_terminated string */
+                        buf[len] = '\0';
+                        ptr = buf;
 
-                        } else {
-                                char * eol;
-                                /* string operations will need a NULL conn_terminated string */
-                                buf[len] = '\0';
-
-                                /* must handle only one message, because we might have multiple and subsequent might need to be
-                                   treated as prio message if the one before is about starting the game */
-                                if (!(eol = strchr(buf, '\n'))) {
+                        while (1) {
+                                if (!(eol = strchr(ptr, '\n'))) {
                                         // the bad bad guy sent a 0 byte before the \n
-                                        send_line_log_push(fd, fl_client_nulbyte);
+                                        if (!prio)
+                                                send_line_log_push(fd, fl_client_nulbyte);
                                         conn_terminated(fd, "NUL byte before newline");
                                         return;
                                 }
-                                eol[0] = '\0';
-                                if (strlen(buf) > 0 && eol[-1] == '\r')  // let's try to behave in case of Windows and Mac ports
-                                        eol[-1] = '\0';
-                                if (process_msg(fd, buf)) {
-                                        conn_terminated(fd, "process_msg said to shutdown this connection");
-                                        return;
-                                }
 
-                                if (eol + 1 - buf < len) {
-                                        ssize_t remaining = len - (eol + 1 - buf);
-                                        l2(OUTPUT_TYPE_DEBUG, "multiple non-prio messages for %d, buffering (%zd bytes)", fd, remaining);
-                                        memcpy(incoming_data_buffers[fd], eol + 1, remaining);
-                                        incoming_data_buffers_count[fd] = remaining;
+                                if (prio) {
+                                        // prio e.g. in game; we split messages because p and ! must be treated specially (see game::process_msg_prio)
+                                        process_msg_prio(fd, ptr, eol - ptr + 1);
+                                        len -= eol - ptr + 1;
+                                        if (len == 0) {
+                                                prio_processed = 1;
+                                                break;
+                                        }
+                                        ptr = eol + 1;
+
+                                } else {
+                                        eol[0] = '\0';
+                                        if (strlen(ptr) > 0 && eol[-1] == '\r')  // let's try to behave in case of Windows and Mac ports
+                                                eol[-1] = '\0';
+                                        if (process_msg(fd, ptr)) {
+                                                conn_terminated(fd, "process_msg said to shutdown this connection");
+                                                return;
+                                        }
+                                        
+                                        if (eol + 1 - ptr < len) {
+                                                ssize_t remaining = len - (eol + 1 - ptr);
+                                                l2(OUTPUT_TYPE_DEBUG, "multiple non-prio messages for %d, buffering (%zd bytes)", fd, remaining);
+                                                memcpy(incoming_data_buffers[fd], eol + 1, remaining);
+                                                incoming_data_buffers_count[fd] = remaining;
+                                        }
+                                        /* must handle only one message, because we might have multiple and subsequent might need to be
+                                           treated as prio message if the one before is about starting the game */
+                                        break;
                                 }
                         }
                 }
@@ -255,12 +268,12 @@ static void handle_incoming_data_generic(gpointer data, gpointer user_data, int 
         if (prio) {
                 // 5 seconds is in game gracetime after which player is kicked out
                 if (current_time - last_data_in[fd] > 5) {
-                        conn_terminated(fd, "no activity within gracetime");
+                        conn_terminated(fd, "no activity within gracetime (during game, gracetime of 5 secs)");
                 }
         } else {
                 if (current_time - last_data_in[fd] > gracetime) {
                         send_line_log_push(fd, fl_client_noactivity);
-                        conn_terminated(fd, "no activity within gracetime");
+                        conn_terminated(fd, "no activity within gracetime (not during game)");
                 }
         }
 }
@@ -421,13 +434,6 @@ int conns_nb(void)
         return g_list_length(conns_prio) + g_list_length(conns);
 }
 
-#ifdef DEBUG
-void net_debug(void)
-{
-        printf("conns_prio:%d;conns:%d\n", g_list_length(conns_prio), g_list_length(conns));
-}
-#endif
-        
 void add_prio(int fd)
 {
         conns_prio = g_list_append(conns_prio, GINT_TO_POINTER(fd));
@@ -787,7 +793,7 @@ static char * http_get(char * host, int port, char * path)
 	write(sock, buf, strlen(buf));
         free(buf);
 
-	/* This is fun; read the response a character at a time until we:
+	/* This is fun (well, fun for ewt); read the response a character at a time until we:
 
 	   1) Get our first \r\n; which lets us check the return code
 	   2) Get a \r\n\r\n, which means we're done */
