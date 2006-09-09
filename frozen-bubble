@@ -795,9 +795,10 @@ sub stick_bubble($$$$$) {
 	    $pdata{$player}{newroot_prelight_step} = 0;
 	}
 	if ($pdata{$player}{newroot} > $TIME_APPEARS_NEW_ROOT) {
+            my $_1p_mode = is_1p_game() && $levels{current} ne 'mp_train';
 	    $need_redraw = 1;
 	    $pdata{$player}{newroot_prelight} = 0;
-	    play_sound(is_1p_game() ? 'newroot_solo' : 'newroot');
+	    play_sound($_1p_mode ? 'newroot_solo' : 'newroot');
 	    $pdata{$player}{newroot} = 0;
 	    $pdata{$player}{oddswap} = !$pdata{$player}{oddswap};
 	    remove_images_from_background($player, @{$sticked_bubbles{$player}});
@@ -811,7 +812,7 @@ sub stick_bubble($$$$$) {
 		$_->{chaindesty} += $ROW_SIZE;
 	    }
 	    put_allimages_to_background($player);
-	    if (is_1p_game()) {
+	    if ($_1p_mode) {
 		$pdata{$player}{newrootlevel}++;
 		print_compressor();
 	    } else {
@@ -941,6 +942,11 @@ sub handle_graphics($) {
 #- extract it from "handle_graphics" to optimize a bit animations
 sub malus_change($$) {
     my ($numb, $player) = @_;
+    if ($levels{current} eq 'mp_train' && $numb > 0) {
+        $pdata{p1}{score} += $numb;
+        print_scores($app);
+        return;
+    }
     return if $numb == 0 || is_1p_game();
     my $update_malus = sub($) {
 	my ($fun, $p) = @_;
@@ -1320,7 +1326,9 @@ sub handle_game_events() {
 sub print_scores($) {
     my ($surface) = @_;  
     iter_players_ {  #- sometimes called from within a iter_players so...
-        my $score = @PLAYERS == 1 ? ($pdata{$::p_}{score} eq 'RANDOM' ? t("Random level") : t("Level %s", $pdata{$::p_}{score}) ) : $pdata{$::p_}{score};
+        my $score = @PLAYERS == 1 ? ($pdata{$::p_}{score} eq 'random' ? t("Random level")
+                                         : $levels{current} eq 'mp_train' ? t("Score: %d", $pdata{$::p_}{score})
+                                               : t("Level %s", $pdata{$::p_}{score})) : $pdata{$::p_}{score};
         is_mp_game() and $score = "$pdata{$::p_}{nick}: $score";
         my $width = width(mini_graphics($::p_) ? 'ingame_small' : 'ingame', $score);
         my $xpos = $POS{$::p_}{scores}{x} - $width/2;
@@ -1416,7 +1424,7 @@ sub verify_if_end {
 	}
     };
 
-    if (is_1p_game() && @{$sticked_bubbles{$PLAYERS[0]}} == 0) {
+    if (is_1p_game() && $levels{current} ne 'mp_train' && @{$sticked_bubbles{$PLAYERS[0]}} == 0) {
 	put_image_to_background($imgbin{win_panel_1player}, $POS{centerpanel}{x}, $POS{centerpanel}{'y'});
 	$pdata{state} = "won $PLAYERS[0]";
 	$pdata{$PLAYERS[0]}{ping_right}{state} = 'win';
@@ -2305,6 +2313,8 @@ sub init_game() {
     $imgbin{txt_1pmenu_pick_start_level_off} = add_image('menu/txt_pick_start_level_off.png');
     $imgbin{txt_1pmenu_play_random_levels_off} = add_image('menu/txt_play_random_levels_off.png');
     $imgbin{txt_1pmenu_play_random_levels_over} = add_image('menu/txt_play_random_levels_over.png');
+    $imgbin{txt_1pmenu_mp_train_off} = add_image('menu/txt_play_random_levels_off.png');
+    $imgbin{txt_1pmenu_mp_train_over} = add_image('menu/txt_play_random_levels_over.png');
 
     #- net game setup images
     $imgbin{back_netgame} = add_image('back_netgame.png');
@@ -2658,10 +2668,14 @@ sub new_game() {
     } elsif (is_1p_game()) {
 	$backgr = $imgbin{back_1p};
 	%POS = %POS_1P;
-	$TIME_APPEARS_NEW_ROOT = 8;
-	$TIME_HURRY_WARN = 400;
-	$TIME_HURRY_MAX = 525;
-	$pdata{$PLAYERS[0]}{score} = $levels{current} || "RANDOM";
+        if ($levels{current} eq 'mp_train') {
+            $pdata{$PLAYERS[0]}{score} = 0;
+        } else {
+            $TIME_APPEARS_NEW_ROOT = 8;
+            $TIME_HURRY_WARN = 400;
+            $TIME_HURRY_MAX = 525;
+            $pdata{$PLAYERS[0]}{score} = $levels{current};
+        }
     } else {
 	die "oops";
     }
@@ -2699,7 +2713,7 @@ sub new_game() {
 
     is_1p_game() and print_compressor();
 
-    if ($levels{current}) {
+    if ($levels{current} =~ /^\d+$/) {
 	open_level($levels{current});
     } else {
 	foreach my $cy (0 .. 4) {
@@ -2817,19 +2831,20 @@ sub new_game() {
 
 sub choose_1p_game_mode() {
 
-    my @ordered_names = qw(play_all_levels pick_start_level play_random_levels);
+    my @ordered_names = qw(play_all_levels pick_start_level play_random_levels mp_train);
     my $active_menu = 0;
 
     my $redraw = sub {
-        my $menu_ypos_spacer = $imgbin{txt_1pmenu_play_all_levels_over}->height + 10;
+        my $menu_ypos_spacer = $imgbin{txt_1pmenu_play_all_levels_over}->height + 4;
         my $menu_xpos = $MENUPOS{xpos_panel} + ($imgbin{'1p_panel'}->width - $imgbin{txt_1pmenu_play_all_levels_over}->width)/2; 
-        my $menu_ypos = $MENUPOS{ypos_panel} + 122;
+        my $menu_ypos = $MENUPOS{ypos_panel} + 90;
 
         my $draw_element = sub {
             my ($name, $mode) = @_;
-            my %name2ypos = (play_all_levels => $menu_ypos,
-                             pick_start_level => $menu_ypos + $menu_ypos_spacer,
-                             play_random_levels => $menu_ypos + 2 * $menu_ypos_spacer);
+            my %name2ypos = (play_all_levels    => $menu_ypos,
+                             pick_start_level   => $menu_ypos +     $menu_ypos_spacer,
+                             play_random_levels => $menu_ypos + 2 * $menu_ypos_spacer,
+                             mp_train           => $menu_ypos + 3 * $menu_ypos_spacer);
             my $img_name = 'txt_1pmenu_' . $name . '_' . $mode;
             put_image($imgbin{$img_name}, $menu_xpos, $name2ypos{$name});
         };
@@ -2874,8 +2889,9 @@ sub choose_1p_game_mode() {
                             choose_levelset(1) or $cancel = 1;
                         }
                     } elsif ($ordered_names[$active_menu] eq 'play_random_levels') {
-                        #- set the random command line parameter
-                        $levels{current} = undef;
+                        $levels{current} = 'random';
+                    } elsif ($ordered_names[$active_menu] eq 'mp_train') {
+                        $levels{current} = 'mp_train';
                     }
                     $cancel or return 1;
                 } elsif ($event->key_sym == SDLK_ESCAPE) {
@@ -3885,7 +3901,7 @@ sub maingame() {
     @update_rects = ();
 
     my $to_wait = $TARGET_ANIM_SPEED - ($app->ticks - $synchro_ticks);
-    print "$to_wait\n";
+#    print "$to_wait\n";
     $to_wait > 0 and fb_c_stuff::fbdelay($to_wait);
 }
 
