@@ -74,8 +74,8 @@ $TIMEOUT_PINGUIN_SLEEP = 200;
 $FREE_FALL_CONSTANT = 0.5;
 $KEYS = { p1 => { left => SDLK_LEFT, right => SDLK_RIGHT, fire => SDLK_UP, center => SDLK_DOWN },
           p2 => { left => SDLK_x,    right => SDLK_v,     fire => SDLK_c,  center => SDLK_d },
-	  misc => { fs => SDLK_f, chat => SDLK_RETURN, send_malus_to_rp1 => SDLK_F1, send_malus_to_rp2 => SDLK_F2, send_malus_to_rp3 => SDLK_F3,
-                    send_malus_to_rp4 => SDLK_F4, next_playlist_elem => SDLK_TAB } };
+	  misc => { fs => SDLK_f, chat => SDLK_RETURN, send_malus_to_rp1 => SDLK_1, send_malus_to_rp2 => SDLK_2, send_malus_to_rp3 => SDLK_3,
+                    send_malus_to_rp4 => SDLK_4, send_malus_to_all => SDLK_0, next_playlist_elem => SDLK_TAB } };
 
 $sdl_flags = SDL_ANYFORMAT | SDL_HWSURFACE | SDL_DOUBLEBUF | SDL_HWACCEL | SDL_ASYNCBLIT;
 $mixer = 0;
@@ -977,6 +977,27 @@ sub handle_graphics($) {
 }
 
 #- extract it from "handle_graphics" to optimize a bit animations
+sub update_malus($$) {
+    my ($fun, $p) = @_;
+    my $malus = $pdata{$p}{malus};
+    my $y_shift = 0;
+    while ($malus > 0) {
+        my $print = sub($) {
+            my ($type) = @_;
+            my $type_real = translate_mini_image($type);
+            $fun->($type, $POS{$p}{malus}{x} - $type_real->width/2, $POS{$p}{malus}{'y'} - $y_shift - $type_real->height);
+            $y_shift += $type_real->height - 1;
+        };
+        if ($malus >= 7) {
+            $print->($malus_gfx{tomate});
+            $malus -= 7;
+        } else {
+            $print->($malus_gfx{banane});
+            $malus--;
+        }
+    }
+}
+
 sub malus_change($$) {
     my ($numb, $player) = @_;
     return if $numb == 0 || is_1p_game() && $levels{current} ne 'mp_train';
@@ -985,40 +1006,46 @@ sub malus_change($$) {
         print_scores($app);
         return;
     }
-    my $update_malus = sub($) {
-	my ($fun, $p) = @_;
-	my $malus = $pdata{$p}{malus};
-	my $y_shift = 0;
-	while ($malus > 0) {
-	    my $print = sub($) {
-		my ($type) = @_;
-                my $type_real = translate_mini_image($type);
-		$fun->($type, $POS{$p}{malus}{x} - $type_real->width/2, $POS{$p}{malus}{'y'} - $y_shift - $type_real->height);
-		$y_shift += $type_real->height - 1;
-	    };
-	    if ($malus >= 7) {
-		$print->($malus_gfx{tomate});
-		$malus -= 7;
-	    } else {
-		$print->($malus_gfx{banane});
-		$malus--;
-	    }
-	}
-    };
     if ($numb > 0) {
-        my @living = living_players();
-        $numb = int($numb/(@living-1) + 0.99);
-        iter_players_ {
-            if ($::p_ ne $player && member($::p_, @living)) {
-                $update_malus->(\&remove_image_from_background, $::p_);
-                $pdata{$::p_}{malus} += $numb;
-                $update_malus->(\&put_image_to_background, $::p_);
+        if (!is_mp_game()) {
+            iter_players_ {
+                if ($::p_ ne $player) {
+                    update_malus(\&remove_image_from_background, $::p_);
+                    $pdata{$::p_}{malus} += $numb;
+                    update_malus(\&put_image_to_background, $::p_);
+                }
+            };
+
+        } else {
+            if (is_local_player($player)) {  #- remote players handled when receiving the 'g' messag
+                if (!$pdata{sendmalustoone}) {
+                    my @living = living_players();
+                    $numb = int($numb/(@living-1) + 0.99);
+                    iter_players_ {
+                        if ($::p_ ne $player && member($::p_, @living)) {
+                            fb_net::gsend("g$pdata{$::p_}{nick}:$numb");
+                            update_malus(\&remove_image_from_background, $::p_);
+                            $pdata{$::p_}{malus} += $numb;
+                            update_malus(\&put_image_to_background, $::p_);
+                        }
+                    };
+                } else {
+                    my $p = $pdata{sendmalustoone};
+                    fb_net::gsend("g$pdata{$p}{nick}:$numb");
+                    iter_players_ {  #- get mini graphics
+                        if ($::p_ eq $p) {
+                            update_malus(\&remove_image_from_background, $::p_);
+                            $pdata{$::p_}{malus} += $numb;
+                            update_malus(\&put_image_to_background, $::p_);
+                        }
+                    };
+                }
             }
-        };
+        }
     } else {
-        $update_malus->(\&remove_image_from_background, $player);
+        update_malus(\&remove_image_from_background, $player);
         $pdata{$player}{malus} += $numb;
-        $update_malus->(\&put_image_to_background, $player);
+        update_malus(\&put_image_to_background, $player);
     }
 }
 
@@ -1208,6 +1235,17 @@ sub handle_game_events() {
                     is_1p_game() and $time_1pgame += $app->ticks - $time_pause;
                 }
 
+                if (is_mp_game()) {
+                    foreach my $rp (qw(rp1 rp2 rp3 rp4)) {
+                        if ($keypressed eq $KEYS->{misc}{"send_malus_to_$rp"}) {
+                            $pdata{sendmalustoone} = $rp;
+                        }
+                    }
+                    if ($keypressed eq $KEYS->{misc}{send_malus_to_all}) {
+                        $pdata{sendmalustoone} = undef;
+                    }
+                }
+
                 if ($mixer_enabled && $mixer && @playlist && $keypressed eq $KEYS->{misc}{next_playlist_elem}) {
                     $mixer->halt_music;
                     play_music('dummy', 0);
@@ -1313,6 +1351,31 @@ sub handle_game_events() {
                 $actions{$player}{mp_stick} = 1;
                 ($pdata{$player}{stickcx}, $pdata{$player}{stickcy}, $pdata{$player}{stickcol}, my $newrootcols) = $params =~ /(.+):(.+):(.+):(.*)/;
                 @{$pdata{$player}{nextcolors}} = split / /, $newrootcols;
+            } elsif ($command eq 'g') {
+                my ($destplayer, $numb) = $params =~ /(.+):(.+)/;
+                print "receive generate malus: $destplayer:$numb\n";
+                iter_players {
+                    if ($pdata{$::p}{nick} eq $destplayer) {
+                        print "=> adding to $::p\n";
+                        update_malus(\&remove_image_from_background, $::p);
+                        $pdata{$::p}{malus} += $numb;
+                        update_malus(\&put_image_to_background, $::p);
+                    }
+                };
+            } elsif ($command eq 'm') {
+                my ($num, $cx, $cy, $sticky) = $params =~ /(.+):(.+):(.+):(.+)/;
+                my $b = create_bubble_given_img_num($num);
+                $b->{cx} = $cx;
+                $b->{cy} = $cy;
+                $b->{'stick_y'} = $sticky;
+                print "receive remote malus: $cx:$cy c$num sy$sticky\n";
+                iter_players { #- need iter_players to get the small graphics change for free
+                    if ($::p eq $player) {
+                        calc_real_pos($b, $::p);
+                        push @{$malus_bubble{$player}}, $b;
+                        malus_change(-1, $player);
+                    }
+                };
             } elsif ($command eq 'M') {
                 my ($cx, $sticky) = $params =~ /(.+):(.+)/;
                 #- if network cuts several malussticks in two parts, it's possible that
@@ -1329,20 +1392,6 @@ sub handle_game_events() {
                     die "could not find malus bubble to malusstick!\n";
                   ok_malusstick:                    
                 }
-            } elsif ($command eq 'm') {
-                my ($num, $cx, $cy, $sticky) = $params =~ /(.+):(.+):(.+):(.+)/;
-                my $b = create_bubble_given_img_num($num);
-                $b->{cx} = $cx;
-                $b->{cy} = $cy;
-                $b->{'stick_y'} = $sticky;
-                print "receive remote malus: $cx:$cy c$num sy$sticky\n";
-                iter_players { #- need iter_players to get the small graphics change for free
-                    if ($::p eq $player) {
-                        calc_real_pos($b, $::p);
-                        push @{$malus_bubble{$player}}, $b;
-                        malus_change(-1, $player);
-                    }
-                };
             } elsif ($command eq 'F') {
                 #- this is coming too soon. it needs to be collected in the algo to restart a game.
                 print "finished coming a little soon. delay and hope we're not in infinite loop.\n";

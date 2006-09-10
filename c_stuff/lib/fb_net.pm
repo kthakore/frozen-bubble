@@ -484,6 +484,7 @@ sub setmyid($) {
 #-   f (fire)
 #-   F (finished)
 #-   l (leave)
+#-   g (generatemalus)
 #-   m (malus)
 #-   M (malusstick)
 #-   n (newgame)
