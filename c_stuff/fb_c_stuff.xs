@@ -1236,6 +1236,21 @@ SV* locatefont_(char *pattern) {
         return retval;
 }
 
+void alphaize_(SDL_Surface * surf)
+{
+	myLockSurface(surf);
+        for (y=0; y<surf->h; y++)
+                for (x=0; x<surf->w; x++) {
+                        Uint32 pixelvalue = 0;
+                        int a;
+                        memcpy(&pixelvalue, surf->pixels + y*surf->pitch + x*surf->format->BytesPerPixel, surf->format->BytesPerPixel);
+                        a = ( ( pixelvalue & surf->format->Amask ) >> surf->format->Ashift ) / 2;
+                        pixelvalue = ( pixelvalue & (~ surf->format->Amask ) ) + ( a << surf->format->Ashift );
+                        memcpy(surf->pixels + y*surf->pitch + x*surf->format->BytesPerPixel, &pixelvalue, surf->format->BytesPerPixel);
+                }
+	myUnlockSurface(surf);
+}
+
 /************************** Gateway to Perl ****************************/
 
 MODULE = fb_c_stuff		PACKAGE = fb_c_stuff
@@ -1387,6 +1402,12 @@ brokentv(dest, orig, offset)
         int offset
 	CODE:
 		brokentv_(dest, orig, offset);
+
+void
+alphaize(surf)
+        SDL_Surface * surf
+	CODE:
+                alphaize_(surf);
 
 void
 _exit(status)

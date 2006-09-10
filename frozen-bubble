@@ -1605,7 +1605,7 @@ sub update_game() {
                     } else {
                         do {
                             $pdata{$::p}{nextcolor} = int(rand(@bubbles_images));
-                        } while (!validate_nextcolor($pdata{$::p}{nextcolor}, $::p));
+                        } while (!validate_nextcolor($pdata{$::p}{nextcolor}, $::p) && @{$sticked_bubbles{$::p}});
                     }
                 }
 
@@ -2283,6 +2283,16 @@ sub init_game() {
     $imgbin{menu_cursor}{graphics1} = [ add_image("menu/anims/gfx-l3_0001.png") ];
     $imgbin{menu_cursor}{keys} = [ map { add_image("menu/anims/keys_00$_.png") } ('01'..'80') ];
     $imgbin{menu_cursor}{highscores} = [ map { add_image("menu/anims/highscore_00$_.png") } ('01'..'89') ];
+    foreach my $cursortype (keys %{$imgbin{menu_cursor}}) {
+        foreach my $img (@{$imgbin{menu_cursor}{$cursortype}}) {
+            my $alpha = SDL::Surface->new(-width => $img->width, -height => $img->height, -depth => 32);
+            $img->set_alpha(0, 0);  #- for RGBA->RGBA blits, SDL_SRCALPHA must be removed or destination alpha is preserved
+            $img->blit(undef, $alpha, undef);
+            fb_c_stuff::alphaize($alpha->{-surface});
+            push @{$imgbin{menu_cursor}{"${cursortype}alpha"}}, $alpha;
+            $img->set_alpha(SDL_SRCALPHA(), 0);
+        }
+    }
     $imgbin{left_rp1} = add_image('left-rp1.png');
     $imgbin{"left_${_}_mini"} = add_image("left-${_}-mini.png") foreach qw(rp1 rp2 rp3 rp4);
     $imgbin{mp_ready_newgame} = add_image('pinguins/mp_ready_newgame.png');
@@ -2313,8 +2323,8 @@ sub init_game() {
     $imgbin{txt_1pmenu_pick_start_level_off} = add_image('menu/txt_pick_start_level_off.png');
     $imgbin{txt_1pmenu_play_random_levels_off} = add_image('menu/txt_play_random_levels_off.png');
     $imgbin{txt_1pmenu_play_random_levels_over} = add_image('menu/txt_play_random_levels_over.png');
-    $imgbin{txt_1pmenu_mp_train_off} = add_image('menu/txt_play_random_levels_off.png');
-    $imgbin{txt_1pmenu_mp_train_over} = add_image('menu/txt_play_random_levels_over.png');
+    $imgbin{txt_1pmenu_mp_train_off} = add_image('menu/txt_multiplayer_training_off.png');
+    $imgbin{txt_1pmenu_mp_train_over} = add_image('menu/txt_multiplayer_training_over.png');
 
     #- net game setup images
     $imgbin{back_netgame} = add_image('back_netgame.png');
@@ -4226,6 +4236,7 @@ sub menu {
     };
 
     $imgbin{menu_cursor}{graphics} = $imgbin{menu_cursor}{"graphics$graphics_level"};
+    $imgbin{menu_cursor}{graphicsalpha} = $imgbin{menu_cursor}{"graphics${graphics_level}alpha"};
     my ($MENU_XPOS, $MENU_FIRSTY, $SPACING) = (89, 14, 56);
     my %menu_ypos = ( '1pgame' =>      $MENU_FIRSTY,
 		      '2pgame' =>      $MENU_FIRSTY +     $SPACING,
@@ -4250,6 +4261,7 @@ sub menu {
                                              $graphics_level = $_[0];
                                              if ($graphics_level < 3) { $draw_logo->() } else { $speed_ok = 4; }
                                              $imgbin{menu_cursor}{graphics} = $imgbin{menu_cursor}{"graphics$graphics_level"};
+                                             $imgbin{menu_cursor}{graphicsalpha} = $imgbin{menu_cursor}{"graphics${graphics_level}alpha"};
                                              $pdata{cursor_img}{graphics} >= @{$imgbin{menu_cursor}{graphics}} and $pdata{cursor_img}{graphics} = 0;
                                          },
                                          value => $graphics_level },
@@ -4263,7 +4275,7 @@ sub menu {
     $invalidate_all = sub { push @menu_invalids, $menu_entries{$_}->{pos} foreach keys %menu_entries };
 
     my $display_cursor = sub {
-        my ($m) = @_;
+        my ($m, $alpha) = @_;
         my $cursor_rect = SDL::Rect->new(-x => 248, '-y' => $menu_ypos{$m} + 8,
                                          -width => $imgbin{menu_cursor}{$m}[$pdata{cursor_img}{$m}]->width,
                                          -height => $imgbin{menu_cursor}{$m}[$pdata{cursor_img}{$m}]->height);
@@ -4273,7 +4285,11 @@ sub menu {
                                                                          -width => $imgbin{menu_cursor}{$m}[0]->width, -height => $imgbin{menu_cursor}{$m}[0]->height));
         }
         $cursor_save_bg{$m}->blit(undef, $app, $cursor_rect);
-        $imgbin{menu_cursor}{$m}[$pdata{cursor_img}{$m}]->blit(undef, $app, $cursor_rect);
+        if ($alpha) {
+            $imgbin{menu_cursor}{"${m}alpha"}[$pdata{cursor_img}{$m}]->blit(undef, $app, $cursor_rect);
+        } else {
+            $imgbin{menu_cursor}{$m}[$pdata{cursor_img}{$m}]->blit(undef, $app, $cursor_rect);
+        }
         return $cursor_rect;
     };
     my $menu_update = sub {
@@ -4286,7 +4302,7 @@ sub menu {
 	    erase_image_from($imgbin{$txt}, $MENU_XPOS, $menu_ypos{$m}, $back_start);
 	    put_image($imgbin{$txt}, $MENU_XPOS, $menu_ypos{$m});
             $cursor_save_bg{$m} = undef;
-            $display_cursor->($m);
+            $display_cursor->($m, 1);
 	}
 	@menu_invalids = ();
         $draw_logo->('no-update');
@@ -4399,7 +4415,7 @@ sub menu {
                 if ($menu_entries{$m}->{pos} == $current_pos) {
                     $pdata{cursor_img}{$m}++;
                     $pdata{cursor_img}{$m} >= @{$imgbin{menu_cursor}{$m}} and $pdata{cursor_img}{$m} = 0;
-                    my $cursor_rect = $display_cursor->($m);
+                    my $cursor_rect = $display_cursor->($m, 0);
                     $app->update($cursor_rect);
                 }
             }
