@@ -43,7 +43,7 @@ use vars qw($TARGET_ANIM_SPEED $BUBBLE_SIZE $ROW_SIZE $LAUNCHER_SPEED $BUBBLE_SP
             $graphics_level @update_rects $CANON_ROTATIONS_NB %malus_bubble %falling_bubble %exploding_bubble %malus_gfx %ttfonts
             %sticking_bubble $time %imgbin $TIME_HURRY_WARN $TIME_HURRY_MAX $TIMEOUT_PINGUIN_SLEEP $FREE_FALL_CONSTANT @joysticks $joysticksinfo
             $direct @PLAYERS @ALL_PLAYERS %levels $display_on_app_disabled $total_time $time_1pgame $time_netgame $fullscreen $rcfile $hiscorefile $HISCORES
-            $lev_number $playermalus $loaded_levelset $direct_levelset $chainreaction %chains %history %img_mini $frame $sock $gameserver $mynick);
+            $lev_number $playermalus $mptrainingdiff $loaded_levelset $direct_levelset $chainreaction %chains %history %img_mini $frame $sock $gameserver $mynick);
 
 use Data::Dumper;
 use Locale::gettext;
@@ -82,7 +82,9 @@ $graphics_level = 3;
 @PLAYERS = qw(p1 p2);
 @ALL_PLAYERS = qw(p1 p2 rp1 rp2 rp3 rp4);
 $playermalus = 0;
+$mptrainingdiff = 10;
 $chainreaction = 0;
+$mynick = $ENV{USER};
 $HISCORES = [];
 
 $rcfile = "$ENV{HOME}/.fbrc";
@@ -121,7 +123,7 @@ local $_ = "@ARGV";
  -nm, --nomusic              disable music (only)
  -nfx, --nosfx               disable sound effects (only)
  -pl<file>, --playlist<file> use all files listed in the given file as music files and play them
- -Pl<dir>, --playlist<directory> use all files inside the given directory as music files and play them
+ -pl<dir>, --playlist<directory> use all files inside the given directory as music files and play them
  -sl, --slow_machine         enable slow machine mode (disable a few animations)
  -vs, --very_slow_machine    enable very slow machine mode (disable all that can be disabled)
  -so, --solo                 directly start solo (1p) game, with random levels if no -l<#n> is given
@@ -131,6 +133,7 @@ local $_ = "@ARGV";
  -ls<name>, --levelset<name> directly start with the specified levelset name
  -cr, --chain_reaction       enable chain-reaction (if you use NET/LAN game, pay attention that all players do so!)
  -pm<#n>, --playermalus<#n>  add a malus of n to the left player (can be negative)
+ -mpd<#n>, --mp-training-difficulty<#n> set the average duration between receiving malus bubbles in 1 player multiplayer training (default 10 (= every 10 seconds on average), the lower the harder)
  -cb, --colourblind          use bubbles for colourblind people
  -ji, --joysticksinfo        print information about detected joystick(s) on startup
  -ne, --noecho               when sound is enabled, disable echoing each typed character with a typewriter sound
@@ -152,7 +155,8 @@ local $_ = "@ARGV";
 /-so/ and $direct = 1, @PLAYERS = ('p1');
 /-cr/ || /-chain_reaction/ and $chainreaction = 1;
 /-cb/ || /-co/ and $colourblind = 1;
-/-pm\s*(-?[\d]+)/ || /-playermalus\s*(-?\d+)/ and $playermalus = $1;
+/-pm\s*(-?\d+)/ || /-playermalus\s*(-?\d+)/ and $playermalus = $1;
+/-mpd\s*(\d+)/ || /-mp-training-difficulty\s*(\d+)/ and $mptrainingdiff = $1;
 /-ls\s*(\S+)/ || /-levelset\s*(\S+)/ and $levels{current} = 1, $direct = 1, @PLAYERS = ('p1'), $direct_levelset = $1;
 /-l\s*(\d+)/ || /-level\s*(\d+)/ and $levels{current} = $1, $direct = 1, @PLAYERS = ('p1');
 /-ms\s*(\S+)/ || /-masterserver\s*(\S+)/ and $fb_net::masterserver = $1;
@@ -163,7 +167,6 @@ local $_ = "@ARGV";
 /-if\s*(\S+)/ || /-italicfont\s*(\S+)/ and $italicfont = $1; 
 /-ji/ || /-joysticksinfo/ and $joysticksinfo = 1;
 
-$mynick ||= $ENV{USER};
 $mynick = sanitize_nick($mynick);
 
 #- ------------------------------------------------------------------------
@@ -861,6 +864,8 @@ sub generate_new_bubble($$) {
 
 #- ----------- game stuff -------------------------------------------------
 
+our $smg_lineheight = 16;
+
 sub handle_graphics($) {
     my ($fun) = @_;
 
@@ -937,17 +942,46 @@ sub handle_graphics($) {
 
     };
 
+    if ($levels{current} eq 'mp_train' && $pdata{state} eq 'game') {
+        my ($xpos, $ypos) = (45, 160);
+        if ($fun eq \&erase_image) {
+            my $drect = SDL::Rect->new(-width => 100, -height => 30, -x => $xpos, '-y' => $ypos);
+            $background_orig->blit($drect, $app, $drect);
+            push @update_rects, $drect;
+        } else {
+            my $seconds = 120 - ($app->ticks - $pdata{origticks})/1000;
+            $seconds < 0 and $seconds = 0;
+            my $m = int($seconds/60);
+            my $s = int($seconds-$m*60);
+            print_('ingame', $app, $xpos, $ypos, sprintf("%01d' %02d''", $m, $s));
+            if ($seconds == 0) {
+                put_image($imgbin{void_panel}, $MENUPOS{xpos_panel}, $MENUPOS{ypos_panel});
+                my $y = $MENUPOS{ypos_panel} + 30;
+                my @messages = ('', '', '', t("Your score after two minutes:"), '', $pdata{p1}{score}, '', t("Press any key to retry."));
+                foreach (@messages) {
+                    print_('menu', $app, 320 - width('menu', $_)/2, $y, $_);
+                    $y += $smg_lineheight;
+                }
+                $app->flip;
+                play_sound('cancel');
+                fb_c_stuff::fbdelay(1000);
+                $event->pump while $event->poll != 0;
+                grab_key() eq SDLK_ESCAPE() and die 'quit';
+                die 'new_game';
+            }
+        }
+    }
 }
 
 #- extract it from "handle_graphics" to optimize a bit animations
 sub malus_change($$) {
     my ($numb, $player) = @_;
+    return if $numb == 0 || is_1p_game() && $levels{current} ne 'mp_train';
     if ($levels{current} eq 'mp_train' && $numb > 0) {
         $pdata{p1}{score} += $numb;
         print_scores($app);
         return;
     }
-    return if $numb == 0 || is_1p_game();
     my $update_malus = sub($) {
 	my ($fun, $p) = @_;
 	my $malus = $pdata{$p}{malus};
@@ -1005,8 +1039,6 @@ sub print_compressor() {
 	$y -= $comp_ext->height;
     }
 }
-
-our $smg_lineheight = 16;
 
 sub print_ {
     my ($kind, $surface, $x, $y, @text) = @_;
@@ -1320,6 +1352,12 @@ sub handle_game_events() {
             }
         }
         fb_net::gdelay_messages(@messages);
+    }
+
+    if ($levels{current} eq 'mp_train' && @{$malus_bubble{p1}} == 0 && $pdata{p1}{malus} == 0) {
+        if (int(rand($mptrainingdiff*(1000/$TARGET_ANIM_SPEED))) == 0) {
+            $pdata{p1}{malus} = 1 + int(rand(6));
+        }
     }
 }
 
@@ -2837,6 +2875,10 @@ sub new_game() {
             }
         }
     }
+
+    if ($levels{current} eq 'mp_train') {
+        $pdata{origticks} = $app->ticks + 999;
+    }
 }
 
 sub choose_1p_game_mode() {
@@ -4302,7 +4344,7 @@ sub menu {
 	    erase_image_from($imgbin{$txt}, $MENU_XPOS, $menu_ypos{$m}, $back_start);
 	    put_image($imgbin{$txt}, $MENU_XPOS, $menu_ypos{$m});
             $cursor_save_bg{$m} = undef;
-            $display_cursor->($m, 1);
+            $display_cursor->($m, $menu_entries{$m}->{pos} != $current_pos);
 	}
 	@menu_invalids = ();
         $draw_logo->('no-update');
