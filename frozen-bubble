@@ -74,7 +74,8 @@ $TIMEOUT_PINGUIN_SLEEP = 200;
 $FREE_FALL_CONSTANT = 0.5;
 $KEYS = { p1 => { left => SDLK_LEFT, right => SDLK_RIGHT, fire => SDLK_UP, center => SDLK_DOWN },
           p2 => { left => SDLK_x,    right => SDLK_v,     fire => SDLK_c,  center => SDLK_d },
-	  misc => { fs => SDLK_f, chat => SDLK_RETURN } };
+	  misc => { fs => SDLK_f, chat => SDLK_RETURN, send_malus_to_rp1 => SDLK_F1, send_malus_to_rp2 => SDLK_F2, send_malus_to_rp3 => SDLK_F3,
+                    send_malus_to_rp4 => SDLK_F4, next_playlist_elem => SDLK_TAB } };
 
 $sdl_flags = SDL_ANYFORMAT | SDL_HWSURFACE | SDL_DOUBLEBUF | SDL_HWACCEL | SDL_ASYNCBLIT;
 $mixer = 0;
@@ -88,7 +89,9 @@ $mynick = $ENV{USER};
 $HISCORES = [];
 
 $rcfile = "$ENV{HOME}/.fbrc";
+my $keys_orig = $KEYS;
 eval(cat_($rcfile));
+$KEYS->{misc}{$_} ||= $keys_orig->{misc}{$_} foreach keys %{$keys_orig->{misc}};  #- for upgrades
 eval(cat_($hiscorefile = "$ENV{HOME}/.fbhighscores"));
 
 textdomain("frozen-bubble");
@@ -1204,7 +1207,12 @@ sub handle_game_events() {
                     $total_time += $app->ticks - $time_pause;
                     is_1p_game() and $time_1pgame += $app->ticks - $time_pause;
                 }
-                
+
+                if ($mixer_enabled && $mixer && @playlist && $keypressed eq $KEYS->{misc}{next_playlist_elem}) {
+                    $mixer->halt_music;
+                    play_music('dummy', 0);
+                }
+
             }
         }
 
