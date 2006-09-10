@@ -946,10 +946,10 @@ sub handle_graphics($) {
     };
 
     if ($levels{current} eq 'mp_train' && $pdata{state} eq 'game') {
-        my ($xpos, $ypos) = (45, 160);
+        my ($xpos, $ypos) = (53, 177);
         if ($fun eq \&erase_image) {
             my $drect = SDL::Rect->new(-width => 100, -height => 30, -x => $xpos, '-y' => $ypos);
-            $background_orig->blit($drect, $app, $drect);
+            $background->blit($drect, $app, $drect);
             push @update_rects, $drect;
         } else {
             my $seconds = 120 - ($app->ticks - $pdata{origticks})/1000;
@@ -2364,6 +2364,7 @@ sub init_game() {
     $imgbin{'1p_panel'} = add_image('menu/1p_panel.png');
     $imgbin{void_chat} = add_image('menu/void_chat.png');
     $imgbin{void_chat_small} = add_image('menu/void_chat_small.png');
+    $imgbin{void_mp_training} = add_image('void_mp_training.png');
     $imgbin{version} = add_image('menu/version.png');
     $imgbin{ping_low} = add_image('menu/ping-low.png');
     $imgbin{ping_mid} = add_image('menu/ping-mid.png');
@@ -2776,6 +2777,7 @@ sub new_game() {
         if ($levels{current} eq 'mp_train') {
             $pdata{$PLAYERS[0]}{score} = 0;
         } else {
+            $chainreaction = 0;
             $TIME_APPEARS_NEW_ROOT = 8;
             $TIME_HURRY_WARN = 400;
             $TIME_HURRY_MAX = 525;
@@ -2787,6 +2789,9 @@ sub new_game() {
 
     $backgr->blit($apprects{main}, $background_orig, $apprects{main});
     $background_orig->blit($apprects{main}, $background, $apprects{main});
+    if ($levels{current} eq 'mp_train') {
+        put_image_to_background($imgbin{void_mp_training}, 32, 152);
+    }
 
     iter_players {
 	$actions{$::p}{$_} = 0 foreach qw(left right fire center);
@@ -4347,7 +4352,7 @@ sub menu {
 		      'highscores' =>  $MENU_FIRSTY + 7 * $SPACING,
 		  );
     my %menu_entries = ( '1pgame' => { pos => 1, type => 'rungame',
-				       run => sub { @PLAYERS = ('p1'); $levels{current} = 1; $chainreaction = 0; $time_1pgame = $app->ticks } },
+				       run => sub { @PLAYERS = ('p1'); $levels{current} = 1; $time_1pgame = $app->ticks } },
 			 '2pgame' => { pos => 2, type => 'rungame',
 				       run => sub { @PLAYERS = qw(p1 p2); $levels{current} = undef; } },
 			 'langame'=> { pos => 3, type => 'rungame',
