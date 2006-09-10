@@ -1,5 +1,9 @@
 What's new in version 2:
 
+       - new 1-player game mode: multiplayer training; uses
+         identical game rules as multiplayer, generated malus
+         bubbles are counted as points
+
        - network (Internet) game: up to 5 players in a game (net
          game system has logic able to transparently handle
          players behind a NAT)
