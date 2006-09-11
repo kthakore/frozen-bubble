@@ -2103,10 +2103,17 @@ sub update_game() {
 	}
 	if (@$exploding_end) {
 	    @{$exploding_bubble{$::p}} = difference2($exploding_bubble{$::p}, $exploding_end);
-	    if ($pdata{state} =~ /^lost (.*)/ && $::p ne $1 && !is_1p_game()
-		&& !@{$exploding_bubble{$::p}} && !@{$sticked_bubbles{$::p}}) {
-		put_image($imgbin{win}{$::p}, $POS{centerpanel}{'x'}, $POS{centerpanel}{'y'});
-	    }
+            if (!@{$exploding_bubble{$::p}} && !@{$sticked_bubbles{$::p}}) {
+                if ($pdata{state} =~ /^lost (.*)/ && $::p ne $1 && !is_1p_game()) {
+                    put_image($imgbin{win}{$::p}, $POS{centerpanel}{'x'}, $POS{centerpanel}{'y'});
+                }
+                if (is_mp_game() && $pdata{state} =~ /^won (.*)/) {
+                    my $img = $1 eq 'p1' ? $imgbin{win_panel_p1_net} : @PLAYERS == 2 ? $imgbin{win}{rp3} : $imgbin{win}{$1};
+                    put_image($img, $POS{centerpanel}{x}, $POS{centerpanel}{'y'});
+                    my $width = width('ingame', $pdata{$1}{nick});
+                    print_('ingame', $app, 358 - $width/2, 300, $pdata{$1}{nick});
+                }
+            }
 	}
 
 	if (member($pdata{$::p}{ping_right}{state}, qw(action right_to right_from left_to left_from wait_to wait win lose_to lose))) {
@@ -2322,6 +2329,7 @@ sub init_game() {
     push @{$imgbin{paused}}, add_image("pause_$_.png") foreach 1..10;
     $imgbin{lose} = add_image('lose_panel.png');
     $imgbin{win_panel_1player} = add_image('win_panel_1player.png');
+    $imgbin{win_panel_p1_net} = add_image('win_panel_p1_net.png');
     $imgbin{compressor_main} = add_image('compressor_main.png');
     $imgbin{compressor_ext} = add_image('compressor_ext.png');
 
@@ -2438,18 +2446,9 @@ sub init_game() {
     local @PLAYERS = @ALL_PLAYERS;  #- load all images even if -so commandline option was passed
     iter_players {
 	$imgbin{hurry}{$::p} = add_image("hurry_$::p.png");
-	$pinguin{$::p}{normal} = [ map { add_image($_) } ("pinguins/base_$::p.png", map { "pinguins/base_$::p"."_extra_0$_.png" } (1..3)) ];
 	$pinguin{$::p}{sleep} = [ add_image("pinguins/sleep_$::p.png") ];
-	$pinguin{$::p}{left} = [ add_image("pinguins/move_left_$::p.png") ];
-	$pinguin{$::p}{right} = [ add_image("pinguins/move_right_$::p.png") ];
-	$pinguin{$::p}{action} = [ add_images("pinguins/action_$::p*.png") ];
-	$pinguin{$::p}{lose} = [ map { add_image("pinguins/$::p"."_loose_$_.png") } qw(1 2 3 4 5 6 7 8 9) ];
-	$pinguin{$::p}{lose_roll_back_index} = 5;
-	$pinguin{$::p}{win} = [ map { add_image("pinguins/$::p"."_win_$_.png") } qw(1 2 3 4 5 6 7 8 6) ];
-	$pinguin{$::p}{walkright} = [ map { add_image("pinguins/$::p"."_dg_walk_0$_.png") } qw(1 2 3 4 5 6) ];
 	$imgbin{win}{$::p} = add_image("win_panel_$::p.png");
 	$pdata{$::p}{score} = 0;
-
         $pinguin{$::p}{normal} = [ add_image("pinguins/anime-shooter_p1_0020.png") ];
         $pinguin{$::p}{action} = [ map { add_image("pinguins/anime-shooter_p1_00$_.png") } (21..50) ];
         $pinguin{$::p}{left_to} = [ map { add_image("pinguins/anime-shooter_p1_00$_.png") } reverse ('02'..'19') ];
