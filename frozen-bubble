@@ -869,6 +869,16 @@ sub generate_new_bubble($$) {
 
 our $smg_lineheight = 16;
 
+our ($mp_train_xpos, $mp_train_ypos) = (53, 177);
+sub mp_train_print_time {
+    my $drect = SDL::Rect->new(-width => 100, -height => 30, -x => $mp_train_xpos, '-y' => $mp_train_ypos);
+    my $seconds = 120 - ($app->ticks - $pdata{origticks})/1000;
+    $seconds < 0 and $seconds = 0;
+    my $m = int($seconds/60);
+    my $s = int($seconds-$m*60);
+    print_('ingame', $background, $mp_train_xpos, $mp_train_ypos, sprintf("%01d' %02d''", $m, $s));
+}
+
 sub handle_graphics($) {
     my ($fun) = @_;
 
@@ -946,17 +956,13 @@ sub handle_graphics($) {
     };
 
     if ($levels{current} eq 'mp_train' && $pdata{state} eq 'game') {
-        my ($xpos, $ypos) = (53, 177);
-        if ($fun eq \&erase_image) {
-            my $drect = SDL::Rect->new(-width => 100, -height => 30, -x => $xpos, '-y' => $ypos);
+        if ($fun ne \&erase_image) {
+            my $drect = SDL::Rect->new(-width => 100, -height => 30, -x => $mp_train_xpos, '-y' => $mp_train_ypos);
+            $background_orig->blit($drect, $background, $drect);
+            mp_train_print_time();
             $background->blit($drect, $app, $drect);
             push @update_rects, $drect;
-        } else {
             my $seconds = 120 - ($app->ticks - $pdata{origticks})/1000;
-            $seconds < 0 and $seconds = 0;
-            my $m = int($seconds/60);
-            my $s = int($seconds-$m*60);
-            print_('ingame', $app, $xpos, $ypos, sprintf("%01d' %02d''", $m, $s));
             if ($seconds == 0) {
                 put_image($imgbin{void_panel}, $MENUPOS{xpos_panel}, $MENUPOS{ypos_panel});
                 my $y = $MENUPOS{ypos_panel} + 30;
@@ -1004,6 +1010,7 @@ sub malus_change($$) {
     if ($levels{current} eq 'mp_train' && $numb > 0) {
         $pdata{p1}{score} += $numb;
         print_scores($app);
+        print_scores($background);
         return;
     }
     if ($numb > 0) {
@@ -1233,6 +1240,7 @@ sub handle_game_events() {
                     $app->flip;
                     $total_time += $app->ticks - $time_pause;
                     is_1p_game() and $time_1pgame += $app->ticks - $time_pause;
+                    $levels{current} eq 'mp_train' and $pdata{origticks} += $app->ticks - $time_pause;
                 }
 
                 if (is_mp_game()) {
@@ -2787,10 +2795,11 @@ sub new_game() {
     }
 
     $backgr->blit($apprects{main}, $background_orig, $apprects{main});
-    $background_orig->blit($apprects{main}, $background, $apprects{main});
     if ($levels{current} eq 'mp_train') {
-        put_image_to_background($imgbin{void_mp_training}, 32, 152);
+	my $drect = SDL::Rect->new(-x => 32, '-y' => 152);
+	$imgbin{void_mp_training}->blit($rects{$imgbin{void_mp_training}}, $background_orig, $drect);
     }
+    $background_orig->blit($apprects{main}, $background, $apprects{main});
 
     iter_players {
 	$actions{$::p}{$_} = 0 foreach qw(left right fire center);
@@ -2819,6 +2828,10 @@ sub new_game() {
     };
 
     print_scores($background);
+    if ($levels{current} eq 'mp_train') {
+        $pdata{origticks} = $app->ticks + 999;
+        mp_train_print_time();
+    }
 
     is_1p_game() and print_compressor();
 
