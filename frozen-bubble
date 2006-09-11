@@ -83,7 +83,7 @@ $graphics_level = 3;
 @PLAYERS = qw(p1 p2);
 @ALL_PLAYERS = qw(p1 p2 rp1 rp2 rp3 rp4);
 $playermalus = 0;
-$mptrainingdiff = 10;
+$mptrainingdiff = 30;
 $chainreaction = 0;
 $mynick = $ENV{USER};
 $HISCORES = [];
@@ -136,7 +136,7 @@ local $_ = "@ARGV";
  -ls<name>, --levelset<name> directly start with the specified levelset name
  -cr, --chain_reaction       enable chain-reaction (if you use NET/LAN game, pay attention that all players do so!)
  -pm<#n>, --playermalus<#n>  add a malus of n to the left player (can be negative)
- -mpd<#n>, --mp-training-difficulty<#n> set the average duration between receiving malus bubbles in 1 player multiplayer training (default 10 (= every 10 seconds on average), the lower the harder)
+ -mpd<#n>, --mp-training-difficulty<#n> set the average duration between receiving malus bubbles in 1 player multiplayer training (default 30 (= every 30 seconds on average), the lower the harder)
  -cb, --colourblind          use bubbles for colourblind people
  -ji, --joysticksinfo        print information about detected joystick(s) on startup
  -ne, --noecho               when sound is enabled, disable echoing each typed character with a typewriter sound
