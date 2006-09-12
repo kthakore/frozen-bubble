@@ -2524,10 +2524,10 @@ sub translate_joystick_tokey($) {
             return "joystick|axisvalue|$which|$axis|0";
         }
     } elsif ($event->type() == SDL::JOYBUTTONDOWN()) {
-        my $button = SDL::JoyButtonEventButton($event->{-event});
+        my $button = SDL::JoyButtonEventButton($event->{-event}) + 1;
         return "joystick|buttondown|$which|$button";
     } elsif ($event->type() == SDL::JOYBUTTONUP()) {
-        my $button = SDL::JoyButtonEventButton($event->{-event});
+        my $button = SDL::JoyButtonEventButton($event->{-event}) + 1;
         return "joystick|buttonup|$which|$button";
     }
 }
