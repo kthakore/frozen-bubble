@@ -550,7 +550,6 @@ sub grecv() {
         }
     }
 
-    $ouch and die;
     return @msg;
 }
 
