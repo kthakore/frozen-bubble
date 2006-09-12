@@ -3128,7 +3128,7 @@ sub smg_servers() {
                         return [ { host => 'localhost', port => 1511 } ];
                     } else {
                         %ttfonts = undef;  #- close related file descriptors
-                        unless (exec $fb_server, '-L', '-p', '1511', '-d', '-n', "lan-$mynick", '-z') {
+                        unless (exec $fb_server, '-L', '-d', '-n', "lan-$mynick", '-z') {
                             print STDERR "Could not create server limited to lan game: $!\n";
                             POSIX::_exit(1);
                         }

@@ -15,7 +15,7 @@ msgstr ""
 "Last-Translator: Vitezslav Smid <me@vitezslav-smid.net>\n"
 "Language-Team: Czech\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit"
 
 #: ../frozen-bubble:2633
@@ -240,7 +240,7 @@ msgstr "Hráč 2; střed?"
 
 #: ../frozen-bubble:3756
 msgid "Toggle fullscreen?"
-msgstr "Přepnout zobrazení na celou obrazovku?"
+msgstr "Přepnout fullscreen?"
 
 #: ../frozen-bubble:3757
 msgid "Chat (net/lan game)?"
