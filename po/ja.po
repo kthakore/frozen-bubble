@@ -199,23 +199,23 @@ msgid "Player 1; turn left?"
 msgstr "プレイヤー1: 左へ"
 
 #: ../frozen-bubble:3747
-msgid "Player 1; turn right?"
+msgid "Player 1: turn right?"
 msgstr "プレイヤー1: 右へ"
 
 #: ../frozen-bubble:3748
-msgid "Player 1; fire?"
+msgid "Player 1: fire?"
 msgstr "プレイヤー1: ファイア"
 
 #: ../frozen-bubble:3749
-msgid "Player 1; center?"
+msgid "Player 1: center?"
 msgstr "プレイヤー1: 中央へ"
 
 #: ../frozen-bubble:3751
-msgid "Player 2; turn left?"
+msgid "Player 2: turn left?"
 msgstr "プレイヤー2: 左へ"
 
 #: ../frozen-bubble:3752
-msgid "Player 2; turn right?"
+msgid "Player 2: turn right?"
 msgstr "プレイヤー2: 右へ"
 
 #: ../frozen-bubble:3753
