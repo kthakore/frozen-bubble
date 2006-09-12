@@ -206,11 +206,11 @@ msgstr "Aseta uudet näppäimet:"
 
 #: ../frozen-bubble:3746
 msgid "Player 1; turn left?"
-msgstr "Pelaaja 1; käännä vasemmalle?"
+msgstr "Pelaaja 1; vasemmalle?"
 
 #: ../frozen-bubble:3747
 msgid "Player 1; turn right?"
-msgstr "Pelaaja 1; käännä oikealle?"
+msgstr "Pelaaja 1; oikealle?"
 
 #: ../frozen-bubble:3748
 msgid "Player 1; fire?"
@@ -222,11 +222,11 @@ msgstr "Pelaaja 1; keskitä?"
 
 #: ../frozen-bubble:3751
 msgid "Player 2; turn left?"
-msgstr "Pelaaja 2; käännä vasemmalle?"
+msgstr "Pelaaja 2; vasemmalle?"
 
 #: ../frozen-bubble:3752
 msgid "Player 2; turn right?"
-msgstr "Pelaaja 2; käännä oikealle?"
+msgstr "Pelaaja 2; oikealle?"
 
 #: ../frozen-bubble:3753
 msgid "Player 2; fire?"
