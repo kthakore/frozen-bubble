@@ -35,6 +35,8 @@ our $proto_minor = '0';
 our $timeout = 3;   #- in seconds
 
 my $udp_server_port = 1511;  #- a.k.a 0xF 0xB thx misc
+$SIG{PIPE} = 'IGNORE';  #- stupid send/write low-level API sending SIGPIPE when server closes connection, and stupid Perl
+                        #- not allowing flags in syswrite
 
 #- UDP discover LAN servers with broadcast
 

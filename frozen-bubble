@@ -963,7 +963,7 @@ sub handle_graphics($) {
             $background->blit($drect, $app, $drect);
             push @update_rects, $drect;
             my $seconds = 120 - ($app->ticks - $pdata{origticks})/1000;
-            if ($seconds == 0) {
+            if ($seconds < 0) {
                 put_image($imgbin{void_panel}, $MENUPOS{xpos_panel}, $MENUPOS{ypos_panel});
                 my $y = $MENUPOS{ypos_panel} + 30;
                 my @messages = ('', '', '', t("Your score after two minutes:"), '', $pdata{p1}{score}, '', t("Press any key to retry."));
@@ -1128,7 +1128,13 @@ sub mp_disconnect_with_reason {
 }
 
 sub check_mp_connection {
-    fb_net::isconnected() or mp_disconnect_with_reason(t("Lost connection to server!"), '', t("Your lag is probably too high."));
+    if (!fb_net::isconnected()) {
+        if ($pdata{gametype} eq 'lan') {
+            mp_disconnect_with_reason('', '', '', '', t("Lost connection to server!"), '', t("Hoster aborted the game."));
+        } else {
+            mp_disconnect_with_reason('', '', '', '', t("Lost connection to server!"), '', t("Your lag is probably too high."));
+        }
+    }
 }
 
 sub update_say_mp {
