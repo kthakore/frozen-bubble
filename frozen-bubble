@@ -968,7 +968,7 @@ sub handle_graphics($) {
             if ($seconds < 0) {
                 put_image($imgbin{void_panel}, $MENUPOS{xpos_panel}, $MENUPOS{ypos_panel});
                 my $y = $MENUPOS{ypos_panel} + 30;
-                my @messages = ('', '', '', t("Your score after two minutes:"), '', $pdata{p1}{score}, '', t("Press any key to retry."));
+                my @messages = ('', '', '', t("Your score after two minutes:"), '', $pdata{p1}{score}, '', t("Press any key."));
                 foreach (@messages) {
                     print_('menu', $app, 320 - width('menu', $_)/2, $y, $_);
                     $y += $smg_lineheight;
