@@ -42,7 +42,7 @@ use vars qw($TARGET_ANIM_SPEED $BUBBLE_SIZE $ROW_SIZE $LAUNCHER_SPEED $BUBBLE_SP
             $shooter_lowgfx $sdl_flags $mixer $mixer_enabled $music_disabled $sfx_disabled $no_echo $regularfont $italicfont @playlist %sound %music %pinguin %canon
             $graphics_level @update_rects $CANON_ROTATIONS_NB %malus_bubble %falling_bubble %exploding_bubble %malus_gfx %ttfonts
             %sticking_bubble $time %imgbin $TIME_HURRY_WARN $TIME_HURRY_MAX $TIMEOUT_PINGUIN_SLEEP $FREE_FALL_CONSTANT @joysticks $joysticksinfo
-            $direct @PLAYERS @ALL_PLAYERS %levels $display_on_app_disabled $total_time $time_1pgame $time_netgame $fullscreen $rcfile $hiscorefile $HISCORES
+            $direct @PLAYERS @ALL_PLAYERS %levels $display_on_app_disabled $total_time $time_1pgame $time_netgame $fullscreen $rcfile %hiscorefiles $HISCORES $HISCORES_MPTRAIN
             $lev_number $playermalus $mptrainingdiff $loaded_levelset $direct_levelset $chainreaction %chains %history %img_mini $frame $sock $gameserver $mynick);
 
 use Data::Dumper;
@@ -87,12 +87,14 @@ $mptrainingdiff = 30;
 $chainreaction = 0;
 $mynick = $ENV{USER};
 $HISCORES = [];
+$HISCORES_MPTRAIN = [];
 
 $rcfile = "$ENV{HOME}/.fbrc";
 my $keys_orig = $KEYS;
 eval(cat_($rcfile));
 $KEYS->{misc}{$_} ||= $keys_orig->{misc}{$_} foreach keys %{$keys_orig->{misc}};  #- for upgrades
-eval(cat_($hiscorefile = "$ENV{HOME}/.fbhighscores"));
+eval(cat_($hiscorefiles{levels} = "$ENV{HOME}/.fbhighscores"));
+eval(cat_($hiscorefiles{mptrain} = "$ENV{HOME}/.fbhighscores-mptrain"));
 
 textdomain("frozen-bubble");
 bind_textdomain_codeset("frozen-bubble", "UTF-8");  #- we're going to use SDL-ttf functions using UTF-8 input
@@ -976,6 +978,7 @@ sub handle_graphics($) {
                 fb_c_stuff::fbdelay(1000);
                 $event->pump while $event->poll != 0;
                 grab_key() eq SDLK_ESCAPE() and die 'quit';
+                handle_new_hiscores();
                 die 'new_game';
             }
         }
@@ -2559,91 +2562,97 @@ sub grab_key {
 }
 
 use Time::HiRes qw(gettimeofday sleep);
-sub display_highscores() {
-
-    $imgbin{back_hiscores}->blit($apprects{main}, $app, $apprects{main});
+sub display_highscores {
+    my ($type) = @_;
 
     $display_on_app_disabled = 1;
     @PLAYERS = ('p1');
     %POS = %POS_1P;
 
-    my $initial_high_posx = 90;
-    my ($high_posx, $high_posy) = ($initial_high_posx, 68);
-    my $high_rect = SDL::Rect->new('-x' => $POS{p1}{left_limit} & 0xFFFFFFFC, '-y' => $POS{p1}{top_limit} & 0xFFFFFFFC,
-				   '-width' => ($POS{p1}{right_limit}-$POS{p1}{left_limit}) & 0xFFFFFFFC, -height => ($POS{p1}{'initial_bubble_y'}-$POS{p1}{top_limit}-10) & 0xFFFFFFFC);
+    if ($type eq 'levels' || !defined($type)) {
+        $imgbin{back_hiscores}->blit($apprects{main}, $app, $apprects{main});
 
-    my $centered_print = sub($$$) {
-	my ($x, $y, $txt) = @_;
-	print_('menu', $app, $x + ($imgbin{hiscore_frame}->width - width('menu', $txt))/2 - 6,
-                             $y + $imgbin{hiscore_frame}->height - 8, $txt);
-    };
+        my $initial_high_posx = 90;
+        my ($high_posx, $high_posy) = ($initial_high_posx, 68);
+        my $high_rect = SDL::Rect->new('-x' => $POS{p1}{left_limit} & 0xFFFFFFFC, '-y' => $POS{p1}{top_limit} & 0xFFFFFFFC,
+                                       '-width' => ($POS{p1}{right_limit}-$POS{p1}{left_limit}) & 0xFFFFFFFC, -height => ($POS{p1}{'initial_bubble_y'}-$POS{p1}{top_limit}-10) & 0xFFFFFFFC);
 
-    my $old_levelset = $loaded_levelset;
-
-    foreach my $high (ordered_highscores()) {
-	iter_players {
-	    @{$sticked_bubbles{$::p}} = ();
-	    @{$root_bubbles{$::p}} = ();
-	    $pdata{$::p}{newrootlevel} = 0;
-	    $pdata{$::p}{oddswap} = 0;
-	};
-	$imgbin{back_1p}->blit($high_rect, $background, $high_rect);
-
-	# try to get it from the default-levelset. If we can't, default to the
-	# last level in the default levelset
-	if (!$high->{piclevel}) {
-	    $loaded_levelset ne "$FPATH/data/levels" and load_levelset("$FPATH/data/levels");
+        my $centered_print = sub($$$) {
+            my ($x, $y, $txt) = @_;
+            print_('menu', $app, $x + ($imgbin{hiscore_frame}->width - width('menu', $txt))/2 - 6,
+                   $y + $imgbin{hiscore_frame}->height - 8, $txt);
+        };
         
-	    # handle the case where the user has edited/created a levelset with more levels
-	    # than the default levelset and then got a high score
-	    if ($high->{level} > $lev_number) {
-		open_level($lev_number);
-	    } else {
-		open_level($high->{level});
-	    }
-	} else {
-	    # this is the normal case. just load the level that the file tells us
-	    if ($loaded_levelset ne "$ENV{HOME}/.fbhighlevelshistory") {
-		load_levelset("$ENV{HOME}/.fbhighlevelshistory");
-	    }
-	    open_level($high->{piclevel});
-	}
+        my $old_levelset = $loaded_levelset;
+        
+        foreach my $high (ordered_highscores()) {
+            @{$sticked_bubbles{p1}} = ();
+            @{$root_bubbles{p1}} = ();
+            $pdata{p1}{newrootlevel} = 0;
+            $pdata{p1}{oddswap} = 0;
+            $imgbin{back_1p}->blit($high_rect, $background, $high_rect);
 
-	put_image($imgbin{hiscore_frame}, $high_posx - 7, $high_posy - 6);
-	my $tmp = SDL::Surface->new(-width => $high_rect->width/4, -height => $high_rect->height/4,
-                                    -depth => 32, -Amask => "0 but true")->display_format;
-	fb_c_stuff::shrink($tmp->{-surface}, $background->display_format->{-surface}, 0, 0, $high_rect->{-rect}, 4);
-        $tmp->blit(undef, $app, SDL::Rect->new(-x => $high_posx, '-y' => $high_posy));
-	$centered_print->($high_posx, $high_posy,    $high->{name});
-	$centered_print->($high_posx, $high_posy+20, $high->{level} eq 'WON' ? "won!" : "level ".$high->{level});
-	my $min = int($high->{time}/60);
-	my $sec = int($high->{time} - $min*60); length($sec) == 1 and $sec = "0$sec";
-	$centered_print->($high_posx, $high_posy+40, "$min'$sec''");
-	$high_posx += 98;
-	$high_posx > 550 and $high_posx = $initial_high_posx, $high_posy += 175;
-	$high_posy > 440 and last;
+            # try to get it from the default-levelset. If we can't, default to the
+            # last level in the default levelset
+            if (!$high->{piclevel}) {
+                $loaded_levelset ne "$FPATH/data/levels" and load_levelset("$FPATH/data/levels");
+                
+                # handle the case where the user has edited/created a levelset with more levels
+                # than the default levelset and then got a high score
+                if ($high->{level} > $lev_number) {
+                    open_level($lev_number);
+                } else {
+                    open_level($high->{level});
+                }
+            } else {
+                # this is the normal case. just load the level that the file tells us
+                if ($loaded_levelset ne "$ENV{HOME}/.fbhighlevelshistory") {
+                    load_levelset("$ENV{HOME}/.fbhighlevelshistory");
+                }
+                open_level($high->{piclevel});
+            }
+
+            put_image($imgbin{hiscore_frame}, $high_posx - 7, $high_posy - 6);
+            my $tmp = SDL::Surface->new(-width => $high_rect->width/4, -height => $high_rect->height/4,
+                                        -depth => 32, -Amask => "0 but true")->display_format;
+            fb_c_stuff::shrink($tmp->{-surface}, $background->display_format->{-surface}, 0, 0, $high_rect->{-rect}, 4);
+            $tmp->blit(undef, $app, SDL::Rect->new(-x => $high_posx, '-y' => $high_posy));
+            $centered_print->($high_posx, $high_posy,    $high->{name});
+            $centered_print->($high_posx, $high_posy+20, $high->{level} eq 'WON' ? "won!" : "level ".$high->{level});
+            my $min = int($high->{time}/60);
+            my $sec = int($high->{time} - $min*60); length($sec) == 1 and $sec = "0$sec";
+            $centered_print->($high_posx, $high_posy+40, "$min'$sec''");
+            $high_posx += 98;
+            $high_posx > 550 and $high_posx = $initial_high_posx, $high_posy += 175;
+            $high_posy > 440 and last;
+        }
+        load_levelset($old_levelset);    
+
+        $app->flip;
+        
+        $event->pump while $event->poll != 0;
+        grab_key();
     }
-    load_levelset($old_levelset);    
 
-    $app->flip;
+    if (($type eq 'mptrain' || !defined($type)) && @$HISCORES_MPTRAIN) {
+        $imgbin{back_hiscores}->blit($apprects{main}, $app, $apprects{main});
+
+        my $x = 60;
+        my $y = 40;
+        my $counter = 1;
+        foreach my $high (ordered_mptrain_highscores()) {
+            print_('ingame', $app, $x, $y, "$counter. $high->{name}: $high->{score}");
+            $y += $smg_lineheight + 4;
+            $counter++;
+        }
+
+        $app->flip;
+        
+        $event->pump while $event->poll != 0;
+        grab_key();
+    }
+
     $display_on_app_disabled = 0;
-
-    $event->pump while $event->poll != 0;
-    grab_key();
-
-#    sleep 0.5;
-#    $event->pump while ($event->poll != 0);
-#
-#    my $angle = 0;
-#    my $rect = SDL::Rect->new(-x => 0, '-y' => 240, -width => 240, -height => 240);
-#    while (1) {
-#        $event->pump;
-#        die if $event->poll != 0;
-#        my $bilinear = SDL::Surface->new(-width => 240, -height => 240, -depth => 32);
-#        fb_c_stuff::rotate_bilinear($bilinear->{-surface}, $src->{-surface}, $angle += 0.003);
-#        $bilinear->blit(undef, $app, $rect);
-#        $app->update($rect);
-#    }
 }
 
 sub keysym_to_char($) { my ($key) = @_; eval("$key eq SDLK_$_") and return uc($_) foreach @fbsyms::syms }
@@ -3935,45 +3944,73 @@ sub new_game_once {
 
 sub lvl_cmp($$) { $_[0] eq 'WON' ? ($_[1] eq 'WON' ? 0 : 1) : ($_[1] eq 'WON' ? -1 : $_[0] <=> $_[1]) }
 
-sub ordered_highscores() { return sort { lvl_cmp($b->{level}, $a->{level}) || $a->{time} <=> $b->{time} } @$HISCORES }
+sub ordered_highscores { return sort { lvl_cmp($b->{level}, $a->{level}) || $a->{time} <=> $b->{time} } @$HISCORES }
+sub ordered_mptrain_highscores { return sort { $b->{score} <=> $a->{score} } @$HISCORES_MPTRAIN }
 
 sub handle_new_hiscores() {
     is_1p_game() && $levels{current} or return;
 
-    my @ordered = ordered_highscores();
-    my $worst = pop @ordered;
+    if ($levels{current} ne 'mp_train') {
+        #- levels hiscores
+        my @ordered = ordered_highscores();
+        my $worst = pop @ordered;
+        my $total_seconds = ($app->ticks - $time_1pgame)/1000;
+        if (@$HISCORES == 10 && (lvl_cmp($levels{current}, $worst->{level}) == -1
+                                 || lvl_cmp($levels{current}, $worst->{level}) == 0 && $total_seconds > $worst->{time})) {
+            return;
+        }
+        play_sound('applause');
+        append_highscore_level();
 
-    my $total_seconds = ($app->ticks - $time_1pgame)/1000;
+        my %new_entry;
+        $new_entry{level} = $levels{current};
+        $new_entry{time} = $total_seconds;
+        $new_entry{piclevel} = count_highscorehistory_levels();
+        ask_from({ intro => [ t("Congratulations!"), t("You have a highscore!"), '' ],
+                   entries => [ { 'q' => t("Your name?"), 'a' => \$new_entry{name} } ],
+                   outro => t("Great game!"),
+                   erase_background => $background,
+                 });
 
-    if (@$HISCORES == 10 && (lvl_cmp($levels{current}, $worst->{level}) == -1
-			     || lvl_cmp($levels{current}, $worst->{level}) == 0 && $total_seconds > $worst->{time})) {
-	return;
+        return if $new_entry{name} eq '';
+
+        push @$HISCORES, \%new_entry;
+        if (@$HISCORES == 11) {
+            my @high = ordered_highscores();
+            pop @high;
+            $HISCORES = \@high;
+        }
+        output($hiscorefiles{levels}, Data::Dumper->Dump([$HISCORES], [qw(HISCORES)]));
+        display_highscores('levels');
+
+    } else {
+        #- mp training hiscores
+        my @ordered = ordered_mptrain_highscores();
+        my $worst = pop @ordered;
+        if (@$HISCORES_MPTRAIN == 20 && $pdata{p1}{score} < $worst->{score}) {
+            return;
+        }
+        play_sound('applause');
+
+        my %new_entry;
+        $new_entry{score} = $pdata{p1}{score};
+        ask_from({ intro => [ t("Congratulations!"), t("You have a highscore!"), '' ],
+                   entries => [ { 'q' => t("Your name?"), 'a' => \$new_entry{name} } ],
+                   outro => t("Great game!"),
+                   erase_background => $background,
+                 });
+
+        return if $new_entry{name} eq '';
+
+        push @$HISCORES_MPTRAIN, \%new_entry;
+        if (@$HISCORES_MPTRAIN == 11) {
+            my @high = ordered_mptrain_highscores();
+            pop @high;
+            $HISCORES_MPTRAIN = \@high;
+        }
+        output($hiscorefiles{mptrain}, Data::Dumper->Dump([$HISCORES_MPTRAIN], [qw(HISCORES_MPTRAIN)]));
+        display_highscores('mptrain');
     }
-
-    play_sound('applause');
-    append_highscore_level();
-
-    my %new_entry;
-    $new_entry{level} = $levels{current};
-    $new_entry{time} = $total_seconds;
-    $new_entry{piclevel} = count_highscorehistory_levels();
-    ask_from({ intro => [ t("Congratulations!"), t("You have a highscore!"), '' ],
-	       entries => [ { 'q' => t("Your name?"), 'a' => \$new_entry{name} } ],
-	       outro => t("Great game!"),
-	       erase_background => $background,
-	     });
-
-    return if $new_entry{name} eq '';
-
-    push @$HISCORES, \%new_entry;
-    if (@$HISCORES == 11) {
-	my @high = ordered_highscores();
-	pop @high;
-	$HISCORES = \@high;
-    }
-
-    output($hiscorefile, Data::Dumper->Dump([$HISCORES], [qw(HISCORES)]));
-    display_highscores();
 }
 
 # append the new highscore to the .fbhighlevelshistory
@@ -4237,7 +4274,9 @@ our %cursor_save_bg;
 sub menu {
     my ($from_intro, $back_from_intro) = @_;
 
-    handle_new_hiscores();
+    if (is_1p_game() && $levels{current} ne 'mp_train') {
+        handle_new_hiscores();
+    }
 
     if (!$from_intro) {
         $music{current} ne 'intro' and play_music('intro', 8);
