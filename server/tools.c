@@ -24,8 +24,9 @@
 #include <string.h>
 #include <ctype.h>
 #include <errno.h>
-#include <sys/socket.h>
-
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 #include <glib.h>
 
 #include "tools.h"
@@ -154,9 +155,38 @@ gboolean g_list_any(GList * list, GTruthFunc func, gpointer user_data)
                 return TRUE;
 }
 
+static void close_fds(gpointer data, gpointer user_data)
+{
+        close(GPOINTER_TO_INT(data));
+}
+
 void daemonize() {
         pid_t pid, sid;
-        int sock;
+        GList * retained_fds = NULL;
+        int fd;
+
+        // Using the file descriptor number 10 is not possible because newlines are checked
+        // for message termination. Retain it.
+        while (1) {
+                fd = open("/dev/null", 0);
+                if (fd == -1) {
+                        l1(OUTPUT_TYPE_ERROR, "opening /dev/null: %s", strerror(errno));
+                        exit(EXIT_FAILURE);
+                }
+                if (fd < 10) {
+                        retained_fds = g_list_append(retained_fds, GINT_TO_POINTER(fd));
+                } else if (fd == 10) {
+                        break;
+                } else {
+                        // Past 10, so close this one and break
+                        close(fd);
+                        break;
+                }
+        }
+        if (retained_fds) {
+                g_list_foreach(retained_fds, close_fds, NULL);
+                g_list_free(retained_fds);
+        }
 
         if (debug_mode)
                 return;
@@ -192,9 +222,9 @@ void daemonize() {
 
         // Using the file descriptor number 0 is not possible due to the string-oriented protocol when
         // negociating the game (since C strings cannot contain the NULL char). Retain one file descriptor.
-        sock = socket(AF_INET, SOCK_STREAM, 0);
-        if (sock < 0) {
-                l1(OUTPUT_TYPE_ERROR, "creating socket: %s\n", strerror(errno));
+        fd = open("/dev/null", 0);
+        if (fd == -1) {
+                l1(OUTPUT_TYPE_ERROR, "opening /dev/null: %s", strerror(errno));
                 exit(EXIT_FAILURE);
         }
 
