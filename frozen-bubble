@@ -3785,9 +3785,14 @@ sub smg_choose_game() {
                     smg_add_status_msg(t("*** %s was kicked out of the game...", $1));
                     @wholist = difference2(\@wholist, [ $1 ]);
                     play_sound('newroot_solo');
-                } elsif ($message =~ /^KICKED$/) {
+                } elsif ($message eq 'KICKED') {
                     $forget_because_kicked = $joined_leader;
-                    smg_add_status_msg(t("*** You were kicked out of the game...", $1));
+                    smg_add_status_msg(t("*** You were kicked out of the game..."));
+                    play_sound('cancel');
+                    fb_net::reconnect();
+                    return smg_choose_game();
+                } elsif ($message eq 'NO_ACTIVITY_WITHIN_GRACETIME') {
+                    smg_add_status_msg(t("*** You were disconnected because of too long inactivity"));
                     play_sound('cancel');
                     fb_net::reconnect();
                     return smg_choose_game();
