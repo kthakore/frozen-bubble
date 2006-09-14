@@ -968,7 +968,7 @@ sub handle_graphics($) {
             if ($seconds < 0) {
                 put_image($imgbin{void_panel}, $MENUPOS{xpos_panel}, $MENUPOS{ypos_panel});
                 my $y = $MENUPOS{ypos_panel} + 30;
-                my @messages = ('', '', '', t("Your score after two minutes:"), '', $pdata{p1}{score}, '', t("Press any key."));
+                my @messages = ('', '', '', '', t("Your score after two minutes:"), '', $pdata{p1}{score}, '', t("Press any key."));
                 foreach (@messages) {
                     print_('menu', $app, 320 - width('menu', $_)/2, $y, $_);
                     $y += $smg_lineheight;
@@ -2637,12 +2637,12 @@ sub display_highscores {
     if (($type eq 'mptrain' || !defined($type)) && @$HISCORES_MPTRAIN) {
         $imgbin{back_hiscores}->blit($apprects{main}, $app, $apprects{main});
 
-        my $x = 60;
-        my $y = 40;
+        my $x = 230;
+        my $y = 50;
         my $counter = 1;
         foreach my $high (ordered_mptrain_highscores()) {
-            print_('ingame', $app, $x, $y, "$counter. $high->{name}: $high->{score}");
-            $y += $smg_lineheight + 4;
+            print_('menu', $app, $x, $y, "$counter. $high->{name}: $high->{score}");
+            $y += $smg_lineheight + 2;
             $counter++;
         }
 
@@ -4003,7 +4003,7 @@ sub handle_new_hiscores() {
         return if $new_entry{name} eq '';
 
         push @$HISCORES_MPTRAIN, \%new_entry;
-        if (@$HISCORES_MPTRAIN == 11) {
+        if (@$HISCORES_MPTRAIN == 21) {
             my @high = ordered_mptrain_highscores();
             pop @high;
             $HISCORES_MPTRAIN = \@high;

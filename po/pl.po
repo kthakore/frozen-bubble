@@ -242,7 +242,7 @@ msgstr "Włącz pełęn ekran?"
 
 #: ../frozen-bubble:3757
 msgid "Chat (net/lan game)?"
-msgstr "Czat (gra przez internet/lan)"
+msgstr "Czat (gra internet/lan)"
 
 #: ../frozen-bubble:3759
 msgid "Thanks!"
