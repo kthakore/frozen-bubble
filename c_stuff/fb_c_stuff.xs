@@ -1178,15 +1178,6 @@ SV* utf8key_(SDL_Event * e) {
                 if ((iconv(cd, &src, &source_len, &dst, &dest_len)) != (size_t) (-1)) {
                         *dst = 0;
                         retval = newSVpv(dest, 0);
-                        /*
-                        {
-                          int i;
-                          char beuh[40];
-                          bzero(beuh, 40);
-                          for (i=0; i<strlen(dest); i++)
-                            strcat(beuh, asprintf_("%02X ", (unsigned char)dest[i]));
-                          printf("converted UTF16LE bytes: %02X %02X to a UTF8 string: %s (%s)\n", (unsigned char)source[0], (unsigned char)source[1], dest, beuh);
-                          }*/
                 }
         }
         iconv_close(cd);
