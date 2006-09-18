@@ -1,0 +1,249 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2006-06-19 21:47+0200\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: ../frozen-bubble:2633
+msgid "Start 1-player game menu"
+msgstr "१-खेलडी खेल सुची सुरु गर्नुहोस् "
+
+#: ../frozen-bubble:2735
+msgid "*** Please wait, probing for available servers on local network..."
+msgstr "*** कृपया प्रतिक्षा गर्नुहोला, स्थानीय सन्जाल मा सर्भरको खोजी हुँदैछ... "
+
+#: ../frozen-bubble:2738
+msgid "*** Unable to probe for available servers on local network!"
+msgstr "*** स्थानीय सन्जल््मा सर्भर भेटिएन!  "
+
+#: ../frozen-bubble:2740
+msgid "*** Verify your network setup"
+msgstr "*** आफ्नो सन्जल ब्यवस्थापान पुन्:निरि्क्षण गर्नुहोस् "
+
+#: ../frozen-bubble:2749
+msgid "*** No server found, and could not start server"
+msgstr "*** कुनै सर्भर भेटिएन, र सर्भर सुरु गर्न सकिएन "
+
+#: ../frozen-bubble:2750
+msgid "*** Verify your installation or contact your vendor"
+msgstr "*** अनुप्रयोग स्थापना पुन्:निरि्क्षण गर्नुहोस् "
+
+#: ../frozen-bubble:2757
+msgid "*** No server found, created server for local network game"
+msgstr "*** कुनै सर्भर भेटिएन, स्थानीय सन्जल खेलको लागि सर्भर स्थापना गरियो  "
+
+#: ../frozen-bubble:2773
+msgid "*** Contacting master server..."
+msgstr "*** प्रमुख सर्भरसँग संपर्क हुँदैछ "
+
+#: ../frozen-bubble:2784
+msgid "*** Server list received properly"
+msgstr "*** सर्भर सुची राम्ररी प्राप्त भयो "
+
+#: ../frozen-bubble:2786
+msgid "*** Unable to download server list from master server!"
+msgstr "*** प्रमुख सर्भरबाट सर्भरसुची प्राप्त भएन "
+
+#: ../frozen-bubble:2787
+msgid "*** Verify your network setup or retry later"
+msgstr "*** सन्जल स्थापना पुन्:निरि्क्षण गर्नुहोस् वा, पुनप्रयास गर्नुहोस् "
+
+#: ../frozen-bubble:2820
+#, perl-format
+msgid "Available players:%s  Ping:%sms"
+msgstr "*** उपलब्ध खेलाडीहरु :%s पिङ्ग:%sms"
+
+#: ../frozen-bubble:2857
+msgid "*** No available game server"
+msgstr "*** खेल सर्भर उपलब्ध छैन "
+
+#: ../frozen-bubble:2858
+msgid "*** Please retry later or try a local network game (lan game)"
+msgstr "*** केही समयपछी पुनप्रयास गर्नुहोस् वा, स्थानीय सन्जल खेलमा जानुहोस् "
+
+#: ../frozen-bubble:2865
+msgid "*** Please choose a server"
+msgstr "*** कृपया सर्भर छान्नुहोस् "
+
+#: ../frozen-bubble:2926
+#, perl-format
+msgid "*** Connected to server '%s'"
+msgstr "*** '%s' सर्भर सँग सम्बन्धित"
+
+#: ../frozen-bubble:3042 ../frozen-bubble:3215 ../frozen-bubble:3314
+msgid "Chat: "
+msgstr "कुराकानी:"
+
+#: ../frozen-bubble:3043
+msgid "Create new game"
+msgstr "नयाँ खेल सिर्जना गर्नुहोस् "
+
+#: ../frozen-bubble:3080
+msgid "Say: "
+msgstr "भन्नुहोस् :"
+
+#: ../frozen-bubble:3093
+#, perl-format
+msgid "Join game: %s"
+msgstr "%s :खेल््मा सम्मिलित हुनुहोस् "
+
+#: ../frozen-bubble:3108
+#, perl-format
+msgid "Available Players: %s"
+msgstr "उपलब्ध खेलाडीहरु :%s"
+
+#: ../frozen-bubble:3132
+msgid "*** Leaving game..."
+msgstr "*** खेल छोड्दै ..."
+
+#: ../frozen-bubble:3203
+msgid "*** Game created - now you need to wait for players to join"
+msgstr "*** खेल सिर्जना भयो - अब खेलाडिहरु कुर्नुहोस् "
+
+#: ../frozen-bubble:3205
+msgid "*** Joined game"
+msgstr "*** सम्मिलित खेल "
+
+#: ../frozen-bubble:3212
+msgid "*** Error: game just started or aborted"
+msgstr "*** बिग्रीयो : खेल भर्खर सुरु भयो वा, छोडिसकियो"
+
+#: ../frozen-bubble:3224
+#, perl-format
+msgid "*** Can't start game: '%s'"
+msgstr "*** '%s' :खेल सुरु भएन   "
+
+#: ../frozen-bubble:3254
+#, perl-format
+msgid "*** %s joined the game!"
+msgstr "*** %s खेल््मा सम्मिलित हुनुभयो"
+
+#: ../frozen-bubble:3257
+#, perl-format
+msgid "*** %s left the game..."
+msgstr "*** %sले खेल छोड्नुभयो "
+
+#: ../frozen-bubble:3300
+msgid "*** Lost connection to server, abandoning..."
+msgstr "*** सर्भर सँग सम्बन्ध बिच्छेद भयो । छोड्दै "
+
+#: ../frozen-bubble:3313
+#, perl-format
+msgid "Players in game: %s"
+msgstr "जम्मा %s खेलडिहरु हुनुहुन्छ "
+
+#: ../frozen-bubble:3315
+msgid "Start game!"
+msgstr "खेल सुरु गर्नुहोस् !"
+
+#: ../frozen-bubble:3327
+#, perl-format
+msgid "*** Game finished, because the following player(s) left: %s"
+msgstr "*** %s खेलडि(हरु)ले छोड्नु भएकोले , खेल सकियो "
+
+#: ../frozen-bubble:3331
+#, perl-format
+msgid "*** Winner: %s"
+msgstr "*** बिजे्ता : %s"
+
+#: ../frozen-bubble:3333
+msgid "*** Draw game!"
+msgstr "*** खेल बराबर भयो ! "
+
+#: ../frozen-bubble:3335
+#, perl-format
+msgid "*** Scores: %s"
+msgstr "*** नतिजा: %s"
+
+#: ../frozen-bubble:3383
+msgid "2-player game"
+msgstr "२-खेलडी खेल "
+
+#: ../frozen-bubble:3383
+msgid "Enable chain-reaction?"
+msgstr "सङ्ले-प्रतिकृया सन्चलन गर्नुहुन्छ? "
+
+#: ../frozen-bubble:3384
+#, perl-format
+msgid "%s or %s?"
+msgstr "%s वा %s?"
+
+#: ../frozen-bubble:3385
+msgid "Enjoy the game!"
+msgstr "खेलको मजा लिनुहोस्! "
+
+#: ../frozen-bubble:3423
+msgid "Congratulations!"
+msgstr "धेरै धेरै बधाई छ!"
+
+#: ../frozen-bubble:3423
+msgid "You have a highscore!"
+msgstr "यहाँको नतिजा सर्बोत्कृष्ट छ !"
+
+#: ../frozen-bubble:3424
+msgid "Your name?"
+msgstr "कृपया यहाँको नाम पांउन?"
+
+#: ../frozen-bubble:3425
+msgid "Great game!"
+msgstr "उत्कृष्ट प्रदर्शन !"
+
+#: ../frozen-bubble:3744
+msgid "Please enter new keys:"
+msgstr "कृपया नयाँ की प्रवेश गर्नुहोस् :"
+
+#: ../frozen-bubble:3746
+msgid "Player 1; turn left?"
+msgstr "खेलडी-१; दाँया? "
+
+#: ../frozen-bubble:3747
+msgid "Player 1; turn right?"
+msgstr "खेलडी-१; बाँया? "
+
+#: ../frozen-bubble:3748
+msgid "Player 1; fire?"
+msgstr "खेलडी-१; तारो?"
+
+#: ../frozen-bubble:3749
+msgid "Player 1; center?"
+msgstr "खेलडी-१; बिच? "
+
+#: ../frozen-bubble:3751
+msgid "Player 2; turn left?"
+msgstr "खेलडी-२ ; दाँया?"
+
+#: ../frozen-bubble:3752
+msgid "Player 2; turn right?"
+msgstr "खेलडी-२ ; बाँया?"
+
+#: ../frozen-bubble:3753
+msgid "Player 2; fire?"
+msgstr "खेलडी-२ ; तारो?"
+
+#: ../frozen-bubble:3754
+msgid "Player 2; center?"
+msgstr "खेलडी-२ ; बिच?"
+
+#: ../frozen-bubble:3756
+msgid "Toggle fullscreen?"
+msgstr "पर्दा ठुलो/सानो पर्नुहोस्?"
+
+#: ../frozen-bubble:3757
+msgid "Chat (net/lan game)?"
+msgstr "कुराकानी (नेट/सन्जल खेल्) "
+
+#: ../frozen-bubble:3759
+msgid "Thanks!"
+msgstr "धन्यवाद !"
