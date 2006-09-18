@@ -1153,6 +1153,12 @@ sub cleanup_chatting {
     print_next_bubble($next_bubble{p1}{img}, 'p1');
 }
 
+sub set_sendmalustoone {
+    my ($whoto) = @_;
+    $pdata{sendmalustoone} = $whoto;
+    #- todo: gfx
+}
+
 sub handle_game_events() {
     $event->pump;
     while ($event->poll != 0) {
@@ -1255,11 +1261,11 @@ sub handle_game_events() {
                 if (is_mp_game()) {
                     foreach my $rp (qw(rp1 rp2 rp3 rp4)) {
                         if ($keypressed eq $KEYS->{misc}{"send_malus_to_$rp"}) {
-                            $pdata{sendmalustoone} = $rp;
+                            set_sendmalustoone($rp);
                         }
                     }
                     if ($keypressed eq $KEYS->{misc}{send_malus_to_all}) {
-                        $pdata{sendmalustoone} = undef;
+                        set_sendmalustoone(undef);
                     }
                 }
 
@@ -1519,6 +1525,9 @@ sub lose {
             play_sound('cancel');
         } else {
             play_sound('lose');
+        }
+        if ($pdata{sendmalustoone} eq $player) {
+            set_sendmalustoone(undef);
         }
 
     } else {
@@ -2243,8 +2252,8 @@ sub init_game() {
     print_step('.'); 
     $regularfont ||= fb_c_stuff::locatefont("sans");
     $italicfont ||= fb_c_stuff::locatefont("sans:italic");
-    $regularfont or die "[*ERROR*] FontConfig didn't locate a regular TTF font. Please try specifying one with --regularfont<file>.\n";
-    $italicfont or die "[*ERROR*] FontConfig didn't locate an italic TTF font. Please try specifying one with --italicfont<file>.\n";
+    $regularfont or die "[*ERROR*] FontConfig wasn't able to locate a regular TTF font for your language. Please try specifying one with --regularfont<file>.\n";
+    $italicfont or die "[*ERROR*] FontConfig wasn't able to locate an italic TTF font for your language. Please try specifying one with --italicfont<file>.\n";
 
     $ttfonts{netdialogs}{fg} = SDL::TTFont->new(-name => $regularfont, -size => 12, -mode => SDL::TTF_UTF8_BLENDED(),
                                                 -foreground => $SDL::Color::white);
