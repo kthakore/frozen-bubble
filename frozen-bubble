@@ -4284,6 +4284,8 @@ our ($logox, $logoy) = (400, 15);
 our $candy;
 our ($blink_green, $blink_purple);
 our %cursor_save_bg;
+our $cursor_tmp;
+our %broken_cursors;
 
 sub menu {
     my ($from_intro, $back_from_intro) = @_;
@@ -4450,7 +4452,7 @@ sub menu {
     $invalidate_all = sub { push @menu_invalids, $menu_entries{$_}->{pos} foreach keys %menu_entries };
 
     my $display_cursor = sub {
-        my ($m, $alpha) = @_;
+        my ($m, $alpha, $pixelize) = @_;
         my $cursor_rect = SDL::Rect->new(-x => 248, '-y' => $menu_ypos{$m} + 8,
                                          -width => $imgbin{menu_cursor}{$m}[$pdata{cursor_img}{$m}]->width,
                                          -height => $imgbin{menu_cursor}{$m}[$pdata{cursor_img}{$m}]->height);
@@ -4461,7 +4463,15 @@ sub menu {
         }
         $cursor_save_bg{$m}->blit(undef, $app, $cursor_rect);
         if ($alpha) {
-            $imgbin{menu_cursor}{"${m}alpha"}[$pdata{cursor_img}{$m}]->blit(undef, $app, $cursor_rect);
+            if ($pixelize) {
+                if (!defined($cursor_tmp)) {
+                    $cursor_tmp = SDL::Surface->new(-width => $imgbin{menu_cursor}{$m}[0]->width, -height => $imgbin{menu_cursor}{$m}[0]->height, -depth => 32);
+                }
+                fb_c_stuff::pixelize($cursor_tmp->{-surface}, $imgbin{menu_cursor}{"${m}alpha"}[$pdata{cursor_img}{$m}]{-surface});
+                $cursor_tmp->blit(undef, $app, $cursor_rect);
+            } else {
+                $imgbin{menu_cursor}{"${m}alpha"}[$pdata{cursor_img}{$m}]->blit(undef, $app, $cursor_rect);
+            }
         } else {
             $imgbin{menu_cursor}{$m}[$pdata{cursor_img}{$m}]->blit(undef, $app, $cursor_rect);
         }
@@ -4585,13 +4595,24 @@ sub menu {
 	    $banner_pos >= $banners_max and $banner_pos = 1;
             $app->update($banner_rect);
 
-            #- animate cursor
+            #- animate and break cursor
             foreach my $m (keys %menu_entries) {
                 if ($menu_entries{$m}->{pos} == $current_pos) {
                     $pdata{cursor_img}{$m}++;
                     $pdata{cursor_img}{$m} >= @{$imgbin{menu_cursor}{$m}} and $pdata{cursor_img}{$m} = 0;
-                    my $cursor_rect = $display_cursor->($m, 0);
-                    $app->update($cursor_rect);
+                    $app->update($display_cursor->($m, 0));
+                    
+                } else {
+                    if ($broken_cursors{$m}) {
+                        $broken_cursors{$m}--;
+                        if ($broken_cursors{$m}) {
+                            $app->update($display_cursor->($m, 1, 1));
+                        } else {
+                            $app->update($display_cursor->($m, 1));
+                        }
+                    } else {
+                        rand() < 0.001 and $broken_cursors{$m} = int(20 + 10 * cos(rand(2*$PI)));
+                    }
                 }
             }
             

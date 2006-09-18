@@ -1242,6 +1242,36 @@ void alphaize_(SDL_Surface * surf)
 	myUnlockSurface(surf);
 }
 
+void pixelize_(SDL_Surface * dest, SDL_Surface * orig)
+{
+	int Bpp = dest->format->BytesPerPixel;
+        Uint8 *ptrdest, *ptrorig;
+	if (orig->format->BytesPerPixel != 4) {
+                fprintf(stderr, "pixelize: orig surface must be 32bpp\n");
+                abort();
+        }
+	if (dest->format->BytesPerPixel != 4) {
+                fprintf(stderr, "pixelize: dest surface must be 32bpp\n");
+                abort();
+        }
+	myLockSurface(orig);
+	myLockSurface(dest);
+        for (y = 0; y < dest->h; y++) {
+                ptrdest = dest->pixels + y*dest->pitch;
+                ptrorig = orig->pixels + y*orig->pitch;
+                for (x = 0; x < dest->w; x++) {
+                        * ( ptrdest ) = *( ptrorig );
+                        * ( ptrdest + 1 ) = *( ptrorig + 1 );
+                        * ( ptrdest + 2 ) = *( ptrorig + 2 );
+                        * ( ptrdest + 3 ) = *( ptrorig + 3 ) * ( 0.2 + rand_(100)/100.0 );
+                        ptrdest += Bpp;
+                        ptrorig += Bpp;
+		}
+	}
+	myUnlockSurface(orig);
+	myUnlockSurface(dest);
+}
+
 /************************** Gateway to Perl ****************************/
 
 MODULE = fb_c_stuff		PACKAGE = fb_c_stuff
@@ -1399,6 +1429,13 @@ alphaize(surf)
         SDL_Surface * surf
 	CODE:
                 alphaize_(surf);
+
+void
+pixelize(dest, orig)
+        SDL_Surface * dest
+        SDL_Surface * orig
+	CODE:
+		pixelize_(dest, orig);
 
 void
 _exit(status)
