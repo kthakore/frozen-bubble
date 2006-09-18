@@ -18,7 +18,7 @@ SDL perl >= 1.19.0
 ***                                                                     ***
 ***************************************************************************
 
-fontconfig
+fontconfig (reasonably recent, series 2.3 or upper should be fine)
         http://www.fontconfig.org/
 
 The glib is needed for the server (and the server is needed for
