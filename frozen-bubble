@@ -2301,23 +2301,11 @@ sub init_game() {
     print_step('.'); 
     $shooter_lowgfx = add_image("shooter-lowgfx.png");
     my $shooter = add_image("shooter.png");
-    #- make a surface with RGBA order suitable for hardcoded values in rotate_bicubic
-    my $replace = SDL::Surface->new(-width => $shooter->width, -height => $shooter->height, -depth => 32,
-                                    -Rmask => 0x000000FF, -Gmask => 0x0000FF00, -Bmask => 0x00FF0000, -Amask => 0xFF000000);
-    $shooter->set_alpha(0, 0);  #- for RGBA->RGBA blits, SDL_SRCALPHA must be removed or destination alpha is preserved
-    $shooter->blit(undef, $replace, undef);
-    $shooter = $replace;
     my $shooter_mini = add_image("shooter-mini.png");
-    my $replace_mini = SDL::Surface->new(-width => $shooter_mini->width, -height => $shooter_mini->height, -depth => 32,
-                                         -Rmask => 0x000000FF, -Gmask => 0x0000FF00, -Bmask => 0x00FF0000, -Amask => 0xFF000000);
-    $shooter_mini->set_alpha(0, 0);  #- for RGBA->RGBA blits, SDL_SRCALPHA must be removed or destination alpha is preserved
-    $shooter_mini->blit(undef, $replace_mini, undef);
-    $shooter_mini = $replace_mini;
     foreach my $number (-$CANON_ROTATIONS_NB..$CANON_ROTATIONS_NB) {
         my $angle = $number*($PI/2)/$CANON_ROTATIONS_NB;
 
-        $canon{img}{$number} = SDL::Surface->new(-width => $shooter->width, -height => $shooter->height, -depth => 32,
-                                                 -Rmask => 0x000000FF, -Gmask => 0x0000FF00, -Bmask => 0x00FF0000, -Amask => 0xFF000000);
+        $canon{img}{$number} = SDL::Surface->new(-width => $shooter->width, -height => $shooter->height, -depth => 32);
         fb_c_stuff::rotate_bicubic($canon{img}{$number}->{-surface}, $shooter->{-surface}, $angle);
         $canon{data}{$number} = fb_c_stuff::autopseudocrop($canon{img}{$number}->{-surface});
         #- now crop (and use native RGBA ordering)
@@ -2328,8 +2316,7 @@ sub init_game() {
         $canon{img}{$number} = $replace;
         add_default_rect($canon{img}{$number});
 
-        $canon{img_mini}{$number} = SDL::Surface->new(-width => $shooter_mini->width, -height => $shooter_mini->height, -depth => 32,
-                                                      -Rmask => 0x000000FF, -Gmask => 0x0000FF00, -Bmask => 0x00FF0000, -Amask => 0xFF000000);
+        $canon{img_mini}{$number} = SDL::Surface->new(-width => $shooter_mini->width, -height => $shooter_mini->height, -depth => 32);
         fb_c_stuff::rotate_bicubic($canon{img_mini}{$number}->{-surface}, $shooter_mini->{-surface}, $angle);
         $canon{data_mini}{$number} = fb_c_stuff::autopseudocrop($canon{img_mini}{$number}->{-surface});
         #- now crop (and use native RGBA ordering)
@@ -2492,8 +2479,7 @@ sub init_game() {
     };
 
     #- the RGBA effects algorithms assume little endian RGBA surfaces
-    my $replace = SDL::Surface->new(-width => $imgbin{menu_logo}->width, -height => $imgbin{menu_logo}->height, -depth => 32,
-                                    -Rmask => 0x000000FF, -Gmask => 0x0000FF00, -Bmask => 0x00FF0000, -Amask => 0xFF000000);
+    my $replace = SDL::Surface->new(-width => $imgbin{menu_logo}->width, -height => $imgbin{menu_logo}->height, -depth => 32);
     $imgbin{menu_logo}->set_alpha(0, 0);  #- for RGBA->RGBA blits, SDL_SRCALPHA must be removed or destination alpha is preserved
     $imgbin{menu_logo}->blit(undef, $replace, undef);
     $imgbin{menu_logo} = $replace;
@@ -4387,8 +4373,7 @@ sub menu {
             erase_image_from($imgbin{menu_logo}, $logox, $logoy, $back_start);
 
             if (!defined($candy)) {
-                $candy = SDL::Surface->new(-width => $imgbin{menu_logo}->width, -height => $imgbin{menu_logo}->height, -depth => 32,
-                                           -Rmask => 0x000000FF, -Gmask => 0x0000FF00, -Bmask => 0x00FF0000, -Amask => 0xFF000000);
+                $candy = SDL::Surface->new(-width => $imgbin{menu_logo}->width, -height => $imgbin{menu_logo}->height, -depth => 32);
             }
             
             $logo_candy_method == 0 and fb_c_stuff::rotate_bilinear($candy->{-surface}, $imgbin{menu_logo}->{-surface}, sin($logo_candy_index/40)/20);

@@ -46,6 +46,10 @@ const int YRES = 480;
 int x, y;
 int i, j;
 
+int Rdec = SDL_BYTEORDER == SDL_LIL_ENDIAN ? 0 : 3;  // be nice with the ppc loserz
+int Gdec = SDL_BYTEORDER == SDL_LIL_ENDIAN ? 1 : 2;
+int Bdec = SDL_BYTEORDER == SDL_LIL_ENDIAN ? 2 : 1;
+int Adec = SDL_BYTEORDER == SDL_LIL_ENDIAN ? 3 : 0;
 
 int ANIM_SPEED = 20;
 Uint32 ticks;
@@ -477,6 +481,10 @@ void rotate_nearest_(SDL_Surface * dest, SDL_Surface * orig, double angle)
 }
 
 #define CLAMP(x, low, high)  (((x) > (high)) ? (high) : (((x) < (low)) ? (low) : (x)))
+#define getr(pixeladdr) ( *( ( (Uint8*) pixeladdr ) + Rdec ) )
+#define getg(pixeladdr) ( *( ( (Uint8*) pixeladdr ) + Gdec ) )
+#define getb(pixeladdr) ( *( ( (Uint8*) pixeladdr ) + Bdec ) )
+#define geta(pixeladdr) ( *( ( (Uint8*) pixeladdr ) + Adec ) )
 
 void rotate_bilinear_(SDL_Surface * dest, SDL_Surface * orig, double angle)
 {
@@ -516,10 +524,6 @@ void rotate_bilinear_(SDL_Surface * dest, SDL_Surface * orig, double angle)
                                 B = orig->pixels + (x_+1)*Bpp + y_*orig->pitch;
                                 C = orig->pixels + x_*Bpp     + (y_+1)*orig->pitch;
                                 D = orig->pixels + (x_+1)*Bpp + (y_+1)*orig->pitch;
-#define getr(pixeladdr) ( *( (Uint8*) pixeladdr ) )
-#define getg(pixeladdr) ( *( (Uint8*) pixeladdr + 1 ) )
-#define getb(pixeladdr) ( *( (Uint8*) pixeladdr + 2 ) )
-#define geta(pixeladdr) ( *( (Uint8*) pixeladdr + 3 ) )
                                 a = (geta(A) * ( 1 - dx ) + geta(B) * dx) * ( 1 - dy ) + (geta(C) * ( 1 - dx ) + geta(D) * dx) * dy;
                                 if (a == 0) {
                                         // fully transparent, no use working
@@ -535,10 +539,10 @@ void rotate_bilinear_(SDL_Surface * dest, SDL_Surface * orig, double angle)
                                         g = ( (getg(A) * geta(A) * ( 1 - dx ) + getg(B) * geta(B) * dx) * ( 1 - dy ) + (getg(C) * geta(C) * ( 1 - dx ) + getg(D) * geta(D) * dx) * dy ) / a;
                                         b = ( (getb(A) * geta(A) * ( 1 - dx ) + getb(B) * geta(B) * dx) * ( 1 - dy ) + (getb(C) * geta(C) * ( 1 - dx ) + getb(D) * geta(D) * dx) * dy ) / a;
                                 }
-                                * ( ( (Uint8*) ptr ) ) = CLAMP(r, 0, 255);  // it is slightly faster to not recompose the 32-bit pixel - at least on my p4
-                                * ( ( (Uint8*) ptr ) + 1 ) = CLAMP(g, 0, 255);
-                                * ( ( (Uint8*) ptr ) + 2 ) = CLAMP(b, 0, 255);
-                                * ( ( (Uint8*) ptr ) + 3 ) = a;
+                                * ( ( (Uint8*) ptr ) + Rdec ) = CLAMP(r, 0, 255);  // it is slightly faster to not recompose the 32-bit pixel - at least on my p4
+                                * ( ( (Uint8*) ptr ) + Gdec ) = CLAMP(g, 0, 255);
+                                * ( ( (Uint8*) ptr ) + Bdec ) = CLAMP(b, 0, 255);
+                                * ( ( (Uint8*) ptr ) + Adec ) = a;
                         }
                         x__ += cosval;
                         y__ += sinval;
@@ -739,10 +743,6 @@ void flipflop_(SDL_Surface * dest, SDL_Surface * orig, int offset)
                                 B = orig->pixels + (x_+1)*Bpp + y*orig->pitch;
                                 C = orig->pixels + x_*Bpp     + (y+1)*orig->pitch;
                                 D = orig->pixels + (x_+1)*Bpp + (y+1)*orig->pitch;
-#define getr(pixeladdr) ( *( (Uint8*) pixeladdr ) )
-#define getg(pixeladdr) ( *( (Uint8*) pixeladdr + 1 ) )
-#define getb(pixeladdr) ( *( (Uint8*) pixeladdr + 2 ) )
-#define geta(pixeladdr) ( *( (Uint8*) pixeladdr + 3 ) )
                                 a = geta(A) * ( 1 - dx ) + geta(B) * dx;
                                 if (a == 0) {
                                         // fully transparent, no use working
@@ -761,10 +761,10 @@ void flipflop_(SDL_Surface * dest, SDL_Surface * orig, int offset)
                                 r = CLAMP(r*shading, 0, 255);
                                 g = CLAMP(g*shading, 0, 255);
                                 b = CLAMP(b*shading, 0, 255);
-                                * ( ptr ) = r;  // it is slightly faster to not recompose the 32-bit pixel - at least on my p4
-                                * ( ptr + 1 ) = g;
-                                * ( ptr + 2 ) = b;
-                                * ( ptr + 3 ) = a;
+                                * ( ptr + Rdec ) = r;  // it is slightly faster to not recompose the 32-bit pixel - at least on my p4
+                                * ( ptr + Gdec ) = g;
+                                * ( ptr + Bdec ) = b;
+                                * ( ptr + Adec ) = a;
                         }
                         ptr += dest->pitch;
 		}
@@ -805,10 +805,10 @@ void enlighten_(SDL_Surface * dest, SDL_Surface * orig, int offset)
                                 sqdist -= 2;
                         shading = sqdist <= 0 ? 50 : 1 + 20/sqdist;
                         if (shading > 1.02) {
-                                * ( ptrdest )     = CLAMP(*( ptrorig )    *shading, 0, 255);
-                                * ( ptrdest + 1 ) = CLAMP(*( ptrorig + 1 )*shading, 0, 255);
-                                * ( ptrdest + 2 ) = CLAMP(*( ptrorig + 2 )*shading, 0, 255);
-                                * ( ptrdest + 3 ) = *( ptrorig + 3 );
+                                * ( ptrdest + Rdec ) = CLAMP(*( ptrorig + Rdec )*shading, 0, 255);
+                                * ( ptrdest + Gdec ) = CLAMP(*( ptrorig + Gdec )*shading, 0, 255);
+                                * ( ptrdest + Bdec ) = CLAMP(*( ptrorig + Bdec )*shading, 0, 255);
+                                * ( ptrdest + Adec ) = *( ptrorig + Adec );
                         } else {
                                 * ( (Uint32*) ptrdest ) = *( (Uint32*) ptrorig );
                         }
@@ -858,10 +858,6 @@ void stretch_(SDL_Surface * dest, SDL_Surface * orig, int offset)
                                 B = orig->pixels + (x_+1)*Bpp + y_*orig->pitch;
                                 C = orig->pixels + x_*Bpp     + (y_+1)*orig->pitch;
                                 D = orig->pixels + (x_+1)*Bpp + (y_+1)*orig->pitch;
-#define getr(pixeladdr) ( *( (Uint8*) pixeladdr ) )
-#define getg(pixeladdr) ( *( (Uint8*) pixeladdr + 1 ) )
-#define getb(pixeladdr) ( *( (Uint8*) pixeladdr + 2 ) )
-#define geta(pixeladdr) ( *( (Uint8*) pixeladdr + 3 ) )
                                 a = (geta(A) * ( 1 - dx ) + geta(B) * dx) * ( 1 - dy ) + (geta(C) * ( 1 - dx ) + geta(D) * dx) * dy;
                                 if (a == 0) {
                                         // fully transparent, no use working
@@ -877,10 +873,10 @@ void stretch_(SDL_Surface * dest, SDL_Surface * orig, int offset)
                                         g = ( (getg(A) * geta(A) * ( 1 - dx ) + getg(B) * geta(B) * dx) * ( 1 - dy ) + (getg(C) * geta(C) * ( 1 - dx ) + getg(D) * geta(D) * dx) * dy ) / a;
                                         b = ( (getb(A) * geta(A) * ( 1 - dx ) + getb(B) * geta(B) * dx) * ( 1 - dy ) + (getb(C) * geta(C) * ( 1 - dx ) + getb(D) * geta(D) * dx) * dy ) / a;
                                 }
-                                * ( (Uint8*) ptr ) = r;  // it is slightly faster to not recompose the 32-bit pixel - at least on my p4
-                                * ( (Uint8*) ptr + 1 ) = g;
-                                * ( (Uint8*) ptr + 2 ) = b;
-                                * ( (Uint8*) ptr + 3 ) = a;
+                                * ( (Uint8*) ptr + Rdec ) = r;  // it is slightly faster to not recompose the 32-bit pixel - at least on my p4
+                                * ( (Uint8*) ptr + Gdec ) = g;
+                                * ( (Uint8*) ptr + Bdec ) = b;
+                                * ( (Uint8*) ptr + Adec ) = a;
                         }
                         ptr += dest->pitch;
 		}
@@ -928,10 +924,6 @@ void tilt_(SDL_Surface * dest, SDL_Surface * orig, int offset)
                                 B = orig->pixels + (x_+1)*Bpp + y_*orig->pitch;
                                 C = orig->pixels + x_*Bpp     + (y_+1)*orig->pitch;
                                 D = orig->pixels + (x_+1)*Bpp + (y_+1)*orig->pitch;
-#define getr(pixeladdr) ( *( (Uint8*) pixeladdr ) )
-#define getg(pixeladdr) ( *( (Uint8*) pixeladdr + 1 ) )
-#define getb(pixeladdr) ( *( (Uint8*) pixeladdr + 2 ) )
-#define geta(pixeladdr) ( *( (Uint8*) pixeladdr + 3 ) )
                                 a = (geta(A) * ( 1 - dx ) + geta(B) * dx) * ( 1 - dy ) + (geta(C) * ( 1 - dx ) + geta(D) * dx) * dy;
                                 if (a == 0) {
                                         // fully transparent, no use working
@@ -950,10 +942,10 @@ void tilt_(SDL_Surface * dest, SDL_Surface * orig, int offset)
                                 r = CLAMP(r*shading, 0, 255);
                                 g = CLAMP(g*shading, 0, 255);
                                 b = CLAMP(b*shading, 0, 255);
-                                * ( (Uint8*) ptr ) = r;  // it is slightly faster to not recompose the 32-bit pixel - at least on my p4
-                                * ( (Uint8*) ptr + 1 ) = g;
-                                * ( (Uint8*) ptr + 2 ) = b;
-                                * ( (Uint8*) ptr + 3 ) = a;
+                                * ( (Uint8*) ptr + Rdec ) = r;  // it is slightly faster to not recompose the 32-bit pixel - at least on my p4
+                                * ( (Uint8*) ptr + Gdec ) = g;
+                                * ( (Uint8*) ptr + Bdec ) = b;
+                                * ( (Uint8*) ptr + Adec ) = a;
                         }
                         ptr += dest->pitch;
 		}
@@ -1087,10 +1079,6 @@ void waterize_(SDL_Surface * dest, SDL_Surface * orig, int offset)
                                 B = orig->pixels + (x_+1)*Bpp + y_*orig->pitch;
                                 C = orig->pixels + x_*Bpp     + (y_+1)*orig->pitch;
                                 D = orig->pixels + (x_+1)*Bpp + (y_+1)*orig->pitch;
-#define getr(pixeladdr) ( *( (Uint8*) pixeladdr ) )
-#define getg(pixeladdr) ( *( (Uint8*) pixeladdr + 1 ) )
-#define getb(pixeladdr) ( *( (Uint8*) pixeladdr + 2 ) )
-#define geta(pixeladdr) ( *( (Uint8*) pixeladdr + 3 ) )
                                 a = (geta(A) * ( 1 - dx ) + geta(B) * dx) * ( 1 - dy ) + (geta(C) * ( 1 - dx ) + geta(D) * dx) * dy;
                                 if (a == 0) {
                                         // fully transparent, no use working
@@ -1106,10 +1094,10 @@ void waterize_(SDL_Surface * dest, SDL_Surface * orig, int offset)
                                         g = ( (getg(A) * geta(A) * ( 1 - dx ) + getg(B) * geta(B) * dx) * ( 1 - dy ) + (getg(C) * geta(C) * ( 1 - dx ) + getg(D) * geta(D) * dx) * dy ) / a;
                                         b = ( (getb(A) * geta(A) * ( 1 - dx ) + getb(B) * geta(B) * dx) * ( 1 - dy ) + (getb(C) * geta(C) * ( 1 - dx ) + getb(D) * geta(D) * dx) * dy ) / a;
                                 }
-                                * ( (Uint8*) ptr ) = r;  // it is slightly faster to not recompose the 32-bit pixel - at least on my p4
-                                * ( (Uint8*) ptr + 1 ) = g;
-                                * ( (Uint8*) ptr + 2 ) = b;
-                                * ( (Uint8*) ptr + 3 ) = a;
+                                * ( (Uint8*) ptr + Rdec ) = r;  // it is slightly faster to not recompose the 32-bit pixel - at least on my p4
+                                * ( (Uint8*) ptr + Gdec ) = g;
+                                * ( (Uint8*) ptr + Bdec ) = b;
+                                * ( (Uint8*) ptr + Adec ) = a;
                         }
                         ptr += dest->pitch;
 		}
@@ -1148,10 +1136,10 @@ void brokentv_(SDL_Surface * dest, SDL_Surface * orig, int offset)
                 for (x = 0; x < dest->w; x++) {
                         if (pixelize)
                                 throughness = 0.2 + rand_(100)/100.0;
-                        * ( ptrdest ) = *( ptrorig );
-                        * ( ptrdest + 1 ) = *( ptrorig + 1 );
-                        * ( ptrdest + 2 ) = *( ptrorig + 2 );
-                        * ( ptrdest + 3 ) = *( ptrorig + 3 ) * throughness;
+                        * ( ptrdest + Rdec ) = *( ptrorig + Rdec );
+                        * ( ptrdest + Gdec ) = *( ptrorig + Gdec );
+                        * ( ptrdest + Bdec ) = *( ptrorig + Bdec );
+                        * ( ptrdest + Adec ) = *( ptrorig + Adec ) * throughness;
                         ptrdest += Bpp;
                         ptrorig += Bpp;
 		}
@@ -1260,10 +1248,10 @@ void pixelize_(SDL_Surface * dest, SDL_Surface * orig)
                 ptrdest = dest->pixels + y*dest->pitch;
                 ptrorig = orig->pixels + y*orig->pitch;
                 for (x = 0; x < dest->w; x++) {
-                        * ( ptrdest ) = *( ptrorig );
-                        * ( ptrdest + 1 ) = *( ptrorig + 1 );
-                        * ( ptrdest + 2 ) = *( ptrorig + 2 );
-                        * ( ptrdest + 3 ) = *( ptrorig + 3 ) * ( 0.2 + rand_(100)/100.0 );
+                        * ( ptrdest + Rdec ) = *( ptrorig + Rdec );
+                        * ( ptrdest + Gdec ) = *( ptrorig + Gdec );
+                        * ( ptrdest + Bdec ) = *( ptrorig + Bdec );
+                        * ( ptrdest + Adec ) = *( ptrorig + Adec ) * ( 0.2 + rand_(100)/100.0 );
                         ptrdest += Bpp;
                         ptrorig += Bpp;
 		}
