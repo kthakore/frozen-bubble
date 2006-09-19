@@ -203,15 +203,15 @@ msgstr "Bonega ludo!"
 
 #: ../frozen-bubble:3744
 msgid "Please enter new keys:"
-msgstr "B.v. doni novajn ŝlosilojn"
+msgstr "B.v. doni novajn klavojn:"
 
 #: ../frozen-bubble:3746
 msgid "Player 1; turn left?"
-msgstr "Ludanto 1: turnu maldekstren?"
+msgstr "Ludanto 1: maldekstren?"
 
 #: ../frozen-bubble:3747
 msgid "Player 1; turn right?"
-msgstr "Ludanto 1: turnu dekstren?"
+msgstr "Ludanto 1: dekstren?"
 
 #: ../frozen-bubble:3748
 msgid "Player 1; fire?"
@@ -223,11 +223,11 @@ msgstr "Ludanto 1: mezu?"
 
 #: ../frozen-bubble:3751
 msgid "Player 2; turn left?"
-msgstr "Ludanto 2: turnu maldekstren?"
+msgstr "Ludanto 2: maldekstren?"
 
 #: ../frozen-bubble:3752
 msgid "Player 2; turn right?"
-msgstr "Ludanto 2: turnu dekstren?"
+msgstr "Ludanto 2: dekstren?"
 
 #: ../frozen-bubble:3753
 msgid "Player 2; fire?"
