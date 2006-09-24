@@ -1,0 +1,248 @@
+# Frozen Bubble - Slovak translation
+#
+# Peter Mann <Peter.Mann@tuke.sk>, 2006.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: frozen-bubble\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2006-06-19 21:47+0200\n"
+"PO-Revision-Date: 2006-09-24 12:12+0200\n"
+"Last-Translator: Peter Mann <Peter.Mann@tuke.sk>\n"
+"Language-Team: Slovak <sk-i18n@lists.linux.sk>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: ../frozen-bubble:2633
+msgid "Start 1-player game menu"
+msgstr "Štart menu hry pre 1 hráča"
+
+#: ../frozen-bubble:2735
+msgid "*** Please wait, probing for available servers on local network..."
+msgstr "*** Počkajte prosím, hľadajú sa dostupné servery na lokálnej sieti..."
+
+#: ../frozen-bubble:2738
+msgid "*** Unable to probe for available servers on local network!"
+msgstr "*** Na lokálnej sieti sa nedajú nájsť dostupné servery!"
+
+#: ../frozen-bubble:2740
+msgid "*** Verify your network setup"
+msgstr "*** Skontrolujte nastavenie siete"
+
+#: ../frozen-bubble:2749
+msgid "*** No server found, and could not start server"
+msgstr "*** Nenašiel sa žiaden server a server sa nemohol spustiť"
+
+#: ../frozen-bubble:2750
+msgid "*** Verify your installation or contact your vendor"
+msgstr "*** Skontrolujte vašu inštaláciu alebo kontaktujte vášho dodávateľa"
+
+#: ../frozen-bubble:2757
+msgid "*** No server found, created server for local network game"
+msgstr "*** Nenašiel sa žiaden server, vytvoril sa server pre lokálnu sieťovú hru"
+
+#: ../frozen-bubble:2773
+msgid "*** Contacting master server..."
+msgstr "*** Prebieha pripojenie na hlavný server..."
+
+#: ../frozen-bubble:2784
+msgid "*** Server list received properly"
+msgstr "*** Zoznam serverov sa stiahol správne"
+
+#: ../frozen-bubble:2786
+msgid "*** Unable to download server list from master server!"
+msgstr "*** Z hlavného servera sa nedá stiahnuť zoznam serverov!"
+
+#: ../frozen-bubble:2787
+msgid "*** Verify your network setup or retry later"
+msgstr "*** Skontrolujte nastavenie siete alebo to skúste neskôr"
+
+#: ../frozen-bubble:2820
+#, perl-format
+msgid "Available players:%s  Ping:%sms"
+msgstr "Dostupní hráči:%s  Ping:%sms"
+
+#: ../frozen-bubble:2857
+msgid "*** No available game server"
+msgstr "*** Nie je dostupný žiaden herný server"
+
+#: ../frozen-bubble:2858
+msgid "*** Please retry later or try a local network game (lan game)"
+msgstr "*** Zopakujte to neskôr alebo skúste lokálnu sieťovú hru"
+
+#: ../frozen-bubble:2865
+msgid "*** Please choose a server"
+msgstr "*** Zvoľte si server"
+
+#: ../frozen-bubble:2926
+#, perl-format
+msgid "*** Connected to server '%s'"
+msgstr "*** Pripojený na server '%s'"
+
+#: ../frozen-bubble:3042 ../frozen-bubble:3215 ../frozen-bubble:3314
+msgid "Chat"
+msgstr "Chat"
+
+#: ../frozen-bubble:3043
+msgid "Create new game"
+msgstr "Vytvoriť novú hru"
+
+#: ../frozen-bubble:3080
+msgid "Say: "
+msgstr "Hovorím: "
+
+#: ../frozen-bubble:3093
+#, perl-format
+msgid "Join game: %s"
+msgstr "Pripojiť hru: %s"
+
+#: ../frozen-bubble:3108
+#, perl-format
+msgid "Available Players: %s"
+msgstr "Dostupní hráči: %s"
+
+#: ../frozen-bubble:3132
+msgid "*** Leaving game..."
+msgstr "*** Hra sa opúšťa..."
+
+#: ../frozen-bubble:3203
+msgid "*** Game created - now you need to wait for players to join"
+msgstr "*** Hra je vytvorená - teraz musíte počkať na pripojenie ďalších hráčov"
+
+#: ../frozen-bubble:3205
+msgid "*** Joined game"
+msgstr "*** Pripojená hra"
+
+#: ../frozen-bubble:3212
+msgid "*** Error: game just started or aborted"
+msgstr "*** Chyba: hra sa práve začala alebo sa skončila"
+
+#: ../frozen-bubble:3224
+#, perl-format
+msgid "*** Can't start game: '%s'"
+msgstr "*** Nedá sa spustiť hra: '%s'"
+
+#: ../frozen-bubble:3254
+#, perl-format
+msgid "*** %s joined the game!"
+msgstr "*** %s sa pripojil do hry!"
+
+#: ../frozen-bubble:3257
+#, perl-format
+msgid "*** %s left the game..."
+msgstr "*** %s opustil hru..."
+
+#: ../frozen-bubble:3300
+msgid "*** Lost connection to server, abandoning..."
+msgstr "*** Prerušené spojenie so serverom, ukončuje sa..."
+
+#: ../frozen-bubble:3313
+#, perl-format
+msgid "Players in game: %s"
+msgstr "Hráči v hre: %s"
+
+#: ../frozen-bubble:3315
+msgid "Start game!"
+msgstr "Spustiť hru!"
+
+#: ../frozen-bubble:3327
+#, perl-format
+msgid "*** Game finished, because the following player(s) left: %s"
+msgstr "*** Hra skončila, pretože nasledujúci hráč(i) odišli: %s"
+
+#: ../frozen-bubble:3331
+#, perl-format
+msgid "*** Winner: %s"
+msgstr "*** Víťaz: %s"
+
+#: ../frozen-bubble:3333
+msgid "*** Draw game!"
+msgstr "*** Remíza!"
+
+#: ../frozen-bubble:3335
+#, perl-format
+msgid "*** Scores: %s"
+msgstr "*** Skóre: %s"
+
+#: ../frozen-bubble:3383
+msgid "2-player game"
+msgstr "Hra pre 2 hráčov"
+
+#: ../frozen-bubble:3383
+msgid "Enable chain-reaction?"
+msgstr "Povoliť reťazovú reakciu?"
+
+#: ../frozen-bubble:3384
+#, perl-format
+msgid "%s or %s?"
+msgstr "%s alebo %s?"
+
+#: ../frozen-bubble:3385
+msgid "Enjoy the game!"
+msgstr "Užijte si hru!"
+
+#: ../frozen-bubble:3423
+msgid "Congratulations!"
+msgstr "Gratulujeme!"
+
+#: ../frozen-bubble:3423
+msgid "You have a highscore!"
+msgstr "Dosiahli ste výborné skóre!"
+
+#: ../frozen-bubble:3424
+msgid "Your name?"
+msgstr "Vaše meno?"
+
+#: ../frozen-bubble:3425
+msgid "Great game!"
+msgstr "Skvelá hra!"
+
+#: ../frozen-bubble:3744
+msgid "Please enter new keys:"
+msgstr "Zadajte nové klávesy:"
+
+#: ../frozen-bubble:3746
+msgid "Player 1; turn left?"
+msgstr "Hráč 1; doľava?"
+
+#: ../frozen-bubble:3747
+msgid "Player 1; turn right?"
+msgstr "Hráč 1; doprava?"
+
+#: ../frozen-bubble:3748
+msgid "Player 1; fire?"
+msgstr "Hráč 1; strela?"
+
+#: ../frozen-bubble:3749
+msgid "Player 1; center?"
+msgstr "Hráč 1; stred?"
+
+#: ../frozen-bubble:3751
+msgid "Player 2; turn left?"
+msgstr "Hráč 2; doľava?"
+
+#: ../frozen-bubble:3752
+msgid "Player 2; turn right?"
+msgstr "Hráč 2; doprava?"
+
+#: ../frozen-bubble:3753
+msgid "Player 2; fire?"
+msgstr "Hráč 2; strela?"
+
+#: ../frozen-bubble:3754
+msgid "Player 2; center?"
+msgstr "Hráč 2; stred?"
+
+#: ../frozen-bubble:3756
+msgid "Toggle fullscreen?"
+msgstr "Prepnúť na celú obrazovku?"
+
+#: ../frozen-bubble:3757
+msgid "Chat (net/lan game)?"
+msgstr "Chat (sieťová hra)?"
+
+#: ../frozen-bubble:3759
+msgid "Thanks!"
+msgstr "Vďaka!"
