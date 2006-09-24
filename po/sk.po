@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: frozen-bubble\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2006-06-19 21:47+0200\n"
-"PO-Revision-Date: 2006-09-24 12:12+0200\n"
+"PO-Revision-Date: 2006-09-24 15:28+0200\n"
 "Last-Translator: Peter Mann <Peter.Mann@tuke.sk>\n"
 "Language-Team: Slovak <sk-i18n@lists.linux.sk>\n"
 "MIME-Version: 1.0\n"
@@ -237,7 +237,7 @@ msgstr "Hráč 2; stred?"
 
 #: ../frozen-bubble:3756
 msgid "Toggle fullscreen?"
-msgstr "Prepnúť na celú obrazovku?"
+msgstr "Celá obrazovka?"
 
 #: ../frozen-bubble:3757
 msgid "Chat (net/lan game)?"
