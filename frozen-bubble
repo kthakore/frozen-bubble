@@ -40,7 +40,7 @@ use vars qw($TARGET_ANIM_SPEED $BUBBLE_SIZE $ROW_SIZE $LAUNCHER_SPEED $BUBBLE_SP
             %POS %POS_1P %POS_2P %MENUPOS $KEYS %actions %angle %pdata $app %apprects $event %rects %sticked_bubbles %root_bubbles
             $background $background_orig @bubbles_images $gcwashere %bubbles_anim %launched_bubble %tobe_launched %next_bubble
             $shooter_lowgfx $sdl_flags $mixer $mixer_enabled $music_disabled $sfx_disabled $no_echo $regularfont $italicfont @playlist %sound %music %pinguin %canon
-            $graphics_level @update_rects $CANON_ROTATIONS_NB %malus_bubble %falling_bubble %exploding_bubble %malus_gfx %ttfonts
+            $graphics_level @update_rects $CANON_ROTATIONS_NB %malus_bubble %falling_bubble %exploding_bubble %malus_gfx %ttfonts $private
             %sticking_bubble $time %imgbin $TIME_HURRY_WARN $TIME_HURRY_MAX $TIMEOUT_PINGUIN_SLEEP $FREE_FALL_CONSTANT @joysticks $joysticksinfo
             $direct @PLAYERS @ALL_PLAYERS %levels $display_on_app_disabled $total_time $time_1pgame $time_netgame $fullscreen $rcfile %hiscorefiles $HISCORES $HISCORES_MPTRAIN
             $lev_number $playermalus $mptrainingdiff $loaded_levelset $direct_levelset $chainreaction %chains %history %img_mini $frame $sock $gameserver $mynick);
@@ -48,6 +48,7 @@ use vars qw($TARGET_ANIM_SPEED $BUBBLE_SIZE $ROW_SIZE $LAUNCHER_SPEED $BUBBLE_SP
 use Data::Dumper;
 use Locale::gettext;
 use POSIX;
+use Math::Trig;
 
 use SDL;
 use SDL::App;
@@ -143,6 +144,7 @@ local $_ = "@ARGV";
  -ji, --joysticksinfo        print information about detected joystick(s) on startup
  -ne, --noecho               when sound is enabled, disable echoing each typed character with a typewriter sound
  -mn<nick>, --mynick<nick>   for net/lan games, use this nick instead of username (max 10 chars, ASCII alphanumeric plus dash and underscore only)
+ -pr, --private              when starting a net game, don't use http://hostip.info/ to retrieve your geographical position to send it to other players
  -rf<file>, --regularfont<file> use the specified font file instead of using fontconfig to detect the best regular font
  -if<file>, --italicfont<file> use the specified font file instead of using fontconfig to detect the best italic font
 ";
@@ -168,6 +170,7 @@ local $_ = "@ARGV";
 /-gs\s*(\S+):(\S+)/ || /-gameserver\s*(\S+):(\S+)/ and $direct = 1, @PLAYERS = qw(p1 rp1), $pdata{gametype} = 'net', $gameserver = "$1:$2";
 /-ne/ || /-noe/ and $no_echo = 1;
 /-mn\s*(\S+)/ || /-mynick\s*(\S+)/ and $mynick = substr($1, 0, 10);
+/-pr/ || /-private/ and $private = 1;
 /-rf\s*(\S+)/ || /-regularfont\s*(\S+)/ and $regularfont = $1; 
 /-if\s*(\S+)/ || /-italicfont\s*(\S+)/ and $italicfont = $1; 
 /-ji/ || /-joysticksinfo/ and $joysticksinfo = 1;
@@ -213,25 +216,28 @@ sub play_music($;$) {
 	    -f $elem or return 0;
 	    push @playlist, $elem;
 	    $mus = SDL::Music->new($elem);
-	    if ($mus->{-data}) {
+	    if ((UNIVERSAL::isa($mus, 'HASH') && $mus->{-data}) || $$mus) {
 		print STDERR "[Playlist] playing `$elem'\n";
 		$mixer->play_music($mus, 0);
 		return 1;
 	    } else { 
-		print STDERR "Warning, could not create new music from `$elem' (reason: ", $app->error, ").\n";
+		print STDERR "Warning, could not create new music from '$elem' (reason: ", $app->error, ").\n";
 		return 0;
 	    }
 	};
 	while ($tryanother->() == 0) {};
     } else {
 	$mus = SDL::Music->new("$FPATH$musics{$name}");
-	$mus->{-data} or print STDERR "Warning, could not create new music from `$FPATH$musics{$name}' (reason: ", $app->error, ").\n";
-	if ($pos) {
-	    fb_c_stuff::fade_in_music_position($mus->{-data}, -1, 500, $pos);
-	} else {
-	    $mixer->play_music($mus, -1);
-	}
-        $music{current} = $name;
+        if ((UNIVERSAL::isa($mus, 'HASH') && $mus->{-data}) || $$mus) {
+            if ($pos) {
+                fb_c_stuff::fade_in_music_position(UNIVERSAL::isa($mus, 'HASH') ? $mus->{-data} : $$mus, -1, 500, $pos);
+            } else {
+                $mixer->play_music($mus, -1);
+            }
+            $music{current} = $name;
+        } else {
+            print STDERR "Warning, could not create new music from `$FPATH$musics{$name}' (reason: ", $app->error, ").\n";
+        }
     }
 }
 
@@ -247,7 +253,7 @@ sub init_sound() {
     foreach (@sounds) {
 	my $sound_path = "$FPATH/snd/$_.ogg";
 	$sound{$_} = SDL::Sound->new($sound_path);
-	if ($sound{$_}{-data}) {
+	if ((UNIVERSAL::isa($sound{$_}, 'HASH') && $sound{$_}{-data}) || ${$sound{$_}}) {
 	    $sound{$_}->volume(80);
 	} else {
 	    print STDERR "Warning, could not create new sound from `$sound_path'.\n";
@@ -1092,12 +1098,21 @@ sub myttfprint_ {
 
     length(join("",@text)) > 0 or return;
     
-    $surface = $$surface{-surface} if ( ref($surface) && $surface->isa("SDL::Surface"));
+    my ($fg, $bg);
+    if (ref($surface) && $surface->isa("SDL::Surface") && UNIVERSAL::isa($surface, 'HASH')) {
+        $surface = $surface->{-surface};
+        $fg = $$self{-fg}{-color};
+        $bg = $$self{-bg}{-color};
+    } else {
+        $surface = $$surface;
+        $fg = ${$$self{-fg}};
+        $bg = ${$$self{-bg}};
+    }
     
     SDL::FreeSurface($self->{-surface}) if ($$self{-surface});
     
     $$self{-surface} = fb_c_stuff::TTFPutString($$self{-font},$$self{-mode},
-                                                $surface,$x,$y,$$self{-fg}{-color},$$self{-bg}{-color},join("",@text));
+                                                $surface,$x,$y,$fg,$bg,fb_c_stuff::bidi_cvt(join("",@text)));
     
     die "Could not print \"", join("",@text), "\" to surface, ",
       SDL::GetError(), "\n" unless ($$self{-surface});
@@ -1165,7 +1180,7 @@ sub handle_game_events() {
         my $keypressed;
 	if ($event->type == SDL_KEYDOWN) {
 	    $keypressed = $event->key_sym;
-	} elsif ($event->type == SDL::JOYAXISMOTION() || $event->type() == SDL::JOYBUTTONDOWN()) {
+	} elsif ($event->type == fb_c_stuff::JOYAXISMOTION() || $event->type() == fb_c_stuff::JOYBUTTONDOWN()) {
 	    $keypressed = translate_joystick_tokey($event);
             if ($keypressed =~ /^joystick\|axisvalue\|\d+\|\d+\|0$/) {  #- we treat position at 0 as KEYUP
                 $keypressed = undef;
@@ -1227,7 +1242,7 @@ sub handle_game_events() {
                                     my $keypressed;
                                     if ($event->type == SDL_KEYDOWN) {
                                         $keypressed = $event->key_sym;
-                                    } elsif ($event->type == SDL::JOYAXISMOTION() || $event->type() == SDL::JOYBUTTONDOWN()) {
+                                    } elsif ($event->type == fb_c_stuff::JOYAXISMOTION() || $event->type() == fb_c_stuff::JOYBUTTONDOWN()) {
                                         $keypressed = translate_joystick_tokey($event);
                                         if ($keypressed =~ /^joystick\|axisvalue\|\d+\|\d+\|0$/) {  #- we treat position at 0 as KEYUP
                                             $keypressed = undef;
@@ -1280,9 +1295,9 @@ sub handle_game_events() {
         $keypressed = undef;
 	if ($event->type == SDL_KEYUP) {
 	    $keypressed = $event->key_sym;
-	} elsif ($event->type == SDL::JOYAXISMOTION() || $event->type() == SDL::JOYBUTTONUP) {
+	} elsif ($event->type == fb_c_stuff::JOYAXISMOTION() || $event->type() == fb_c_stuff::JOYBUTTONUP()) {
 	    $keypressed = translate_joystick_tokey($event);
-            if ($event->type == SDL::JOYAXISMOTION() && $keypressed !~ /^joystick\|axisvalue\|\d+\|\d+\|0$/) {  #- we treat position at 0 as KEYUP
+            if ($event->type == fb_c_stuff::JOYAXISMOTION() && $keypressed !~ /^joystick\|axisvalue\|\d+\|\d+\|0$/) {  #- we treat position at 0 as KEYUP
                 $keypressed = undef;
             }
             $keypressed =~ s/^joystick\|buttonup/joystick|buttondown/;
@@ -1603,7 +1618,7 @@ sub update_lost {
                 die 'new_game';
             }
             if (!@{$sticked_bubbles{$player}}) {
-                if ($event->type == SDL_KEYDOWN || $event->type == SDL::JOYBUTTONUP) {
+                if ($event->type == SDL_KEYDOWN || $event->type == fb_c_stuff::JOYBUTTONUP()) {
                     die 'new_game';
                 }
             }
@@ -2025,7 +2040,7 @@ sub update_game() {
                 while ($event->poll != 0) {
                     if ($event->type == SDL_KEYDOWN && $event->key_sym == SDLK_ESCAPE()) {
                         die 'quit';
-                    } elsif ($event->type == SDL_KEYDOWN || $event->type == SDL::JOYBUTTONUP) {
+                    } elsif ($event->type == SDL_KEYDOWN || $event->type == fb_c_stuff::JOYBUTTONUP()) {
                         if (is_mp_game()) {
                             $mp_newgame->();
                         } else {
@@ -2216,6 +2231,21 @@ sub load_levelset {
     }
 }
 
+our $surfstyle;
+sub surf {
+    my ($surface) = @_;
+    $surfstyle ||= UNIVERSAL::isa($surface, 'HASH') ? 'hashref' : 'scalarref';
+    return $surfstyle eq 'hashref' ? $surface->{-surface} : $$surface;
+}
+sub rect {
+    my ($rect) = @_;
+    return $surfstyle eq 'hashref' ? $rect->{-rect} : $$rect;
+}
+sub evt {
+    my ($evt) = @_;
+    return $surfstyle eq 'hashref' ? $evt->{-event} : $$evt;
+}
+
 sub init_game() {
     -r "$FPATH/$_" or die "[*ERROR*] the datafiles seem to be missing! (could not read `$FPATH/$_')\n".
                           "          The datafiles need to go to `$FPATH'.\n"
@@ -2254,33 +2284,37 @@ sub init_game() {
     $italicfont ||= fb_c_stuff::locatefont("sans:italic");
     $regularfont or die "[*ERROR*] FontConfig wasn't able to locate a regular TTF font for your language. Please try specifying one with --regularfont<file>.\n";
     $italicfont or die "[*ERROR*] FontConfig wasn't able to locate an italic TTF font for your language. Please try specifying one with --italicfont<file>.\n";
-
-    $ttfonts{netdialogs}{fg} = SDL::TTFont->new(-name => $regularfont, -size => 12, -mode => SDL::TTF_UTF8_BLENDED(),
+    my $mode;
+    eval { $mode = SDL::TTF_UTF8_BLENDED(); };    #- bloody API change
+    $@ and eval { $mode = SDL::UTF8_BLENDED(); }; #-
+    $@ and die "[*ERROR*] Both SDL::TTF_UTF8_BLENDED() and SDL::UTF8_BLENDED() unavailableg, your version of sdl-perl is not supported.\n";
+    $ttfonts{netdialogs}{fg} = SDL::TTFont->new(-name => $regularfont, -size => 12, -mode => $mode,
                                                 -foreground => $SDL::Color::white);
-    $ttfonts{netdialogs}{bg} = SDL::TTFont->new(-name => $regularfont, -size => 12, -mode => SDL::TTF_UTF8_BLENDED(),
+    $ttfonts{netdialogs}{bg} = SDL::TTFont->new(-name => $regularfont, -size => 12, -mode => $mode,
                                                 -foreground => $SDL::Color::black);
+
     if ($ENV{LANGUAGE} =~ /^ja/ && $regularfont eq $italicfont) {
         $ttfonts{netdialogs_servermsg}{fg} = $ttfonts{netdialogs}{fg};  #- save 5M of RSS
         $ttfonts{netdialogs_servermsg}{bg} = $ttfonts{netdialogs}{bg};
     } else {
-        $ttfonts{netdialogs_servermsg}{fg} = SDL::TTFont->new(-name => $italicfont, -size => 12, -mode => SDL::TTF_UTF8_BLENDED(),
+        $ttfonts{netdialogs_servermsg}{fg} = SDL::TTFont->new(-name => $italicfont, -size => 12, -mode => $mode,
                                                               -foreground => $SDL::Color::white);
-        $ttfonts{netdialogs_servermsg}{bg} = SDL::TTFont->new(-name => $italicfont, -size => 12, -mode => SDL::TTF_UTF8_BLENDED(),
+        $ttfonts{netdialogs_servermsg}{bg} = SDL::TTFont->new(-name => $italicfont, -size => 12, -mode => $mode,
                                                               -foreground => $SDL::Color::black);
     }
-    $ttfonts{menu}{fg} = SDL::TTFont->new(-name => $regularfont, -size => 16, -mode => SDL::TTF_UTF8_BLENDED(),
+    $ttfonts{menu}{fg} = SDL::TTFont->new(-name => $regularfont, -size => 16, -mode => $mode,
                                           -foreground => $SDL::Color::white);
     $ENV{LANGUAGE} =~ /^ja/ and print_step('.');  #- loading japanese font is much slower
-    $ttfonts{menu}{bg} = SDL::TTFont->new(-name => $regularfont, -size => 16, -mode => SDL::TTF_UTF8_BLENDED(),
+    $ttfonts{menu}{bg} = SDL::TTFont->new(-name => $regularfont, -size => 16, -mode => $mode,
                                           -foreground => $SDL::Color::black);
-    $ttfonts{ingame}{fg} = SDL::TTFont->new(-name => $regularfont, -size => 18, -mode => SDL::TTF_UTF8_BLENDED(),
+    $ttfonts{ingame}{fg} = SDL::TTFont->new(-name => $regularfont, -size => 18, -mode => $mode,
                                             -foreground => $SDL::Color::white);
-    $ttfonts{ingame}{bg} = SDL::TTFont->new(-name => $regularfont, -size => 18, -mode => SDL::TTF_UTF8_BLENDED(),
+    $ttfonts{ingame}{bg} = SDL::TTFont->new(-name => $regularfont, -size => 18, -mode => $mode,
                                             -foreground => $SDL::Color::black);
     $ENV{LANGUAGE} =~ /^ja/ and print_step('.');
-    $ttfonts{ingame_small}{fg} = SDL::TTFont->new(-name => $regularfont, -size => 10, -mode => SDL::TTF_UTF8_BLENDED(),
+    $ttfonts{ingame_small}{fg} = SDL::TTFont->new(-name => $regularfont, -size => 10, -mode => $mode,
                                                   -foreground => $SDL::Color::white);
-    $ttfonts{ingame_small}{bg} = SDL::TTFont->new(-name => $regularfont, -size => 10, -mode => SDL::TTF_UTF8_BLENDED(),
+    $ttfonts{ingame_small}{bg} = SDL::TTFont->new(-name => $regularfont, -size => 10, -mode => $mode,
                                                   -foreground => $SDL::Color::black);
 
     foreach my $ball (1..8) {
@@ -2306,8 +2340,8 @@ sub init_game() {
         my $angle = $number*($PI/2)/$CANON_ROTATIONS_NB;
 
         $canon{img}{$number} = SDL::Surface->new(-width => $shooter->width, -height => $shooter->height, -depth => 32);
-        fb_c_stuff::rotate_bicubic($canon{img}{$number}->{-surface}, $shooter->{-surface}, $angle);
-        $canon{data}{$number} = fb_c_stuff::autopseudocrop($canon{img}{$number}->{-surface});
+        fb_c_stuff::rotate_bicubic(surf($canon{img}{$number}), surf($shooter), $angle);
+        $canon{data}{$number} = fb_c_stuff::autopseudocrop(surf($canon{img}{$number}));
         #- now crop (and use native RGBA ordering)
         my $replace = SDL::Surface->new(-width => $canon{data}{$number}[2], -height => $canon{data}{$number}[3], -depth => 32);
         $canon{img}{$number}->set_alpha(0, 0);
@@ -2317,8 +2351,8 @@ sub init_game() {
         add_default_rect($canon{img}{$number});
 
         $canon{img_mini}{$number} = SDL::Surface->new(-width => $shooter_mini->width, -height => $shooter_mini->height, -depth => 32);
-        fb_c_stuff::rotate_bicubic($canon{img_mini}{$number}->{-surface}, $shooter_mini->{-surface}, $angle);
-        $canon{data_mini}{$number} = fb_c_stuff::autopseudocrop($canon{img_mini}{$number}->{-surface});
+        fb_c_stuff::rotate_bicubic(surf($canon{img_mini}{$number}), surf($shooter_mini), $angle);
+        $canon{data_mini}{$number} = fb_c_stuff::autopseudocrop(surf($canon{img_mini}{$number}));
         #- now crop (and use native RGBA ordering)
         my $replace = SDL::Surface->new(-width => $canon{data_mini}{$number}[2], -height => $canon{data_mini}{$number}[3], -depth => 32);
         $canon{img_mini}{$number}->set_alpha(0, 0);
@@ -2405,7 +2439,7 @@ sub init_game() {
             my $alpha = SDL::Surface->new(-width => $img->width, -height => $img->height, -depth => 32);
             $img->set_alpha(0, 0);  #- for RGBA->RGBA blits, SDL_SRCALPHA must be removed or destination alpha is preserved
             $img->blit(undef, $alpha, undef);
-            fb_c_stuff::alphaize($alpha->{-surface});
+            fb_c_stuff::alphaize(surf($alpha));
             push @{$imgbin{menu_cursor}{"${cursortype}alpha"}}, $alpha;
             $img->set_alpha(SDL_SRCALPHA(), 0);
         }
@@ -2445,6 +2479,7 @@ sub init_game() {
 
     #- net game setup images
     $imgbin{back_netgame} = add_image('back_netgame.png');
+    $imgbin{netspot} = add_image('netspot.png');
 
     #- hiscore
     $imgbin{back_hiscores} = add_image('back_hiscores.png');
@@ -2518,20 +2553,20 @@ sub open_level($) {
 
 sub translate_joystick_tokey($) {
     my ($event) = @_;
-    my $which =  SDL::JoyAxisEventWhich($event->{-event});
-    if ($event->type == SDL::JOYAXISMOTION()) {
-        my $axis = SDL::JoyAxisEventAxis($event->{-event});
-        my $value = fb_c_stuff::JoyAxisEventValue($event->{-event});
+    my $which =  SDL::JoyAxisEventWhich(evt($event));
+    if ($event->type == fb_c_stuff::JOYAXISMOTION()) {
+        my $axis = SDL::JoyAxisEventAxis(evt($event));
+        my $value = fb_c_stuff::JoyAxisEventValue(evt($event));
         if ($value <= -32767 || $value >= 32767) {  #- theoretically, it should work properly with analog joysticks this way
             return "joystick|axisvalue|$which|$axis|$value";
         } else {
             return "joystick|axisvalue|$which|$axis|0";
         }
-    } elsif ($event->type() == SDL::JOYBUTTONDOWN()) {
-        my $button = SDL::JoyButtonEventButton($event->{-event}) + 1;
+    } elsif ($event->type() == fb_c_stuff::JOYBUTTONDOWN()) {
+        my $button = SDL::JoyButtonEventButton(evt($event)) + 1;
         return "joystick|buttondown|$which|$button";
-    } elsif ($event->type() == SDL::JOYBUTTONUP()) {
-        my $button = SDL::JoyButtonEventButton($event->{-event}) + 1;
+    } elsif ($event->type() == fb_c_stuff::JOYBUTTONUP()) {
+        my $button = SDL::JoyButtonEventButton(evt($event)) + 1;
         return "joystick|buttonup|$which|$button";
     }
 }
@@ -2543,7 +2578,7 @@ sub grab_key {
 	$event->wait;
 	if ($event->type == SDL_KEYDOWN) {
 	    $keyp = $event->key_sym;
-	} elsif ($event->type == SDL::JOYAXISMOTION() || $event->type() == SDL::JOYBUTTONDOWN()) {
+	} elsif ($event->type == fb_c_stuff::JOYAXISMOTION() || $event->type() == fb_c_stuff::JOYBUTTONDOWN()) {
 	    $keyp = translate_joystick_tokey($event);
         }
     } while (!defined($keyp));
@@ -2610,7 +2645,7 @@ sub display_highscores {
             put_image($imgbin{hiscore_frame}, $high_posx - 7, $high_posy - 6);
             my $tmp = SDL::Surface->new(-width => $high_rect->width/4, -height => $high_rect->height/4,
                                         -depth => 32, -Amask => "0 but true")->display_format;
-            fb_c_stuff::shrink($tmp->{-surface}, $background->display_format->{-surface}, 0, 0, $high_rect->{-rect}, 4);
+            fb_c_stuff::shrink(surf($tmp), surf($background->display_format), 0, 0, rect($high_rect), 4);
             $tmp->blit(undef, $app, SDL::Rect->new(-x => $high_posx, '-y' => $high_posy));
             $centered_print->($high_posx, $high_posy,    $high->{name});
             $centered_print->($high_posx, $high_posy+20, $high->{level} eq 'WON' ? "won!" : "level ".$high->{level});
@@ -2892,7 +2927,7 @@ sub new_game() {
 	$background->blit($apprects{main}, $app, $apprects{main});
 	$app->flip;
     } else {
-	fb_c_stuff::effect($app->{-surface}, $background->display_format->{-surface});
+	fb_c_stuff::effect(surf($app), surf($background->display_format));
     }
 
     $display_on_app_disabled = 0;
@@ -3263,7 +3298,7 @@ sub smg_choose_server(@) {
             my $k;
             if ($event->type == SDL_KEYDOWN) {
                 $k = $event->key_sym;
-            } elsif ($event->type == SDL::JOYAXISMOTION() || $event->type() == SDL::JOYBUTTONDOWN()) {
+            } elsif ($event->type == fb_c_stuff::JOYAXISMOTION() || $event->type() == fb_c_stuff::JOYBUTTONDOWN()) {
                 $k = translate_joystick_tokey($event);
             }
             if ($k) {
@@ -3410,7 +3445,7 @@ sub callback_entry {
                 $position = $#typed + 1;
             }
         } else {
-            my $utf8char = fb_c_stuff::utf8key($params->{event}{-event});
+            my $utf8char = fb_c_stuff::utf8key(evt($params->{event}));
             if ($utf8char ne '' && $utf8char ne "\n") {
                 splice @typed, $position, 0, $utf8char;
                 if (width($params->{font}, $params->{prefix} . join('', @typed)) >= $params->{maxlen}) {
@@ -3442,9 +3477,19 @@ sub callback_entry {
     }
 }
 
-sub smg_choose_game() {
-    fb_net::send_and_receive('NICK', $mynick);
+sub print_spot {
+    my ($latitude, $longitude) = @_;
+    my $x0 = 309;
+    my $y0 = 231;
+    my $longitude_factor = 1.424;
+    my $latitude_factor = -94;
+    put_image($imgbin{netspot},
+              $x0 + $longitude*$longitude_factor - $imgbin{netspot}->width/2,
+              $y0 + asinh(tan($latitude*2*$PI/360))*$latitude_factor - $imgbin{netspot}->height/2);  #- map is not exactly mercator but.. approximation is kinda ok
+}
 
+our ($mylatitude, $mylongitude);
+sub smg_choose_game() {
     my @actions = ({ name => t("Chat"), action => 'CHAT', selected => 1 },
                    { name => t("Create new game"), action => 'CREATE' });
     my $max_actions = 18;
@@ -3468,6 +3513,7 @@ sub smg_choose_game() {
         $imgbin{back_netgame}->blit($drect, $app, $drect);
     };
     callback_entry('reset');
+    my @geolocs;
     my $redraw = sub {
         $erase->();
         my $y = $smg_starty;
@@ -3482,6 +3528,7 @@ sub smg_choose_game() {
         if ($curaction->() && $curaction->()->{action} eq 'CHAT') {
             callback_entry('print', { xpos => $smg_startx, ypos => $smg_starty_chat, prefix => t("Say: "), font => 'netdialogs' });
         }
+        print_spot($_->[0], $_->[1]) foreach @geolocs;
         smg_printstatus();
     };
 
@@ -3491,7 +3538,13 @@ sub smg_choose_game() {
         my ($free, @games);
         eval {
             ($free, undef, my $freenicks, @games) = fb_net::list();
-            @wholist = split ',', $freenicks;
+            @wholist = ();
+            @geolocs = ();
+            foreach (split ',', $freenicks) {
+                my ($nick, undef, $latitude, $longitude) = $_ =~ /([^:]+)(:([^:]+):([^:]+))?/;
+                push @wholist, $nick;
+                $latitude && int($latitude) ne 0 && int($longitude) ne 0 and push @geolocs, [ $latitude, $longitude ];
+            }
         };
         $@ and return;
         my ($join, $rest) = partition { $_->{action} eq 'JOIN' } @actions;
@@ -3532,6 +3585,39 @@ sub smg_choose_game() {
         }
     };
 
+    fb_net::send_and_receive('NICK', $mynick);
+
+    if ($pdata{gametype} = 'net') {
+        if (!defined($mylatitude) && !$private) {
+            $erase->();
+            smg_add_status_msg(t("*** Please wait, retrieving your geographical location from http://hostip.info/..."));
+            eval {
+                local $SIG{ALRM} = sub { die "alarm\n" };
+                alarm 5;
+                my $data = fb_net::http_download('http://api.hostip.info/get_html.php?position=true');
+                ($mylatitude) = $data =~ /Latitude: (-?\S{1,5})/;
+                ($mylongitude) = $data =~ /Longitude: (-?\S{1,5})/;
+                if (defined($mylatitude)) {
+                    smg_add_status_msg(t("*** Done - you can now create or join a game"));
+                } else {
+                    smg_add_status_msg(t("*** hostip.info doesn't know the geographical location of your IP address"));
+                    smg_add_status_msg(t("*** If you want that your location appears on the map, fix your entry at http://hostip.info/"));
+                    $mylatitude = '';
+                }
+                alarm 0;
+            };
+            if ($@) {
+                if ($@ =~ /^alarm/) {
+                    smg_add_status_msg(t("*** hostip.info didn't reply within 5 seconds, giving up"));
+                }
+                $mylatitude = '';
+            }
+        }
+        if ($mylatitude) {
+            fb_net::send_and_receive('GEOLOC', "$mylatitude:$mylongitude");
+        }
+    }
+
     my $need4update;
     my $relist;
     my $players_in_game = '';
@@ -3543,7 +3629,7 @@ sub smg_choose_game() {
 
     while (1) {
         $relist++;
-        $relist % (3*(1000/$TARGET_ANIM_SPEED)) == 0 and $list->();
+        $relist % (5*(1000/$TARGET_ANIM_SPEED)) == 0 and $list->();
         callback_entry('ping') and $redraw->();
 
         my $need_redraw;
@@ -3555,7 +3641,7 @@ sub smg_choose_game() {
             my $k;
             if ($event->type == SDL_KEYDOWN) {
                 $k = $event->key_sym;
-            } elsif ($curaction->()->{action} ne 'CHAT' && ($event->type == SDL::JOYAXISMOTION() || $event->type() == SDL::JOYBUTTONDOWN())) {
+            } elsif ($curaction->()->{action} ne 'CHAT' && ($event->type == fb_c_stuff::JOYAXISMOTION() || $event->type() == fb_c_stuff::JOYBUTTONDOWN())) {
                 $k = translate_joystick_tokey($event);
             }
             if ($k) {
@@ -4376,14 +4462,14 @@ sub menu {
                 $candy = SDL::Surface->new(-width => $imgbin{menu_logo}->width, -height => $imgbin{menu_logo}->height, -depth => 32);
             }
             
-            $logo_candy_method == 0 and fb_c_stuff::rotate_bilinear($candy->{-surface}, $imgbin{menu_logo}->{-surface}, sin($logo_candy_index/40)/20);
-            $logo_candy_method == 1 and fb_c_stuff::flipflop($candy->{-surface}, $imgbin{menu_logo}->{-surface}, $logo_candy_index);
-            $logo_candy_method == 2 and fb_c_stuff::enlighten($candy->{-surface}, $imgbin{menu_logo}->{-surface}, $logo_candy_index);
-            $logo_candy_method == 3.1 and fb_c_stuff::stretch($candy->{-surface}, $imgbin{menu_logo}->{-surface}, $logo_candy_index);
-            $logo_candy_method == 4.1 and fb_c_stuff::tilt($candy->{-surface}, $imgbin{menu_logo}->{-surface}, $logo_candy_index);
-            $logo_candy_method == 5 and fb_c_stuff::points($candy->{-surface}, $imgbin{menu_logo}->{-surface}, $imgbin{menu_logo_mask}->{-surface});
-            $logo_candy_method == 6 and fb_c_stuff::waterize($candy->{-surface}, $imgbin{menu_logo}->{-surface}, $logo_candy_index);
-            $logo_candy_method == 7 and fb_c_stuff::brokentv($candy->{-surface}, $imgbin{menu_logo}->{-surface}, $logo_candy_index);
+            $logo_candy_method == 0 and fb_c_stuff::rotate_bilinear(surf($candy), surf($imgbin{menu_logo}), sin($logo_candy_index/40)/20);
+            $logo_candy_method == 1 and fb_c_stuff::flipflop(surf($candy), surf($imgbin{menu_logo}), $logo_candy_index);
+            $logo_candy_method == 2 and fb_c_stuff::enlighten(surf($candy), surf($imgbin{menu_logo}), $logo_candy_index);
+            $logo_candy_method == 3.1 and fb_c_stuff::stretch(surf($candy), surf($imgbin{menu_logo}), $logo_candy_index);
+            $logo_candy_method == 4.1 and fb_c_stuff::tilt(surf($candy), surf($imgbin{menu_logo}), $logo_candy_index);
+            $logo_candy_method == 5 and fb_c_stuff::points(surf($candy), surf($imgbin{menu_logo}), surf($imgbin{menu_logo_mask}));
+            $logo_candy_method == 6 and fb_c_stuff::waterize(surf($candy), surf($imgbin{menu_logo}), $logo_candy_index);
+            $logo_candy_method == 7 and fb_c_stuff::brokentv(surf($candy), surf($imgbin{menu_logo}), $logo_candy_index);
             
             $candy->blit(undef, $app, my $rect = SDL::Rect->new(-x => $logox, '-y' => $logoy));
             if (!$no_update) {
@@ -4452,7 +4538,7 @@ sub menu {
                 if (!defined($cursor_tmp)) {
                     $cursor_tmp = SDL::Surface->new(-width => $imgbin{menu_cursor}{$m}[0]->width, -height => $imgbin{menu_cursor}{$m}[0]->height, -depth => 32);
                 }
-                fb_c_stuff::pixelize($cursor_tmp->{-surface}, $imgbin{menu_cursor}{"${m}alpha"}[$pdata{cursor_img}{$m}]{-surface});
+                fb_c_stuff::pixelize(surf($cursor_tmp), surf($imgbin{menu_cursor}{"${m}alpha"}[$pdata{cursor_img}{$m}]));
                 $cursor_tmp->blit(undef, $app, $cursor_rect);
             } else {
                 $imgbin{menu_cursor}{"${m}alpha"}[$pdata{cursor_img}{$m}]->blit(undef, $app, $cursor_rect);
@@ -4508,7 +4594,7 @@ sub menu {
             my $keypressed;
             if ($event->type == SDL_KEYDOWN) {
                 $keypressed = $event->key_sym;
-            } elsif ($event->type == SDL::JOYAXISMOTION() || $event->type() == SDL::JOYBUTTONDOWN()) {
+            } elsif ($event->type == fb_c_stuff::JOYAXISMOTION() || $event->type() == fb_c_stuff::JOYBUTTONDOWN()) {
                 $keypressed = translate_joystick_tokey($event);
                 if ($keypressed =~ /^joystick\|axisvalue\|\d+\|\d+\|0$/) {  #- we treat position at 0 as KEYUP
                     $keypressed = undef;

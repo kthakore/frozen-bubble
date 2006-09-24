@@ -81,6 +81,7 @@ static char fl_line_unrecognized[] = "MISSING_FB_PROTOCOL_TAG";
 static char fl_proto_mismatch[] = "INCOMPATIBLE_PROTOCOL";
 
 char * nick[256];
+char * geoloc[256];
 
 // calculate the list of players for a given game
 static char* list_game(const struct game * g)
@@ -102,10 +103,15 @@ static int games_running;
 static void list_open_nicks_aux(gpointer data, gpointer user_data)
 {
         char* n = nick[GPOINTER_TO_INT(data)];
+        if (n == NULL)
+                return;
+        strconcat(list_games_str, n, sizeof(list_games_str));
+        n = geoloc[GPOINTER_TO_INT(data)];
         if (n != NULL) {
+                strconcat(list_games_str, ":", sizeof(list_games_str));
                 strconcat(list_games_str, n, sizeof(list_games_str));
-                strconcat(list_games_str, ",", sizeof(list_games_str));
         }
+        strconcat(list_games_str, ",", sizeof(list_games_str));
 }
 static void list_games_aux(gpointer data, gpointer user_data)
 {
@@ -464,6 +470,21 @@ int process_msg(int fd, char* msg)
                                 calculate_list_games();
                                 send_ok(fd, msg_orig);
                         }
+                }
+        } else if (streq(current_command, "GEOLOC")) {
+                if (!args) {
+                        send_line_log(fd, wn_missing_arguments, msg_orig);
+                } else {
+                        if ((ptr = strchr(args, ' ')))
+                                *ptr = '\0';
+                        if (strlen(args) > 13)  // sign, 4 digits, dot, colon, sign, 4 digits, dot
+                                args[13] = '\0';
+                        if (geoloc[fd] != NULL) {
+                                free(geoloc[fd]);
+                        }
+                        geoloc[fd] = strdup(args);
+                        calculate_list_games();
+                        send_ok(fd, msg_orig);
                 }
         } else if (streq(current_command, "CREATE")) {
                 if (!args) {

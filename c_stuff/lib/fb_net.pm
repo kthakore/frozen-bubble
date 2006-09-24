@@ -403,7 +403,7 @@ sub http_download($) {
     my ($host, $port, $path) = $url =~ m,^http://([^/:]+)(?::(\d+))?(/\S*)?$,;
     $port ||= 80;
 
-    $sock = IO::Socket::INET->new(PeerAddr => $host, PeerPort => $port, Proto => 'tcp', Timeout => 5);
+    my $sock = IO::Socket::INET->new(PeerAddr => $host, PeerPort => $port, Proto => 'tcp', Timeout => 5);
     if (!$sock) {
         print STDERR "Couldn't connect to $host:$port:\n\t$@\n";
         return;
@@ -417,7 +417,7 @@ sub http_download($) {
                                      "User-Agent: Frozen-Bubble client version $version (protocol version $proto_major.$proto_minor) on $sysname/$machine",
                                      "", ""));
     if (!$bytes) {
-        disconnect();
+        close $sock;
         return;
     }
 
@@ -449,11 +449,11 @@ sub http_download($) {
     };
 
     if ($@ =~ /^eof/) {
-        disconnect();
+        close $sock;
         return $tmp;
     } else {
         print STDERR "http_download: $@\n";
-        disconnect();
+        close $sock;
         return;
     }
 }

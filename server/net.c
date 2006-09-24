@@ -167,6 +167,9 @@ void conn_terminated(int fd, char* reason)
                 if (nick[fd] != NULL) {
                         free(nick[fd]);
                 }
+                if (geoloc[fd] != NULL) {
+                        free(geoloc[fd]);
+                }
                 new_conns = g_list_remove(new_conns, GINT_TO_POINTER(fd));
                 player_part_game(fd);                       // this is where the recursive call can come from (process_msg_prio with a failed send)
                 player_disconnects(fd);
@@ -412,6 +415,7 @@ void connections_manager(void)
                                         } else {
                                                 last_data_in[fd] = current_time;
                                                 nick[fd] = NULL;
+                                                geoloc[fd] = NULL;
                                                 send_line_log_push(fd, greets_msg);
                                                 conns = g_list_append(conns, GINT_TO_POINTER(fd));
                                                 player_connects(fd);
