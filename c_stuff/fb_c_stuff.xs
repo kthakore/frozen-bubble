@@ -27,18 +27,7 @@
 
 #include <SDL/SDL.h>
 #include <SDL/SDL_mixer.h>
-#include <SDL/SDL_ttf.h>
-#define TEXT_SOLID      1
-#define TEXT_SHADED     2
-#define TEXT_BLENDED    4
-#define UTF8_SOLID      8
-#define UTF8_SHADED     16      
-#define UTF8_BLENDED    32
-#define UNICODE_SOLID   64
-#define UNICODE_SHADED  128
-#define UNICODE_BLENDED 256
-
-#include <fontconfig/fontconfig.h>
+#include <SDL/SDL_Pango.h>
 
 const int XRES = 640;
 const int YRES = 480;
@@ -1172,49 +1161,6 @@ SV* utf8key_(SDL_Event * e) {
         return retval;
 }
 
-SV* locatefont_(char *pattern) {
-        FcFontSet   *fs;
-        FcPattern   *pat;
-        FcPattern   *match;
-        FcResult    result;
-        SV* retval = NULL;
-
-        if (!FcInit()) {
-                fprintf(stderr, "Ouch, can't init font config library\n");
-                exit(1);
-        }
-
-        pat = FcNameParse((FcChar8 *) pattern);
-        if (!pat) {
-                fprintf(stderr, "Failed to parse pattern (%s)\n", pattern);
-                exit(1);
-        }
-
-        FcConfigSubstitute(0, pat, FcMatchPattern);
-        FcDefaultSubstitute(pat);
-        fs = FcFontSetCreate();
-        match = FcFontMatch(0, pat, &result);
-        if (match)
-            FcFontSetAdd(fs, match);
-        FcPatternDestroy(pat);
-
-        if (fs) {
-                if (fs->nfont > 0) {
-                        FcChar8 *file;
-                        if (FcPatternGetString(fs->fonts[0], FC_FONTFORMAT, 0, &file) == FcResultMatch) {
-                                if (!strcmp((char*)file, "TrueType")) {
-                                        if (FcPatternGetString(fs->fonts[0], FC_FILE, 0, &file) == FcResultMatch) {
-                                                retval = newSVpv((char*)file, 0);
-                                        }
-                                }
-                        }
-                }
-                FcFontSetDestroy(fs);
-        }
-
-        return retval;
-}
-
 void alphaize_(SDL_Surface * surf)
 {
 	myLockSurface(surf);
@@ -1258,6 +1204,49 @@ void pixelize_(SDL_Surface * dest, SDL_Surface * orig)
 	}
 	myUnlockSurface(orig);
 	myUnlockSurface(dest);
+}
+
+void sdlpango_init_()
+{
+        SDLPango_Init();
+}
+
+/* only "white" and "black" are supported in the color parameter */
+SDLPango_Context* sdlpango_createcontext_(char* color, char* font_desc)
+{
+        SDLPango_Context * context = SDLPango_CreateContext_GivenFontDesc(font_desc);
+        if (!strcmp(color, "white")) {
+                SDLPango_SetDefaultColor(context, MATRIX_TRANSPARENT_BACK_WHITE_LETTER);
+        } else {
+                SDLPango_SetDefaultColor(context, MATRIX_TRANSPARENT_BACK_BLACK_LETTER);
+        }
+        return context;
+}
+
+AV* sdlpango_getsize_(SDLPango_Context* context, char* text, int width)
+{
+        AV* ret;
+        int w, h;
+        SDLPango_SetMinimumSize(context, width, 0);
+        SDLPango_SetText(context, text, -1);
+        w = SDLPango_GetLayoutWidth(context);
+        h = SDLPango_GetLayoutHeight(context);
+        ret = newAV();
+        av_push(ret, newSViv(w));
+        av_push(ret, newSViv(h));
+        return ret;
+}
+
+SDL_Surface* sdlpango_draw_(SDLPango_Context* context, char* text, int width)
+{
+        SDLPango_SetMinimumSize(context, width, 0);
+        SDLPango_SetText(context, text, -1);
+	return SDLPango_CreateSurfaceDraw(context);
+}
+
+void sdlpango_freecontext_(SDLPango_Context* context)
+{
+        SDLPango_FreeContext(context);
 }
 
 /************************** Gateway to Perl ****************************/
@@ -1452,117 +1441,6 @@ utf8key(event)
   RETVAL
 
 
-SV *
-locatefont(pattern)
-  char *pattern
-  CODE:
-  RETVAL = locatefont_(pattern);
-  OUTPUT:
-  RETVAL
-
-
-SDL_Surface*
-TTFPutString ( font, mode, surface, x, y, fg, bg, text )
-	TTF_Font *font
-	int mode
-	SDL_Surface *surface
-	int x
-	int y
-	SDL_Color *fg
-	SDL_Color *bg
-	char *text
-	CODE:
-		SDL_Surface *img;
-		SDL_Rect dest;
-		int w,h;
-		dest.x = x;
-		dest.y = y;
-		RETVAL = NULL;
-		switch (mode) {
-			case TEXT_SOLID:
-				img = TTF_RenderText_Solid(font,text,*fg);
-				TTF_SizeText(font,text,&w,&h);
-				dest.w = w;
-				dest.h = h;
-				break;
-			case TEXT_SHADED:
-				img = TTF_RenderText_Shaded(font,text,*fg,*bg);
-				TTF_SizeText(font,text,&w,&h);
-				dest.w = w;
-				dest.h = h;
-				break;
-			case TEXT_BLENDED:
-				img = TTF_RenderText_Blended(font,text,*fg);
-				TTF_SizeText(font,text,&w,&h);
-				dest.w = w;
-				dest.h = h;
-				break;
-			case UTF8_SOLID:
-				img = TTF_RenderUTF8_Solid(font,text,*fg);
-				TTF_SizeUTF8(font,text,&w,&h);
-				dest.w = w;
-				dest.h = h;
-				break;
-			case UTF8_SHADED:
-				img = TTF_RenderUTF8_Shaded(font,text,*fg,*bg);
-				TTF_SizeUTF8(font,text,&w,&h);
-				dest.w = w;
-				dest.h = h;
-				break;
-			case UTF8_BLENDED:
-				img = TTF_RenderUTF8_Blended(font,text,*fg);
-				TTF_SizeUTF8(font,text,&w,&h);
-				dest.w = w;
-				dest.h = h;
-				break;
-			case UNICODE_SOLID:
-				img = TTF_RenderUNICODE_Solid(font,(Uint16*)text,*fg);
-				TTF_SizeUNICODE(font,(Uint16*)text,&w,&h);
-				dest.w = w;
-				dest.h = h;
-				break;
-			case UNICODE_SHADED:
-				img = TTF_RenderUNICODE_Shaded(font,(Uint16*)text,*fg,*bg);
-				TTF_SizeUNICODE(font,(Uint16*)text,&w,&h);
-				dest.w = w;
-				dest.h = h;
-				break;
-			case UNICODE_BLENDED:
-				img = TTF_RenderUNICODE_Blended(font,(Uint16*)text,*fg);
-				TTF_SizeUNICODE(font,(Uint16*)text,&w,&h);
-				dest.w = w;
-				dest.h = h;
-				break;
-			default:
-				img = TTF_RenderText_Shaded(font,text,*fg,*bg);
-				TTF_SizeText(font,text,&w,&h);
-				dest.w = w;
-				dest.h = h;
-		}
-		if ( img && img->format ) {
-                        if ( img->format->palette ) {
-                                SDL_Color *c = &img->format->palette->colors[0];
-                                Uint32 key = SDL_MapRGB( img->format, c->r, c->g, c->b );
-                                SDL_SetColorKey(img,SDL_SRCCOLORKEY,key );
-                                if (0 > SDL_BlitSurface(img,NULL,surface,&dest)) {
-                                        SDL_FreeSurface(img);
-                                        RETVAL = NULL;	
-                                } else {
-                                        RETVAL = img;
-                                }
-                        } else {
-                                if (0 > SDL_BlitSurface(img,NULL,surface,&dest)) {
-                                        SDL_FreeSurface(img);
-                                        RETVAL = NULL;	
-                                } else {
-                                        RETVAL = img;
-                                }
-                        }
-		}
-	OUTPUT:
-		RETVAL
-
-
 Sint16
 JoyAxisEventValue ( e )
         SDL_Event *e
@@ -1591,3 +1469,34 @@ JOYBUTTONUP ()
                 RETVAL = SDL_JOYBUTTONUP; // missing in 2.1.2
         OUTPUT:
                 RETVAL
+
+void
+sdlpango_init()
+        CODE:
+                sdlpango_init_();
+
+SDLPango_Context*
+sdlpango_createcontext(char* color, char* font_desc)
+        CODE:
+                RETVAL = sdlpango_createcontext_(color, font_desc);
+        OUTPUT:
+                RETVAL
+
+AV*
+sdlpango_getsize(SDLPango_Context* context, char* text, int width)
+        CODE:
+                RETVAL = sdlpango_getsize_(context, text, width);
+        OUTPUT:
+                RETVAL
+
+SDL_Surface*
+sdlpango_draw(SDLPango_Context* context, char* text, int width)
+        CODE:
+                RETVAL = sdlpango_draw_(context, text, width);
+        OUTPUT:
+                RETVAL
+
+void
+sdlpango_freecontext(SDLPango_Context* context)
+        CODE:
+                sdlpango_freecontext_(context);

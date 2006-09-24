@@ -7,20 +7,11 @@
 SDL_mixer >= 1.2.2
 	http://www.libsdl.org/projects/SDL_mixer/
 
-SDL_ttf >= 2.0.9 (or 2.0.8 with http://zarb.org/~gc/t/SDL_ttf.c.patch for
-                  japanese to work properly)
-	http://www.libsdl.org/projects/SDL_ttf/
-
 SDL perl >= 1.19.0
 	http://sdlperl.org/
-***************************************************************************
-***                                                                     ***
-***    !! WARNING !! we are not compatible with SDL perl 2.x series.    ***
-***                                                                     ***
-***************************************************************************
 
-fontconfig (reasonably recent, series 2.3 or upper should be fine)
-        http://www.fontconfig.org/
+SDL_Pango >= 0.1.3
+        http://sdlpango.sourceforge.net/
 
 The glib is needed for the server (and the server is needed for
 easy automatic LAN games).

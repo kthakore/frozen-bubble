@@ -24,3 +24,4 @@ SDL_GLattr              T_IV
 TTF_Font *              T_PTR
 int *			T_PTR
 void *			T_PTR
+SDLPango_Context *      T_PTR

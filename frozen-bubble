@@ -39,8 +39,8 @@ use strict;
 use vars qw($TARGET_ANIM_SPEED $BUBBLE_SIZE $ROW_SIZE $LAUNCHER_SPEED $BUBBLE_SPEED $MALUS_BUBBLE_SPEED $TIME_APPEARS_NEW_ROOT
             %POS %POS_1P %POS_2P %MENUPOS $KEYS %actions %angle %pdata $app %apprects $event %rects %sticked_bubbles %root_bubbles
             $background $background_orig @bubbles_images $gcwashere %bubbles_anim %launched_bubble %tobe_launched %next_bubble
-            $shooter_lowgfx $sdl_flags $mixer $mixer_enabled $music_disabled $sfx_disabled $no_echo $regularfont $italicfont @playlist %sound %music %pinguin %canon
-            $graphics_level @update_rects $CANON_ROTATIONS_NB %malus_bubble %falling_bubble %exploding_bubble %malus_gfx %ttfonts $private
+            $shooter_lowgfx $sdl_flags $mixer $mixer_enabled $music_disabled $sfx_disabled $no_echo @playlist %sound %music %pinguin %canon
+            $graphics_level @update_rects $CANON_ROTATIONS_NB %malus_bubble %falling_bubble %exploding_bubble %malus_gfx %pangocontext $private
             %sticking_bubble $time %imgbin $TIME_HURRY_WARN $TIME_HURRY_MAX $TIMEOUT_PINGUIN_SLEEP $FREE_FALL_CONSTANT @joysticks $joysticksinfo
             $direct @PLAYERS @ALL_PLAYERS %levels $display_on_app_disabled $total_time $time_1pgame $time_netgame $fullscreen $rcfile %hiscorefiles $HISCORES $HISCORES_MPTRAIN
             $lev_number $playermalus $mptrainingdiff $loaded_levelset $direct_levelset $chainreaction %chains %history %img_mini $frame $sock $gameserver $mynick);
@@ -145,8 +145,6 @@ local $_ = "@ARGV";
  -ne, --noecho               when sound is enabled, disable echoing each typed character with a typewriter sound
  -mn<nick>, --mynick<nick>   for net/lan games, use this nick instead of username (max 10 chars, ASCII alphanumeric plus dash and underscore only)
  -pr, --private              when starting a net game, don't use http://hostip.info/ to retrieve your geographical position to send it to other players
- -rf<file>, --regularfont<file> use the specified font file instead of using fontconfig to detect the best regular font
- -if<file>, --italicfont<file> use the specified font file instead of using fontconfig to detect the best italic font
 ";
 
 /-fs/ || /-fu/ and $fullscreen = 1;
@@ -171,8 +169,6 @@ local $_ = "@ARGV";
 /-ne/ || /-noe/ and $no_echo = 1;
 /-mn\s*(\S+)/ || /-mynick\s*(\S+)/ and $mynick = substr($1, 0, 10);
 /-pr/ || /-private/ and $private = 1;
-/-rf\s*(\S+)/ || /-regularfont\s*(\S+)/ and $regularfont = $1; 
-/-if\s*(\S+)/ || /-italicfont\s*(\S+)/ and $italicfont = $1; 
 /-ji/ || /-joysticksinfo/ and $joysticksinfo = 1;
 
 $mynick = sanitize_nick($mynick);
@@ -1088,45 +1084,22 @@ sub print_compressor() {
 
 sub print_ {
     my ($kind, $surface, $x, $y, @text) = @_;
-    exists $ttfonts{$kind} or die "$kind is no kind\n";
-    myttfprint_($ttfonts{$kind}{bg}, $surface, $x+1, $y+1, @text);
-    myttfprint_($ttfonts{$kind}{fg}, $surface, $x, $y, @text);
-}
-
-sub myttfprint_ {
-    my ($self,$surface,$x,$y,@text) = @_;
-
-    length(join("",@text)) > 0 or return;
-    
-    my ($fg, $bg);
-    if (ref($surface) && $surface->isa("SDL::Surface") && UNIVERSAL::isa($surface, 'HASH')) {
-        $surface = $surface->{-surface};
-        $fg = $$self{-fg}{-color};
-        $bg = $$self{-bg}{-color};
-    } else {
-        $surface = $$surface;
-        $fg = ${$$self{-fg}};
-        $bg = ${$$self{-bg}};
-    }
-    
-    SDL::FreeSurface($self->{-surface}) if ($$self{-surface});
-    
-    $$self{-surface} = fb_c_stuff::TTFPutString($$self{-font},$$self{-mode},
-                                                $surface,$x,$y,$fg,$bg,fb_c_stuff::bidi_cvt(join("",@text)));
-    
-    die "Could not print \"", join("",@text), "\" to surface, ",
-      SDL::GetError(), "\n" unless ($$self{-surface});
-}
-
-sub width_ {
-    my ($self,@text) = @_;
-    SDL::TTFSizeUTF8($$self{-font},join(" ",@text));
+    exists $pangocontext{$kind} or die "$kind is no kind\n";
+    my $surf = fb_c_stuff::sdlpango_draw($pangocontext{$kind}{context_bg}, join('', @text), -1);
+    my $rect = SDL::Rect->new('-x' => $x + 1, '-y' => $y + 1);
+    SDL::BlitSurface($surf, undef, surf($surface), rect($rect));
+    SDL::FreeSurface($surf);
+    $surf = fb_c_stuff::sdlpango_draw($pangocontext{$kind}{context_fg}, join('', @text), -1);
+    $rect = SDL::Rect->new('-x' => $x, '-y' => $y);
+    SDL::BlitSurface($surf, undef, surf($surface), rect($rect));
+    SDL::FreeSurface($surf);
 }
 
 sub width {
     my ($kind, @text) = @_;
-    exists $ttfonts{$kind} or die "$kind is no kind\n";
-    return ${width_($ttfonts{$kind}{fg}, @text)}[0];
+    exists $pangocontext{$kind} or die "$kind is no kind\n";
+    my $size = fb_c_stuff::sdlpango_getsize($pangocontext{$kind}{context_fg}, join('', @text), -1);
+    return $size->[0];
 }
 
 sub mp_disconnect_with_reason {
@@ -2280,42 +2253,14 @@ sub init_game() {
     $background_orig = SDL::Surface->new(-width => $app->width, -height => $app->height, -depth => 32, -Amask => '0 but true');
 
     print_step('.'); 
-    $regularfont ||= fb_c_stuff::locatefont("sans");
-    $italicfont ||= fb_c_stuff::locatefont("sans:italic");
-    $regularfont or die "[*ERROR*] FontConfig wasn't able to locate a regular TTF font for your language. Please try specifying one with --regularfont<file>.\n";
-    $italicfont or die "[*ERROR*] FontConfig wasn't able to locate an italic TTF font for your language. Please try specifying one with --italicfont<file>.\n";
-    my $mode;
-    eval { $mode = SDL::TTF_UTF8_BLENDED(); };    #- bloody API change
-    $@ and eval { $mode = SDL::UTF8_BLENDED(); }; #-
-    $@ and die "[*ERROR*] Both SDL::TTF_UTF8_BLENDED() and SDL::UTF8_BLENDED() unavailableg, your version of sdl-perl is not supported.\n";
-    $ttfonts{netdialogs}{fg} = SDL::TTFont->new(-name => $regularfont, -size => 12, -mode => $mode,
-                                                -foreground => $SDL::Color::white);
-    $ttfonts{netdialogs}{bg} = SDL::TTFont->new(-name => $regularfont, -size => 12, -mode => $mode,
-                                                -foreground => $SDL::Color::black);
-
-    if ($ENV{LANGUAGE} =~ /^ja/ && $regularfont eq $italicfont) {
-        $ttfonts{netdialogs_servermsg}{fg} = $ttfonts{netdialogs}{fg};  #- save 5M of RSS
-        $ttfonts{netdialogs_servermsg}{bg} = $ttfonts{netdialogs}{bg};
-    } else {
-        $ttfonts{netdialogs_servermsg}{fg} = SDL::TTFont->new(-name => $italicfont, -size => 12, -mode => $mode,
-                                                              -foreground => $SDL::Color::white);
-        $ttfonts{netdialogs_servermsg}{bg} = SDL::TTFont->new(-name => $italicfont, -size => 12, -mode => $mode,
-                                                              -foreground => $SDL::Color::black);
-    }
-    $ttfonts{menu}{fg} = SDL::TTFont->new(-name => $regularfont, -size => 16, -mode => $mode,
-                                          -foreground => $SDL::Color::white);
-    $ENV{LANGUAGE} =~ /^ja/ and print_step('.');  #- loading japanese font is much slower
-    $ttfonts{menu}{bg} = SDL::TTFont->new(-name => $regularfont, -size => 16, -mode => $mode,
-                                          -foreground => $SDL::Color::black);
-    $ttfonts{ingame}{fg} = SDL::TTFont->new(-name => $regularfont, -size => 18, -mode => $mode,
-                                            -foreground => $SDL::Color::white);
-    $ttfonts{ingame}{bg} = SDL::TTFont->new(-name => $regularfont, -size => 18, -mode => $mode,
-                                            -foreground => $SDL::Color::black);
-    $ENV{LANGUAGE} =~ /^ja/ and print_step('.');
-    $ttfonts{ingame_small}{fg} = SDL::TTFont->new(-name => $regularfont, -size => 10, -mode => $mode,
-                                                  -foreground => $SDL::Color::white);
-    $ttfonts{ingame_small}{bg} = SDL::TTFont->new(-name => $regularfont, -size => 10, -mode => $mode,
-                                                  -foreground => $SDL::Color::black);
+    fb_c_stuff::sdlpango_init();
+    $pangocontext{netdialogs} =           { params => { desc => 'sans 10', fg => 'white', bg => 'black' } };
+    $pangocontext{netdialogs_servermsg} = { params => { desc => 'sans italic 10', fg => 'white', bg => 'black' } };
+    $pangocontext{menu} =                 { params => { desc => 'sans 12', fg => 'white', bg => 'black' } };
+    $pangocontext{ingame} =               { params => { desc => 'sans 14', fg => 'white', bg => 'black' } };
+    $pangocontext{ingame_small} =         { params => { desc => 'sans 8', fg => 'white', bg => 'black' } };
+    $pangocontext{$_}{context_fg} = fb_c_stuff::sdlpango_createcontext($pangocontext{$_}{params}{fg}, $pangocontext{$_}{params}{desc}) foreach keys %pangocontext;
+    $pangocontext{$_}{context_bg} = fb_c_stuff::sdlpango_createcontext($pangocontext{$_}{params}{bg}, $pangocontext{$_}{params}{desc}) foreach keys %pangocontext;
 
     foreach my $ball (1..8) {
         my $img = add_bubble_image('balls/bubble-'.($colourblind && 'colourblind-')."$ball.gif");
@@ -3172,7 +3117,7 @@ sub smg_servers() {
                         sleep 1;
                         return [ { host => 'localhost', port => 1511 } ];
                     } else {
-                        %ttfonts = undef;  #- close related file descriptors
+                        fb_c_stuff::freecontext($pangocontext{$_}{context}) foreach keys %pangocontext;  #- close related file descriptors
                         unless (exec $fb_server, '-L', '-d', '-n', "lan-$mynick", '-z') {
                             print STDERR "Could not create server limited to lan game: $!\n";
                             POSIX::_exit(1);

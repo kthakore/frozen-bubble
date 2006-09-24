@@ -32,13 +32,12 @@ system("sdl-config --cflags 2>/dev/null 1>/dev/null") == 0
 
 
 ccompile('#include <SDL/SDL.h>
-          #include <SDL/SDL_mixer.h>
-          #include <SDL/SDL_ttf.h>',
+          #include <SDL/SDL_mixer.h>',
 	 '',
 	 `sdl-config --cflags`,
-	 chomp_(`sdl-config --libs`) . ' -lSDL_mixer -lSDL_ttf')
+	 chomp_(`sdl-config --libs`) . ' -lSDL_mixer')
   or
-  die_ 'SDL_mixer and SDL_ttf are needed (and, by the way, SDL_mixer version >= 1.2.2)';
+  die_ 'SDL_mixer is needed (and, version >= 1.2.2)';
 
 
 ccompile('#include <SDL/SDL.h>
@@ -50,27 +49,27 @@ ccompile('#include <SDL/SDL.h>
   die_ 'SDL_mixer >= 1.2.2 is needed (function Mix_FadeInMusicPos is missing)';
 
 
-system("pkg-config fontconfig --cflags 2>/dev/null 1>/dev/null") == 0
+system("pkg-config SDL_Pango --cflags 2>/dev/null 1>/dev/null") == 0
   or
-  die_ 'FontConfig development environment seems to be missing ("pkg-config fontconfig" reports an error)';
+  die_ 'SDL_Pango development environment seems to be missing ("pkg-config SDL_Pango" reports an error)';
 
 
-ccompile('#include <fontconfig/fontconfig.h>',
-	 '',
-	 `pkg-config fontconfig --cflags`,
-	 chomp_(`pkg-config fontconfig --libs`))
+ccompile('#include <SDL_Pango.h>',
+	 'SDLPango_Context *context;',
+	 `pkg-config SDL_Pango --cflags`,
+	 chomp_(`pkg-config SDL_Pango --libs`))
   or
-  die_ 'FontConfig is needed';
+  die_ 'SDL_Pango is needed';
 
 
 
 
 WriteMakefile(
     'NAME'         => 'fb_c_stuff',
-    'LIBS'         => [ '-lm ' . chomp_(`sdl-config --libs`) . ' -lSDL_mixer -lSDL_ttf ' . chomp_(`pkg-config fontconfig --libs`)],
+    'LIBS'         => [ '-lm ' . chomp_(`sdl-config --libs`) . ' -lSDL_mixer ' . chomp_(`pkg-config SDL_Pango --libs`)],
     'VERSION_FROM' => 'fb_c_stuff.pm', # finds VERSION
     'OBJECT'       => 'fb_c_stuff.o',
-    'INC'          => chomp_(`sdl-config --cflags`) . ' ' . chomp_(`pkg-config fontconfig --cflags`) . ' -I.',
+    'INC'          => chomp_(`sdl-config --cflags`) . ' ' . chomp_(`pkg-config SDL_Pango --cflags`) . ' -I.',
     'OPTIMIZE'     => '-O2 -Wall',
     'MAKEFILE'     => 'Makefile_c',
 );
