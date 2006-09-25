@@ -1237,10 +1237,12 @@ AV* sdlpango_getsize_(SDLPango_Context* context, char* text, int width)
         return ret;
 }
 
-SDL_Surface* sdlpango_draw_(SDLPango_Context* context, char* text, int width)
+SDL_Surface* sdlpango_draw_(SDLPango_Context* context, char* text, int width, char* align)
 {
+        SDLPango_Alignment alignment = !strcmp(align, "left") ? SDLPANGO_ALIGN_LEFT :
+                                       !strcmp(align, "center") ? SDLPANGO_ALIGN_CENTER : SDLPANGO_ALIGN_RIGHT;
         SDLPango_SetMinimumSize(context, width, 0);
-        SDLPango_SetText(context, text, -1);
+        SDLPango_SetText_GivenAlignment(context, text, -1, alignment);
 	return SDLPango_CreateSurfaceDraw(context);
 }
 
@@ -1492,9 +1494,17 @@ sdlpango_getsize(SDLPango_Context* context, char* text, int width)
 SDL_Surface*
 sdlpango_draw(SDLPango_Context* context, char* text, int width)
         CODE:
-                RETVAL = sdlpango_draw_(context, text, width);
+                RETVAL = sdlpango_draw_(context, text, width, "left");
         OUTPUT:
                 RETVAL
+
+SDL_Surface*
+sdlpango_draw_givenalignment(SDLPango_Context* context, char* text, int width, char* alignment)
+        CODE:
+                RETVAL = sdlpango_draw_(context, text, width, alignment);
+        OUTPUT:
+                RETVAL
+
 
 void
 sdlpango_freecontext(SDLPango_Context* context)

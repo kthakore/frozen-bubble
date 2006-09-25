@@ -1083,13 +1083,13 @@ sub print_compressor() {
 }
 
 sub print_ {
-    my ($kind, $surface, $x, $y, @text) = @_;
+    my ($kind, $surface, $x, $y, $text, $size, $alignment) = @_;
     exists $pangocontext{$kind} or die "$kind is no kind\n";
-    my $surf = fb_c_stuff::sdlpango_draw($pangocontext{$kind}{context_bg}, join('', @text), -1);
+    my $surf = fb_c_stuff::sdlpango_draw_givenalignment($pangocontext{$kind}{context_bg}, $text, $size || -1, $alignment || 'left');
     my $rect = SDL::Rect->new('-x' => $x + 1, '-y' => $y + 1);
     SDL::BlitSurface($surf, undef, surf($surface), rect($rect));
     SDL::FreeSurface($surf);
-    $surf = fb_c_stuff::sdlpango_draw($pangocontext{$kind}{context_fg}, join('', @text), -1);
+    $surf = fb_c_stuff::sdlpango_draw_givenalignment($pangocontext{$kind}{context_fg}, $text, $size || -1, $alignment || 'left');
     $rect = SDL::Rect->new('-x' => $x, '-y' => $y);
     SDL::BlitSurface($surf, undef, surf($surface), rect($rect));
     SDL::FreeSurface($surf);
@@ -2326,6 +2326,7 @@ sub init_game() {
     $imgbin{compressor_ext} = add_image('compressor_ext.png');
 
     $imgbin{back_menu} = SDL::Surface->new(-name => "$FPATH/gfx/menu/back_start.png");
+    $imgbin{stamp} = add_image('menu/stamp.png');
     $imgbin{menu_closedeye_green_left} = add_image('menu/backgrnd-closedeye-left-green.png');
     $imgbin{menu_closedeye_green_right} = add_image('menu/backgrnd-closedeye-right-green.png');
     $imgbin{menu_closedeye_purple_left} = add_image('menu/backgrnd-closedeye-left-purple.png');
@@ -2642,14 +2643,12 @@ sub ask_from($) {
 
     put_image($imgbin{void_panel}, $MENUPOS{xpos_panel}, $MENUPOS{ypos_panel});
 
-    my $xpos;
     my $ypos = $MENUPOS{ypos_panel} + 12;
     my $lineheight = 18;
 
     foreach my $i (@{$w->{intro}}) {
 	if ($i) {
-	    my $xpos = (640 - width('menu', $i))/2;
-	    print_('menu', $app, $xpos, $ypos, $i);
+	    print_('menu', $app, $MENUPOS{xpos_panel}, $ypos, $i, $imgbin{void_panel}->width, 'center');
 	}
 	$ypos += $lineheight;
     }
@@ -2660,14 +2659,15 @@ sub ask_from($) {
     $event->set_key_repeat(200, 50);
   ask_from_entries:
     foreach my $entry (@{$w->{entries}}) {
-	$xpos = (640-$imgbin{void_panel}->width)/2 + 120 - width('menu', $entry->{'q'})/2;
-	print_('menu', $app, $xpos, $ypos, $entry->{'q'});
+        #- in case wrapping occurred
+        $imgbin{void_panel}->blit(SDL::Rect->new(-width => $imgbin{void_panel}->width - 20, -height => 30, -x => 10, '-y' => $ypos - $MENUPOS{ypos_panel}), $app,
+                                  SDL::Rect->new(-x => $MENUPOS{xpos_panel} + 10, '-y' => $ypos));
+	print_('menu', $app, $MENUPOS{xpos_panel}, $ypos, $entry->{'q'}, $imgbin{void_panel}->width*2/3 - 10, @{$w->{entries}} == 1 ? 'center' : 'right');
 	$app->flip;
-	my $srect_mulchar_redraw = SDL::Rect->new(-width => $imgbin{void_panel}->width, -height => 30,
-                                                  -x => $xpos + 140 - $MENUPOS{xpos_panel}, '-y' => $ypos - $MENUPOS{ypos_panel});
-	my $drect_mulchar_redraw = SDL::Rect->new(-width => $imgbin{void_panel}->width, -height => 30,
-                                                  -x => $xpos + 140, '-y' => $ypos);
-        my $x_echo = (640-$imgbin{void_panel}->width)/2 + 220;
+	my $srect_mulchar_redraw = SDL::Rect->new(-width => $imgbin{void_panel}->width*1/3 - 10, -height => 30,
+                                                  -x => $imgbin{void_panel}->width*2/3 - 3, '-y' => $ypos - $MENUPOS{ypos_panel});
+	my $drect_mulchar_redraw = SDL::Rect->new(-x => $MENUPOS{xpos_panel} + $imgbin{void_panel}->width*2/3 - 3, '-y' => $ypos);
+        my $x_echo = $MENUPOS{xpos_panel} + $imgbin{void_panel}->width*2/3;
 	my $txt;
         if ($entry->{f} ne 'SPACE') {
             if ($entry->{f} eq 'ONE_CHAR') {
@@ -2730,9 +2730,7 @@ sub ask_from($) {
 
     if ($ok) {
 	${$_->{a}} = $_->{answer} foreach @{$w->{entries}};
-	$xpos = (640 - width('menu', $w->{outro}))/2;
-	$ypos = (480 + $imgbin{void_panel}->height)/2 - 35;
-	print_('menu', $app, $xpos, $ypos, $w->{outro});
+        print_('menu', $app, $MENUPOS{xpos_panel}, $MENUPOS{ypos_panel} + $imgbin{void_panel}->height - 35, $w->{outro}, $imgbin{void_panel}->width, 'center');
 	$app->flip;
 	play_sound('menu_selected');
 	sleep 2;
@@ -4374,6 +4372,7 @@ sub menu {
     my $back_start;
     my $display_menu = sub {
 	$back_start->blit($apprects{main}, $app, $apprects{main});
+	$imgbin{stamp}->blit(undef, $app, SDL::Rect->new('-x' => 0, '-y' => 38));
     };
 
     if (!$from_intro || !$back_from_intro) {
