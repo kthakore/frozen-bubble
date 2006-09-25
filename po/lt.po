@@ -206,11 +206,11 @@ msgstr "Prašome įvesti naują valdymą:"
 
 #: ../frozen-bubble:3746
 msgid "Player 1; turn left?"
-msgstr "Žaidėjas 1; pasukti kairėn?"
+msgstr "Žaidėjas 1; kairėn?"
 
 #: ../frozen-bubble:3747
 msgid "Player 1; turn right?"
-msgstr "Žaidėjas 1; pasukti dešinėn?"
+msgstr "Žaidėjas 1; dešinėn?"
 
 #: ../frozen-bubble:3748
 msgid "Player 1; fire?"
@@ -222,11 +222,11 @@ msgstr "Žaidėjas 1; centras?"
 
 #: ../frozen-bubble:3751
 msgid "Player 2; turn left?"
-msgstr "Žaidėjas 2; pasukti kairėn?"
+msgstr "Žaidėjas 2; kairėn?"
 
 #: ../frozen-bubble:3752
 msgid "Player 2; turn right?"
-msgstr "Žaidėjas 2; pasukti dešinėn?"
+msgstr "Žaidėjas 2; dešinėn?"
 
 #: ../frozen-bubble:3753
 msgid "Player 2; fire?"
@@ -238,11 +238,11 @@ msgstr "Žaidėjas 2; centras?"
 
 #: ../frozen-bubble:3756
 msgid "Toggle fullscreen?"
-msgstr "Perjungti į/iš pilno ekrano?"
+msgstr "Į/iš pilno ekrano?"
 
 #: ../frozen-bubble:3757
 msgid "Chat (net/lan game)?"
-msgstr "Pokalbis (interneto/tinklo žaidimas)?"
+msgstr "Pokalbis (interneto/tinklo)?"
 
 #: ../frozen-bubble:3759
 msgid "Thanks!"
