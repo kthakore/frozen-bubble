@@ -2425,6 +2425,7 @@ sub init_game() {
     #- net game setup images
     $imgbin{back_netgame} = add_image('back_netgame.png');
     $imgbin{netspot} = add_image('netspot.png');
+    $imgbin{netspot_self} = [ map { add_image("netspot-self-$_.png") } qw(1 2 3 4 5 6 7 8 9 A B C D) ];
 
     #- hiscore
     $imgbin{back_hiscores} = add_image('back_hiscores.png');
@@ -3422,15 +3423,33 @@ sub callback_entry {
     }
 }
 
-sub print_spot {
+sub get_spot_location {
     my ($latitude, $longitude) = @_;
     my $x0 = 309;
     my $y0 = 231;
     my $longitude_factor = 1.424;
-    my $latitude_factor = -94;
-    put_image($imgbin{netspot},
-              $x0 + $longitude*$longitude_factor - $imgbin{netspot}->width/2,
-              $y0 + asinh(tan($latitude*2*$PI/360))*$latitude_factor - $imgbin{netspot}->height/2);  #- map is not exactly mercator but.. approximation is kinda ok
+    my $latitude_factor = -145;
+    return ($x0 + $longitude*$longitude_factor,
+            $y0 + asinh(tan($latitude*1.4*$PI/360))*$latitude_factor);  #- map seems not to really be mercator but.. approximation is kinda ok
+}
+
+sub print_spot {
+    my ($latitude, $longitude, $surface, $back) = @_;
+    $surface ||= $imgbin{netspot};
+    my ($x, $y) = get_spot_location($latitude, $longitude);
+    $x -= $surface->width/2;
+    $y -= $surface->height/2;
+    if ($back) {
+        if ($$back) {
+            put_image($$back, $x, $y);
+            pop @update_rects;
+        } else {
+            $$back = SDL::Surface->new(-width => 20, -height => 20, -depth => 32, -Amask => '0 but true');
+            $app->blit(SDL::Rect->new('-x' => $x, '-y' => $y, -width => 20, -height => 20), $$back, undef);
+            add_default_rect($$back);
+        }
+    }
+    put_image($surface, $x, $y);
 }
 
 our ($mylatitude, $mylongitude);
@@ -3459,6 +3478,8 @@ sub smg_choose_game() {
     };
     callback_entry('reset');
     my @geolocs;
+    my $index_selfspot = 0;
+    my $back_selfspot;
     my $redraw = sub {
         $erase->();
         my $y = $smg_starty;
@@ -3474,9 +3495,35 @@ sub smg_choose_game() {
             callback_entry('print', { xpos => $smg_startx, ypos => $smg_starty_chat, prefix => t("Say: "), font => 'netdialogs' });
         }
         print_spot($_->[0], $_->[1]) foreach @geolocs;
+        print_spot(48.8, 2.33333);
+        print_spot(25.7757, -80.2108);
+        print_spot(64.15, -21.95);
+        print_spot(-33.9167, 18.3667);
+        print_spot(19.4, -99.05);
+        print_spot(-23.5666, -46.6333);
+        print_spot(35.6667, 139.75);
+        print_spot(43.65, -79.3833);
+        print_spot(60.3833, 5.33333);
+        print_spot(65.0167, 25.4667);
+        print_spot(57.1333, -2.1);
+        $back_selfspot = undef;
+        if ($mylatitude && $index_selfspot >= 0) {
+            print_spot($mylatitude, $mylongitude, $imgbin{netspot_self}[$index_selfspot], \$back_selfspot);
+        }
         smg_printstatus();
     };
-
+    my $print_selfspot = sub {
+        if ($mylatitude) {
+            $index_selfspot >= 0 and print_spot($mylatitude, $mylongitude, $imgbin{netspot_self}[$index_selfspot], \$back_selfspot);
+            $index_selfspot++;
+            if ($index_selfspot == @{$imgbin{netspot_self}}) {
+                my ($x, $y) = get_spot_location($mylatitude, $mylongitude);
+                put_image($back_selfspot, $x - 10, $y - 10);
+                $index_selfspot = -15;
+            }
+        }
+    };
+    
     my @wholist;
     my $list = sub {
         $state eq 'game_select' or return;
@@ -3488,7 +3535,7 @@ sub smg_choose_game() {
             foreach (split ',', $freenicks) {
                 my ($nick, undef, $latitude, $longitude) = $_ =~ /([^:]+)(:([^:]+):([^:]+))?/;
                 push @wholist, $nick;
-                $latitude && int($latitude) ne 0 && int($longitude) ne 0 and push @geolocs, [ $latitude, $longitude ];
+                $latitude && $latitude =~ /^-?\d+\.?\d*$/ && $longitude =~ /^-?\d+\.?\d*$/ and push @geolocs, [ $latitude, $longitude ];
             }
         };
         $@ and return;
@@ -3575,7 +3622,15 @@ sub smg_choose_game() {
     while (1) {
         $relist++;
         $relist % (5*(1000/$TARGET_ANIM_SPEED)) == 0 and $list->();
-        callback_entry('ping') and $redraw->();
+        if (callback_entry('ping')) {
+            $redraw->();
+        } else {
+            if ($relist % 3 == 0) {
+                $print_selfspot->();
+                $app->update(@update_rects);
+                @update_rects = ();
+            }
+        }
 
         my $need_redraw;
         $event->pump;
