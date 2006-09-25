@@ -2256,7 +2256,7 @@ sub init_game() {
     fb_c_stuff::sdlpango_init();
     $pangocontext{netdialogs} =           { params => { desc => 'sans 10', fg => 'white', bg => 'black' } };
     $pangocontext{netdialogs_servermsg} = { params => { desc => 'sans italic 10', fg => 'white', bg => 'black' } };
-    $pangocontext{menu} =                 { params => { desc => 'sans 12', fg => 'white', bg => 'black' } };
+    $pangocontext{menu} =                 { params => { desc => 'sans 11', fg => 'white', bg => 'black' } };
     $pangocontext{ingame} =               { params => { desc => 'sans 14', fg => 'white', bg => 'black' } };
     $pangocontext{ingame_small} =         { params => { desc => 'sans 8', fg => 'white', bg => 'black' } };
     $pangocontext{$_}{context_fg} = fb_c_stuff::sdlpango_createcontext($pangocontext{$_}{params}{fg}, $pangocontext{$_}{params}{desc}) foreach keys %pangocontext;
