@@ -4486,7 +4486,7 @@ sub menu {
     my $back_start;
     my $display_menu = sub {
 	$back_start->blit($apprects{main}, $app, $apprects{main});
-	$imgbin{stamp}->blit(undef, $app, SDL::Rect->new('-x' => 0, '-y' => 38));
+	$imgbin{stamp}->blit(undef, $app, SDL::Rect->new('-x' => 490, '-y' => 142));
     };
 
     if (!$from_intro || !$back_from_intro) {
