@@ -398,7 +398,7 @@ sub iter_players(&) {
     my ($f, @p) = @_;
     my $bt = backtrace();
     $bt =~ /\nmain::iter_players\b/ and die "iter_players: assert failed -- iter_players can't be called recursively sorry\n$bt";
-    @p == 0 and @p = @PLAYERS;
+    @p or @p = @PLAYERS;
     local $::p;
     foreach $::p (@p) {
         mini_graphics($::p) or goto normal_sizes;  #- can't use an if block because of local
@@ -411,11 +411,12 @@ sub iter_players(&) {
     }
 }
 sub iter_players_(&) {  #- so that I can do an iter_players_ from within an iter_players
-    my ($f) = @_;
+    my ($f, @p) = @_;
     my $bt = backtrace();
     $bt =~ /\nmain::iter_players_\b/ and die "iter_players_: assert failed -- iter_players_ can't be called recursively sorry\n$bt";
+    @p or @p = @PLAYERS;
     local $::p_;
-    foreach $::p_ (@PLAYERS) {
+    foreach $::p_ (@p) {
 	&$f;
     }
 }
@@ -433,6 +434,11 @@ sub iter_distant_players(&) {
     my ($f) = @_;
     my @p = grep { /rp/ } @PLAYERS;
     &iter_players($f, @p);
+}
+sub iter_distant_players_(&) {
+    my ($f) = @_;
+    my @p = grep { /rp/ } @PLAYERS;
+    &iter_players_($f, @p);
 }
 
 sub is_1p_game() { @PLAYERS == 1 }
@@ -1125,8 +1131,14 @@ sub cleanup_chatting {
 
 sub set_sendmalustoone {
     my ($whoto) = @_;
-    $pdata{sendmalustoone} = $whoto;
-    #- todo: gfx
+    $pdata{sendmalustoone} = undef;
+    iter_distant_players_ {
+        remove_image_from_background($imgbin{attack}{$::p_}, $POS{$::p_}{attack}{x}, $POS{$::p_}{attack}{'y'});
+    };
+    if (member($whoto, living_players())) {
+        $pdata{sendmalustoone} = $whoto;
+        put_image_to_background($imgbin{attack}{$pdata{sendmalustoone}}, $POS{$pdata{sendmalustoone}}{attack}{x}, $POS{$pdata{sendmalustoone}}{attack}{'y'});
+    }
 }
 
 sub handle_mp_messages {
@@ -2538,7 +2550,8 @@ sub init_game() {
 	$imgbin{hurry}{$::p} = add_image("hurry_$::p.png");
 	$pinguin{$::p}{sleep} = [ add_image("pinguins/sleep_$::p.png") ];
 	$imgbin{win}{$::p} = add_image("win_panel_$::p.png");
-	$imgbin{net_lose}{$::p} = add_image("net_lose_$::p.png");
+	$::p ne 'p2' and $imgbin{net_lose}{$::p} = add_image("net_lose_$::p.png");
+        $::p =~ /^r/ and $imgbin{attack}{$::p} = add_image("attack_$::p.png");
 	$pdata{$::p}{score} = 0;
         $pinguin{$::p}{normal} = [ add_image("pinguins/anime-shooter_p1_0020.png") ];
         $pinguin{$::p}{action} = [ map { add_image("pinguins/anime-shooter_p1_00$_.png") } (21..50) ];
