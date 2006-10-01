@@ -56,7 +56,6 @@ use SDL::Surface;
 use SDL::Event;
 use SDL::Cursor;
 use SDL::Mixer;
-use SDL::TTFont;
 
 use fb_stuff;
 use fb_net;
@@ -2720,7 +2719,15 @@ sub display_highscores {
     $display_on_app_disabled = 0;
 }
 
-sub keysym_to_char($) { my ($key) = @_; eval("$key eq SDLK_$_") and return uc($_) foreach @fbsyms::syms }
+sub keysym_to_char($) {
+    my ($key) = @_;
+    eval("$key eq SDLK_$_()") and return uc($_) foreach @fbsyms::syms;
+    if ($key >= 160 && $key <= 255) {
+        return 'WORLD_' . ($key - 160);  #- "world" keys are not exported
+    }
+}
+
+our $is_rtl = $ENV{LANGUAGE} =~ /^fa/;
 
 sub ask_from($) {
     my ($w) = @_;
@@ -2733,7 +2740,9 @@ sub ask_from($) {
 
     my $ypos = $MENUPOS{ypos_panel} + 12;
     my $lineheight = 18;
-
+    my %xpos = ( questions => $is_rtl ? $MENUPOS{xpos_panel} + $imgbin{void_panel}->width*1/3 + 10 : $MENUPOS{xpos_panel},
+                 echo => $is_rtl ? $MENUPOS{xpos_panel} + $imgbin{void_panel}->width*1/3 - 100 : $MENUPOS{xpos_panel} + $imgbin{void_panel}->width*2/3 );
+ 
     foreach my $i (@{$w->{intro}}) {
 	if ($i) {
 	    print_('menu', $app, $MENUPOS{xpos_panel}, $ypos, $i, $imgbin{void_panel}->width, 'center');
@@ -2750,12 +2759,12 @@ sub ask_from($) {
         #- in case wrapping occurred
         $imgbin{void_panel}->blit(SDL::Rect->new(-width => $imgbin{void_panel}->width - 20, -height => 30, -x => 10, '-y' => $ypos - $MENUPOS{ypos_panel}), $app,
                                   SDL::Rect->new(-x => $MENUPOS{xpos_panel} + 10, '-y' => $ypos));
-	print_('menu', $app, $MENUPOS{xpos_panel}, $ypos, $entry->{'q'}, $imgbin{void_panel}->width*2/3 - 10, @{$w->{entries}} == 1 ? 'center' : 'right');
+	print_('menu', $app, $xpos{questions}, $ypos, $entry->{'q'}, $imgbin{void_panel}->width*2/3 - 10, @{$w->{entries}} == 1 ? 'center' : 'right');
 	$app->flip;
-	my $srect_mulchar_redraw = SDL::Rect->new(-width => $imgbin{void_panel}->width*1/3 - 10, -height => 30,
-                                                  -x => $imgbin{void_panel}->width*2/3 - 3, '-y' => $ypos - $MENUPOS{ypos_panel});
-	my $drect_mulchar_redraw = SDL::Rect->new(-x => $MENUPOS{xpos_panel} + $imgbin{void_panel}->width*2/3 - 3, '-y' => $ypos);
-        my $x_echo = $MENUPOS{xpos_panel} + $imgbin{void_panel}->width*2/3;
+	my $srect_mulchar_redraw = SDL::Rect->new(-width => $imgbin{void_panel}->width*1/3, -height => 30,
+                                                  -x => $xpos{echo} - 3 - $MENUPOS{xpos_panel}, '-y' => $ypos - $MENUPOS{ypos_panel});
+	my $drect_mulchar_redraw = SDL::Rect->new(-x => $xpos{echo} - 3, '-y' => $ypos);
+        my $x_echo = $xpos{echo};
 	my $txt;
         if ($entry->{f} ne 'SPACE') {
             if ($entry->{f} eq 'ONE_CHAR') {
@@ -2779,14 +2788,14 @@ sub ask_from($) {
                 } else {
                     $k = keysym_to_char($k);
                 }
-                print_('menu', $app, $x_echo, $ypos, $k);
+                print_('menu', $app, $x_echo, $ypos, $k, 100, $is_rtl ? 'right' : 'left');  #- always in ASCII so need to tell it to go right in RTL
             } else {
                 callback_entry('reset');
               ask_from_main_loop:
                 while (1) {
                     if (callback_entry('ping')) {
                         $imgbin{void_panel}->blit($srect_mulchar_redraw, $app, $drect_mulchar_redraw);
-                        callback_entry('print', { xpos => $x_echo, ypos => $ypos, font => 'menu' });
+                        callback_entry('print', { xpos => $x_echo, ypos => $ypos, maxlen => 100, font => 'menu' });
                     }
                     $app->flip;
                     $event->pump;
@@ -2803,7 +2812,7 @@ sub ask_from($) {
                                 callback_entry('keypressed', { event => $event, maxlen => 100, font => 'menu' });
                                 $imgbin{void_panel}->blit($srect_mulchar_redraw, $app, $drect_mulchar_redraw);
                                 callback_entry('moved');
-                                callback_entry('print', { xpos => $x_echo, ypos => $ypos, font => 'menu' });
+                                callback_entry('print', { xpos => $x_echo, ypos => $ypos, maxlen => 100, font => 'menu' });
                             }
                         }
                     }
@@ -3150,7 +3159,7 @@ sub smg_printstatus {
     while ($i < $smg_max_messages + $smg_status_message_offsetpage && @smg_status_messages >= $i) {
         if ($smg_status_messages[-$i]) {
             my $kind = $smg_status_messages[-$i] =~ /^\*\*\*/ ? 'netdialogs_servermsg' : 'netdialogs';
-            print_($kind, $app, $smg_statusx, $y, $smg_status_messages[-$i]);
+            print_($kind, $app, $smg_statusx, $y, $smg_status_messages[-$i], 620);
         }
         $y -= $smg_lineheight;
         $i++;
@@ -3263,18 +3272,24 @@ sub smg_choose_server(@) {
         my $drect = SDL::Rect->new(-width => 640, -height => $smg_statusy-$smg_lineheight*5, -x => 0, '-y' => 0);
         $imgbin{back_netgame}->blit($drect, $app, $drect);
 
+        my %parts = (flag =>    { xpos => $smg_startx,                    width => 30 },
+                     name =>    { xpos => $smg_startx + 30 + 4,           width => 164 },
+                     details => { xpos => $smg_startx + 30 + 4 + 164 + 4, width => 300 });
+        if ($is_rtl) {
+            $parts{$_}{xpos} = 640 - $parts{$_}{xpos} - $parts{$_}{width} foreach keys %parts;
+        }
         my $y = $smg_starty;
-        my $details_pos = 280;
         foreach my $server (@sorted_servers) {
             if ($server->{selected}) {
                 put_image($imgbin{highlight_server}, 6, $y-1);
             }
-            exists $imgbin{flag}{$server->{language}} and put_image($imgbin{flag}{$server->{language}}, $smg_startx, $y);
-            print_('netdialogs', $app, $smg_startx + 34, $y, $server->{name});
+            exists $imgbin{flag}{$server->{language}} and put_image($imgbin{flag}{$server->{language}}, $parts{flag}{xpos}, $y);
+            print_('netdialogs', $app, $parts{name}{xpos}, $y, $server->{name}, $parts{name}{width}, $is_rtl ? 'right' : 'left');  #- ASCII
             my $details = t("Available players:%s  Ping:%sms", $server->{players}, $server->{ping});
-            print_('netdialogs', $app, $details_pos, $y, $details);
+            print_('netdialogs', $app, $parts{details}{xpos}, $y, $details, $parts{details}{width});
             my $pingimg = $server->{ping} < 50 ? "ping_low" : $server->{ping} < 100 ? "ping_mid" : "ping_high";
-            put_image($imgbin{$pingimg}, $details_pos + width('netdialogs', $details), $y);
+            put_image($imgbin{$pingimg}, $is_rtl ? $parts{details}{xpos} + $parts{details}{width} - width('netdialogs', $details) - 17
+                                                 : $parts{details}{xpos} + width('netdialogs', $details), $y);
                                                      
             $y += $smg_lineheight + 2;
         }
@@ -3500,12 +3515,17 @@ sub callback_entry {
         return @typed;
     }
     if ($action eq 'print') {
-        print_($params->{font}, $app, $params->{xpos}, $params->{ypos}, $params->{prefix} . join('', @typed));
+        $params->{maxlen} or die("need maxlen\n".backtrace());
+        print_($params->{font}, $app, $params->{xpos}, $params->{ypos}, $params->{prefix} . join('', @typed), $params->{maxlen});
         if ($echo_blink_counter > 25) {
             my @before_echo = @typed;
             splice @before_echo, $position;
-            my $width = width($params->{font}, $params->{prefix} . join('', @before_echo)) - 3;
-            print_($params->{font}, $app, $params->{xpos} + $width, $params->{ypos}, '|');
+            my $width = width($params->{font}, $params->{prefix} . join('', @before_echo)) + ( $is_rtl ? 3 : -3 );
+            if ($is_rtl) {
+                print_($params->{font}, $app, $params->{xpos} + $params->{maxlen} - $width, $params->{ypos}, '|');
+            } else {
+                print_($params->{font}, $app, $params->{xpos} + $width, $params->{ypos}, '|');
+            }
         }
     }
     if ($action eq 'ping') {
@@ -3579,12 +3599,12 @@ sub smg_choose_game() {
             if ($action->{selected}) {
                 put_image($imgbin{highlight_server}, 6, $y-1);
             }
-            print_('netdialogs', $app, $smg_startx, $y, $action->{name});
+            print_('netdialogs', $app, $smg_startx, $y, $action->{name}, 520);
             $y += $smg_lineheight;
         }
         erase_line($smg_starty_chat, $imgbin{back_netgame});
         if ($curaction->() && $curaction->()->{action} eq 'CHAT') {
-            callback_entry('print', { xpos => $smg_startx, ypos => $smg_starty_chat, prefix => t("Say: "), font => 'netdialogs' });
+            callback_entry('print', { xpos => $smg_startx, ypos => $smg_starty_chat, maxlen => 520, prefix => t("Say: "), font => 'netdialogs' });
         }
         print_spot($_->[0], $_->[1]) foreach @geolocs;
         print_spot(48.8, 2.33333);
@@ -3651,7 +3671,7 @@ sub smg_choose_game() {
             $actions[0]{selected} = 1;
         }
         erase_line($smg_starty_players, $imgbin{back_netgame});
-        print_('netdialogs', $app, $smg_startx, $smg_starty_players, t("Available Players: %s", $free));
+        print_('netdialogs', $app, $smg_startx, $smg_starty_players, t("Available Players: %s", $free), 520);
         $redraw->();
     };
 
@@ -4025,7 +4045,7 @@ sub smg_choose_game() {
                 $players_in_game = fb_net::send_and_receive('STATUS');
                 @wholist = split /,/, $players_in_game;
                 erase_line($smg_starty_players, $imgbin{back_netgame});
-                print_('netdialogs', $app, $smg_startx, $smg_starty_players, t("Players in game: %s", $players_in_game));
+                print_('netdialogs', $app, $smg_startx, $smg_starty_players, t("Players in game: %s", $players_in_game), 520);
                 @actions = { name => t("Chat"), action => 'CHAT', selected => 1 };
                 $can_start && $players_in_game =~ /,/ and push @actions, { name => t("Start game!"), action => 'START' };
             }
@@ -4875,10 +4895,15 @@ sub menu {
     foreach my $p (keys %$KEYS) {
 	foreach my $k (keys %{$KEYS->{$p}}) {
             if ($KEYS->{$p}{$k} =~ /^\d+$/) {
-                eval("$KEYS->{$p}{$k} eq SDLK_$_") and $KEYS_->{$p}{$k} = "SDLK_$_" foreach @fbsyms::syms;
-            } else {
-                $KEYS_->{$p}{$k} = $KEYS->{$p}{$k};
+                foreach (@fbsyms::syms) {
+                    if (eval("$KEYS->{$p}{$k} eq SDLK_$_")) {
+                        $KEYS_->{$p}{$k} = "SDLK_$_";
+                        goto nextkey;
+                    }
+                }
             }
+            $KEYS_->{$p}{$k} = $KEYS->{$p}{$k};  #- fallback to numeric
+          nextkey:
 	}
     }
     my $dump = Data::Dumper->Dump([$fullscreen, $graphics_level, $KEYS_], [qw(fullscreen graphics_level KEYS)]);
