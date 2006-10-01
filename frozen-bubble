@@ -38,8 +38,8 @@ use strict;
 
 use vars qw($TARGET_ANIM_SPEED $BUBBLE_SIZE $ROW_SIZE $LAUNCHER_SPEED $BUBBLE_SPEED $MALUS_BUBBLE_SPEED $TIME_APPEARS_NEW_ROOT
             %POS %POS_1P %POS_2P %MENUPOS $KEYS %actions %angle %pdata $app %apprects $event %rects %sticked_bubbles %root_bubbles
-            $background $background_orig @bubbles_images $gcwashere %bubbles_anim %launched_bubble %tobe_launched %next_bubble
-            $shooter_lowgfx $sdl_flags $mixer $mixer_enabled $music_disabled $sfx_disabled $no_echo @playlist %sound %music %pinguin %canon
+            $background $background_orig @bubbles_images $gcwashere %bubbles_anim %launched_bubble %tobe_launched %next_bubble $recorddir %recorddata $playdata
+            $shooter_lowgfx $sdl_flags $mixer $mixer_enabled $music_disabled $sfx_disabled $no_echo @playlist %sound %music %pinguin %canon $autorecord $comment
             $graphics_level @update_rects $CANON_ROTATIONS_NB %malus_bubble %falling_bubble %exploding_bubble %malus_gfx %pangocontext $private
             %sticking_bubble $time %imgbin $TIME_HURRY_WARN $TIME_HURRY_MAX $TIMEOUT_PINGUIN_SLEEP $FREE_FALL_CONSTANT @joysticks $joysticksinfo
             $direct @PLAYERS @ALL_PLAYERS %levels $display_on_app_disabled $total_time $time_1pgame $time_netgame $fullscreen $rcfile %hiscorefiles $HISCORES $HISCORES_MPTRAIN
@@ -75,8 +75,8 @@ $TIMEOUT_PINGUIN_SLEEP = 200;
 $FREE_FALL_CONSTANT = 0.5;
 $KEYS = { p1 => { left => SDLK_LEFT, right => SDLK_RIGHT, fire => SDLK_UP, center => SDLK_DOWN },
           p2 => { left => SDLK_x,    right => SDLK_v,     fire => SDLK_c,  center => SDLK_d },
-	  misc => { fs => SDLK_f, chat => SDLK_RETURN, send_malus_to_rp1 => SDLK_1, send_malus_to_rp2 => SDLK_2, send_malus_to_rp3 => SDLK_3,
-                    send_malus_to_rp4 => SDLK_4, send_malus_to_all => SDLK_0, next_playlist_elem => SDLK_TAB } };
+	  misc => { fs => SDLK_f, chat => SDLK_RETURN, send_malus_to_rp1 => SDLK_F1, send_malus_to_rp2 => SDLK_F2, send_malus_to_rp3 => SDLK_F3,
+                    send_malus_to_rp4 => SDLK_F4, send_malus_to_all => SDLK_F10, next_playlist_elem => SDLK_TAB, save_record => SDLK_PRINT } };
 
 $sdl_flags = SDL_ANYFORMAT | SDL_HWSURFACE | SDL_DOUBLEBUF | SDL_HWACCEL | SDL_ASYNCBLIT;
 $mixer = 0;
@@ -145,6 +145,10 @@ local $_ = "@ARGV";
  -ne, --noecho               when sound is enabled, disable echoing each typed character with a typewriter sound
  -mn<nick>, --mynick<nick>   for net/lan games, use this nick instead of username (max 10 chars, ASCII alphanumeric plus dash and underscore only)
  -pr, --private              when starting a net game, don't use http://hostip.info/ to retrieve your geographical position to send it to other players
+ -re<dir>, --record<dir>     specify the recording directory (normally, records are saved in the directory '$ENV{HOME}/.fb_records')
+ -ar, --autorecord           automatically record all applicable games (normally, a record is triggered by hitting the Print Screen key during a game)
+ -cm '...', --comment '...'  add the comment enclosed between simple quotes to records (must not contain anything else than ASCII), it will be shown on console when playing back the record later
+ -pb<file>, --playback<file> playback the specified record file
 ";
 
 /-fs/ || /-fu/ and $fullscreen = 1;
@@ -152,10 +156,9 @@ local $_ = "@ARGV";
 /-ns/ || /-noso/ and $mixer = 'SOUND_DISABLED';
 /-nm/ || /-nom/ and $music_disabled = 1;
 /-nfx/ || /-nosf/ and $sfx_disabled = 1;
-/-pl\s*(\S+)/ || /-playlist\s*(\S+)/ and @playlist = -d $1 ? glob("$1/*") : cat_($1);
+/-pl(?!aylist)\s*(\S+)/ || /-playlist\s*(\S+)/ and @playlist = -d $1 ? glob("$1/*") : cat_($1);
 /-sl/ and $graphics_level = 2;
 /-vs/ || /-ve/ and $graphics_level = 1;
-/-srand/ and srand 0;
 /-di/ and $direct = 1;
 /-so/ and $direct = 1, @PLAYERS = ('p1');
 /-cr/ || /-chain_reaction/ and $chainreaction = 1;
@@ -170,6 +173,10 @@ local $_ = "@ARGV";
 /-mn\s*(\S+)/ || /-mynick\s*(\S+)/ and $mynick = substr($1, 0, 10);
 /-pr/ || /-private/ and $private = 1;
 /-ji/ || /-joysticksinfo/ and $joysticksinfo = 1;
+/-re\s*(\S+)/ || /-record\s*(\S+)/ and do { if (!-d $1) { die("$1 does not exist.\n") } else { $recorddir = $1; } };
+/-ar/ || /-autorecord/ and $autorecord = 1;
+/-pb\s*(\S+)/ || /-playback\s*(\S+)/ and do { if (!-f $1) { die("$1 does not exist.\n") } else { eval(cat_($1)); } };
+member($ARGV[$_], '-cm', '--comment') and $comment = $ARGV[$_+1] foreach 0 .. $#ARGV;
 
 $mynick = sanitize_nick($mynick);
 
@@ -571,30 +578,6 @@ sub each_index(&@) {
 }
 sub img2numb { my ($i, $f) = @_; each_index { $i eq $_ and $f = $::i } @bubbles_images; return defined($f) ? $f : '-' }
 
-#sub history {
-#    foreach my $frame (@{$history{$_[0]}}[-10...1]) {
-#	iter_rowscols {
-#	    if ($::col == 0) {
-#		$::row == 0 or print "\n";
-#		odd($::row+$frame->{oddswap}) and print "  ";
-#	    }
-#	    foreach (@{$frame->{sticked}}) {
-#		$_->[0] == $::col && $_->[1] == $::row or next;
-#		print $_->[2];
-#		goto non_void;
-#	    }
-#	    if ($frame->{sticking}[0] == $::col && $frame->{sticking}[1] == $::row) {
-#		print "\033[D!$frame->{sticking}[2]";
-#		goto non_void;
-#	    }
-#	    print '-';
-#	  non_void:
-#	    $::col+odd($::row+$frame->{oddswap}) < 7 and print "   ";
-#        } $frame->{oddswap};
-#	print "\n\n";
-#    }
-#}
-
 sub bubble_next_to($$$$$) {
     my ($x1, $y1, $x2, $y2, $player) = @_;
     $x1 == $x2 && $y1 == $y2 and die "bubble_next_to: assert failed -- same bubbles ($x1:$y1;$player)\n(are you using chain-reaction with network partners not doing so on their side too?)\n" . backtrace();
@@ -835,7 +818,7 @@ sub stick_bubble($$$$$) {
 
     if ($need_redraw) {
 	my $malus_val = @will_destroy + @falling - 2;
-	$malus_val > 0 and $malus_val += ($player eq 'p1' ? $playermalus : -$playermalus);
+	$malus_val > 0 && !is_mp_game() and $malus_val += ($player eq 'p1' ? $playermalus : -$playermalus);
 	$malus_val < 0 and $malus_val = 0;
 	$background->blit($apprects{$player}, $app, $apprects{$player});
 	malus_change($malus_val, $player);
@@ -873,14 +856,14 @@ sub generate_new_bubble($$) {
 
 our $smg_lineheight = 16;
 
-our ($mp_train_xpos, $mp_train_ypos) = (53, 177);
+our ($mp_train_xpos, $mp_train_ypos) = (32, 177);
 sub mp_train_print_time {
-    my $drect = SDL::Rect->new(-width => 100, -height => 30, -x => $mp_train_xpos, '-y' => $mp_train_ypos);
+    my $drect = SDL::Rect->new(-width => $imgbin{void_mp_training}->width, -height => 30, -x => $mp_train_xpos, '-y' => $mp_train_ypos);
     my $seconds = 120 - ($app->ticks - $pdata{origticks})/1000;
     $seconds < 0 and $seconds = 0;
     my $m = int($seconds/60);
     my $s = int($seconds-$m*60);
-    print_('ingame', $background, $mp_train_xpos, $mp_train_ypos, sprintf("%01d' %02d''", $m, $s));
+    print_('ingame', $background, $mp_train_xpos, $mp_train_ypos, sprintf("%01d' %02d''", $m, $s), $imgbin{void_mp_training}->width, 'center');
 }
 
 sub handle_graphics($) {
@@ -961,7 +944,7 @@ sub handle_graphics($) {
 
     if ($levels{current} eq 'mp_train' && $pdata{state} eq 'game') {
         if ($fun ne \&erase_image) {
-            my $drect = SDL::Rect->new(-width => 100, -height => 30, -x => $mp_train_xpos, '-y' => $mp_train_ypos);
+            my $drect = SDL::Rect->new(-width => $imgbin{void_mp_training}->width, -height => 30, -x => $mp_train_xpos, '-y' => $mp_train_ypos);
             $background_orig->blit($drect, $background, $drect);
             mp_train_print_time();
             $background->blit($drect, $app, $drect);
@@ -972,7 +955,7 @@ sub handle_graphics($) {
                 my $y = $MENUPOS{ypos_panel} + 30;
                 my @messages = ('', '', '', '', t("Your score after two minutes:"), '', $pdata{p1}{score}, '', t("Press any key."));
                 foreach (@messages) {
-                    print_('menu', $app, 320 - width('menu', $_)/2, $y, $_);
+                    print_('menu', $app, $MENUPOS{xpos_panel}, $y, $_, $imgbin{void_panel}->width, 'center');
                     $y += $smg_lineheight;
                 }
                 $app->flip;
@@ -1035,7 +1018,7 @@ sub malus_change($$) {
                     $numb = int($numb/(@living-1) + 0.99);
                     iter_players_ {
                         if ($::p_ ne $player && member($::p_, @living)) {
-                            fb_net::gsend("g$pdata{$::p_}{nick}:$numb");
+                            is_mp_game() and fb_net::gsend("g$pdata{$::p_}{nick}:$numb");
                             update_malus(\&remove_image_from_background, $::p_);
                             $pdata{$::p_}{malus} += $numb;
                             update_malus(\&put_image_to_background, $::p_);
@@ -1043,7 +1026,7 @@ sub malus_change($$) {
                     };
                 } else {
                     my $p = $pdata{sendmalustoone};
-                    fb_net::gsend("g$pdata{$p}{nick}:$numb");
+                    is_mp_game() and fb_net::gsend("g$pdata{$p}{nick}:$numb");
                     iter_players_ {  #- get mini graphics
                         if ($::p_ eq $p) {
                             update_malus(\&remove_image_from_background, $::p_);
@@ -1147,7 +1130,138 @@ sub set_sendmalustoone {
     #- todo: gfx
 }
 
+sub handle_mp_messages {
+    my ($msg) = @_;
+
+    #- in order to keep ordering of actions executed in update_game, we must tolerate only one action at a time
+    my $check_action_possible = sub {
+        my ($m, $player) = @_;
+        #- we check also the presence of malus bubbles, because if the malus order has lagged much
+        #- we might receive a fire or even a stick command before the malus bubbles are sticked,
+        #- this would provoke a local inconsistency
+        if ($actions{$player}{mp_fire} || $actions{$player}{mp_stick} || @{$malus_bubble{$player}}) {
+            unshift @$msg, $m;
+            return 0;
+        } else {
+            return 1;
+        }
+    };
+
+    while (@$msg) {
+        my $m = shift @$msg;
+        my $player = $pdata{id2p}{$m->{id}};
+        if (!$player) {
+            printf "Network protocol error: player with id '%d' doesn't exist. You're not a regular Frozen-Bubble client, aren't you?\n", ord($m->{id});
+            die 'quit';
+        }
+        if ($pdata{$player}{left}) {
+            print STDERR "$pdata{$player}{nick}: you don't exist, go away!\n";
+            next;
+        }
+        my ($command, $params) = $m->{msg} =~ /^(.)(.*)/;
+        if ($command eq 'l') {
+            print "rcv leave from $player\n";
+            iter_players { #- need iter_players to get the small graphics change for free
+                if ($::p eq $player) {
+                    $pdata{$::p}{left} = 1;
+                    lose($::p);
+                }
+            };
+        } elsif ($command eq 'f') {
+            $check_action_possible->($m, $player) or last;
+            $actions{$player}{mp_fire} = 1;
+            ($angle{$player}, $pdata{$player}{nextcolor}) = $params =~ /(.+):(.+)/;
+        } elsif ($command eq 'a') {
+            $angle{$player} = $params;
+        } elsif ($command eq 's') {
+            $check_action_possible->($m, $player) or last;
+            #- we can't rely on locally animated launched bubble, to ensure game
+            #- consistency we transmit stick positions
+            $actions{$player}{mp_stick} = 1;
+            ($pdata{$player}{stickcx}, $pdata{$player}{stickcy}, $pdata{$player}{stickcol}, my $newrootcols) = $params =~ /(.+):(.+):(.+):(.*)/;
+            @{$pdata{$player}{nextcolors}} = split / /, $newrootcols;
+        } elsif ($command eq 'g') {
+            my ($destplayer, $numb) = $params =~ /(.+):(.+)/;
+            print "receive generate malus: $destplayer:$numb\n";
+            iter_players {
+                if ($pdata{$::p}{nick} eq $destplayer) {
+                    print "=> adding to $::p\n";
+                    update_malus(\&remove_image_from_background, $::p);
+                    $pdata{$::p}{malus} += $numb;
+                    update_malus(\&put_image_to_background, $::p);
+                }
+            };
+        } elsif ($command eq 'm') {
+            my ($num, $cx, $cy, $sticky) = $params =~ /(.+):(.+):(.+):(.+)/;
+            my $b = create_bubble_given_img_num($num);
+            $b->{cx} = $cx;
+            $b->{cy} = $cy;
+            $b->{'stick_y'} = $sticky;
+            print "receive remote malus: $cx:$cy c$num sy$sticky\n";
+            iter_players { #- need iter_players to get the small graphics change for free
+                if ($::p eq $player) {
+                    calc_real_pos($b, $::p);
+                    push @{$malus_bubble{$player}}, $b;
+                    malus_change(-1, $player);
+                }
+            };
+        } elsif ($command eq 'M') {
+            my ($cx, $sticky) = $params =~ /(.+):(.+)/;
+            #- if network cuts several malussticks in two parts, it's possible that
+            #- one malusstick from the first part trigger a lose; at next game run,
+            #- the player has lost and his malus bubbles were cleaned up, so malusstick
+            #- is not possible, but this is no big deal
+            if ($pdata{$player}{state} eq 'ingame') {
+                foreach (@{$malus_bubble{$player}}) {
+                    if ($_->{cx} == $cx && $_->{'stick_y'} == $sticky) {
+                        $_->{mp_stick} = 1;
+                        goto ok_malusstick;
+                    }
+                }
+                die "could not find malus bubble to malusstick!\n";
+              ok_malusstick:                    
+            }
+        } elsif ($command eq 'F') {
+            #- this is coming too soon. it needs to be collected in the algo to restart a game.
+            print "finished coming a little soon. delay and hope we're not in infinite loop.\n";
+            unshift @$msg, $m;
+            last;
+        } elsif ($command eq 't') {
+            put_image_to_background($imgbin{void_chat_small}, $POS{$player}{chatting}{x}, $POS{$player}{chatting}{'y'});
+            print_('ingame_small', $background, $POS{$player}{chatting}{x} + 5, $POS{$player}{chatting}{'y'} + 3, $params);
+            erase_image($imgbin{void_chat_small}, $POS{$player}{chatting}{x}, $POS{$player}{chatting}{'y'});
+            push @update_rects, $apprects{main};
+            play_sound('chatted');
+            $pdata{$player}{chat_msg_delay} = 500;
+        } else {
+            print STDERR "****** Unrecognized command: $m->{msg}\n";
+        }
+    }
+}
+
 sub handle_game_events() {
+
+    if ($levels{current} eq 'mp_train' && @{$malus_bubble{p1}} == 0 && $pdata{p1}{malus} == 0) {
+        if (int(rand($mptrainingdiff*(1000/$TARGET_ANIM_SPEED))) == 0) {
+            $pdata{p1}{malus} = 1 + int(rand(6));
+        }
+    }
+
+    if ($playdata) {
+        play();
+        $event->pump;
+        while ($event->poll != 0) {
+            my $keypressed;
+            if ($event->type == SDL_KEYDOWN && $event->key_sym == SDLK_ESCAPE) {
+                die 'quit';
+            }
+            if ($event->type == SDL_QUIT) {
+                exit 0;
+            }
+        }
+        return;
+    }
+
     $event->pump;
     while ($event->poll != 0) {
         my $keypressed;
@@ -1200,7 +1314,7 @@ sub handle_game_events() {
                     my $back_saved = switch_image_on_background($imgbin{back_paused}, 0, 0, 1);
                   pause_label:
                     while (1) {
-                        my ($index, $side) = (0, 1);
+                        my ($index, $side, $snore_counter) = (0, 1, 0);
                         while ($index || $side == 1) {
                             erase_image(${$imgbin{paused}}[$index], 320-${$imgbin{paused}}[$index]->width/2-5, 240-${$imgbin{paused}}[$index]->height/2-4);
                             put_image(${$imgbin{paused}}[$index], 320-${$imgbin{paused}}[$index]->width/2-5, 240-${$imgbin{paused}}[$index]->height/2-4);
@@ -1228,7 +1342,7 @@ sub handle_game_events() {
                                     }
                                 }
                             }
-                            rand() < 0.1 and play_sound('snore');
+                            ++$snore_counter % 10 == 0 and play_sound('snore');
                             $index += $side;
                             if ($index == @{$imgbin{paused}}) {
                                 $side = -1;
@@ -1262,6 +1376,10 @@ sub handle_game_events() {
                     play_music('dummy', 0);
                 }
 
+                if ($levels{current} !~ /^\d+$/ && $keypressed eq $KEYS->{misc}{save_record}) {
+                    print "This game will be recorded when it's over.\n";
+                    $recorddata{save} = 1;
+                }
             }
         }
 
@@ -1301,6 +1419,7 @@ sub handle_game_events() {
                     die 'quit';
                 }
             } else {
+                $pdata{p1}{left} = 1;
                 die 'quit';
             }
 	}
@@ -1313,118 +1432,82 @@ sub handle_game_events() {
         $pdata{p1}{chatting} && callback_entry('ping') and update_say_mp();
 
         my @messages = fb_net::grecv();
-
         check_mp_connection();
 
-        #- in order to keep ordering of actions executed in update_game, we must tolerate only one action at a time
-        my $check_action_possible = sub {
-            my ($m, $player) = @_;
-            #- we check also the presence of malus bubbles, because if the malus order has lagged much
-            #- we might receive a fire or even a stick command before the malus bubbles are sticked,
-            #- this would provoke a local inconsistency
-            if ($actions{$player}{mp_fire} || $actions{$player}{mp_stick} || @{$malus_bubble{$player}}) {
-                unshift @messages, $m;
-                return 0;
-            } else {
-                return 1;
-            }
-        };
-        while (@messages) {
-            my $m = shift @messages;
-            my $player = $pdata{id2p}{$m->{id}};
-            if (!$player) {
-                printf "Network protocol error: player with id '%d' doesn't exist. You're not a regular Frozen-Bubble client, aren't you?\n", ord($m->{id});
-                die 'quit';
-            }
-            if ($pdata{$player}{left}) {
-                print STDERR "$pdata{$player}{nick}: you don't exist, go away!\n";
-                next;
-            }
-            my ($command, $params) = $m->{msg} =~ /^(.)(.*)/;
-            if ($command eq 'l') {
-                print "rcv leave from $player\n";
-                iter_players { #- need iter_players to get the small graphics change for free
-                    if ($::p eq $player) {
-                        $pdata{$::p}{left} = 1;
-                        lose($::p);
-                    }
-                };
-            } elsif ($command eq 'f') {
-                $check_action_possible->($m, $player) or last;
-                $actions{$player}{mp_fire} = 1;
-                ($angle{$player}, $pdata{$player}{nextcolor}) = $params =~ /(.+):(.+)/;
-            } elsif ($command eq 'a') {
-                $angle{$player} = $params;
-            } elsif ($command eq 's') {
-                $check_action_possible->($m, $player) or last;
-                #- we can't rely on locally animated launched bubble, to ensure game
-                #- consistency we transmit stick positions
-                $actions{$player}{mp_stick} = 1;
-                ($pdata{$player}{stickcx}, $pdata{$player}{stickcy}, $pdata{$player}{stickcol}, my $newrootcols) = $params =~ /(.+):(.+):(.+):(.*)/;
-                @{$pdata{$player}{nextcolors}} = split / /, $newrootcols;
-            } elsif ($command eq 'g') {
-                my ($destplayer, $numb) = $params =~ /(.+):(.+)/;
-                print "receive generate malus: $destplayer:$numb\n";
-                iter_players {
-                    if ($pdata{$::p}{nick} eq $destplayer) {
-                        print "=> adding to $::p\n";
-                        update_malus(\&remove_image_from_background, $::p);
-                        $pdata{$::p}{malus} += $numb;
-                        update_malus(\&put_image_to_background, $::p);
-                    }
-                };
-            } elsif ($command eq 'm') {
-                my ($num, $cx, $cy, $sticky) = $params =~ /(.+):(.+):(.+):(.+)/;
-                my $b = create_bubble_given_img_num($num);
-                $b->{cx} = $cx;
-                $b->{cy} = $cy;
-                $b->{'stick_y'} = $sticky;
-                print "receive remote malus: $cx:$cy c$num sy$sticky\n";
-                iter_players { #- need iter_players to get the small graphics change for free
-                    if ($::p eq $player) {
-                        calc_real_pos($b, $::p);
-                        push @{$malus_bubble{$player}}, $b;
-                        malus_change(-1, $player);
-                    }
-                };
-            } elsif ($command eq 'M') {
-                my ($cx, $sticky) = $params =~ /(.+):(.+)/;
-                #- if network cuts several malussticks in two parts, it's possible that
-                #- one malusstick from the first part trigger a lose; at next game run,
-                #- the player has lost and his malus bubbles were cleaned up, so malusstick
-                #- is not possible, but this is no big deal
-                if ($pdata{$player}{state} eq 'ingame') {
-                    foreach (@{$malus_bubble{$player}}) {
-                        if ($_->{cx} == $cx && $_->{'stick_y'} == $sticky) {
-                            $_->{mp_stick} = 1;
-                            goto ok_malusstick;
-                        }
-                    }
-                    die "could not find malus bubble to malusstick!\n";
-                  ok_malusstick:                    
-                }
-            } elsif ($command eq 'F') {
-                #- this is coming too soon. it needs to be collected in the algo to restart a game.
-                print "finished coming a little soon. delay and hope we're not in infinite loop.\n";
-                unshift @messages, $m;
-                last;
-            } elsif ($command eq 't') {
-                put_image_to_background($imgbin{void_chat_small}, $POS{$player}{chatting}{x}, $POS{$player}{chatting}{'y'});
-                print_('ingame_small', $background, $POS{$player}{chatting}{x} + 5, $POS{$player}{chatting}{'y'} + 3, $params);
-                erase_image($imgbin{void_chat_small}, $POS{$player}{chatting}{x}, $POS{$player}{chatting}{'y'});
-                push @update_rects, $apprects{main};
-                play_sound('chatted');
-                $pdata{$player}{chat_msg_delay} = 500;
-            } else {
-                print STDERR "****** Unrecognized command: $m->{msg}\n";
-            }
-        }
+        @{$recorddata{mp_messages}} = @messages;  #- copy
+        handle_mp_messages(\@messages);
+
         fb_net::gdelay_messages(@messages);
     }
 
-    if ($levels{current} eq 'mp_train' && @{$malus_bubble{p1}} == 0 && $pdata{p1}{malus} == 0) {
-        if (int(rand($mptrainingdiff*(1000/$TARGET_ANIM_SPEED))) == 0) {
-            $pdata{p1}{malus} = 1 + int(rand(6));
+    record();
+}
+
+sub record {
+    $recorddata{frame}++;
+    #- check for differences
+    my %newdata;
+    iter_players {
+        foreach my $action (keys %{$actions{$::p}}) {
+            $action =~ /^mp/ and next;  #- mp actions will be generated by saving the mp messages
+            if ($recorddata{lastactions}{$::p}{$action} ne $actions{$::p}{$action}) {
+                $newdata{actions}{$::p}{$action} = $actions{$::p}{$action};
+            }
+        }
+    };
+    #- save if at least one difference or mp messages
+    if (%newdata || @{$recorddata{mp_messages} || []}) {
+        @{$recorddata{mp_messages} || []} and @{$newdata{mp_messages}} = @{$recorddata{mp_messages}};
+        push @{$recorddata{data}}, [ $recorddata{frame}, \%newdata ];
+    }
+    #- save current state
+    iter_players {
+        foreach my $action (keys %{$actions{$::p}}) {
+            $recorddata{lastactions}{$::p}{$action} = $actions{$::p}{$action};
+        }
+    };
+}
+
+our $recordnumber = 0;
+sub save_record_if_needed {
+    if (($recorddata{save} || $autorecord) && $levels{current} !~ /^\d+$/ && @{$recorddata{data}} > 1 && !$pdata{p1}{left}) {
+        if (!$recorddir) {
+            print "Notice: no recorddir was specified on commandline; recording in '$ENV{HOME}/.fb_records'\n";
+            $recorddir = "$ENV{HOME}/.fb_records";
+            mkdir $recorddir;
+        }
+        my $filename = sprintf("$recorddir/fb_record_%08d", $recordnumber++);
+        -f $filename and return save_record_if_needed();
+        @{$recorddata{data}[0]{players}} = @PLAYERS;  #- first record is pdatas, the rest are actions
+        $recorddata{data}[0]{gametype} = $pdata{gametype};
+        $recorddata{data}[0]{current_level} = $levels{current};
+        $recorddata{data}[0]{chainreaction} = $chainreaction;
+        $recorddata{data}[0]{time} = time();
+        $comment and $recorddata{data}[0]{comment} = $comment;
+        if (is_mp_game()) {
+            $recorddata{data}[0]{mp_result} = $pdata{state};
+            iter_players {
+                $recorddata{data}[0]{$::p}{id} = $pdata{$::p}{id};
+                $recorddata{data}[0]{$::p}{nick} = $pdata{$::p}{nick};
+            };
+            $recorddata{data}[0]{id2p} = $pdata{id2p};
+        }
+        output($filename, Data::Dumper->Dump([$recorddata{data}], [qw(playdata)]));
+        print "Record saved in '$filename'. Start Frozen-Bubble with '--playback $filename' to replay the game.\n";
+    }
+}
+
+sub play {
+    $recorddata{frame}++;
+    my $nextdata = $playdata->[0];
+    if ($nextdata) {
+        if ($nextdata->[0] == $recorddata{frame}) {
+            foreach my $p (keys %{$nextdata->[1]{actions}}) {
+                my %pnew = %{$nextdata->[1]{actions}{$p}};
+                $actions{$p}{$_} = $pnew{$_} foreach keys %pnew;
+            }
+            $nextdata->[1]{mp_messages} and handle_mp_messages($nextdata->[1]{mp_messages});
+            shift @$playdata;
         }
     }
 }
@@ -1650,7 +1733,6 @@ sub decode_postgame_message($) {
     }
 }
 
-
 #- ----------- mainloop helper --------------------------------------------
 
 sub update_game() {
@@ -1705,16 +1787,17 @@ sub update_game() {
                     $actions{$::p}{hadfire} = 1;
                     $pdata{$::p}{hurry} = 0;
                     remove_hurry($::p);
-                    if (is_mp_game()) {
-                        if (is_local_player($::p)) {
-                            $pdata{$::p}{nextcolor} = int(rand(@bubbles_images));
-                            fb_net::gsend(sprintf("f%.3f:$pdata{$::p}{nextcolor}", $angle{$::p}));
-                        }
-                        $actions{$::p}{mp_fire} = 0;
-                    } else {
+                    if (is_local_player($::p)) {
                         do {
                             $pdata{$::p}{nextcolor} = int(rand(@bubbles_images));
                         } while (!validate_nextcolor($pdata{$::p}{nextcolor}, $::p) && @{$sticked_bubbles{$::p}});
+                    }
+                    if (is_mp_game()) {
+                        if (is_local_player($::p)) {
+                            fb_net::gsend(sprintf("f%.3f:$pdata{$::p}{nextcolor}", $angle{$::p}));
+                        } else {
+                            $actions{$::p}{mp_fire} = 0;
+                        }
                     }
                 }
 
@@ -1783,7 +1866,6 @@ sub update_game() {
                                     #- malus generation
                                     if (!any { $_->{chaindestx} } @{$falling_bubble{$::p}}) {
                                         $pdata{$::p}{malus} > 0 and play_sound('malus');
-                                        $pdata{$::p}{malus} > 0 and print "Malus generation: $pdata{$::p}{malus}\n";
                                         while ($pdata{$::p}{malus} > 0 && @{$malus_bubble{$::p}} < 7) {
                                             my $num = int(rand(@bubbles_images));
                                             my $b = create_bubble_given_img_num($num);
@@ -1802,7 +1884,6 @@ sub update_game() {
                                                 }
                                             }
                                             $b->{'stick_y'}++;
-                                            print "add local malus: $b->{cx}:$b->{cy} c$b->{num} sy$b->{stick_y}\n";
                                             calc_real_pos($b, $::p);
                                             push @{$malus_bubble{$::p}}, $b;
                                             malus_change(-1, $::p);
@@ -1810,7 +1891,7 @@ sub update_game() {
                                         #- sort them and shift them
                                         @{$malus_bubble{$::p}} = sort { $a->{'cx'} <=> $b->{'cx'} } @{$malus_bubble{$::p}};
                                         my $shifting = 0;
-                                        $_->{'y'} += ($shifting+=7)+int(rand(20)) foreach @{$malus_bubble{$::p}};
+                                        $_->{'y'} += ($shifting += 7) + int(rand(20)) foreach @{$malus_bubble{$::p}};
                                         if (is_mp_game()) {
                                             fb_net::gsend("m$_->{num}:$_->{cx}:$_->{cy}:$_->{stick_y}") foreach @{$malus_bubble{$::p}};
                                         }
@@ -1873,10 +1954,6 @@ sub update_game() {
                     $pdata{$::p}{ping_right}{img} = 0;
                     $actions{$::p}{hadfire} = 0;
                 }
-                if ($pdata{$::p}{ping_right}{state} eq 'normal' && ($pdata{$::p}{ping_right}{movelatency}++ > 10)) {
-                    $pdata{$::p}{ping_right}{movelatency} = 0;
-                    rand() < 0.4 and $pdata{$::p}{ping_right}{img} = int(rand(@{$pinguin{$::p}{normal}}));
-                }
 
                 if ($pdata{$::p}{ping_right}{img} >= @{$pinguin{$::p}{$pdata{$::p}{ping_right}{state}}}) {
                     $pdata{$::p}{ping_right}{img} = 0;
@@ -1894,56 +1971,66 @@ sub update_game() {
         is_2p_game() and update_won($loser eq 'p1' ? 'p2' : 'p1');
         
     } elsif ($pdata{state} =~ /^finished (\S+):(\S+) (\S+)/) {
-        $event->pump while $event->poll != 0;
-        print "$pdata{state}\n";
-        #- mp game only state when we're trying to figure out if this is not a draw game
-
         my $supposed_winner_player = $1;
         my $supposed_winner_nick = $2;
         my $timeout_counter = $3;
 
-        if (my $msg = fb_net::grecv_get1msg_ifdata()) {
-            my $result = decode_postgame_message($msg);
-            print "msg: $result\n";
-            if ($result =~ /^(\S+) finished (\S+)/) {
-                print "\tfinish msg\n";
-                my $remote_winner_nick = $2;
-                if ($remote_winner_nick ne $supposed_winner_nick) {
-                    print "\tdisagree, draw\n";
-                    #- players don't agree with who won the game, this is a draw game
-                    $pdata{state} = "won ";
-                    lose($supposed_winner_player);
-                } else {
-                    print "\tagree..\n";
-                    if (every { $pdata{$_}{still_game_messages} == 0 } @PLAYERS) {
-                        print "\tok, finish with $supposed_winner_player\n";
-                        win($supposed_winner_player);
-                        $pdata{state} = "won $supposed_winner_player";
-                    } else {
-                        print "\twaiting for: ";
-                        $pdata{$_}{still_game_messages} and print "$_ " foreach @PLAYERS;
-                        print "\n";
-                    }
-                }
-            } elsif ($result =~ /^(\S+) other/) {
-                print "finished state - $1 sends post-finish non-newgame $msg->{msg} - passing hand to won\n";
-                $pdata{$pdata{id2p}{$msg->{id}}}{left} = 1;
+        if ($playdata) {
+            $pdata{state} = $recorddata{pdatas}{mp_result};
+            if ($pdata{state} eq 'won ') {
+                lose($supposed_winner_player);  #- draw game
+            } else {
                 win($supposed_winner_player);
-                $pdata{state} = "won $supposed_winner_player";
-            } elsif ($result !~ /^(\S+) gamemsg/) {
-                print "finished state, delaying $msg->{msg}\n";
-                fb_net::gdelay_messages($msg);
             }
-            print "\tstate: $pdata{state}\n";
 
         } else {
-            check_mp_connection();
-            #- timeout for receiving the winners. it could happen when a client is badly killed.
-            $timeout_counter++;
-            if ($timeout_counter > 2 * $fb_net::timeout * (1000/$TARGET_ANIM_SPEED) ) {
-                mp_disconnect_with_reason(t("Lost synchronization!"));
+            $event->pump while $event->poll != 0;
+            print "$pdata{state}\n";
+            #- mp game only state when we're trying to figure out if this is not a draw game
+            
+            if (my $msg = fb_net::grecv_get1msg_ifdata()) {
+                my $result = decode_postgame_message($msg);
+                print "msg: $result\n";
+                if ($result =~ /^(\S+) finished (\S+)/) {
+                    print "\tfinish msg\n";
+                    my $remote_winner_nick = $2;
+                    if ($remote_winner_nick ne $supposed_winner_nick) {
+                        print "\tdisagree, draw\n";
+                        #- players don't agree with who won the game, this is a draw game
+                        lose($supposed_winner_player);
+                        $pdata{state} = "won ";
+                    } else {
+                        print "\tagree..\n";
+                        if (every { $pdata{$_}{still_game_messages} == 0 } @PLAYERS) {
+                            print "\tok, finish with $supposed_winner_player\n";
+                            win($supposed_winner_player);
+                            $pdata{state} = "won $supposed_winner_player";
+                        } else {
+                            print "\twaiting for: ";
+                            $pdata{$_}{still_game_messages} and print "$_ " foreach @PLAYERS;
+                            print "\n";
+                        }
+                    }
+                } elsif ($result =~ /^(\S+) other/) {
+                    print "finished state - $1 sends post-finish non-newgame $msg->{msg} - passing hand to won\n";
+                    $pdata{$pdata{id2p}{$msg->{id}}}{left} = 1;
+                    win($supposed_winner_player);
+                    $pdata{state} = "won $supposed_winner_player";
+                } elsif ($result !~ /^(\S+) gamemsg/) {
+                    print "finished state, delaying $msg->{msg}\n";
+                    fb_net::gdelay_messages($msg);
+                }
+                print "\tstate: $pdata{state}\n";
+                
             } else {
-                $pdata{state} = "finished $supposed_winner_player:$supposed_winner_nick $timeout_counter";
+                check_mp_connection();
+                #- timeout for receiving the winners. it could happen when a client is badly killed.
+                $timeout_counter++;
+                if ($timeout_counter > 2 * $fb_net::timeout * (1000/$TARGET_ANIM_SPEED) ) {
+                    mp_disconnect_with_reason(t("Lost synchronization!"));
+                } else {
+                    $pdata{state} = "finished $supposed_winner_player:$supposed_winner_nick $timeout_counter";
+                }
             }
         }
 
@@ -2014,7 +2101,9 @@ sub update_game() {
                     if ($event->type == SDL_KEYDOWN && $event->key_sym == SDLK_ESCAPE()) {
                         die 'quit';
                     } elsif ($event->type == SDL_KEYDOWN || $event->type == fb_c_stuff::JOYBUTTONUP()) {
-                        if (is_mp_game()) {
+                        if ($playdata) {
+                            die 'quit';
+                        } elsif (is_mp_game()) {
                             $mp_newgame->();
                         } else {
                             die 'new_game';
@@ -2056,10 +2145,9 @@ sub update_game() {
 	    !$b->{freeze} and $b->{'y'} -= $MALUS_BUBBLE_SPEED;
 	    if (get_array_yclosest($b->{'y'}, $::p) <= $b->{'stick_y'}) {
                 if (is_local_player($::p)) {
-                    print "malus stick local at $b->{cx} $b->{stick_y}\n"; 
                     real_stick_bubble($b, $b->{'cx'}, $b->{'stick_y'}, $::p, 0, 'malus');
                     push @$malus_end, $b;
-                    fb_net::gsend("M$b->{cx}:$b->{stick_y}");
+                    is_mp_game() and fb_net::gsend("M$b->{cx}:$b->{stick_y}");
                 } else {
                     $b->{freeze} = 1;
                 }
@@ -2798,6 +2886,7 @@ sub new_game() {
 	@{$root_bubbles{$::p}} = ();
 	@{$falling_bubble{$::p}} = ();
 	@{$exploding_bubble{$::p}} = ();
+        delete $pdata{$::p}{nextcolors};
 	@{$chains{$::p}{falling_chained}} = ();
 	%{$chains{$::p}{chained_bubbles}} = ();
 	$launched_bubble{$::p} = undef;
@@ -2824,13 +2913,19 @@ sub new_game() {
 
     is_1p_game() and print_compressor();
 
+    if (!$playdata) {
+        %recorddata = ();
+        my $srand = $app->ticks;
+        srand $srand;
+        push @{$recorddata{data}}, { srand => $srand };  #- the first record entry is used for pdatas (more keys added later)
+    }
     if ($levels{current} =~ /^\d+$/) {
 	open_level($levels{current});
     } else {
 	foreach my $cy (0 .. 4) {
 	    foreach my $cx (0 .. (6 + even($cy))) {
                 my $num = int(rand(@bubbles_images));
-                if (is_mp_game()) {
+                if (is_mp_game() && !$playdata) {
                     check_mp_connection();
                     $num = mp_propagate("b|$cx|$cy", $num, \$ticks);
                 }
@@ -2839,7 +2934,6 @@ sub new_game() {
                 if (!is_1p_game()) {
                     iter_players_but_first {
                         real_stick_bubble(create_bubble_given_img($b->{img}), $cx, $cy, $::p, 0, 'randomlevel/otherp', 'nostory');
-#                        fb_net::grecv_get1msg() foreach 1 .. (@PLAYERS - 1);   #- eat stickstory
                     };
                 }
 	    }
@@ -2853,7 +2947,7 @@ sub new_game() {
     my ($next_num, $tobe_num);
     do { $next_num = int(rand(@bubbles_images)) } while (!validate_nextcolor($next_num, $PLAYERS[0]));
     do { $tobe_num = int(rand(@bubbles_images)) } while (!validate_nextcolor($tobe_num, $PLAYERS[0]));
-    if (is_mp_game()) {
+    if (is_mp_game() && !$playdata) {
         check_mp_connection();
         $next_num = mp_propagate("N", $next_num, \$ticks);
         $tobe_num = mp_propagate("T", $tobe_num, \$ticks);
@@ -2881,7 +2975,7 @@ sub new_game() {
 
     $direct = undef;
 
-    if (is_mp_game()) {
+    if (is_mp_game() && !$playdata) {
         mp_ping_if_needed(\$ticks);
 
         eval {
@@ -3116,7 +3210,7 @@ sub smg_servers() {
                         sleep 1;
                         return [ { host => 'localhost', port => 1511 } ];
                     } else {
-                        fb_c_stuff::freecontext($pangocontext{$_}{context}) foreach keys %pangocontext;  #- close related file descriptors
+                        fb_c_stuff::sdlpango_freecontext($pangocontext{$_}{context}) foreach keys %pangocontext;  #- free related resources
                         unless (exec $fb_server, '-L', '-d', '-n', "lan-$mynick", '-z') {
                             print STDERR "Could not create server limited to lan game: $!\n";
                             POSIX::_exit(1);
@@ -4008,7 +4102,7 @@ sub new_game_once {
             $chainreaction = $answ == SDLK_y; #;;
         }
     }
-    if (is_mp_game()) {
+    if (is_mp_game() && !$playdata) {
         $event->set_key_repeat(200, 50);
         my $ok_game;
         eval {
@@ -4032,7 +4126,7 @@ sub ordered_highscores { return sort { lvl_cmp($b->{level}, $a->{level}) || $a->
 sub ordered_mptrain_highscores { return sort { $b->{score} <=> $a->{score} } @$HISCORES_MPTRAIN }
 
 sub handle_new_hiscores() {
-    is_1p_game() && $levels{current} or return;
+    is_1p_game() && $levels{current} && $levels{current} ne 'random' && !$playdata or return;
 
     if ($levels{current} ne 'mp_train') {
         #- levels hiscores
@@ -4844,18 +4938,55 @@ sub choose_levelset() {
 
 init_game();
 
+if ($playdata) {
+    $recorddata{pdatas} = shift @$playdata;  #- first record is used for pdatas, the rest will contain frame-indexed actions
+    @PLAYERS = @{$recorddata{pdatas}{players}};
+    $pdata{gametype} = $recorddata{pdatas}{gametype};
+    $levels{current} = $recorddata{pdatas}{current_level};
+    $chainreaction = $recorddata{pdatas}{chainreaction};
+    srand $recorddata{pdatas}{srand};
+    print 'Game recorded at ' . localtime($recorddata{pdatas}{time}) . ".\n";
+    $recorddata{pdatas}{comment} and print "Comment specified with record: $recorddata{pdatas}{comment}\n";
+    if (is_mp_game()) {
+        iter_players {
+            $pdata{$::p}{id} = $recorddata{pdatas}{$::p}{id};
+            $pdata{$::p}{nick} = $recorddata{pdatas}{$::p}{nick};
+        };
+        $pdata{id2p} = $recorddata{pdatas}{id2p};
+    }
+    local $direct = 1;
+    #- I'm wondering if the following is really more dirty than adding a $playdata test in the beginning of the three functions..
+    local *fb_net::gsend = sub { print "gsend: do nothing\n"; };
+    local *fb_net::grecv_get1msg_ifdata = sub { print "grecv_get1msg_ifdata: do nothing\n"; return; };
+    local *check_mp_connection = sub { print "check_mp_connection: do nothing\n"; };
+    new_game_once();
+    new_game();
+    while (1) {
+        eval { maingame() };
+        if ($@) {
+            if ($@ =~ /^quit/ || $@ =~ /^new_game/) {
+                last;
+            } else {
+                die;
+            }
+        }
+    }
+    $playdata = undef;
+}
+
 $direct or intro_plus_menu();
 
 while (!new_game_once()) { menu() }
 new_game();
 
-
 while (1) {
     eval { maingame() };
     if ($@) {
-	if ($@ =~ /^new_game/) {
+        my $died = $@;
+        save_record_if_needed();
+	if ($died =~ /^new_game/) {
 	    new_game();
-	} elsif ($@ =~ /^quit/) {
+	} elsif ($died =~ /^quit/) {
             if (is_mp_game()) {
                 if ($pdata{gametype} eq 'lan') {
                     fb_net::disconnect();
@@ -4875,7 +5006,7 @@ while (1) {
                 new_game();
             }
 	} else {
-	    die;
+	    die $died;
 	}
     }
 }
