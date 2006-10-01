@@ -19,6 +19,11 @@ What's new in version 2:
          push buttons in the "change keys" dialog[1] (analog
          joysticks handled as digital for fair play)         
 
+       - recording and playback of all games with non-predefined
+         levels (1-player in random and multiplayer training,
+         local 2-player, and network/LAN game with 2 to 5
+         players)
+
        - realtime graphical effects in the menu screen (if your
          computer is fast enough)
 
