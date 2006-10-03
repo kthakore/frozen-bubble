@@ -62,6 +62,13 @@ ccompile('#include <SDL_Pango.h>',
   die_ 'SDL_Pango is needed';
 
 
+ccompile('#include <SDL_Pango.h>',
+	 'SDLPango_Context * context = SDLPango_CreateContext_GivenFontDesc(NULL);',
+	 `pkg-config SDL_Pango --cflags`,
+	 chomp_(`pkg-config SDL_Pango --libs`))
+  or
+  die_ 'Frozen-Bubble patches are needed in SDL_Pango (tried SDLPango_CreateContext_GivenFontDesc)';
+
 
 
 WriteMakefile(
