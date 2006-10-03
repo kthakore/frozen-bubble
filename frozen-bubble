@@ -174,7 +174,7 @@ local $_ = "@ARGV";
 /-ji/ || /-joysticksinfo/ and $joysticksinfo = 1;
 /-re\s*(\S+)/ || /-record\s*(\S+)/ and do { if (!-d $1) { die("$1 does not exist.\n") } else { $recorddir = $1; } };
 /-ar/ || /-autorecord/ and $autorecord = 1;
-/-pb\s*(\S+)/ || /-playback\s*(\S+)/ and do { if (!-f $1) { die("$1 does not exist.\n") } else { eval(cat_($1)); } };
+/-pb\s*(\S+)/ || /-playback\s*(\S+)/ and do { if (!-f $1) { die("$1 does not exist.\n") } else { $playdata = $1; } };
 member($ARGV[$_], '-cm', '--comment') and $comment = $ARGV[$_+1] foreach 0 .. $#ARGV;
 
 $mynick = sanitize_nick($mynick);
@@ -1504,6 +1504,9 @@ sub save_record_if_needed {
             $recorddata{data}[0]{id2p} = $pdata{id2p};
         }
         output($filename, Data::Dumper->Dump([$recorddata{data}], [qw(playdata)]));
+        if (system("bzip2 '$filename' >/dev/null 2>/dev/null") == 0) {
+            $filename .= ".bz2";
+        }
         print "Record saved in '$filename'. Start Frozen-Bubble with '--playback $filename' to replay the game.\n";
     }
 }
@@ -2553,19 +2556,23 @@ sub init_game() {
 	$::p ne 'p2' and $imgbin{net_lose}{$::p} = add_image("net_lose_$::p.png");
         $::p =~ /^r/ and $imgbin{attack}{$::p} = add_image("attack_$::p.png");
 	$pdata{$::p}{score} = 0;
-        $pinguin{$::p}{normal} = [ add_image("pinguins/anime-shooter_p1_0020.png") ];
-        $pinguin{$::p}{action} = [ map { add_image("pinguins/anime-shooter_p1_00$_.png") } (21..50) ];
-        $pinguin{$::p}{left_to} = [ map { add_image("pinguins/anime-shooter_p1_00$_.png") } reverse ('02'..'19') ];
-        $pinguin{$::p}{left} = [ add_image("pinguins/anime-shooter_p1_0001.png") ];
-        $pinguin{$::p}{left_from} = [ map { add_image("pinguins/anime-shooter_p1_00$_.png") } ('02'..'19') ];
-        $pinguin{$::p}{right_to} = [ map { add_image("pinguins/anime-shooter_p1_00$_.png") } (51..70) ];
-        $pinguin{$::p}{right} = [ add_image("pinguins/anime-shooter_p1_0071.png") ];
-        $pinguin{$::p}{right_from} = [ map { add_image("pinguins/anime-shooter_p1_00$_.png") } reverse (51..71) ];
-        $pinguin{$::p}{wait_to} = [ map { add_image("pinguins/wait_p1_00$_.png") } ('01'..'74') ];
-        $pinguin{$::p}{wait} = [ map { add_image("pinguins/wait_p1_00$_.png") } (75..97) ];
-        $pinguin{$::p}{win} = [ map { add_image("pinguins/win_p1_00$_.png") } ('01'..'90') ];
-        $pinguin{$::p}{lose_to} = [ map { add_image("pinguins/loose_p1_00$_.png") } ('01'..'64') ];
-        $pinguin{$::p}{lose} = [ map { add_image("pinguins/loose_p1_0$_.png") } ('065'..'158') ];
+        my $p = $::p;
+        if ($p ne 'p1' && $p ne 'rp2') {
+            $p = 'p1';
+        }
+        $pinguin{$::p}{normal} = [ add_image("pinguins/anime-shooter_${p}_0020.png") ];
+        $pinguin{$::p}{action} = [ map { add_image("pinguins/anime-shooter_${p}_00$_.png") } (21..50) ];
+        $pinguin{$::p}{left_to} = [ map { add_image("pinguins/anime-shooter_${p}_00$_.png") } reverse ('02'..'19') ];
+        $pinguin{$::p}{left} = [ add_image("pinguins/anime-shooter_${p}_0001.png") ];
+        $pinguin{$::p}{left_from} = [ map { add_image("pinguins/anime-shooter_${p}_00$_.png") } ('02'..'19') ];
+        $pinguin{$::p}{right_to} = [ map { add_image("pinguins/anime-shooter_${p}_00$_.png") } (51..70) ];
+        $pinguin{$::p}{right} = [ add_image("pinguins/anime-shooter_${p}_0071.png") ];
+        $pinguin{$::p}{right_from} = [ map { add_image("pinguins/anime-shooter_${p}_00$_.png") } reverse (51..71) ];
+        $pinguin{$::p}{wait_to} = [ map { add_image("pinguins/wait_${p}_00$_.png") } ('01'..'74') ];
+        $pinguin{$::p}{wait} = [ map { add_image("pinguins/wait_${p}_00$_.png") } (75..97) ];
+        $pinguin{$::p}{win} = [ map { add_image("pinguins/win_${p}_00$_.png") } ('01'..'68') ];
+        $pinguin{$::p}{lose_to} = [ map { add_image("pinguins/loose_${p}_00$_.png") } ('01'..'64') ];
+        $pinguin{$::p}{lose} = [ map { add_image("pinguins/loose_${p}_0$_.png") } ('065'..'158') ];
         print_step('.'); 
     };
 
@@ -4986,13 +4993,22 @@ sub choose_levelset() {
 init_game();
 
 if ($playdata) {
+    if ($playdata =~ /\.bz2$/) {
+        local *F;
+        local $/ = undef;
+        open(F, "bzcat '$playdata'|" ) or die("Can't open '$playdata': $!");
+        $playdata = <F>;
+    } else {
+        $playdata = cat_($playdata);
+    }
+    eval($playdata);  #- fills up $playdata
     $recorddata{pdatas} = shift @$playdata;  #- first record is used for pdatas, the rest will contain frame-indexed actions
     @PLAYERS = @{$recorddata{pdatas}{players}};
     $pdata{gametype} = $recorddata{pdatas}{gametype};
     $levels{current} = $recorddata{pdatas}{current_level};
     $chainreaction = $recorddata{pdatas}{chainreaction};
     srand $recorddata{pdatas}{srand};
-    print 'Game recorded at ' . localtime($recorddata{pdatas}{time}) . ".\n";
+    print 'Game recorded on ' . localtime($recorddata{pdatas}{time}) . ".\n";
     $recorddata{pdatas}{comment} and print "Comment specified with record: $recorddata{pdatas}{comment}\n";
     if (is_mp_game()) {
         iter_players {
