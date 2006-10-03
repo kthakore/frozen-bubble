@@ -1266,6 +1266,10 @@ sub handle_game_events() {
             if ($event->type == SDL_KEYDOWN && $event->key_sym == SDLK_ESCAPE) {
                 die 'quit';
             }
+            if ($keypressed eq $KEYS->{misc}{fs}) {
+                $fullscreen = !$fullscreen;
+                $app->fullscreen;
+            }
             if ($event->type == SDL_QUIT) {
                 exit 0;
             }
