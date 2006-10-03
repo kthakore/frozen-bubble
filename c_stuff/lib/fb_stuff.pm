@@ -81,7 +81,7 @@ $POS_2P{rp1} = $POS_2P{p2};  #- in net/lan 2p mode, use bigger graphics and posi
 %POS_MP = ( p1 => { left_limit => 190, right_limit => 446, top_limit => 44, 'initial_bubble_y' => 390,
                     canon => { x => 268, 'y' => 356 },   #- (left_limit + right_limit) / 2 - 50  |  initial_bubble_y + 16 - 50  (50x50 is half dimensions of gfx/shoot/base)
                     simpleshooter => { x => 317, 'y' => 405, diameter => 60 },
-                    pinguin => { x => 165, 'y' => 420 },
+                    pinguin => { x => 213, 'y' => 420 },
                     next_bubble => { x => 112, 'y' => 440 },
                     on_top_next_relpos => { x => -4, 'y' => -3 },
                     hurry => { x => 10, 'y' => 265 },
@@ -105,7 +105,7 @@ $POS_2P{rp1} = $POS_2P{p2};  #- in net/lan 2p mode, use bigger graphics and posi
             rp2 => { left_limit => 492, right_limit => 620, top_limit => 19, 'initial_bubble_y' => 192,
                      canon => { x => 531, 'y' => 175 },
                      simpleshooter => { x => 555, 'y' => 197, diameter => 30 },
-                     pinguin => { x => 18, 'y' => 211 },
+                     pinguin => { x => 94, 'y' => 211 },
                      next_bubble => { x => 56, 'y' => 216 },
                      on_top_next_relpos => { x => -2, 'y' => -2 },
                      hurry => { x => 5, 'y' => 128 },
