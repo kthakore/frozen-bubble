@@ -481,6 +481,7 @@ sub setmyid($) {
 #- data is command:parameters
 #- supported commands:
 #-   ! (synchro)      [this one is special, server propagates also to emitter]
+#-   r (rotate)
 #-   a (angle)
 #-   b (bubble)
 #-   f (fire)
@@ -529,11 +530,11 @@ sub grecv() {
         disconnect();
         return;
     }
-    print "received $bytes bytes, adding to buffered ", length($buffered_buf), "\n";
+#    print "received $bytes bytes, adding to buffered ", length($buffered_buf), "\n";
     $buf = $buffered_buf . $buf;
     $buffered_buf = undef;
     my @ascii = unpack("C*", $buf);
-    print "bytes in buf: @ascii\n";
+#    print "bytes in buf: @ascii\n";
     
     while ($buf) {
         #- first byte of a "frame" is the id of the sender

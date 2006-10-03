@@ -1017,7 +1017,7 @@ sub malus_change($$) {
             };
 
         } else {
-            if (is_local_player($player)) {  #- remote players handled when receiving the 'g' messag
+            if (is_local_player($player)) {  #- remote players handled when receiving the 'g' message
                 if (!$pdata{sendmalustoone}) {
                     my @living = living_players();
                     $numb = int($numb/(@living-1) + 0.99);
@@ -1158,6 +1158,8 @@ sub handle_mp_messages {
         }
     };
 
+    my %latestangle = ();  #- for smoothing, need to handle last angle only
+
     while (@$msg) {
         my $m = shift @$msg;
         my $player = $pdata{id2p}{$m->{id}};
@@ -1182,8 +1184,19 @@ sub handle_mp_messages {
             $check_action_possible->($m, $player) or last;
             $actions{$player}{mp_fire} = 1;
             ($angle{$player}, $pdata{$player}{nextcolor}) = $params =~ /(.+):(.+)/;
+        } elsif ($command eq 'r') {
+            $actions{$player}{left} = 0;
+            $actions{$player}{right} = 0;
+            $actions{$player}{center} = 0;
+            if ($params eq 'l') {
+                $actions{$player}{left} = 1;
+            } elsif ($params eq 'r') {
+                $actions{$player}{right} = 1;
+            } elsif ($params eq 'c') {
+                $actions{$player}{center} = 1;
+            }
         } elsif ($command eq 'a') {
-            $angle{$player} = $params;
+            $latestangle{$player} = $params;
         } elsif ($command eq 's') {
             $check_action_possible->($m, $player) or last;
             #- we can't rely on locally animated launched bubble, to ensure game
@@ -1248,6 +1261,19 @@ sub handle_mp_messages {
             print STDERR "****** Unrecognized command: $m->{msg}\n";
         }
     }
+
+    foreach my $player (keys %latestangle) {
+        #- try to smoothen on network lag
+        my $difference = $latestangle{$player} - $angle{$player};
+        if (abs($difference) > 0.15) {
+            #- we're lagging. ignore that to prevent jerks. hope this is temporary.
+            #- I know this will behave bad on high lags but hey I can't do no miracle buddy.
+        } else {
+            #- we're not lagging so much. but smoothen it up.
+            $angle{$player} += $difference / 2;
+        }
+    }
+            
 }
 
 sub handle_game_events() {
@@ -1305,8 +1331,15 @@ sub handle_game_events() {
 
             } else {
                 iter_local_players {
-                    foreach (qw(left right fire center)) {
-                        $keypressed eq $KEYS->{$::p}{$_} and $actions{$::p}{$_} = 1, last;
+                    foreach my $action (qw(left right fire center)) {
+                        if ($keypressed eq $KEYS->{$::p}{$action}) {
+                            $actions{$::p}{$action} = 1;
+                            if (is_mp_game() && $action ne 'fire') {
+                                $action =~ /./;  #- first letter
+                                fb_net::gsend("r$&");
+                            }
+                            last;
+                        }
                     }
                 };
                 
@@ -1411,12 +1444,14 @@ sub handle_game_events() {
 
         if ($keypressed) {
 	    iter_local_players {
-		foreach (qw(left right fire center)) {
-		    if ($keypressed eq $KEYS->{$::p}{$_}) {
-                        $actions{$::p}{$_} = 0;
+		foreach my $action (qw(left right fire center)) {
+		    if ($keypressed eq $KEYS->{$::p}{$action}) {
+                        $actions{$::p}{$action} = 0;
+                        is_mp_game() && $action ne 'fire' and fb_net::gsend('r');
                         last;
-                    } elsif ($keypressed =~ /^joystick\|axisvalue\|(\d+)\|(\d+)\|0$/ && $KEYS->{$::p}{$_} =~ /^joystick\|axisvalue\|$1\|$2\|/) {
-                        $actions{$::p}{$_} = 0;
+                    } elsif ($keypressed =~ /^joystick\|axisvalue\|(\d+)\|(\d+)\|0$/ && $KEYS->{$::p}{$action} =~ /^joystick\|axisvalue\|$1\|$2\|/) {
+                        $actions{$::p}{$action} = 0;
+                        is_mp_game() && $action ne 'fire' and fb_net::gsend('r');
                         #- no last, there might be two values of the same axis
                     }
 		}
@@ -1774,7 +1809,7 @@ sub update_game() {
                 }
                 ($angle{$::p} < 0.1) and $angle{$::p} = 0.1;
                 ($angle{$::p} > $PI-0.1) and $angle{$::p} = $PI-0.1;
-                if (is_mp_game() && ($actions{$::p}{left} || $actions{$::p}{right} || $actions{$::p}{center})) {
+                if (is_mp_game() && is_local_player($::p) && ($actions{$::p}{left} || $actions{$::p}{right} || $actions{$::p}{center})) {
                     fb_net::gsend(sprintf("a%.2f", $angle{$::p}));
                 }
                 $pdata{$::p}{hurry}++;
