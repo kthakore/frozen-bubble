@@ -9,7 +9,7 @@ MANDIR = $(DATADIR)/man
 all: prepare dirs
 
 prepare:
-	perl -ne "print \$$1 if m|\\\$$version = '(.*)';|" frozen-bubble > VERSION
+	perl -ne "print \$$1 if m|\\\$$version = '(.*)';|" c_stuff/lib/fb_stuff.pm > VERSION
 
 dirs:
 	@if ! perl -e 'use SDL'; then echo -e "\n    *** I need perl-SDL installed"; false; fi
