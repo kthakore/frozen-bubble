@@ -2570,6 +2570,8 @@ sub init_game() {
     #- hiscore
     $imgbin{back_hiscores} = add_image('back_hiscores.png');
     $imgbin{hiscore_frame} = add_image('hiscore_frame.png');
+    $imgbin{hiscore_levelset} = add_image('hiscore-levelset.png');
+    $imgbin{hiscore_mptraining} = add_image('hiscore-mptraining.png');
     
     print_step('.'); 
     #- temporarily desactivate the intro storyboard because it's not finished yet
@@ -2689,6 +2691,7 @@ sub display_highscores {
 
     if ($type eq 'levels' || !defined($type)) {
         $imgbin{back_hiscores}->blit($apprects{main}, $app, $apprects{main});
+        put_image($imgbin{hiscore_levelset}, 640 - 10 - $imgbin{hiscore_levelset}->width, 8);
 
         my $initial_high_posx = 90;
         my ($high_posx, $high_posy) = ($initial_high_posx, 68);
@@ -2754,8 +2757,9 @@ sub display_highscores {
 
     if (($type eq 'mptrain' || !defined($type)) && @$HISCORES_MPTRAIN) {
         $imgbin{back_hiscores}->blit($apprects{main}, $app, $apprects{main});
+        put_image($imgbin{hiscore_mptraining}, 640 - 10 - $imgbin{hiscore_mptraining}->width, 8);
 
-        my $x = 230;
+        my $x = 240;
         my $y = 50;
         my $counter = 1;
         foreach my $high (ordered_mptrain_highscores()) {
