@@ -1246,10 +1246,6 @@ SDL_Surface* sdlpango_draw_(SDLPango_Context* context, char* text, int width, ch
 	return SDLPango_CreateSurfaceDraw(context);
 }
 
-void sdlpango_freecontext_(SDLPango_Context* context)
-{
-        SDLPango_FreeContext(context);
-}
 
 /************************** Gateway to Perl ****************************/
 
@@ -1505,8 +1501,3 @@ sdlpango_draw_givenalignment(SDLPango_Context* context, char* text, int width, c
         OUTPUT:
                 RETVAL
 
-
-void
-sdlpango_freecontext(SDLPango_Context* context)
-        CODE:
-                sdlpango_freecontext_(context);

@@ -3273,7 +3273,6 @@ sub smg_servers() {
                         sleep 1;
                         return [ { host => 'localhost', port => 1511 } ];
                     } else {
-                        fb_c_stuff::sdlpango_freecontext($pangocontext{$_}{context}) foreach keys %pangocontext;  #- free related resources
                         unless (exec $fb_server, '-L', '-d', '-n', "lan-$mynick", '-z') {
                             print STDERR "Could not create server limited to lan game: $!\n";
                             POSIX::_exit(1);
