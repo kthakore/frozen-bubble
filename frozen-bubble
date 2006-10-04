@@ -2512,8 +2512,8 @@ sub init_game() {
     $imgbin{txt_highscores_over} = add_image('menu/txt_highscores_over.png');
     $imgbin{void_panel} = add_image('menu/void_panel.png');
     $imgbin{'1p_panel'} = add_image('menu/1p_panel.png');
-    $imgbin{void_chat} = add_image('menu/void_chat.png');
-    $imgbin{void_chat_small} = add_image('menu/void_chat_small.png');
+    $imgbin{void_chat} = add_image('void_chat.png');
+    $imgbin{void_chat_small} = add_image('void_chat_small.png');
     $imgbin{void_mp_training} = add_image('void_mp_training.png');
     $imgbin{version} = add_image('menu/version.png');
     $imgbin{ping_low} = add_image('menu/ping-low.png');
@@ -2541,8 +2541,6 @@ sub init_game() {
     }
     $imgbin{left_rp1} = add_image('left-rp1.png');
     $imgbin{"left_${_}_mini"} = add_image("left-${_}-mini.png") foreach qw(rp1 rp2 rp3 rp4);
-    $imgbin{mp_ready_newgame} = add_image('pinguins/mp_ready_newgame.png');
-    $imgbin{mp_waiting_newgame} = add_image('pinguins/mp_waiting_newgame.png');
     $imgbin{highlight_server} = add_image('menu/highlight-server.png');
 
     #- little flags
@@ -2590,15 +2588,11 @@ sub init_game() {
     local @PLAYERS = @ALL_PLAYERS;  #- load all images even if -so commandline option was passed
     iter_players {
 	$imgbin{hurry}{$::p} = add_image("hurry_$::p.png");
-	$pinguin{$::p}{sleep} = [ add_image("pinguins/sleep_$::p.png") ];
 	$imgbin{win}{$::p} = add_image("win_panel_$::p.png");
 	$::p ne 'p2' and $imgbin{net_lose}{$::p} = add_image("net_lose_$::p.png");
         $::p =~ /^r/ and $imgbin{attack}{$::p} = add_image("attack_$::p.png");
 	$pdata{$::p}{score} = 0;
         my $p = $::p;
-        if ($p ne 'p1' && $p ne 'rp2') {
-            $p = 'p1';
-        }
         $pinguin{$::p}{normal} = [ add_image("pinguins/anime-shooter_${p}_0020.png") ];
         $pinguin{$::p}{action} = [ map { add_image("pinguins/anime-shooter_${p}_00$_.png") } (21..50) ];
         $pinguin{$::p}{left_to} = [ map { add_image("pinguins/anime-shooter_${p}_00$_.png") } reverse ('02'..'19') ];
