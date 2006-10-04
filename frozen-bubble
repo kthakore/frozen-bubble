@@ -2492,16 +2492,8 @@ sub init_game() {
     $imgbin{txt_langame_over} = add_image('menu/txt_langame_over.png');
     $imgbin{txt_editor_off}  = add_image('menu/txt_editor_off.png');
     $imgbin{txt_editor_over} = add_image('menu/txt_editor_over.png');
-    $imgbin{txt_fullscreen_off}  = add_image('menu/txt_fullscreen_off.png');
-    $imgbin{txt_fullscreen_over} = add_image('menu/txt_fullscreen_over.png');
-    $imgbin{txt_fullscreen_act_off}  = add_image('menu/txt_fullscreen_act_off.png');
-    $imgbin{txt_fullscreen_act_over} = add_image('menu/txt_fullscreen_act_over.png');
     $imgbin{txt_keys_off}  = add_image('menu/txt_keys_off.png');
     $imgbin{txt_keys_over} = add_image('menu/txt_keys_over.png');
-    $imgbin{txt_sound_off}  = add_image('menu/txt_sound_off.png');
-    $imgbin{txt_sound_over} = add_image('menu/txt_sound_over.png');
-    $imgbin{txt_sound_act_off}  = add_image('menu/txt_sound_act_off.png');
-    $imgbin{txt_sound_act_over} = add_image('menu/txt_sound_act_over.png');
     $imgbin{txt_graphics_1_off}  = add_image('menu/txt_graphics_1_off.png');
     $imgbin{txt_graphics_1_over} = add_image('menu/txt_graphics_1_over.png');
     $imgbin{txt_graphics_2_off}  = add_image('menu/txt_graphics_2_off.png');
