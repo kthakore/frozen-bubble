@@ -1182,6 +1182,15 @@ sub modify_selected_level {
     
 }
 
+#- from gentoo patch IIRC
+sub SDL_TEXTWIDTH {
+    if (defined(&SDL::App::SDL_TEXTWIDTH)) {
+        SDL::App::SDL_TEXTWIDTH(@_);   # perl-sdl-1.x
+    } else {
+        SDL::SFont::SDL_TEXTWIDTH(@_); # perl-sdl-2.x
+    }
+}
+
 
 sub show_selected_level {
     my $surf_select_level_background
@@ -2004,8 +2013,8 @@ sub print_ok_text {
 }
 
 sub print_level_nb {
-    my $posx = 180;
-    my $posy = 430;
+    my $posx = 183;
+    my $posy = 421;
     my $level_sign_rect = SDL::Rect->new(-x => $posx - 50, '-y' => $posy, -width => 100, -height => 25);
     $background->blit($level_sign_rect, $app, $level_sign_rect);
     my $text = "$curr_level/" . keys %bubble_hash;
