@@ -2759,11 +2759,12 @@ sub display_highscores {
         $imgbin{back_hiscores}->blit($apprects{main}, $app, $apprects{main});
         put_image($imgbin{hiscore_mptraining}, 640 - 10 - $imgbin{hiscore_mptraining}->width, 8);
 
-        my $x = 240;
+        my $x = 230;
         my $y = 50;
         my $counter = 1;
         foreach my $high (ordered_mptrain_highscores()) {
-            print_('menu', $app, $x, $y, "$counter. $high->{name}: $high->{score}");
+            print_('menu', $app, $x, $y, "$counter. ", 40, 'right');
+            print_('menu', $app, $x + 40, $y, "$high->{name}: $high->{score}");
             $y += $smg_lineheight + 2;
             $counter++;
         }
