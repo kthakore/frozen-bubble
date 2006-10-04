@@ -2507,7 +2507,6 @@ sub init_game() {
     $imgbin{void_chat} = add_image('void_chat.png');
     $imgbin{void_chat_small} = add_image('void_chat_small.png');
     $imgbin{void_mp_training} = add_image('void_mp_training.png');
-    $imgbin{version} = add_image('menu/version.png');
     $imgbin{ping_low} = add_image('menu/ping-low.png');
     $imgbin{ping_mid} = add_image('menu/ping-mid.png');
     $imgbin{ping_high} = add_image('menu/ping-high.png');
