@@ -13,7 +13,7 @@ prepare:
 
 dirs:
 	@if ! perl -e 'use SDL'; then echo -e "\n    *** I need perl-SDL installed"; false; fi
-	@if ! perl -e 'use SDL; ($$mj, $$mn, $$mc) = split /\./, $$SDL::VERSION; exit 1 if $$mj<1 || $$mn<19'; then echo -e "\n    *** I need perl-SDL version 1.19.0 or upper"; false; fi
+	@if ! perl -e 'use SDL; ($$mj, $$mn, $$mc) = split /\./, $$SDL::VERSION; exit 0 if $$mj > 1 || $$mn >= 19; exit 1'; then echo -e "\n    *** I need perl-SDL version 1.19.0 or upper"; false; fi
 	@for n in . $(DIRS); do \
 		[ "$$n" = "." ] || $(MAKE) -C $$n ;\
 	done
