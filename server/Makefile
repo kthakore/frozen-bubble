@@ -1,3 +1,5 @@
+PREFIX = /usr/local
+LIBDIR = $(PREFIX)/lib
 
 CFLAGS ?= -g -Wall -Werror -pipe `glib-config --cflags`
 LIBS ?= `glib-config --libs`
@@ -23,7 +25,8 @@ clean:
 	rm -f fb-server *.o .depend
 
 install:
-	@echo Installed from main Makefile
+        install -d $(DESTDIR)$(LIBDIR)/frozen-bubble
+        install server/fb-server $(DESTDIR)$(LIBDIR)/frozen-bubble
 
 .depend:
 	$(CPP) $(CFLAGS) -M $(ALLSRC) > .depend

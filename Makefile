@@ -25,17 +25,14 @@ dirs:
 
 install: $(ALL)
 	@for n in $(DIRS); do \
-		(cd $$n; $(MAKE) install DESTDIR=$(DESTDIR)) \
+		(cd $$n; $(MAKE) install) \
 	done
-	install -d $(BINDIR)
-	install frozen-bubble frozen-bubble-editor $(BINDIR)
-	install -d $(DATADIR)/frozen-bubble
-	cp -a gfx snd data $(DATADIR)/frozen-bubble
-	rm -f $(DATADIR)/frozen-bubble/gfx/shoot/create.pl
-	install -d $(LIBDIR)/frozen-bubble
-	install server/fb-server $(LIBDIR)/frozen-bubble
-	install -d $(MANDIR)/man6
-	install doc/*.6 $(MANDIR)/man6
+        install -d $(DESTDIR)$(BINDIR)
+        install frozen-bubble frozen-bubble-editor $(DESTDIR)$(BINDIR)
+        install -d $(DESTDIR)$(DATADIR)/frozen-bubble
+        cp -a gfx snd data $(DESTDIR)$(DATADIR)/frozen-bubble
+        install -d $(DESTDIR)$(MAN)/man6
+        install doc/*.6 $(DESTDIR)$(MANDIR)/man6
 
 clean: 
 	@for n in $(DIRS); do \

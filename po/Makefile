@@ -27,12 +27,12 @@ merge: $(PGOAL).pot
 	msgfmt $< -o $@
 
 install: $(MOFILES)
-	install -d $(LOCALEDIR)
+	install -d $(DESTDIR)$(LOCALEDIR)
 	@for n in $(MOFILES); do \
-		echo install $$n $(LOCALEDIR)/`echo $$n | sed -e 's/.mo//'`/LC_MESSAGES/frozen-bubble.mo; \
-		install -d $(LOCALEDIR)/`echo $$n | sed -e 's/.mo//'`; \
-		install -d $(LOCALEDIR)/`echo $$n | sed -e 's/.mo//'`/LC_MESSAGES; \
-		install $$n $(LOCALEDIR)/`echo $$n | sed -e 's/.mo//'`/LC_MESSAGES/frozen-bubble.mo; \
+		echo install $$n $(DESTDIR)$(LOCALEDIR)/`echo $$n | sed -e 's/.mo//'`/LC_MESSAGES/frozen-bubble.mo; \
+		install -d $(DESTDIR)$(LOCALEDIR)/`echo $$n | sed -e 's/.mo//'`; \
+		install -d $(DESTDIR)$(LOCALEDIR)/`echo $$n | sed -e 's/.mo//'`/LC_MESSAGES; \
+		install $$n $(DESTDIR)$(LOCALEDIR)/`echo $$n | sed -e 's/.mo//'`/LC_MESSAGES/frozen-bubble.mo; \
 	done
 
 clean:
