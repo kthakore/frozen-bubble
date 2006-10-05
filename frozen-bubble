@@ -836,13 +836,19 @@ sub stick_bubble($$$$$) {
 
 sub print_next_bubble($$;$) {
     my ($img, $player, $not_on_top_next) = @_;
-    if (is_mp_game() && $pdata{p1}{chatting}) {
+    if (is_mp_game() && $player eq 'p1' && $pdata{p1}{chatting}) {
         return;
     }
     put_image_to_background($img, $next_bubble{$player}{'x'}, $next_bubble{$player}{'y'});
     $not_on_top_next or put_image_to_background($bubbles_anim{on_top_next},
                                                 $POS{$player}{left_limit} + $POS{$player}{next_bubble}{x} + $POS{$player}{on_top_next_relpos}{x},
                                                 $POS{$player}{next_bubble}{'y'} + $POS{$player}{on_top_next_relpos}{'y'});
+    if ($pdata{current_chat_messages}{$player}) {
+        put_image_to_background($imgbin{void_chat_small}, $POS{$player}{chatting}{x}, $POS{$player}{chatting}{'y'});
+        print_('ingame_small_chat', $background,
+               $POS{$player}{chatting}{x} + 5, $POS{$player}{chatting}{'y'} + 3, $pdata{current_chat_messages}{$player}, $imgbin{void_chat_small}->width + 10);
+        erase_image($imgbin{void_chat_small}, $POS{$player}{chatting}{x}, $POS{$player}{chatting}{'y'});
+    }
 }
 
 sub generate_new_bubble($$) {
@@ -937,7 +943,10 @@ sub handle_graphics($) {
         #- chat message in mp
         if (is_mp_game() && $pdata{$::p}{chat_msg_delay}) {
             $pdata{$::p}{chat_msg_delay}--;
-            $pdata{$::p}{chat_msg_delay} or remove_image_from_background($imgbin{void_chat_small}, $POS{$::p}{chatting}{x}, $POS{$::p}{chatting}{'y'});
+            if (!$pdata{$::p}{chat_msg_delay}) {
+                remove_image_from_background($imgbin{void_chat_small}, $POS{$::p}{chatting}{x}, $POS{$::p}{chatting}{'y'});
+                $pdata{current_chat_messages}{$::p} = undef;
+            }
         }
 
 	#- moving bubbles --> I want them on top of the rest
@@ -1073,6 +1082,13 @@ sub print_compressor() {
 sub print_ {
     my ($kind, $surface, $x, $y, $text, $size, $alignment) = @_;
     exists $pangocontext{$kind} or die "$kind is no kind\n";
+    if ($size) {
+        #- instead of segfaulting
+        my $minsize = width($kind, $text);
+        if ($minsize > $size) {
+            $size = $minsize;
+        }
+    }
     my $surf = fb_c_stuff::sdlpango_draw_givenalignment($pangocontext{$kind}{context_bg}, $text, $size || -1, $alignment || 'left');
     my $rect = SDL::Rect->new('-x' => $x + 1, '-y' => $y + 1);
     SDL::BlitSurface($surf, undef, surf($surface), rect($rect));
@@ -1084,9 +1100,9 @@ sub print_ {
 }
 
 sub width {
-    my ($kind, @text) = @_;
+    my ($kind, $text) = @_;
     exists $pangocontext{$kind} or die "$kind is no kind\n";
-    my $size = fb_c_stuff::sdlpango_getsize($pangocontext{$kind}{context_fg}, join('', @text), -1);
+    my $size = fb_c_stuff::sdlpango_getsize($pangocontext{$kind}{context_fg}, $text, -1);
     return $size->[0];
 }
 
@@ -1095,7 +1111,7 @@ sub mp_disconnect_with_reason {
     put_image($imgbin{void_panel}, $MENUPOS{xpos_panel}, $MENUPOS{ypos_panel});
     my $y = $MENUPOS{ypos_panel} + 30;
     foreach (@messages) {
-        print_('menu', $app, 320 - width('menu', $_)/2, $y, $_);
+        print_('menu', $app, $MENUPOS{xpos_panel}, $y, $_, $imgbin{void_panel}->width - 20, 'center');
         $y += $smg_lineheight;
     }
     $app->flip;
@@ -1118,7 +1134,7 @@ sub check_mp_connection {
 
 sub update_say_mp {
     put_image($imgbin{void_chat}, $POS{p1}{chatting}{x}, $POS{p1}{chatting}{'y'});
-    callback_entry('print', { xpos => $POS{p1}{chatting}{x} + 10, ypos => $POS{p1}{chatting}{'y'} + 9, font => 'ingame' });
+    callback_entry('print', { xpos => $POS{p1}{chatting}{x} + 10, ypos => $POS{p1}{chatting}{'y'} + 9, font => 'ingame', maxlen => $imgbin{void_chat}->width - 20 });
     push @update_rects, $apprects{main};
 }
 
@@ -1252,11 +1268,12 @@ sub handle_mp_messages {
             last;
         } elsif ($command eq 't') {
             put_image_to_background($imgbin{void_chat_small}, $POS{$player}{chatting}{x}, $POS{$player}{chatting}{'y'});
-            print_('ingame_small', $background, $POS{$player}{chatting}{x} + 5, $POS{$player}{chatting}{'y'} + 3, $params);
+            print_('ingame_small_chat', $background, $POS{$player}{chatting}{x} + 5, $POS{$player}{chatting}{'y'} + 3, $params, $imgbin{void_chat_small}->width + 10);
             erase_image($imgbin{void_chat_small}, $POS{$player}{chatting}{x}, $POS{$player}{chatting}{'y'});
             push @update_rects, $apprects{main};
             play_sound('chatted');
             $pdata{$player}{chat_msg_delay} = 500;
+            $pdata{current_chat_messages}{$player} = $params;
         } else {
             print STDERR "****** Unrecognized command: $m->{msg}\n";
         }
@@ -1527,7 +1544,7 @@ sub save_record_if_needed {
             mkdir $recorddir;
         }
         my $filename = sprintf("$recorddir/fb_record_%08d", $recordnumber++);
-        -f $filename and return save_record_if_needed();
+        -f $filename || -f "$filename.bz2" and return save_record_if_needed();
         @{$recorddata{data}[0]{players}} = @PLAYERS;  #- first record is pdatas, the rest are actions
         $recorddata{data}[0]{gametype} = $pdata{gametype};
         $recorddata{data}[0]{current_level} = $levels{current};
@@ -1737,9 +1754,7 @@ sub update_lost {
     my $still_sticked = sum(map { @{$sticked_bubbles{$_}} } @PLAYERS);
     if ($pdata{state} eq 'won ' && $still_sticked == 1) {
         put_image($imgbin{void_panel}, $MENUPOS{xpos_panel}, $MENUPOS{ypos_panel});
-        my $message = "Draw game!";
-        my $xpos = 320 - width('menu', $message)/2;
-        print_('menu', $app, $xpos, $MENUPOS{ypos_panel} + 30, $message);
+        print_('menu', $app, $MENUPOS{xpos_panel}, $MENUPOS{ypos_panel} + 30, t("Draw game!"), $imgbin{void_panel}->width - 20, 'center');
         $app->flip;
     }
 }
@@ -2408,6 +2423,7 @@ sub init_game() {
     $pangocontext{menu} =                 { params => { desc => 'sans 11', fg => 'white', bg => 'black' } };
     $pangocontext{ingame} =               { params => { desc => 'sans 14', fg => 'white', bg => 'black' } };
     $pangocontext{ingame_small} =         { params => { desc => 'sans 8', fg => 'white', bg => 'black' } };
+    $pangocontext{ingame_small_chat} =    { params => { desc => 'sans 8', fg => 'black', bg => 'white' } };
     $pangocontext{$_}{context_fg} = fb_c_stuff::sdlpango_createcontext($pangocontext{$_}{params}{fg}, $pangocontext{$_}{params}{desc}) foreach keys %pangocontext;
     $pangocontext{$_}{context_bg} = fb_c_stuff::sdlpango_createcontext($pangocontext{$_}{params}{bg}, $pangocontext{$_}{params}{desc}) foreach keys %pangocontext;
 
@@ -2699,8 +2715,7 @@ sub display_highscores {
 
         my $centered_print = sub($$$) {
             my ($x, $y, $txt) = @_;
-            print_('menu', $app, $x + ($imgbin{hiscore_frame}->width - width('menu', $txt))/2 - 6,
-                   $y + $imgbin{hiscore_frame}->height - 8, $txt);
+            print_('menu', $app, $x, $y + $imgbin{hiscore_frame}->height - 8, $txt, $imgbin{hiscore_frame}->width + 12, 'center');
         };
         
         my $old_levelset = $loaded_levelset;
@@ -2737,11 +2752,11 @@ sub display_highscores {
                                         -depth => 32, -Amask => "0 but true")->display_format;
             fb_c_stuff::shrink(surf($tmp), surf($background->display_format), 0, 0, rect($high_rect), 4);
             $tmp->blit(undef, $app, SDL::Rect->new(-x => $high_posx, '-y' => $high_posy));
-            $centered_print->($high_posx, $high_posy,    $high->{name});
-            $centered_print->($high_posx, $high_posy+20, $high->{level} eq 'WON' ? "won!" : "level ".$high->{level});
+            $centered_print->($high_posx - 15, $high_posy,      $high->{name});
+            $centered_print->($high_posx - 15, $high_posy + 20, $high->{level} eq 'WON' ? t("won!") : t("level %s", $high->{level}));
             my $min = int($high->{time}/60);
             my $sec = int($high->{time} - $min*60); length($sec) == 1 and $sec = "0$sec";
-            $centered_print->($high_posx, $high_posy+40, "$min'$sec''");
+            $centered_print->($high_posx - 15, $high_posy + 40, "$min'$sec''");
             $high_posx += 98;
             $high_posx > 550 and $high_posx = $initial_high_posx, $high_posy += 175;
             $high_posy > 440 and last;
@@ -2751,7 +2766,7 @@ sub display_highscores {
         $app->flip;
         
         $event->pump while $event->poll != 0;
-        grab_key();
+        grab_key() eq SDLK_ESCAPE() and return;
     }
 
     if (($type eq 'mptrain' || !defined($type)) && @$HISCORES_MPTRAIN) {
@@ -3140,8 +3155,7 @@ sub choose_1p_game_mode() {
 
         my $title = t("Start 1-player game menu");
         my $ypos = $MENUPOS{ypos_panel} + 16;
-        my $xpos = (640 - width('menu', $title)) / 2;
-        print_('menu', $app, $xpos, $ypos, $title);
+        print_('menu', $app, $MENUPOS{xpos_panel}, $ypos, $title, $imgbin{'1p_panel'}->width, 'center');
 
         foreach (@ordered_names) {
             $_ ne $ordered_names[$active_menu] and $draw_element->($_, 'off');
@@ -3904,7 +3918,12 @@ sub smg_choose_game() {
                             smg_add_status_msg(t("*** Unknown command. Try %s for help.", '/help'));
                             $text = undef;
                         } else {
-                            $text = "<$mynick> $text";
+#                            if ($is_rtl) {
+#                                #- force beginning on the right
+#                                $text = "‫<$mynick> $text";
+#                            } else {
+                                $text = "<$mynick> $text";
+#                            }
                         }
                         if ($text) {
                             fb_net::send_("TALK $text");
@@ -4930,17 +4949,17 @@ sub menu {
         }
 
 	my $to_wait = $TARGET_ANIM_SPEED - ($app->ticks - $synchro_ticks);
-        print "$to_wait\n";
+#        print "$to_wait\n";
 	if ($to_wait > 0) {
             $app->delay($to_wait);
             $speed_ok and $speed_ok = 4;
         } else {
             #- disable nice graphics artwork if computer is too slow
-            print "$to_wait\n";
+#            print "$to_wait\n";
             if ($speed_ok) {
                 $speed_ok--;
                 if (!$speed_ok) {
-                    print "disabled\n";
+                    print "Eye-candy animation is too slow, disabling.\n";
                     $draw_logo->();
                 }
             }

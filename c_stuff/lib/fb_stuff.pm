@@ -60,7 +60,7 @@ $FLPATH = '@LIBDIR@/frozen-bubble';
                     hurry => { x => 10, 'y' => 265 },
                     malus => { x => 308, 'y' => 402 },
                     scores => { x => 160, 'y' => 11 },
-                    chatting => { x => 30, 'y' => 440 },
+                    chatting => { x => 70, 'y' => 465 },
                     left => { x => 30, 'y' => 40 },
                   },
 	    p1 => { left_limit => 354, right_limit => 610, top_limit => 40, 'initial_bubble_y' => 390,
@@ -72,7 +72,7 @@ $FLPATH = '@LIBDIR@/frozen-bubble';
                     hurry => { x => 10, 'y' => 265 },
                     malus => { x => 331, 'y' => 402 },
                     scores => { x => 480, 'y' => 11 },
-                    chatting => { x => 450, 'y' => 460 },
+                    chatting => { x => 330, 'y' => 440 },
                   },
 	    centerpanel => { x => 153, 'y' => 190 },
 	  );
