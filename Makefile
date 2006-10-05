@@ -27,12 +27,12 @@ install: $(ALL)
 	@for n in $(DIRS); do \
 		(cd $$n; $(MAKE) install) \
 	done
-        install -d $(DESTDIR)$(BINDIR)
-        install frozen-bubble frozen-bubble-editor $(DESTDIR)$(BINDIR)
-        install -d $(DESTDIR)$(DATADIR)/frozen-bubble
-        cp -a gfx snd data $(DESTDIR)$(DATADIR)/frozen-bubble
-        install -d $(DESTDIR)$(MAN)/man6
-        install doc/*.6 $(DESTDIR)$(MANDIR)/man6
+	install -d $(DESTDIR)$(BINDIR)
+	install frozen-bubble frozen-bubble-editor $(DESTDIR)$(BINDIR)
+	install -d $(DESTDIR)$(DATADIR)/frozen-bubble
+	cp -a gfx snd data $(DESTDIR)$(DATADIR)/frozen-bubble
+	install -d $(DESTDIR)$(MAN)/man6
+	install doc/*.6 $(DESTDIR)$(MANDIR)/man6
 
 clean: 
 	@for n in $(DIRS); do \
