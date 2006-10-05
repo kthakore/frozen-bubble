@@ -31,7 +31,7 @@ install: $(ALL)
 	install frozen-bubble frozen-bubble-editor $(DESTDIR)$(BINDIR)
 	install -d $(DESTDIR)$(DATADIR)/frozen-bubble
 	cp -a gfx snd data $(DESTDIR)$(DATADIR)/frozen-bubble
-	install -d $(DESTDIR)$(MAN)/man6
+	install -d $(DESTDIR)$(MANDIR)/man6
 	install doc/*.6 $(DESTDIR)$(MANDIR)/man6
 
 clean: 

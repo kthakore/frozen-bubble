@@ -26,7 +26,7 @@ clean:
 
 install:
 	install -d $(DESTDIR)$(LIBDIR)/frozen-bubble
-	install server/fb-server $(DESTDIR)$(LIBDIR)/frozen-bubble
+	install fb-server $(DESTDIR)$(LIBDIR)/frozen-bubble
 
 .depend:
 	$(CPP) $(CFLAGS) -M $(ALLSRC) > .depend
