@@ -4661,9 +4661,6 @@ sub menu {
             $logo_candy_method == 7 and fb_c_stuff::brokentv(surf($candy), surf($imgbin{menu_logo}), $logo_candy_index);
             
             $candy->blit(undef, $app, my $rect = SDL::Rect->new(-x => $logox, '-y' => $logoy));
-            if (!$no_update) {
-                $app->update($rect);
-            }
             $logo_candy_index++;
         }
         if (!$no_update) {
