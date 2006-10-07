@@ -1306,11 +1306,10 @@ sub handle_game_events() {
         play();
         $event->pump;
         while ($event->poll != 0) {
-            my $keypressed;
             if ($event->type == SDL_KEYDOWN && $event->key_sym == SDLK_ESCAPE) {
                 die 'quit';
             }
-            if ($keypressed eq $KEYS->{misc}{fs}) {
+            if (extended_keypress($event) eq $KEYS->{misc}{fs}) {
                 $fullscreen = !$fullscreen;
                 $app->fullscreen;
             }
@@ -1323,16 +1322,7 @@ sub handle_game_events() {
 
     $event->pump;
     while ($event->poll != 0) {
-        my $keypressed;
-	if ($event->type == SDL_KEYDOWN) {
-	    $keypressed = $event->key_sym;
-	} elsif ($event->type == fb_c_stuff::JOYAXISMOTION() || $event->type() == fb_c_stuff::JOYBUTTONDOWN()) {
-	    $keypressed = translate_joystick_tokey($event);
-            if ($keypressed =~ /^joystick\|axisvalue\|\d+\|\d+\|0$/) {  #- we treat position at 0 as KEYUP
-                $keypressed = undef;
-            }
-        }
-
+        my $keypressed = extended_keypress($event);
         if ($keypressed) {
 
             if (is_mp_game() && $pdata{p1}{chatting}) {
@@ -1378,43 +1368,32 @@ sub handle_game_events() {
                     play_sound('pause');
                     $mixer_enabled && $mixer and $mixer->pause_music;
                     my $back_saved = switch_image_on_background($imgbin{back_paused}, 0, 0, 1);
+                    my $index;
                   pause_label:
                     while (1) {
-                        my ($index, $side, $snore_counter) = (0, 1, 0);
-                        while ($index || $side == 1) {
-                            erase_image(${$imgbin{paused}}[$index], 320-${$imgbin{paused}}[$index]->width/2-5, 240-${$imgbin{paused}}[$index]->height/2-4);
-                            put_image(${$imgbin{paused}}[$index], 320-${$imgbin{paused}}[$index]->width/2-5, 240-${$imgbin{paused}}[$index]->height/2-4);
-                            $app->flip;
-                            foreach (1..30) {
-                                $app->delay(20);
-                                $event->pump;
-                                while ($event->poll != 0) {
-                                    if ($event->type == SDL_QUIT) {
-                                        exit 0;
-                                    }
-                                    my $keypressed;
-                                    if ($event->type == SDL_KEYDOWN) {
-                                        $keypressed = $event->key_sym;
-                                    } elsif ($event->type == fb_c_stuff::JOYAXISMOTION() || $event->type() == fb_c_stuff::JOYBUTTONDOWN()) {
-                                        $keypressed = translate_joystick_tokey($event);
-                                        if ($keypressed =~ /^joystick\|axisvalue\|\d+\|\d+\|0$/) {  #- we treat position at 0 as KEYUP
-                                            $keypressed = undef;
-                                        }
-                                    }
-                                    if ($keypressed) {
-                                        last pause_label if $event->key_sym ne $KEYS->{misc}{fs};
-                                        $fullscreen = !$fullscreen;
-                                        $app->fullscreen;
-                                    }
-                                }
+                        my $ticks = $app->ticks;
+                        erase_image(${$imgbin{paused}}[$index], 320-${$imgbin{paused}}[$index]->width/2-5, 240-${$imgbin{paused}}[$index]->height/2-4);
+                        put_image(${$imgbin{paused}}[$index], 320-${$imgbin{paused}}[$index]->width/2-5, 240-${$imgbin{paused}}[$index]->height/2-4);
+                        $app->update(@update_rects);
+                        @update_rects = ();
+                        $app->delay(20);
+                        $event->pump;
+                        while ($event->poll != 0) {
+                            if ($event->type == SDL_QUIT) {
+                                exit 0;
                             }
-                            ++$snore_counter % 10 == 0 and play_sound('snore');
-                            $index += $side;
-                            if ($index == @{$imgbin{paused}}) {
-                                $side = -1;
-                                $index -= 2;
+                            my $keypressed = extended_keypress($event);
+                            if ($keypressed) {
+                                last pause_label if $event->key_sym ne $KEYS->{misc}{fs};
+                                $fullscreen = !$fullscreen;
+                                $app->fullscreen;
                             }
                         }
+                        if (++$index == @{$imgbin{paused}}) {
+                            $index = 11;
+                        }
+                        my $to_wait = $TARGET_ANIM_SPEED - ($app->ticks - $ticks);
+                        $to_wait > 0 and fb_c_stuff::fbdelay($to_wait);
                     }
                     switch_image_on_background($back_saved, 0, 0);
                     iter_local_players { $actions{$::p}{left} = 0; $actions{$::p}{right} = 0; };
@@ -1692,12 +1671,14 @@ sub verify_if_end {
 	$pdata{state} = "won $PLAYERS[0]";
 	$pdata{$PLAYERS[0]}{ping_right}{state} = 'win';
 	$pdata{$PLAYERS[0]}{ping_right}{img} = 0;
-	$levels{current} and $levels{current}++;
-	if ($levels{current} && !$levels{$levels{current}}) {
-	    $levels{current} = 'WON';
-	    @{$falling_bubble{$PLAYERS[0]}} = @{$exploding_bubble{$PLAYERS[0]}} = ();
-	    die 'quit';
-	}
+        if ($levels{current} ne 'random') {
+            $levels{current} and $levels{current}++;
+            if ($levels{current} && !$levels{$levels{current}}) {
+                $levels{current} = 'WON';
+                @{$falling_bubble{$PLAYERS[0]}} = @{$exploding_bubble{$PLAYERS[0]}} = ();
+                die 'quit';
+            }
+        }
     }
 }
 
@@ -2484,7 +2465,7 @@ sub init_game() {
     $img_mini{$malus_gfx{tomate}} = add_image('tomate-mini.png');
 
     $imgbin{back_paused} = add_image('back_paused.png');
-    push @{$imgbin{paused}}, add_image("pause_$_.png") foreach 1..10;
+    push @{$imgbin{paused}}, add_image("pause_00$_.png") foreach '01'..'35';
     $imgbin{lose} = add_image('lose_panel.png');
     $imgbin{win_panel_1player} = add_image('win_panel_1player.png');
     $imgbin{win_panel_p1_net} = add_image('win_panel_p1_net.png');
@@ -2674,6 +2655,19 @@ sub translate_joystick_tokey($) {
     } elsif ($event->type() == fb_c_stuff::JOYBUTTONUP()) {
         my $button = SDL::JoyButtonEventButton(evt($event)) + 1;
         return "joystick|buttonup|$which|$button";
+    }
+}
+
+sub extended_keypress($) {
+    my ($event) = @_;
+    if ($event->type == SDL_KEYDOWN) {
+        return $event->key_sym;
+    } elsif ($event->type == fb_c_stuff::JOYAXISMOTION() || $event->type() == fb_c_stuff::JOYBUTTONDOWN()) {
+        my $keypressed = translate_joystick_tokey($event);
+        if ($keypressed =~ /^joystick\|axisvalue\|\d+\|\d+\|0$/) {  #- we treat position at 0 as KEYUP
+            $keypressed = undef;
+        }
+        return $keypressed;
     }
 }
 
@@ -3428,12 +3422,7 @@ sub smg_choose_server(@) {
             if ($event->type == SDL_QUIT) {
                 exit 0;
             }
-            my $k;
-            if ($event->type == SDL_KEYDOWN) {
-                $k = $event->key_sym;
-            } elsif ($event->type == fb_c_stuff::JOYAXISMOTION() || $event->type() == fb_c_stuff::JOYBUTTONDOWN()) {
-                $k = translate_joystick_tokey($event);
-            }
+            my $k = extended_keypress($event);
             if ($k) {
                 if ($k eq SDLK_ESCAPE()) {
                     return 0;
@@ -4239,6 +4228,7 @@ sub ordered_highscores { return sort { lvl_cmp($b->{level}, $a->{level}) || $a->
 sub ordered_mptrain_highscores { return sort { $b->{score} <=> $a->{score} } @$HISCORES_MPTRAIN }
 
 sub handle_new_hiscores() {
+    print "current: $levels{current}\n";
     is_1p_game() && $levels{current} && $levels{current} ne 'random' && !$playdata or return;
 
     if ($levels{current} ne 'mp_train') {
@@ -4794,15 +4784,7 @@ sub menu {
 
 	$event->pump;
 	while ($event->poll != 0) {
-            my $keypressed;
-            if ($event->type == SDL_KEYDOWN) {
-                $keypressed = $event->key_sym;
-            } elsif ($event->type == fb_c_stuff::JOYAXISMOTION() || $event->type() == fb_c_stuff::JOYBUTTONDOWN()) {
-                $keypressed = translate_joystick_tokey($event);
-                if ($keypressed =~ /^joystick\|axisvalue\|\d+\|\d+\|0$/) {  #- we treat position at 0 as KEYUP
-                    $keypressed = undef;
-                }
-            }
+            my $keypressed = extended_keypress($event);
             if ($keypressed) {
 		if (member($keypressed, (SDLK_DOWN, SDLK_RIGHT)) && $current_pos < max(map { $menu_entries{$_}->{pos} } keys %menu_entries)) {
 		    $current_pos++;
@@ -4840,7 +4822,7 @@ sub menu {
                     $app->fullscreen;
                 }
 
-                if ($keypressed == SDLK_ESCAPE) {
+                if ($keypressed eq SDLK_ESCAPE) {
 		    exit 0;
 		}
                 $synchro_ticks = $app->ticks;  #- avoid stopping candy
