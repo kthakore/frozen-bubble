@@ -3231,7 +3231,13 @@ sub smg_printstatus {
     while ($i < $smg_max_messages + $smg_status_message_offsetpage && @smg_status_messages >= $i) {
         if ($smg_status_messages[-$i]) {
             my $kind = $smg_status_messages[-$i] =~ /^\*\*\*/ ? 'netdialogs_servermsg' : 'netdialogs';
-            print_($kind, $app, $smg_statusx, $y, $smg_status_messages[-$i], 620);
+            if ($smg_status_messages[-$i] =~ /^‫/) {
+                #- if text begins with unicode RTL direction, we also need to tell pango to align on the right
+                #- (is there another unicode special character which does both?)
+                print_($kind, $app, $smg_statusx, $y, $smg_status_messages[-$i], 620, 'right');
+            } else {
+                print_($kind, $app, $smg_statusx, $y, $smg_status_messages[-$i], 620, 'left');
+            }
         }
         $y -= $smg_lineheight;
         $i++;
@@ -3635,6 +3641,14 @@ sub print_spot {
     put_image($surface, $x, $y);
 }
 
+sub is_only_ascii {
+    my ($text) = @_;
+    foreach (unpack("C*", $text)) {
+        $_ > 127 and return 0;
+    }
+    return 1;
+}
+
 our ($mylatitude, $mylongitude);
 sub smg_choose_game() {
     my @actions = ({ name => t("Chat"), action => 'CHAT', selected => 1 },
@@ -3918,12 +3932,12 @@ sub smg_choose_game() {
                             smg_add_status_msg(t("*** Unknown command. Try %s for help.", '/help'));
                             $text = undef;
                         } else {
-#                            if ($is_rtl) {
-#                                #- force beginning on the right
-#                                $text = "‫<$mynick> $text";
-#                            } else {
+                            #- for RTL language, force beginning on the right, but non RTL content will appear wrongly so at least don't do for pure ASCII
+                            if ($is_rtl && !is_only_ascii($text)) {
+                                $text = "‫<$mynick> $text";
+                            } else {
                                 $text = "<$mynick> $text";
-#                            }
+                            }
                         }
                         if ($text) {
                             fb_net::send_("TALK $text");
