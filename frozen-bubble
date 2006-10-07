@@ -4228,7 +4228,6 @@ sub ordered_highscores { return sort { lvl_cmp($b->{level}, $a->{level}) || $a->
 sub ordered_mptrain_highscores { return sort { $b->{score} <=> $a->{score} } @$HISCORES_MPTRAIN }
 
 sub handle_new_hiscores() {
-    print "current: $levels{current}\n";
     is_1p_game() && $levels{current} && $levels{current} ne 'random' && !$playdata or return;
 
     if ($levels{current} ne 'mp_train') {
