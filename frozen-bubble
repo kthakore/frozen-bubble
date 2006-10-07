@@ -1501,8 +1501,8 @@ sub handle_game_events() {
 
         my @messages = fb_net::grecv();
         check_mp_connection();
+        $recorddata{mp_messages} = deep_copy(\@messages);  #- if we don't do a deep copy, the dumped data will be recursive for delayed messages
 
-        @{$recorddata{mp_messages}} = @messages;  #- copy
         handle_mp_messages(\@messages);
 
         fb_net::gdelay_messages(@messages);

@@ -31,7 +31,7 @@ use vars qw(@ISA @EXPORT $FPATH $FLPATH $FBLEVELS $colourblind %POS_1P %POS_2P %
 @EXPORT = qw($version $FPATH $FLPATH $colourblind $FBLEVELS %POS_1P %POS_2P %POS_MP $BUBBLE_SIZE $ROW_SIZE
              $PI cat_ member difference2 any every even odd sqr to_bool to_int if_ chomp_
              fold_left output append_to_file min max backtrace basename cp_af all partition ssort
-             sum put_in_hash mapn mapn_ fastuniq t);
+             sum put_in_hash mapn mapn_ fastuniq deep_copy t);
 
 $version = '2.0.0';
 
@@ -279,9 +279,23 @@ sub mapn_(&@) {
     my $f = shift;
     smapn($f, max(map { scalar @$_ } @_), @_);
 }
+# -=-=---=-=---=-=---=-=---=-=---=-=---=-=---=-=---=-=---=-=---=-=---=-=---=-=---=-=---=-=--
+
 #- it doesn't keep ordering (but I don't care)
 sub fastuniq { my %l; @l{@_} = @_; values %l }
-# -=-=---=-=---=-=---=-=---=-=---=-=---=-=---=-=---=-=---=-=---=-=---=-=---=-=---=-=---=-=--
+
+sub deep_copy {
+    my ($scalar) = @_;
+    if (!ref($scalar)) {
+        $scalar;
+    } elsif (ref($scalar) eq "ARRAY") {
+        [ map deep_copy($_), @$scalar ];
+    } elsif (ref($scalar) eq "HASH") {
+        +{ map { $_ => deep_copy($scalar->{$_}) } keys %$scalar };
+    } else {
+        die "what type is $_?"
+    }
+}
 
 sub t {
     my ($fmt, @args) = @_;
