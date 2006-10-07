@@ -3695,17 +3695,6 @@ sub smg_choose_game() {
             callback_entry('print', { xpos => $smg_startx, ypos => $smg_starty_chat, maxlen => 520, prefix => t("Say: "), font => 'netdialogs' });
         }
         print_spot($_->[0], $_->[1]) foreach @geolocs;
-        print_spot(48.8, 2.33333);
-        print_spot(25.7757, -80.2108);
-        print_spot(64.15, -21.95);
-        print_spot(-33.9167, 18.3667);
-        print_spot(19.4, -99.05);
-        print_spot(-23.5666, -46.6333);
-        print_spot(35.6667, 139.75);
-        print_spot(43.65, -79.3833);
-        print_spot(60.3833, 5.33333);
-        print_spot(65.0167, 25.4667);
-        print_spot(57.1333, -2.1);
         $back_selfspot = undef;
         if ($mylatitude && $index_selfspot >= 0) {
             print_spot($mylatitude, $mylongitude, $imgbin{netspot_self}[$index_selfspot], \$back_selfspot);
