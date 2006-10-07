@@ -98,6 +98,7 @@ eval(cat_($hiscorefiles{mptrain} = "$ENV{HOME}/.fbhighscores-mptrain"));
 
 textdomain("frozen-bubble");
 bind_textdomain_codeset("frozen-bubble", "UTF-8");  #- we're going to use SDL-ttf functions using UTF-8 input
+our $is_rtl = $ENV{LANGUAGE} =~ /^fa/;
 
 print "        [[ Frozen-Bubble-$version ]]\n\n";
 print '  http://www.frozen-bubble.org/
@@ -2696,7 +2697,6 @@ sub grab_key {
     }
 }
 
-use Time::HiRes qw(gettimeofday sleep);
 sub display_highscores {
     my ($type) = @_;
 
@@ -2773,12 +2773,17 @@ sub display_highscores {
         $imgbin{back_hiscores}->blit($apprects{main}, $app, $apprects{main});
         put_image($imgbin{hiscore_mptraining}, 640 - 10 - $imgbin{hiscore_mptraining}->width, 8);
 
-        my $x = 230;
+        my %parts = (rank => { xpos => 230, width => 40 },
+                     name => { xpos => 270, width => 150 });
+        if ($is_rtl) {
+            $parts{$_}{xpos} = 640 - $parts{$_}{xpos} - $parts{$_}{width} foreach keys %parts;
+        }
+
         my $y = 50;
         my $counter = 1;
         foreach my $high (ordered_mptrain_highscores()) {
-            print_('menu', $app, $x, $y, "$counter. ", 40, 'right');
-            print_('menu', $app, $x + 40, $y, "$high->{name}: $high->{score}");
+            print_('menu', $app, $parts{rank}{xpos}, $y, "$counter. ", $parts{rank}{width}, 'right');
+            print_('menu', $app, $parts{name}{xpos}, $y, "$high->{name}: $high->{score}", $parts{name}{width});
             $y += $smg_lineheight + 2;
             $counter++;
         }
@@ -2799,8 +2804,6 @@ sub keysym_to_char($) {
         return 'WORLD_' . ($key - 160);  #- "world" keys are not exported
     }
 }
-
-our $is_rtl = $ENV{LANGUAGE} =~ /^fa/;
 
 sub ask_from($) {
     my ($w) = @_;
