@@ -845,10 +845,11 @@ sub print_next_bubble($$;$) {
                                                 $POS{$player}{left_limit} + $POS{$player}{next_bubble}{x} + $POS{$player}{on_top_next_relpos}{x},
                                                 $POS{$player}{next_bubble}{'y'} + $POS{$player}{on_top_next_relpos}{'y'});
     if ($pdata{current_chat_messages}{$player}) {
-        put_image_to_background($imgbin{void_chat_small}, $POS{$player}{chatting}{x}, $POS{$player}{chatting}{'y'});
+        my $img = @PLAYERS == 2 ? $imgbin{void_chat_small_p2} : member($player, qw(rp1 rp3)) ? $imgbin{void_chat_small_rp1_rp3} : $imgbin{void_chat_small_rp2_rp4};
+        put_image_to_background($img, $POS{$player}{chatting}{x}, $POS{$player}{chatting}{'y'});
         print_('ingame_small_chat', $background,
-               $POS{$player}{chatting}{x} + 5, $POS{$player}{chatting}{'y'} + 3, $pdata{current_chat_messages}{$player}, $imgbin{void_chat_small}->width + 10);
-        erase_image($imgbin{void_chat_small}, $POS{$player}{chatting}{x}, $POS{$player}{chatting}{'y'});
+               $POS{$player}{chatting}{x} + 3, $POS{$player}{chatting}{'y'} + 3, $pdata{current_chat_messages}{$player}, $img->width - 6);
+        erase_image($img, $POS{$player}{chatting}{x}, $POS{$player}{chatting}{'y'});
     }
 }
 
@@ -945,7 +946,8 @@ sub handle_graphics($) {
         if (is_mp_game() && $pdata{$::p}{chat_msg_delay}) {
             $pdata{$::p}{chat_msg_delay}--;
             if (!$pdata{$::p}{chat_msg_delay}) {
-                remove_image_from_background($imgbin{void_chat_small}, $POS{$::p}{chatting}{x}, $POS{$::p}{chatting}{'y'});
+                my $img = @PLAYERS == 2 ? $imgbin{void_chat_small_p2} : member($::p, qw(rp1 rp3)) ? $imgbin{void_chat_small_rp1_rp3} : $imgbin{void_chat_small_rp2_rp4};
+                remove_image_from_background($img, $POS{$::p}{chatting}{x}, $POS{$::p}{chatting}{'y'});
                 $pdata{current_chat_messages}{$::p} = undef;
                 print_next_bubble($next_bubble{$::p}{img}, $::p);
             }
@@ -1269,9 +1271,10 @@ sub handle_mp_messages {
             unshift @$msg, $m;
             last;
         } elsif ($command eq 't') {
-            put_image_to_background($imgbin{void_chat_small}, $POS{$player}{chatting}{x}, $POS{$player}{chatting}{'y'});
-            print_('ingame_small_chat', $background, $POS{$player}{chatting}{x} + 5, $POS{$player}{chatting}{'y'} + 3, $params, $imgbin{void_chat_small}->width + 10);
-            erase_image($imgbin{void_chat_small}, $POS{$player}{chatting}{x}, $POS{$player}{chatting}{'y'});
+            my $img = @PLAYERS == 2 ? $imgbin{void_chat_small_p2} : member($player, qw(rp1 rp3)) ? $imgbin{void_chat_small_rp1_rp3} : $imgbin{void_chat_small_rp2_rp4};
+            put_image_to_background($img, $POS{$player}{chatting}{x}, $POS{$player}{chatting}{'y'});
+            print_('ingame_small_chat', $background, $POS{$player}{chatting}{x} + 3, $POS{$player}{chatting}{'y'} + 3, $params, $img->width - 6);
+            erase_image($img, $POS{$player}{chatting}{x}, $POS{$player}{chatting}{'y'});
             push @update_rects, $apprects{main};
             play_sound('chatted');
             $pdata{$player}{chat_msg_delay} = 500;
@@ -1307,15 +1310,15 @@ sub handle_game_events() {
         play();
         $event->pump;
         while ($event->poll != 0) {
-            if ($event->type == SDL_KEYDOWN && $event->key_sym == SDLK_ESCAPE) {
-                die 'quit';
-            }
-            if (extended_keypress($event) eq $KEYS->{misc}{fs}) {
-                $fullscreen = !$fullscreen;
-                $app->fullscreen;
-            }
             if ($event->type == SDL_QUIT) {
                 exit 0;
+            }
+            my $keypressed = extended_keypress($event);
+            if ($keypressed eq $KEYS->{misc}{fs}) {
+                $fullscreen = !$fullscreen;
+                $app->fullscreen;
+            } elsif ($keypressed) {
+                die 'quit';
             }
         }
         return;
@@ -2410,7 +2413,7 @@ sub init_game() {
     $pangocontext{menu} =                 { params => { desc => 'sans 11', fg => 'white', bg => 'black' } };
     $pangocontext{ingame} =               { params => { desc => 'sans 14', fg => 'white', bg => 'black' } };
     $pangocontext{ingame_small} =         { params => { desc => 'sans 8', fg => 'white', bg => 'black' } };
-    $pangocontext{ingame_small_chat} =    { params => { desc => 'sans 8', fg => 'black', bg => 'white' } };
+    $pangocontext{ingame_small_chat} =    { params => { desc => 'sans 8', fg => 'white', bg => 'black' } };
     $pangocontext{$_}{context_fg} = fb_c_stuff::sdlpango_createcontext($pangocontext{$_}{params}{fg}, $pangocontext{$_}{params}{desc}) foreach keys %pangocontext;
     $pangocontext{$_}{context_bg} = fb_c_stuff::sdlpango_createcontext($pangocontext{$_}{params}{bg}, $pangocontext{$_}{params}{desc}) foreach keys %pangocontext;
 
@@ -2508,7 +2511,9 @@ sub init_game() {
     $imgbin{void_panel} = add_image('menu/void_panel.png');
     $imgbin{'1p_panel'} = add_image('menu/1p_panel.png');
     $imgbin{void_chat} = add_image('void_chat.png');
-    $imgbin{void_chat_small} = add_image('void_chat_small.png');
+    $imgbin{void_chat_small_p2} = add_image('void_chat_small_p2.png');
+    $imgbin{void_chat_small_rp1_rp3} = add_image('void_chat_small_rp1_rp3.png');
+    $imgbin{void_chat_small_rp2_rp4} = add_image('void_chat_small_rp2_rp4.png');
     $imgbin{void_mp_training} = add_image('void_mp_training.png');
     $imgbin{ping_low} = add_image('menu/ping-low.png');
     $imgbin{ping_mid} = add_image('menu/ping-mid.png');
@@ -4648,6 +4653,7 @@ sub menu {
 		    exit 0;
 		}
                 $synchro_ticks = $app->ticks;  #- avoid stopping candy
+                $time_counter = 0;  #- reset counter for demos
 	    }
             if ($event->type == SDL_QUIT) {
                 exit 0;
@@ -4787,6 +4793,7 @@ sub menu {
             $pdata{demo} = 1;
             replay("$FPATH/data/demo2.bz2");
             $pdata{demo} = 0;
+          blacken:
             foreach my $step (1..100) {
                 my $ticks = $app->ticks;
                 fb_c_stuff::blacken(surf($app), $step);
@@ -4795,6 +4802,16 @@ sub menu {
                     $app->delay($to_wait);
                 }
                 $app->flip;
+
+                $event->pump;
+                while ($event->poll != 0) {
+                    if ($event->type == SDL_QUIT) {
+                        exit 0;
+                    }
+                    if (extended_keypress($event)) {
+                        last blacken;
+                    }
+                }
             }
             $display_menu->();
             $invalidate_all->();
