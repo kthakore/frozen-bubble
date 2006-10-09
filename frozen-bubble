@@ -312,7 +312,7 @@ sub put_image_to_background($$$) {
     my ($image, $x, $y) = @_;
     my $drect;
     $image = translate_mini_image($image);
-    ($x == 0 && $y == 0) and print "put_image_to_background: warning, X and Y are 0\n";
+    ($x == 0 && $y == 0) and print "put_image_to_background: warning, X and Y are 0\n".backtrace();
     if ($y > 0) {
 	$drect = SDL::Rect->new(-width => $image->width, -height => $image->height, -x => $x, '-y' => $y);
 	$display_on_app_disabled or $image->blit($rects{$image}, $app, $drect);
@@ -947,6 +947,7 @@ sub handle_graphics($) {
             if (!$pdata{$::p}{chat_msg_delay}) {
                 remove_image_from_background($imgbin{void_chat_small}, $POS{$::p}{chatting}{x}, $POS{$::p}{chatting}{'y'});
                 $pdata{current_chat_messages}{$::p} = undef;
+                print_next_bubble($next_bubble{$::p}{img}, $::p);
             }
         }
 
@@ -1558,6 +1559,10 @@ sub play {
             }
             $nextdata->[1]{mp_messages} and handle_mp_messages($nextdata->[1]{mp_messages});
             shift @$playdata;
+        }
+    } else {
+        if ($pdata{demo}) {
+            die 'quit';
         }
     }
 }
@@ -3004,9 +3009,14 @@ sub new_game() {
 	foreach my $cy (0 .. 4) {
 	    foreach my $cx (0 .. (6 + even($cy))) {
                 my $num = int(rand(@bubbles_images));
-                if (is_mp_game() && !$playdata) {
-                    check_mp_connection();
-                    $num = mp_propagate("b|$cx|$cy", $num, \$ticks);
+                if (is_mp_game()) {
+                    if (!$playdata) {
+                        check_mp_connection();
+                        $num = mp_propagate("b|$cx|$cy", $num, \$ticks);
+                        push @{$recorddata{data}[0]{bubbles}}, $num;
+                    } else {
+                        $num = shift @{$recorddata{pdatas}{bubbles}};
+                    }
                 }
                 my $b = create_bubble_given_img_num($num);
                 real_stick_bubble($b, $cx, $cy, $PLAYERS[0], 0, 'randomlevel/1p', 'nostory');
@@ -3026,10 +3036,16 @@ sub new_game() {
     my ($next_num, $tobe_num);
     do { $next_num = int(rand(@bubbles_images)) } while (!validate_nextcolor($next_num, $PLAYERS[0]));
     do { $tobe_num = int(rand(@bubbles_images)) } while (!validate_nextcolor($tobe_num, $PLAYERS[0]));
-    if (is_mp_game() && !$playdata) {
-        check_mp_connection();
-        $next_num = mp_propagate("N", $next_num, \$ticks);
-        $tobe_num = mp_propagate("T", $tobe_num, \$ticks);
+    if (is_mp_game()) {
+        if (!$playdata) {
+            check_mp_connection();
+            $next_num = mp_propagate("N", $next_num, \$ticks);
+            $tobe_num = mp_propagate("T", $tobe_num, \$ticks);
+            push @{$recorddata{data}[0]{bubbles}}, $next_num, $tobe_num;
+        } else {
+            $next_num = shift @{$recorddata{pdatas}{bubbles}};
+            $tobe_num = shift @{$recorddata{pdatas}{bubbles}};
+        }
     }
     $next_bubble{$PLAYERS[0]} = create_bubble_given_img_num($next_num);
     generate_new_bubble($PLAYERS[0], $tobe_num);
@@ -4355,193 +4371,6 @@ sub maingame() {
 }
 
 
-#- ----------- intro stuff ------------------------------------------------
-
-sub intro_plus_menu() {
-
-    my %storyboard = (
-		      sleeping => {
-				   start => { type => 'time', value => 0 },
-				   type => 'penguin',
-				   animations => [ qw(1 2 3 4 5 6 7 6 5 4 3 2) ],
-				  },
-		      music => { start => { type => 'time', value => 1 } },
-		      bubble_fall1 => { start => { type => 'synchro', value => 0x01 },
-					type => 'bubble_falling', img => 2, xpos => 200, xaccel => -1.5 },
-		      bubble_fall2 => { start => { type => 'synchro', value => 0x02 },
-					type => 'bubble_falling', img => 3, xpos => 350, xaccel => 1 },
-		      bubble_fall3 => { start => { type => 'synchro', value => 0x03 },
-					type => 'bubble_falling', img => 4, xpos => 400, xaccel => 2 },
-		      eyes_moving => {
-				      start => { type => 'synchro', value => 0x21 },
-				      type => 'penguin',
-				      animations => [ qw(8 9 10 11 12 11 10 9) ],
-				  },
-		      arms_moving => {
-				      start => { type => 'synchro', value => 0x22 },
-				      type => 'penguin',
-				      animations => [ qw(12 13 14 15 14 13) ],
-				  },
-		      fear => {
-			       start => { type => 'synchro', value => 0x31 },
-			       type => 'penguin',
-			       animations => [ qw(15 16 17 18 19 18 17 16) ],
-			      },
-		      txt_frozen_arriving => {
-					      start => { type => 'synchro', value => 0x31 },
-					      type => 'bitmap_animation',
-					      img => $imgbin{frozen},
-					      finalpos => { x => 300, 'y' => 100 },
-					      factor => 1,
-					     },
-		      txt_bubble_arriving => {
-					      start => { type => 'synchro', value => 0x32 },
-					      type => 'bitmap_animation',
-					      img => $imgbin{bubble},
-					      finalpos => { x => 340, 'y' => 155 },
-					      factor => 4,
-					     },
-		     );
-
-    my %sb_params = (
-		     animation_speed => 20
-		    );
-
-
-    my $start_menu;
-    my ($slowdown_number, $slowdown_frame);
-
-    return menu(0);   #- temporarily desactivate the intro storyboard because it's not finished yet
-
-    if ($mixer_enabled && $mixer) {
-	play_music('intro');
-	$mixer->pause_music;
-	my $back_start = SDL::Surface->new(-name => "$FPATH/gfx/intro/back_intro.png");
-	$back_start->blit($apprects{main}, $app, $apprects{main});
-	$app->flip;
-
-	my $penguin;
-	my @bubbles_falling;
-	my @bitmap_animations;
-
-	my $anim_step = -1;
-	my $start_time = $app->ticks;
-	my $current_time = $start_time;
-
-	while (!$start_menu) {
-	    my $synchro_ticks = $app->ticks;
-
-	    my $current_time_ = int(($app->ticks - $start_time)/1000);
-	    my $anim_step_ = fb_c_stuff::get_synchro_value();
-
-	    if ($anim_step_ != $anim_step || $current_time_ != $current_time) {
-		$anim_step = $anim_step_;
-		$current_time = $current_time_;
-		printf "Anim step: %12s Time: <$current_time>\n", sprintf "<0x%02x>", $anim_step;
-
-		foreach my $evt (keys %storyboard) {
-		    next if $storyboard{$evt}->{already};
-		    if ($storyboard{$evt}->{start}->{type} eq 'time' && $storyboard{$evt}->{start}->{value} <= $current_time
-			|| $storyboard{$evt}->{start}->{type} eq 'synchro' && $storyboard{$evt}->{start}->{value} eq $anim_step) {
-			$storyboard{$evt}->{already} = 1;
-			print "*** Starting <$evt>\n";
-			$evt eq 'music' and $mixer->resume_music;
-			if ($storyboard{$evt}->{type} eq 'penguin') {
-			    $penguin = { animations => $storyboard{$evt}->{animations},
-					 current_anim => 0,
-					 anim_step => $sb_params{animation_speed} };
-			}
-			if ($storyboard{$evt}->{type} eq 'bubble_falling') {
-			    push @bubbles_falling, { img => $bubbles_images[$storyboard{$evt}->{img}], 'y' => 0, speed => 3,
-						     x => $storyboard{$evt}->{xpos}, xaccel => $storyboard{$evt}->{xaccel} };
-			}
-			if ($storyboard{$evt}->{type} eq 'bitmap_animation') {
-			    push @bitmap_animations, { img => $storyboard{$evt}->{img}, 'y' => 0,
-						       x => $storyboard{$evt}->{finalpos}->{x},
-						       finaly => $storyboard{$evt}->{finalpos}->{'y'},
-						       factor => $storyboard{$evt}->{factor},
-						     };
-			}
-		    }
-		}
-
-		$anim_step == 0x09 and $start_menu = 1;
-	    }
-
-	    if ($penguin) {
-		$penguin->{anim_step}++;
-		if ($penguin->{anim_step} >= $sb_params{animation_speed}) {
-		    my $img_number = ${$penguin->{animations}}[$penguin->{current_anim}];
-#		    erase_image_from($imgbin{intro_penguin_imgs}->{$img_number}, 260, 293, $back_start);
-		    $penguin->{anim_step} = 0;
-		    $penguin->{current_anim}++;
-		    $penguin->{current_anim} == @{$penguin->{animations}} and $penguin->{current_anim} = 0;
-		    $img_number = ${$penguin->{animations}}[$penguin->{current_anim}];
-#		    put_image($imgbin{intro_penguin_imgs}->{$img_number}, 260, 293);
-		}
-	    }
-
-	    foreach my $b (@bubbles_falling) {
-		erase_image_from($b->{img}, $b->{x}, $b->{'y'}, $back_start);
-		$b->{'x'} += $b->{xaccel};
-		$b->{'y'} += $b->{speed};
-		if ($b->{'y'} >= 360 && !$b->{already_rebound}) {
-		    $b->{already_rebound} = 1;
-		    $b->{'y'} = 2*360 - $b->{'y'};
-		    $b->{speed} *= -0.5;
-		}
-		$b->{speed} += $FREE_FALL_CONSTANT;
-		$b->{kill} = $b->{'y'} > 470;
-		$b->{kill} or put_image($b->{img}, $b->{x}, $b->{'y'});
-	    }
-	    @bubbles_falling = grep { !$_->{kill} } @bubbles_falling;
-
-#	    erase_image_from($_->{img}, $_->{x}, $_->{'y'}, $back_start) foreach @bitmap_animations;
-	    foreach my $b (@bitmap_animations) {
-		foreach (0..$slowdown_frame) {
-		    $b->{'y'} = $b->{'finaly'} - 200*cos(3*$b->{step})/exp($b->{step}*$b->{step});
-		    $b->{step} += 0.015 * $b->{factor};
-		}
-	    }
-	    $slowdown_frame = 0;
-#	    put_image($_->{img}, $_->{x}, $_->{'y'}) foreach @bitmap_animations;
-
-	    $app->update(@update_rects);
-	    @update_rects = ();
-
-	    my $to_wait = $TARGET_ANIM_SPEED - ($app->ticks - $synchro_ticks);
-	    if ($to_wait > 0) {
-		$app->delay($to_wait);
-	    } else {
-#		print "slow by: <$to_wait>\n";
-		$slowdown_number += -$to_wait;
-		if ($slowdown_number > $TARGET_ANIM_SPEED) {
-		    $slowdown_frame = int($slowdown_number / $TARGET_ANIM_SPEED);
-		    $slowdown_number -= $slowdown_frame * $TARGET_ANIM_SPEED;
-#		    print "skip frames: <$slowdown_frame>\n";
-		}
-	    }
-
-	    $event->pump;
-	    while ($event->poll != 0) {
-                if ($event->type == SDL_KEYDOWN && member($event->key_sym, (SDLK_RETURN, SDLK_SPACE, SDLK_KP_ENTER, SDLK_ESCAPE))) {
-                    $start_menu = 2;
-                }
-            }
-	}
-    }
-
-
-#    if ($start_menu == 1) {
-#	my $bkg = SDL::Surface->new(-width => $app->width, -height => $app->height, -depth => 32, -Amask => '0 but true');
-#	$app->blit($apprects{main}, $bkg, $apprects{main});
-#	menu(1, $bkg);
-#    } else {
-	menu(1);
-#    }
-}
-
-
 #- ----------- menu stuff -------------------------------------------------
 
 our $logo_candy_index = 0;
@@ -4554,16 +4383,13 @@ our $cursor_tmp;
 our %broken_cursors;
 
 sub menu {
-    my ($from_intro, $back_from_intro) = @_;
 
     if (is_1p_game() && $levels{current} ne 'mp_train') {
         handle_new_hiscores();
     }
 
-    if (!$from_intro) {
-        $music{current} ne 'intro' and play_music('intro', 8);
-        clean_server();
-    }
+    play_music('intro', 8);
+    clean_server();
 
     my $back_start;
     my $display_menu = sub {
@@ -4571,12 +4397,8 @@ sub menu {
 	$imgbin{stamp}->blit(undef, $app, SDL::Rect->new('-x' => 490, '-y' => 142));
     };
 
-    if (!$from_intro || !$back_from_intro) {
-	$back_start = $imgbin{back_menu};
-	$display_menu->();
-    } else {
-	$back_start = $back_from_intro;
-    }
+    $back_start = $imgbin{back_menu};
+    $display_menu->();
 
     my $invalidate_all;
 
@@ -4775,6 +4597,7 @@ sub menu {
     my ($BANNER_MINX, $BANNER_MAXX, $BANNER_Y) = (304, 596, 243);
     my $banners_max = $banners{leveleditor} - (640 - ($BANNER_MAXX - $BANNER_MINX)) + $BANNER_SPACING;
     my $banner_rect = SDL::Rect->new(-width => $BANNER_MAXX-$BANNER_MINX, -height => 30, '-x' => $BANNER_MINX, '-y' => $BANNER_Y);
+    my $time_counter;
 
     while (!$start_game) {
 	my $synchro_ticks = $app->ticks;
@@ -4959,6 +4782,26 @@ sub menu {
                 }
             }
         }
+
+        if (++$time_counter == 1000) {  #- 20 seconds
+            $pdata{demo} = 1;
+            replay("$FPATH/data/demo2.bz2");
+            $pdata{demo} = 0;
+            foreach my $step (1..100) {
+                my $ticks = $app->ticks;
+                fb_c_stuff::blacken(surf($app), $step);
+                my $to_wait = $TARGET_ANIM_SPEED/4 - ($app->ticks - $ticks);
+                if ($to_wait > 0) {
+                    $app->delay($to_wait);
+                }
+                $app->flip;
+            }
+            $display_menu->();
+            $invalidate_all->();
+            $menu_update->();
+            $app->flip;
+            $time_counter = 0;
+        }
     }
 
     #- for $KEYS, try hard to keep SDLK_<key> instead of integer value in rcfile
@@ -5029,12 +4872,8 @@ sub choose_levelset() {
     return 1;
 }
 
-
-#- ----------- main -------------------------------------------------------
-
-init_game();
-
-if ($playdata) {
+sub replay {
+    ($playdata) = @_;
     if ($playdata =~ /\.bz2$/) {
         local *F;
         local $/ = undef;
@@ -5044,13 +4883,14 @@ if ($playdata) {
         $playdata = cat_($playdata);
     }
     eval($playdata);  #- fills up $playdata
+    %recorddata = ();
     $recorddata{pdatas} = shift @$playdata;  #- first record is used for pdatas, the rest will contain frame-indexed actions
     @PLAYERS = @{$recorddata{pdatas}{players}};
     $pdata{gametype} = $recorddata{pdatas}{gametype};
     $levels{current} = $recorddata{pdatas}{current_level};
     $chainreaction = $recorddata{pdatas}{chainreaction};
     srand $recorddata{pdatas}{srand};
-    print 'Game recorded on ' . localtime($recorddata{pdatas}{time}) . ".\n";
+    $recorddata{pdatas}{time} and print 'Game recorded on ' . localtime($recorddata{pdatas}{time}) . ".\n";
     $recorddata{pdatas}{comment} and print "Comment specified with record: $recorddata{pdatas}{comment}\n";
     if (is_mp_game()) {
         iter_players {
@@ -5079,7 +4919,15 @@ if ($playdata) {
     $playdata = undef;
 }
 
-$direct or intro_plus_menu();
+#- ----------- main -------------------------------------------------------
+
+init_game();
+
+if ($playdata) {
+    replay($playdata);
+}
+
+$direct or menu();
 
 while (!new_game_once()) { menu() }
 new_game();

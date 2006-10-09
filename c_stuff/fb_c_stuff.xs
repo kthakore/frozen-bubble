@@ -1206,6 +1206,30 @@ void pixelize_(SDL_Surface * dest, SDL_Surface * orig)
 	myUnlockSurface(dest);
 }
 
+void blacken_(SDL_Surface * surf, int step)
+{
+        if (surf->format->palette) {
+                /* there is a palette... I don't care of the bloody oldskoolers who still use
+                   8-bit displays & al, they can suffer and die ;p */
+                return;
+        }
+	myLockSurface(surf);
+        for (y=(step-1)*480/100; y<step*480/100; y++)
+                bzero(surf->pixels + y*surf->pitch, surf->format->BytesPerPixel * 640);
+        for (y=step*480/100; y<(step+3)*480/100 && y<480; y++)
+                for (x=0; x<640; x++) {
+                        Uint32 pixelvalue = 0; /* this should also be okay for 16-bit and 24-bit formats */
+                        int r = 0; int g = 0; int b = 0;
+                        memcpy(&pixelvalue, surf->pixels + y*surf->pitch + x*surf->format->BytesPerPixel, surf->format->BytesPerPixel);
+                        r = ((float) ((pixelvalue & surf->format->Rmask) >> surf->format->Rshift))/2;
+                        g = ((float) ((pixelvalue & surf->format->Gmask) >> surf->format->Gshift))/2;
+                        b = ((float) ((pixelvalue & surf->format->Bmask) >> surf->format->Bshift))/2;
+                        pixelvalue = (r << surf->format->Rshift) + (g << surf->format->Gshift) + (b << surf->format->Bshift);
+                        memcpy(surf->pixels + y*surf->pitch + x*surf->format->BytesPerPixel, &pixelvalue, surf->format->BytesPerPixel);
+                }
+	myUnlockSurface(surf);
+}
+
 void sdlpango_init_()
 {
         SDLPango_Init();
@@ -1411,6 +1435,13 @@ pixelize(dest, orig)
         SDL_Surface * orig
 	CODE:
 		pixelize_(dest, orig);
+
+void
+blacken(surf, step)
+        SDL_Surface * surf
+        int step
+	CODE:
+		blacken_(surf, step);
 
 void
 _exit(status)
