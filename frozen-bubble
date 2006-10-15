@@ -180,19 +180,59 @@ member($ARGV[$_], '-cm', '--comment') and $comment = $ARGV[$_+1] foreach 0 .. $#
 
 $mynick = sanitize_nick($mynick);
 
+
 #- ------------------------------------------------------------------------
 
-sub format_addiction($) {
-    my ($seconds) = @_;
+sub i18n_number {
+    my ($number) = @_;
+    my $out = '';
+    foreach my $char (split //, $number) {
+           if ($char eq '0') { $out .= t("0"); }
+        elsif ($char eq '1') { $out .= t("1"); }
+        elsif ($char eq '2') { $out .= t("2"); }
+        elsif ($char eq '3') { $out .= t("3"); }
+        elsif ($char eq '4') { $out .= t("4"); }
+        elsif ($char eq '5') { $out .= t("5"); }
+        elsif ($char eq '6') { $out .= t("6"); }
+        elsif ($char eq '7') { $out .= t("7"); }
+        elsif ($char eq '8') { $out .= t("8"); }
+        elsif ($char eq '9') { $out .= t("9"); }
+        elsif ($char eq '.') { $out .= t("."); }
+        else { $out .= $char; }
+    }
+    return $out;
+}
+
+sub format_addiction {
+    my ($seconds, $i18n) = @_;
     my $h = int($seconds/3600);
     my $m = int(($seconds-$h*3600)/60);
     my $s = int($seconds-$h*3600-$m*60);
-    return ($h ? "${h}h " : '') . ($m ? sprintf('%'.($h ? '02' : '').'dm ', $m) : '') . sprintf('%'.($m ? '02' : '').'ds', $s);
+    if (!$i18n) {
+        return ($h ? "${h}h " : '') . ($m ? sprintf('%'.($h ? '02' : '').'dm ', $m) : '') . sprintf('%'.($m ? '02' : '').'ds', $s);
+    } else {
+        if ($h) {
+            $m = sprintf("%02d", $m);
+        }
+        if ($m) {
+            $s = sprintf("%02d", $s);
+        }
+        $h = i18n_number($h);
+        $m = i18n_number($m);
+        $s = i18n_number($s);
+        if ($h) {
+            return t("%sh %sm %ss", $h, $m, $s);
+        } elsif ($m) {
+            return t("%sm %ss", $m, $s);
+        } else {
+            return t("%ss", $s);
+        }
+    }
 }
 
 END {
     if ($app) {
-	print "\nAddicted for ", format_addiction(($app->ticks - $total_time)/1000), "\n";
+	print "\nAddicted for ", format_addiction(($app->ticks - $total_time)/1000, 0), "\n";
     }
 }
 
@@ -875,8 +915,8 @@ sub mp_train_print_time {
     my $seconds = 120 - ($app->ticks - $pdata{origticks})/1000;
     $seconds < 0 and $seconds = 0;
     my $m = int($seconds/60);
-    my $s = int($seconds-$m*60);
-    print_('ingame', $background, $mp_train_xpos, $mp_train_ypos, sprintf("%01d' %02d''", $m, $s), $imgbin{void_mp_training}->width, 'center');
+    my $s = int($seconds-$m*60); length($s) == 1 and $s = "0$s";
+    print_('ingame', $background, $mp_train_xpos, $mp_train_ypos, t("%s'%s\"", i18n_number($m), i18n_number($s)), $imgbin{void_mp_training}->width, 'center');
 }
 
 sub handle_graphics($) {
@@ -1574,9 +1614,9 @@ sub print_scores($) {
     my ($surface) = @_;  
     iter_players_ {  #- sometimes called from within a iter_players so...
         my $score = @PLAYERS == 1 ? ($pdata{$::p_}{score} eq 'random' ? t("Random level")
-                                         : $levels{current} eq 'mp_train' ? t("Score: %d", $pdata{$::p_}{score})
-                                               : t("Level %s", $pdata{$::p_}{score})) : $pdata{$::p_}{score};
-        is_mp_game() and $score = "$pdata{$::p_}{nick}: $score";
+                                         : $levels{current} eq 'mp_train' ? t("Score: %s", i18n_number($pdata{$::p_}{score}))
+                                               : t("Level %s", i18n_number($pdata{$::p_}{score}))) : i18n_number($pdata{$::p_}{score});
+        is_mp_game() and $score = sprintf("%s: %s", $pdata{$::p_}{nick}, i18n_number($score));
         my $width = width(mini_graphics($::p_) ? 'ingame_small' : 'ingame', $score);
         my $xpos = $POS{$::p_}{scores}{x} - $width/2;
         my $drect = SDL::Rect->new(-width => $width, -height => mini_graphics($::p_) ? 12 : 24, -x => $xpos, '-y' => $POS{$::p_}{scores}{'y'});
@@ -2757,10 +2797,10 @@ sub display_highscores {
             fb_c_stuff::shrink(surf($tmp), surf($background->display_format), 0, 0, rect($high_rect), 4);
             $tmp->blit(undef, $app, SDL::Rect->new(-x => $high_posx, '-y' => $high_posy));
             $centered_print->($high_posx - 15, $high_posy,      $high->{name});
-            $centered_print->($high_posx - 15, $high_posy + 20, $high->{level} eq 'WON' ? t("won!") : t("level %s", $high->{level}));
+            $centered_print->($high_posx - 15, $high_posy + 20, $high->{level} eq 'WON' ? t("won!") : t("level %s", i18n_number($high->{level})));
             my $min = int($high->{time}/60);
             my $sec = int($high->{time} - $min*60); length($sec) == 1 and $sec = "0$sec";
-            $centered_print->($high_posx - 15, $high_posy + 40, "$min'$sec''");
+            $centered_print->($high_posx - 15, $high_posy + 40, t("%s'%s\"", i18n_number($min), i18n_number($sec)));
             $high_posx += 98;
             $high_posx > 550 and $high_posx = $initial_high_posx, $high_posy += 175;
             $high_posy > 440 and last;
@@ -2860,11 +2900,11 @@ sub ask_from($) {
                 $txt = $k;
                 if ($k =~ /^joystick\|axisvalue\|(\d+)\|(\d+)\|([-\d]+)/) {
                     my $num = @joysticks > 1 ? $1 + 1 : '';
-                    $k = "joy$num-" . (even($2) ? ($3 < 0 ? t("left") : t("right")) : ($3 < 0 ? t("up") : t("down")));
+                    $k = 'joy' . i18n_number($num) . (even($2) ? ($3 < 0 ? t("left") : t("right")) : ($3 < 0 ? t("up") : t("down")));
                 } elsif ($k =~ /^joystick\|buttondown\|(\d+)\|(\d+)/) {
                     my $num = @joysticks > 1 ? $1 + 1 : '';
                     my $button = $2 + 1;
-                    $k = "joy$num-" . t("button") . $2;
+                    $k = 'joy' . i18n_number($num) . '-' . t("button") . i18n_number($2);
                 } else {
                     $k = keysym_to_char($k);
                 }
@@ -3380,7 +3420,7 @@ sub smg_choose_server(@) {
             }
             exists $imgbin{flag}{$server->{language}} and put_image($imgbin{flag}{$server->{language}}, $parts{flag}{xpos}, $y);
             print_('netdialogs', $app, $parts{name}{xpos}, $y, $server->{name}, $parts{name}{width}, $is_rtl ? 'right' : 'left');  #- ASCII
-            my $details = t("Available players:%s  Ping:%sms", $server->{players}, $server->{ping});
+            my $details = t("Available players:%s  Ping:%sms", i18n_number($server->{players}), i18n_number($server->{ping}));
             print_('netdialogs', $app, $parts{details}{xpos}, $y, $details, $parts{details}{width});
             my $pingimg = $server->{ping} < 50 ? "ping_low" : $server->{ping} < 100 ? "ping_mid" : "ping_high";
             put_image($imgbin{$pingimg}, $is_rtl ? $parts{details}{xpos} + $parts{details}{width} - width('netdialogs', $details) - 17
@@ -3719,7 +3759,7 @@ sub smg_choose_game() {
 
         #- available players in server
         erase_line($smg_starty_players, $imgbin{back_netgame});
-        print_('netdialogs', $app, $smg_startx, $smg_starty_players, t("Available Players: %s", $free_players), 520);
+        print_('netdialogs', $app, $smg_startx, $smg_starty_players, t("Available Players: %s", i18n_number($free_players)), 520);
 
         #- status messages
         smg_printstatus();
@@ -4164,14 +4204,14 @@ sub show_mp_scores() {
     if (any { $pdata{$_}{left} } @PLAYERS) {
         smg_add_status_msg(t("*** Game finished, because the following player(s) left: %s", join(', ', map { if_($pdata{$_}{left}, $pdata{$_}{nick}) } @PLAYERS)));
     }
-    smg_add_status_msg(t("*** Addicted for: %s", format_addiction(($app->ticks - $time_netgame)/1000)));
+    smg_add_status_msg(t("*** Addicted for: %s", format_addiction(($app->ticks - $time_netgame)/1000, 1)));
     @PLAYERS = reverse ssort { $pdata{$_}{score} } @PLAYERS;
     if ($pdata{$PLAYERS[0]}{score} > $pdata{$PLAYERS[1]}{score}) {
         smg_add_status_msg(t("*** Winner: %s", $pdata{$PLAYERS[0]}{nick}));
     } else {
         smg_add_status_msg(t("*** Draw game!"));
     }
-    smg_add_status_msg(t("*** Scores: %s", join(', ', map { "$pdata{$_}{nick}: $pdata{$_}{score}" } @PLAYERS)));
+    smg_add_status_msg(t("*** Scores: %s", join(', ', map { sprintf("%s: %s", $pdata{$_}{nick}, i18n_number($pdata{$_}{score})) } @PLAYERS)));
 }
 
 sub setup_mp_game() {
