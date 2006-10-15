@@ -40,7 +40,7 @@ use vars qw($TARGET_ANIM_SPEED $BUBBLE_SIZE $ROW_SIZE $LAUNCHER_SPEED $BUBBLE_SP
             %POS %POS_1P %POS_2P %MENUPOS $KEYS %actions %angle %pdata $app %apprects $event %rects %sticked_bubbles %root_bubbles
             $background $background_orig @bubbles_images $gcwashere %bubbles_anim %launched_bubble %tobe_launched %next_bubble $recorddir %recorddata $playdata
             $shooter_lowgfx $sdl_flags $mixer $mixer_enabled $music_disabled $sfx_disabled $no_echo @playlist %sound %music %pinguin %canon $autorecord $comment
-            $graphics_level @update_rects $CANON_ROTATIONS_NB %malus_bubble %falling_bubble %exploding_bubble %malus_gfx %pangocontext $private
+            $graphics_level @update_rects $CANON_ROTATIONS_NB %malus_bubble %falling_bubble %exploding_bubble %malus_gfx %pangocontext $private $no_time_limit
             %sticking_bubble $time %imgbin $TIME_HURRY_WARN $TIME_HURRY_MAX $TIMEOUT_PINGUIN_SLEEP $FREE_FALL_CONSTANT @joysticks $joysticksinfo
             $direct @PLAYERS @ALL_PLAYERS %levels $display_on_app_disabled $total_time $time_1pgame $time_netgame $fullscreen $rcfile %hiscorefiles $HISCORES $HISCORES_MPTRAIN
             $lev_number $playermalus $mptrainingdiff $loaded_levelset $direct_levelset $chainreaction %chains %history %img_mini $frame $sock $gameserver $mynick);
@@ -67,9 +67,9 @@ $| = 1;
 
 $TARGET_ANIM_SPEED = 20;        # number of milliseconds that should last between two animation frames
 $LAUNCHER_SPEED = 0.03;	        # speed of rotation of launchers
-$BUBBLE_SPEED = 10;		# speed of movement of launched bubbles
-$MALUS_BUBBLE_SPEED = 30;	# speed of movement of "malus" launched bubbles
-$CANON_ROTATIONS_NB = 100;       # number of rotations of images for canon (should be consistent with gfx/shoot/Makefile)
+$BUBBLE_SPEED = 10;	        # speed of movement of launched bubbles
+$MALUS_BUBBLE_SPEED = 30;       # speed of movement of "malus" launched bubbles
+$CANON_ROTATIONS_NB = 100;      # number of rotations of images for canon
 
 $TIMEOUT_PINGUIN_SLEEP = 200;
 $FREE_FALL_CONSTANT = 0.5;
@@ -134,8 +134,9 @@ GetOptions("fullscreen!" => \$fullscreen,
            "colour-blind" => \$colourblind,
            "player-malus=i" => \$playermalus,
            "mp-training-difficulty=i" => \$mptrainingdiff,
-           "levelset=s" => sub { $direct_levelset = $_[1]; $levels{current} = 1; $direct = 1; @PLAYERS = ('p1') },
            "level=i" => sub { $levels{current} = $_[1]; $direct = 1; @PLAYERS = ('p1') },
+           "levelset=s" => sub { $direct_levelset = $_[1]; $levels{current} = 1; $direct = 1; @PLAYERS = ('p1') },
+           "no-time-limit" => \$no_time_limit,
            "master-server=s" => \$fb_net::masterserver,
            "game-server=s" => sub { $gameserver = $_[1]; $direct = 1; @PLAYERS = qw(p1 rp1); $pdata{gametype} = 'net' },
            "no-echo" => \$no_echo,
@@ -161,7 +162,8 @@ GetOptions("fullscreen!" => \$fullscreen,
  --gameserver <host:port> directly start NET/LAN game connecting to this game server
  --level <#n>             directly start the n-th level (implies -so)
  --levelset<name>         directly start with the specified levelset name
- --chain-reaction         enable chain-reaction (if you use NET/LAN game, pay attention that all players do so!)
+ --no-time-limit          disable time limit for shooting (e.g. kids mode)
+ --chain-reaction         enable chain-reaction (if you use NET/LAN game, pay crucial attention that all players do so!)
  --player-malus <#n>      add a malus of n to the left player (can be negative)
  --mp-training-difficulty <#n> set the average duration between receiving malus bubbles in 1 player multiplayer training (default 30 (= every 30 seconds on average), the lower the harder)
  --colourblind            use bubbles for colourblind people
@@ -1857,7 +1859,7 @@ sub update_game() {
                     fb_net::gsend(sprintf("a%.2f", $angle{$::p}));
                 }
                 $pdata{$::p}{hurry}++;
-                if ($pdata{$::p}{hurry} > $TIME_HURRY_WARN) {
+                if ((!$no_time_limit || is_mp_game()) && $pdata{$::p}{hurry} > $TIME_HURRY_WARN) {
                     my $oddness = odd(int(($pdata{$::p}{hurry}-$TIME_HURRY_WARN)/(500/$TARGET_ANIM_SPEED))+1);
                     if ($pdata{$::p}{hurry_oddness} xor $oddness) {
                         if ($oddness) {
@@ -1872,7 +1874,7 @@ sub update_game() {
 
                 if ($actions{$::p}{mp_fire}
                     || (is_local_player($::p)
-                        && ($actions{$::p}{fire} || $pdata{$::p}{hurry} == $TIME_HURRY_MAX)
+                        && ($actions{$::p}{fire} || ((!$no_time_limit || is_mp_game()) && $pdata{$::p}{hurry} == $TIME_HURRY_MAX))
                         && !$launched_bubble{$::p}
                         && !(any { exists $_->{chaindestx} } @{$falling_bubble{$::p}})
                         && !@{$malus_bubble{$::p}})) {
