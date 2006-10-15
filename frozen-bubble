@@ -4818,6 +4818,7 @@ sub menu {
             $menu_update->();
             $app->flip;
             $time_counter = 0;
+            play_music('intro', 8);
         }
     }
 
