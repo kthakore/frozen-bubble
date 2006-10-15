@@ -45,6 +45,7 @@ use vars qw($TARGET_ANIM_SPEED $BUBBLE_SIZE $ROW_SIZE $LAUNCHER_SPEED $BUBBLE_SP
             $direct @PLAYERS @ALL_PLAYERS %levels $display_on_app_disabled $total_time $time_1pgame $time_netgame $fullscreen $rcfile %hiscorefiles $HISCORES $HISCORES_MPTRAIN
             $lev_number $playermalus $mptrainingdiff $loaded_levelset $direct_levelset $chainreaction %chains %history %img_mini $frame $sock $gameserver $mynick);
 
+use Getopt::Long;
 use Data::Dumper;
 use Locale::gettext;
 use POSIX;
@@ -119,64 +120,62 @@ print '  http://www.frozen-bubble.org/
 
 ';
 
-local $_ = "@ARGV";
-
-/-h/ and die "Usage: ", basename($0), " [OPTION]...
-  -h, --help                 display this help screen
- -fs, --fullscreen           start in fullscreen mode
- -nofs, --nofullscreen       don't start in fullscreen mode
- -ns, --nosound              don't try to start any sound stuff
- -nm, --nomusic              disable music (only)
- -nfx, --nosfx               disable sound effects (only)
- -pl<file>, --playlist<file> use all files listed in the given file as music files and play them
- -pl<dir>, --playlist<directory> use all files inside the given directory as music files and play them
- -sl, --slow_machine         enable slow machine mode (disable a few animations)
- -vs, --very_slow_machine    enable very slow machine mode (disable all that can be disabled)
- -so, --solo                 directly start solo (1p) game, with random levels if no -l<#n> is given
- -di, --direct               directly start (2p) game (don't display menu)
- -gs<host:port>, --gameserver<host:port> directly start NET/LAN game connecting to this game server
- -l<#n>, --level<#n>         directly start the n-th level (implies -so)
- -ls<name>, --levelset<name> directly start with the specified levelset name
- -cr, --chain_reaction       enable chain-reaction (if you use NET/LAN game, pay attention that all players do so!)
- -pm<#n>, --playermalus<#n>  add a malus of n to the left player (can be negative)
- -mpd<#n>, --mp-training-difficulty<#n> set the average duration between receiving malus bubbles in 1 player multiplayer training (default 30 (= every 30 seconds on average), the lower the harder)
- -cb, --colourblind          use bubbles for colourblind people
- -ji, --joysticksinfo        print information about detected joystick(s) on startup
- -ne, --noecho               when sound is enabled, disable echoing each typed character with a typewriter sound
- -mn<nick>, --mynick<nick>   for net/lan games, use this nick instead of username (max 10 chars, ASCII alphanumeric plus dash and underscore only)
- -pr, --private              when starting a net game, don't use http://hostip.info/ to retrieve your geographical position to send it to other players
- -re<dir>, --record<dir>     specify the recording directory (normally, records are saved in the directory '$ENV{HOME}/.fb_records')
- -ar, --autorecord           automatically record all applicable games (normally, a record is triggered by hitting the Print Screen key during a game)
- -cm '...', --comment '...'  add the comment enclosed between simple quotes to records (must not contain anything else than ASCII), it will be shown on console when playing back the record later
- -pb<file>, --playback<file> playback the specified record file
+#- become a friend of BooK
+GetOptions("fullscreen!" => \$fullscreen,
+           "no-sound" => sub { $mixer = 'SOUND_DISABLED' },
+           "no-music" => \$music_disabled,
+           "no-sfx" => \$sfx_disabled,
+           "playlist=s" => sub { @playlist = -d $_[1] ? glob("$_[1]/*") : cat_($_[1]) },
+           "slow-machine" => sub { $graphics_level = 2 },
+           "very-slow-machine" => sub { $graphics_level = 1 },
+           "direct" => \$direct,
+           "solo" => sub { $direct = 1; @PLAYERS = ('p1') },
+           "chain-reaction" => \$chainreaction,
+           "colour-blind" => \$colourblind,
+           "player-malus=i" => \$playermalus,
+           "mp-training-difficulty=i" => \$mptrainingdiff,
+           "levelset=s" => sub { $direct_levelset = $_[1]; $levels{current} = 1; $direct = 1; @PLAYERS = ('p1') },
+           "level=i" => sub { $levels{current} = $_[1]; $direct = 1; @PLAYERS = ('p1') },
+           "master-server=s" => \$fb_net::masterserver,
+           "game-server=s" => sub { $gameserver = $_[1]; $direct = 1; @PLAYERS = qw(p1 rp1); $pdata{gametype} = 'net' },
+           "no-echo" => \$no_echo,
+           "my-nick=s" => \$mynick,
+           "private" => \$private,
+           "joysticks-info" => \$joysticksinfo,
+           "record=s" => sub { if (!-d $_[1]) { die("$_[1] does not exist.\n") } else { $recorddir = $_[1] } },
+           "auto-record" => \$autorecord,
+           "playback=s" => sub { if (!-f $_[1]) { die("$_[1] does not exist.\n") } else { $playdata = $_[1] } },
+           "comment=s" => \$comment,
+           "help" => sub { print "Usage: ", basename($0), " [OPTION]...
+ --fullscreen             start in fullscreen mode
+ --no-fullscreen          don't start in fullscreen mode
+ --no-sound               don't try to start any sound stuff
+ --no-music               disable music (only)
+ --no-sfx                 disable sound effects (only)
+ --playlist <file>        use all files listed in the given file as music files and play them
+ --playlist <directory>   use all files inside the given directory as music files and play them
+ --slow-machine           enable slow machine mode (disable a few animations)
+ --very-slow-machine      enable very slow machine mode (disable all that can be disabled)
+ --solo                   directly start solo (1p) game, with random levels if no -l<#n> is given
+ --direct                 directly start (2p) game (don't display menu)
+ --gameserver <host:port> directly start NET/LAN game connecting to this game server
+ --level <#n>             directly start the n-th level (implies -so)
+ --levelset<name>         directly start with the specified levelset name
+ --chain-reaction         enable chain-reaction (if you use NET/LAN game, pay attention that all players do so!)
+ --player-malus <#n>      add a malus of n to the left player (can be negative)
+ --mp-training-difficulty <#n> set the average duration between receiving malus bubbles in 1 player multiplayer training (default 30 (= every 30 seconds on average), the lower the harder)
+ --colourblind            use bubbles for colourblind people
+ --joysticks-info         print information about detected joystick(s) on startup
+ --no-echo                when sound is enabled, disable echoing each typed character with a typewriter sound
+ --my-nick <nick>         for net/lan games, use this nick instead of username (max 10 chars, ASCII alphanumeric plus dash and underscore only)
+ --private                when starting a net game, don't use http://hostip.info/ to retrieve your geographical position to send it to other players
+ --record <dir>           specify the recording directory (normally, records are saved in the directory '$ENV{HOME}/.fb_records')
+ --auto-record            automatically record all applicable games (normally, a record is triggered by hitting the Print Screen key during a game)
+ --comment '...'          add the comment enclosed between simple quotes to records (must not contain anything else than ASCII), it will be shown on console when playing back the record later
+ --playback <file>        playback the specified record file
 ";
-
-/-fs/ || /-fu/ and $fullscreen = 1;
-/-nofs/ || /-nofullscreen/ and $fullscreen = 0;
-/-ns/ || /-noso/ and $mixer = 'SOUND_DISABLED';
-/-nm/ || /-nom/ and $music_disabled = 1;
-/-nfx/ || /-nosf/ and $sfx_disabled = 1;
-/-pl(?!aylist)\s*(\S+)/ || /-playlist\s*(\S+)/ and @playlist = -d $1 ? glob("$1/*") : cat_($1);
-/-sl/ and $graphics_level = 2;
-/-vs/ || /-ve/ and $graphics_level = 1;
-/-di/ and $direct = 1;
-/-so/ and $direct = 1, @PLAYERS = ('p1');
-/-cr/ || /-chain_reaction/ and $chainreaction = 1;
-/-cb/ || /-co/ and $colourblind = 1;
-/-pm\s*(-?\d+)/ || /-playermalus\s*(-?\d+)/ and $playermalus = $1;
-/-mpd\s*(\d+)/ || /-mp-training-difficulty\s*(\d+)/ and $mptrainingdiff = $1;
-/-ls\s*(\S+)/ || /-levelset\s*(\S+)/ and $levels{current} = 1, $direct = 1, @PLAYERS = ('p1'), $direct_levelset = $1;
-/-l\s*(\d+)/ || /-level\s*(\d+)/ and $levels{current} = $1, $direct = 1, @PLAYERS = ('p1');
-/-ms\s*(\S+)/ || /-masterserver\s*(\S+)/ and $fb_net::masterserver = $1;
-/-gs\s*(\S+):(\S+)/ || /-gameserver\s*(\S+):(\S+)/ and $direct = 1, @PLAYERS = qw(p1 rp1), $pdata{gametype} = 'net', $gameserver = "$1:$2";
-/-ne/ || /-noe/ and $no_echo = 1;
-/-mn\s*(\S+)/ || /-mynick\s*(\S+)/ and $mynick = substr($1, 0, 10);
-/-pr/ || /-private/ and $private = 1;
-/-ji/ || /-joysticksinfo/ and $joysticksinfo = 1;
-/-re\s*(\S+)/ || /-record\s*(\S+)/ and do { if (!-d $1) { die("$1 does not exist.\n") } else { $recorddir = $1; } };
-/-ar/ || /-autorecord/ and $autorecord = 1;
-/-pb\s*(\S+)/ || /-playback\s*(\S+)/ and do { if (!-f $1) { die("$1 does not exist.\n") } else { $playdata = $1; } };
-member($ARGV[$_], '-cm', '--comment') and $comment = $ARGV[$_+1] foreach 0 .. $#ARGV;
+                           exit(0);
+           });
 
 $mynick = sanitize_nick($mynick);
 
