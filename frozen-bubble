@@ -1379,7 +1379,6 @@ sub handle_game_events() {
                     callback_entry('keypressed', { event => $event, maxlen => $imgbin{void_chat}->width - 20, font => 'ingame' });
                     callback_entry('moved');
                     update_say_mp();
-                    print "updated chat\n";
                 }
 
             } else {
