@@ -75,100 +75,103 @@ talking with the server, choose a low ping when possible.
 
 .SH OPTIONS
 .TP
-.BR -h , \ --help
+.BR --help
 show command-line options summary
 .TP
-.BR -fs , \ --fullscreen
+.BR --fullscreen
 start the game in fullscreen mode
 .TP
-.BR -nofs , \ --nofullscreen
+.BR --no-fullscreen
 don't start the game in fullscreen mode
 .TP
-.BR -ns , \ --nosound
+.BR --no-sound
 disable music and sound effects
 .TP
-.BR -nm , \ --nomusic
+.BR --no-music
 disable music (but not sound effects)
 .TP
-.BR -nfx , \ --nosfx
+.BR --no-sfx
 disable sound effects (but not music)
 .TP
-\fB-pl \fIdirectory\fR, \fB--playlist \fIdirectory\fR
+\fB--playlist \fIdirectory\fR
 use all files of the given directory as music files and play them
 .TP
-\fB-pl \fIfile\fR, \fB--playlist \fIfile\fR
+\fB--playlist \fIfile\fR
 use all files listed in the given file as music files and play them
 .TP
-.BR -sl , \ --slow_machine
+.BR --slow_machine
 use this option if
 .B frozen-bubble
 runs too slowly on your machine (disables a few animations)
 .TP
-.BR -vs , \ --very_slow_machine
+.BR --very_slow_machine
 same as before, if it is not enough (disables all that can be disabled)
 .TP
-.BR -so , \ --solo
+.BR --solo
 directly start solo (1p) game, with random levels
 .TP
-.BR -di , \ --direct
+.BR --direct
 directly start 2p game (don't display menu)
 .TP
-\fB-gs \fIhost:port\fR, \fB--gameserver \fIhost:port\fR
+\fB--gameserver \fIhost:port\fR
 directly start NET/LAN game connecting to this game server
 .TP
-.BR -cr , \ --chain_reaction
+.BR --chain_reaction
 enable chain-reaction
 .TP
-\fB-l \fInumber\fR, \fB--level \fInumber\fR
+\fB--level \fInumber\fR
 start directly the game, at level \fInumber\fR
 .TP
-.BR -cb , \ --colourblind
+.BR --colourblind
 use special bubbles for colourblind people
 .TP
-\fB-pm \fInumber\fR, \fB--playermalus \fInumber\fR
+.BR --no-time-limit
+disable time limit for shooting (e.g. kids mode)
+.TP
+\fB--playermalus \fInumber\fR
 add \fInumber\fR malus to the left player (can be negative -
 doesn't work in network mode)
 .TP
-\fB-mpd \fInumber\fR, \fB--mp-training-difficulty \fInumber\fR
+\fB--mp-training-difficulty \fInumber\fR
 set the average duration between receiving malus bubbles in 1
 player multiplayer training (default 30 (= every 30 seconds on
 average), the lower the harder)
 .TP
-\fB-ji\fR, \fB--joysticksinfo\fR
+\fB--joysticks-info\fR
 print information about detected joystick(s) on startup (if
 Frozen-Bubble doesn't see your joysticks/joypads, try loading
 the joydev module with \fBmodprobe joydev\fR as root, then
 retry)
 .TP
-\fB-ne\fR, \fB--noecho\fR
+\fB--no-echo\fR
 when sound is enabled, disable echoing each typed character with
 a typewriter sound (it may get on your nerves)
 .TP
-\fB-mn \fInick\fR, \fB--mynick \fInick\fR
+\fB--my-nick \fInick\fR
 for NET/LAN games, use this nick instead of username (max 10
 chars, ASCII alphanumeric plus dash and underscore only) - notice
 that the /nick command is also available when connected to a
 server to set your nick
 .TP
-\fB-pr\fR, \fB--private\fR
+\fB--private\fR
 after connecting to a server for a NET game, don't use
 http://hostip.info/ to retrieve your geographical position to
 send it to other players
 .TP
-\fB-re \fIdirectory\fR, \fB--record \fIdirectory\fR
+\fB--record \fIdirectory\fR
 specify the recording directory (normally, records are saved in
 the directory '.fb_records' down your home directory)
 .TP
-\fB-ar\fR, \fB--autorecord\fR
+\fB--auto-record\fR
 automatically record all applicable games (normally, a record is
 triggered by hitting the Print Screen key during a game)
 .TP
-\fB-cm \fI'...'\fR, \fB--comment \fI'...'\fR
+\fB--comment \fI'...'\fR
 add the comment enclosed between simple quotes to records (must
 not contain anything else than ASCII), it will be shown on
 console when playing back the record later
 .TP
-\fB-pb \fIrecord_file\fR, \fB--playback -\fIrecord_file\fR
+\fB--playback -\fIrecord_file\fR
 playback the specified record file
 
 .SH AUTHOR

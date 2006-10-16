@@ -121,9 +121,9 @@ print '  http://www.frozen-bubble.org/
 ';
 
 #- become a friend of BooK
-GetOptions("fullscreen!" => \$fullscreen,
-           "no-sound" => sub { $mixer = 'SOUND_DISABLED' },
-           "no-music" => \$music_disabled,
+GetOptions("fullscreen|fs!" => \$fullscreen,
+           "no-sound|ns" => sub { $mixer = 'SOUND_DISABLED' },
+           "no-music|nm" => \$music_disabled,
            "no-sfx" => \$sfx_disabled,
            "playlist=s" => sub { @playlist = -d $_[1] ? glob("$_[1]/*") : cat_($_[1]) },
            "slow-machine" => sub { $graphics_level = 2 },
@@ -131,14 +131,14 @@ GetOptions("fullscreen!" => \$fullscreen,
            "direct" => \$direct,
            "solo" => sub { $direct = 1; @PLAYERS = ('p1') },
            "chain-reaction" => \$chainreaction,
-           "colour-blind" => \$colourblind,
+           "colour-blind|cb" => \$colourblind,
            "player-malus=i" => \$playermalus,
            "mp-training-difficulty=i" => \$mptrainingdiff,
-           "level=i" => sub { $levels{current} = $_[1]; $direct = 1; @PLAYERS = ('p1') },
+           "level|l=i" => sub { $levels{current} = $_[1]; $direct = 1; @PLAYERS = ('p1') },
            "levelset=s" => sub { $direct_levelset = $_[1]; $levels{current} = 1; $direct = 1; @PLAYERS = ('p1') },
            "no-time-limit" => \$no_time_limit,
            "master-server=s" => \$fb_net::masterserver,
-           "game-server=s" => sub { $gameserver = $_[1]; $direct = 1; @PLAYERS = qw(p1 rp1); $pdata{gametype} = 'net' },
+           "gameserver|gs=s" => sub { $gameserver = $_[1]; $direct = 1; @PLAYERS = qw(p1 rp1); $pdata{gametype} = 'net' },
            "no-echo" => \$no_echo,
            "my-nick=s" => \$mynick,
            "private" => \$private,
@@ -3539,7 +3539,7 @@ sub smg_choose_server(@) {
             }
             smg_add_status_msg(t("*** Connected to server '%s'", $server->{name}));
             print "Notice! next time you start Frozen-Bubble, you may add the commandline parameter\n".
-                  "        -gs$server->{host}:$server->{port} to automatically select this game server\n".
+                  "        -gs $server->{host}:$server->{port} to automatically select this game server\n".
                   "        and save time not listing all available servers\n";
             last;
         }
