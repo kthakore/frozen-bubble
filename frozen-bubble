@@ -3830,7 +3830,7 @@ sub smg_choose_game() {
 
     fb_net::send_and_receive('NICK', $mynick);
 
-    if ($pdata{gametype} = 'net') {
+    if ($pdata{gametype} eq 'net') {
         if (!defined($mylatitude) && !$private) {
             $erase->();
             smg_add_status_msg(t("*** Please wait, retrieving your geographical location from http://hostip.info/..."));
