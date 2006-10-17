@@ -93,7 +93,8 @@ $HISCORES_MPTRAIN = [];
 $rcfile = "$ENV{HOME}/.fbrc";
 my $keys_orig = $KEYS;
 eval(cat_($rcfile));
-$KEYS->{misc}{$_} ||= $keys_orig->{misc}{$_} foreach keys %{$keys_orig->{misc}};  #- for upgrades
+$KEYS->{misc}{chat} or ($KEYS->{p1}, $KEYS->{p2}) = ($KEYS->{p2}, $KEYS->{p1});  #- for upgrades
+$KEYS->{misc}{$_} ||= $keys_orig->{misc}{$_} foreach keys %{$keys_orig->{misc}}; #-
 eval(cat_($hiscorefiles{levels} = "$ENV{HOME}/.fbhighscores"));
 eval(cat_($hiscorefiles{mptrain} = "$ENV{HOME}/.fbhighscores-mptrain"));
 
