@@ -35,12 +35,12 @@ const int YRES = 480;
 int x, y;
 int i, j;
 
-int Rdec = SDL_BYTEORDER == SDL_LIL_ENDIAN ? 0 : 3;  // be nice with the ppc loserz
-int Gdec = SDL_BYTEORDER == SDL_LIL_ENDIAN ? 1 : 2;
-int Bdec = SDL_BYTEORDER == SDL_LIL_ENDIAN ? 2 : 1;
-int Adec = SDL_BYTEORDER == SDL_LIL_ENDIAN ? 3 : 0;
+const int Rdec = 0;
+const int Gdec = 1;
+const int Bdec = 2;
+const int Adec = 3;
 
-int ANIM_SPEED = 20;
+const int ANIM_SPEED = 20;
 Uint32 ticks;
 Uint32 to_wait;
 void myLockSurface(SDL_Surface * s)
@@ -1143,7 +1143,7 @@ SV* utf8key_(SDL_Event * e) {
         SV* retval = NULL;
         source[0] = e->key.keysym.unicode & 0xFF;
         source[1] = ( e->key.keysym.unicode & 0xFF00 ) >> 8;
-        cd = iconv_open("UTF8", "UTF16LE");
+        cd = iconv_open("UTF-8", "UTF-16LE");
         if (cd != (iconv_t) (-1)) {
                 // an utf8 char is maximum 4 bytes long
                 char dest[5];
@@ -1156,8 +1156,10 @@ SV* utf8key_(SDL_Event * e) {
                         *dst = 0;
                         retval = newSVpv(dest, 0);
                 }
+                iconv_close(cd);
+        } else {
+                fprintf(stderr, "**ERROR** iconv_open failed!\n");
         }
-        iconv_close(cd);
         return retval;
 }
 
