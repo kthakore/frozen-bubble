@@ -890,7 +890,7 @@ sub print_next_bubble($$;$) {
         my $img = @PLAYERS == 2 ? $imgbin{void_chat_small_p2} : member($player, qw(rp1 rp3)) ? $imgbin{void_chat_small_rp1_rp3} : $imgbin{void_chat_small_rp2_rp4};
         put_image_to_background($img, $POS{$player}{chatting}{x}, $POS{$player}{chatting}{'y'});
         print_('ingame_small_chat', $background,
-               $POS{$player}{chatting}{x} + 3, $POS{$player}{chatting}{'y'} + 3, $pdata{current_chat_messages}{$player}, $img->width - 6);
+               $POS{$player}{chatting}{x} + 3, $POS{$player}{chatting}{'y'} + 3, $pdata{current_chat_messages}{$player}, $img->width - 6, 'center');
         erase_image($img, $POS{$player}{chatting}{x}, $POS{$player}{chatting}{'y'});
     }
 }
@@ -1180,7 +1180,7 @@ sub check_mp_connection {
 
 sub update_say_mp {
     put_image($imgbin{void_chat}, $POS{p1}{chatting}{x}, $POS{p1}{chatting}{'y'});
-    callback_entry('print', { xpos => $POS{p1}{chatting}{x} + 15, ypos => $POS{p1}{chatting}{'y'} + 5, font => 'ingame_chat', maxlen => $imgbin{void_chat}->width - 30 });
+    callback_entry('print', { xpos => $POS{p1}{chatting}{x} + 5, ypos => $POS{p1}{chatting}{'y'} + 2, font => 'ingame_chat', maxlen => $imgbin{void_chat}->width - 10 });
     push @update_rects, $apprects{main};
 }
 
@@ -1315,7 +1315,7 @@ sub handle_mp_messages {
         } elsif ($command eq 't') {
             my $img = @PLAYERS == 2 ? $imgbin{void_chat_small_p2} : member($player, qw(rp1 rp3)) ? $imgbin{void_chat_small_rp1_rp3} : $imgbin{void_chat_small_rp2_rp4};
             put_image_to_background($img, $POS{$player}{chatting}{x}, $POS{$player}{chatting}{'y'});
-            print_('ingame_small_chat', $background, $POS{$player}{chatting}{x} + 3, $POS{$player}{chatting}{'y'} + 3, $params, $img->width - 6);
+            print_('ingame_small_chat', $background, $POS{$player}{chatting}{x} + 3, $POS{$player}{chatting}{'y'} + 3, $params, $img->width - 6, 'center');
             erase_image($img, $POS{$player}{chatting}{x}, $POS{$player}{chatting}{'y'});
             push @update_rects, $apprects{main};
             play_sound('chatted');
@@ -1373,11 +1373,13 @@ sub handle_game_events() {
 
             if (is_mp_game() && $pdata{p1}{chatting}) {
 
-                if (($keypressed eq SDLK_RETURN() || $keypressed eq SDLK_KP_ENTER()) && callback_entry('gettext') > 0) {
-                    fb_net::gsend('t' . join('', callback_entry('gettext')));
+                if (($keypressed eq SDLK_RETURN() || $keypressed eq SDLK_KP_ENTER())) {
+                    if (callback_entry('gettext') > 0) {
+                        fb_net::gsend('t' . join('', callback_entry('gettext')));
+                    }
                     cleanup_chatting();
                 } elsif (!member($keypressed, SDLK_RETURN(), SDLK_KP_ENTER(), SDLK_TAB())) {
-                    callback_entry('keypressed', { event => $event, maxlen => $imgbin{void_chat}->width - 30, font => 'ingame_chat' });
+                    callback_entry('keypressed', { event => $event, maxlen => $imgbin{void_chat}->width - 10, font => 'ingame_chat' });
                     callback_entry('moved');
                     update_say_mp();
                 }
@@ -3733,6 +3735,8 @@ sub smg_choose_game() {
     my $index_selfspot = 0;
     my $back_selfspot;
     my $free_players;
+    my $ingame = 0;
+    my $players_in_game = '';
     my $redraw = sub {
         $erase->();
 
@@ -3759,9 +3763,13 @@ sub smg_choose_game() {
             callback_entry('print', { xpos => $smg_startx, ypos => $smg_starty_chat, maxlen => 520, prefix => t("Say: "), font => 'netdialogs' });
         }
 
-        #- available players in server
+        #- available players in server, or list of players in game
         erase_line($smg_starty_players, $imgbin{back_netgame});
-        print_('netdialogs', $app, $smg_startx, $smg_starty_players, t("Available Players: %s", i18n_number($free_players)), 520);
+        if ($ingame) {
+            print_('netdialogs', $app, $smg_startx, $smg_starty_players, t("Players in game: %s", $players_in_game), 520);
+        } else {
+            print_('netdialogs', $app, $smg_startx, $smg_starty_players, t("Available Players: %s", i18n_number($free_players)), 520);
+        }
 
         #- status messages
         smg_printstatus();
@@ -3864,8 +3872,6 @@ sub smg_choose_game() {
 
     my $need4update;
     my $relist;
-    my $players_in_game = '';
-    my $ingame = 0;
     my $can_start = 0;
     my $joined_leader;
     $list->();
@@ -4189,8 +4195,6 @@ sub smg_choose_game() {
             if ($state ne 'game_select') {
                 $players_in_game = fb_net::send_and_receive('STATUS');
                 @wholist = split /,/, $players_in_game;
-                erase_line($smg_starty_players, $imgbin{back_netgame});
-                print_('netdialogs', $app, $smg_startx, $smg_starty_players, t("Players in game: %s", $players_in_game), 520);
                 @actions = { name => t("Chat"), action => 'CHAT', selected => 1 };
                 $can_start && $players_in_game =~ /,/ and push @actions, { name => t("Start game!"), action => 'START' };
             }

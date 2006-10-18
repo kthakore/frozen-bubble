@@ -72,7 +72,7 @@ $FLPATH = '@LIBDIR@/frozen-bubble';
                     hurry => { x => 10, 'y' => 265 },
                     malus => { x => 331, 'y' => 402 },
                     scores => { x => 480, 'y' => 11 },
-                    chatting => { x => 330, 'y' => 440 },
+                    chatting => { x => 370, 'y' => 442 },
                   },
 	    centerpanel => { x => 153, 'y' => 190 },
 	  );
@@ -87,7 +87,7 @@ $POS_2P{rp1} = $POS_2P{p2};  #- in net/lan 2p mode, use bigger graphics and posi
                     hurry => { x => 10, 'y' => 265 },
                     malus => { x => 169, 'y' => 464 },
                     scores => { x => 320, 'y' => 12 },
-                    chatting => { x => 170, 'y' => 440 },
+                    chatting => { x => 200, 'y' => 442 },
                   },
             rp1 => { left_limit => 20, right_limit => 148, top_limit => 19, 'initial_bubble_y' => 192,
                      canon => { x => 59, 'y' => 175 },
