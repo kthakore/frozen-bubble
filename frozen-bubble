@@ -489,10 +489,10 @@ sub is_mp_game() { any { /rp/ } @PLAYERS }
 sub is_2p_game() { @PLAYERS == 2 && !is_mp_game() }
 
 sub is_leader() {
-    my $me = $pdata{p1}{nick};
+    my $me = unpack('C', $pdata{p1}{id});
     my $is_leader = 1;
     iter_players_but_first {
-        $is_leader &&= $pdata{$::p}{nick} gt $me;
+        $is_leader &&= unpack('C', $pdata{$::p}{id}) > $me;
     };
     return $is_leader;
 }
