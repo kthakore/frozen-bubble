@@ -181,44 +181,6 @@ sub readline_ifdata() {
 }
 
 
-sub wait4($) {
-    my ($regex) = @_;
-
-    while (1) {
-        my $msg = fb_net::readline_ifdata();
-        if (!$msg) {
-            print "Waiting for network...\n";
-            sleep 1;
-        } else {
-            if ($msg =~ /$regex/) {
-                return $msg;
-            } else {
-                my ($command, $message) = fb_net::decode_msg($msg);
-                if ($command eq 'PUSH') {
-                    print "$message\n";
-                } else {
-                    print "Unexpected message from server: $msg";
-                }
-            }
-        }
-    }
-}
-
-sub wait4start() {
-    my $msg = fb_net::wait4('GAME_CAN_START');
-    $msg =~ /GAME_CAN_START: (.*)/;
-    $msg = $1;
-    my @mappings;
-    while ($msg) {
-        my $id = substr($msg, 0, 1);
-        $msg = substr($msg, 1);
-        my ($nick, undef, $rest) = $msg =~ /([^,]+)(,(.*))?/;
-        $msg = $rest;
-        push @mappings, { id => $id, nick => $nick };
-    }
-    return @mappings;
-}
-
 sub decode_msg($) {
     my ($msg) = @_;
     my ($command, $message) = $msg =~ m|^FB/\d+\.\d+ (\w+): (.*)|;
