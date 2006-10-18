@@ -1157,7 +1157,7 @@ sub mp_disconnect_with_reason {
     put_image($imgbin{void_panel}, $MENUPOS{xpos_panel}, $MENUPOS{ypos_panel});
     my $y = $MENUPOS{ypos_panel} + 30;
     foreach (@messages) {
-        print_('menu', $app, $MENUPOS{xpos_panel}, $y, $_, $imgbin{void_panel}->width - 20, 'center');
+        print_('menu', $app, $MENUPOS{xpos_panel} + 10, $y, $_, $imgbin{void_panel}->width - 20, 'center');
         $y += $smg_lineheight;
     }
     $app->flip;
@@ -1658,7 +1658,6 @@ sub win {
 
 sub lose {
     my ($player) = @_;
-    print "lose($player)\n";
     $pdata{$player}{ping_right}{state} = 'lose_to';
     $pdata{$player}{ping_right}{img} = 0;
     if (!$pdata{$player}{left}) {
@@ -2127,8 +2126,8 @@ sub update_game() {
                 check_mp_connection();
                 #- timeout for receiving the winners. it could happen when a client is badly killed.
                 $timeout_counter++;
-                if ($timeout_counter > 2 * $fb_net::timeout * (1000/$TARGET_ANIM_SPEED) ) {
-                    mp_disconnect_with_reason(t("Lost synchronization!"));
+                if ($timeout_counter > 10 * (1000/$TARGET_ANIM_SPEED) ) {  #- 10 seconds
+                    mp_disconnect_with_reason('', '', '', '', '', t("Lost synchronization!"));
                 } else {
                     $pdata{state} = "finished $supposed_winner_player:$supposed_winner_nick $timeout_counter";
                 }
@@ -2192,8 +2191,8 @@ sub update_game() {
                         $frame++;
                         $frame % (1000/$TARGET_ANIM_SPEED) == 0 and fb_net::gsend('p');
                         $timeout_counter++;
-                        if ($timeout_counter > 2 * $fb_net::timeout * (1000/$TARGET_ANIM_SPEED) ) {
-                            mp_disconnect_with_reason(t("Lost synchronization!"));
+                        if ($timeout_counter > 10 * (1000/$TARGET_ANIM_SPEED) ) {  #- 10 seconds
+                            mp_disconnect_with_reason('', '', '', '', '', t("Lost synchronization!"));
                         }
                     }
                 };
@@ -3061,7 +3060,11 @@ sub new_game() {
                 if (is_mp_game()) {
                     if (!$playdata) {
                         check_mp_connection();
-                        $num = mp_propagate("b|$cx|$cy", $num, \$ticks);
+                        eval { $num = mp_propagate("b|$cx|$cy", $num, \$ticks); };
+                        if ($@) {
+                            $@ =~ /^quit/ and return 0;
+                            die;
+                        }
                         push @{$recorddata{data}[0]{bubbles}}, $num;
                     } else {
                         $num = shift @{$recorddata{pdatas}{bubbles}};
@@ -3088,8 +3091,14 @@ sub new_game() {
     if (is_mp_game()) {
         if (!$playdata) {
             check_mp_connection();
-            $next_num = mp_propagate("N", $next_num, \$ticks);
-            $tobe_num = mp_propagate("T", $tobe_num, \$ticks);
+            eval {
+                $next_num = mp_propagate("N", $next_num, \$ticks);
+                $tobe_num = mp_propagate("T", $tobe_num, \$ticks);
+            };
+            if ($@) {
+                $@ =~ /^quit/ and return 0;
+                die;
+            }
             push @{$recorddata{data}[0]{bubbles}}, $next_num, $tobe_num;
         } else {
             $next_num = shift @{$recorddata{pdatas}{bubbles}};
@@ -3122,64 +3131,62 @@ sub new_game() {
     if (is_mp_game() && !$playdata) {
         mp_ping_if_needed(\$ticks);
 
-        eval {
-            #- 1. first wait on a common barrier with others, so that everyone has finished previous things
-            fb_net::gsend('n');
-            check_mp_connection();
-            iter_distant_players {
-                $pdata{$::p}{barrier4newgame} = 0;
-            };
-
-            #- at this point, we can receive first commands of quickies instead of synchro
-            local $SIG{ALRM} = sub { die "alarm\n" };
-            alarm 5;  #- seconds
-            my @keep_messages;
-            while (1) {
-                my $m = fb_net::grecv_get1msg();  #- blocking
-                mp_ping_if_needed(\$ticks);
-                if ($m->{msg} eq 'n') {
-                    $pdata{$pdata{id2p}{$m->{id}}}{barrier4newgame} = 1;
-                    iter_distant_players {
-                        $pdata{$::p}{barrier4newgame} == 0 and goto still_waiting;
-                    };
-                    last;
-                  still_waiting:
-                } else {
-                    push @keep_messages, $m;
-                }
-            }
-
-            #- 2. now that we're all ready to synchronize, let a unique synchro message be sent, the leader and others will all wait on
-            is_leader() and fb_net::gsend('!');
-            check_mp_connection();
-
-            alarm 5;
-            while (1) {
-                my $m = fb_net::grecv_get1msg();  #- blocking
-                mp_ping_if_needed(\$ticks);
-                if ($m->{msg} eq '!') {
-                    last;
-                } else {
-                    push @keep_messages, $m;
-                }
-            }
-
-            fb_net::gdelay_messages(@keep_messages);
-            alarm 0;
+        #- 1. first wait on a common barrier with others, so that everyone has finished previous things
+        fb_net::gsend('n');
+        check_mp_connection();
+        iter_distant_players {
+            $pdata{$::p}{barrier4newgame} = 0;
         };
-        if ($@) {
-            if ($@ eq "alarm\n") {
-                print STDERR "Sorry, your computer or the network is too slow or another player uses a corrupt protocol, giving up.\n";
-                die 'quit';
-            } else {
+        
+        #- at this point, we can receive first commands of quickies instead of synchro
+        my @keep_messages;
+        while (1) {
+            my $m;
+            eval { $m = fb_net::grecv_get1msg(); };  #- blocking
+            if ($@) {
+                $@ =~ /^quit/ and return 0;
                 die;
             }
+            mp_ping_if_needed(\$ticks);
+            if ($m->{msg} eq 'n') {
+                $pdata{$pdata{id2p}{$m->{id}}}{barrier4newgame} = 1;
+                iter_distant_players {
+                    $pdata{$::p}{barrier4newgame} == 0 and goto still_waiting;
+                };
+                last;
+              still_waiting:
+            } else {
+                push @keep_messages, $m;
+            }
         }
+
+        #- 2. now that we're all ready to synchronize, let a unique synchro message be sent, the leader and others will all wait on
+        is_leader() and fb_net::gsend('!');
+        check_mp_connection();
+        
+        while (1) {
+            my $m;
+            eval { $m = fb_net::grecv_get1msg(); }; #- blocking
+            if ($@) {
+                $@ =~ /^quit/ and return 0;
+                die;
+            }
+            mp_ping_if_needed(\$ticks);
+            if ($m->{msg} eq '!') {
+                last;
+            } else {
+                push @keep_messages, $m;
+            }
+        }
+        
+        fb_net::gdelay_messages(@keep_messages);
     }
 
     if ($levels{current} eq 'mp_train') {
         $pdata{origticks} = $app->ticks + 999;
     }
+
+    return 1;
 }
 
 sub choose_1p_game_mode() {
@@ -4994,7 +5001,7 @@ if ($playdata) {
 $direct or menu();
 
 while (!new_game_once()) { menu() }
-new_game();
+new_game() or goto go_to_menu;
 
 while (1) {
     eval { maingame() };
@@ -5002,7 +5009,7 @@ while (1) {
         my $died = $@;
         save_record_if_needed();
 	if ($died =~ /^new_game/) {
-	    new_game();
+            new_game() or goto go_to_menu;
 	} elsif ($died =~ /^quit/) {
             if (is_mp_game()) {
                 if ($pdata{gametype} eq 'lan') {
@@ -5012,7 +5019,7 @@ while (1) {
                     goto go_to_menu;
                 } else {
                     if (fb_net::reconnect() && new_game_once()) {
-                        new_game();
+                        new_game() or goto go_to_menu;
                     } else {
                         goto go_to_menu;
                     }

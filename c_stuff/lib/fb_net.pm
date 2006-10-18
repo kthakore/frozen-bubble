@@ -32,7 +32,6 @@ use fb_stuff;
 
 our $proto_major = '1';
 our $proto_minor = '0';
-our $timeout = 3;   #- in seconds
 
 my $udp_server_port = 1511;  #- a.k.a 0xF 0xB thx misc
 $SIG{PIPE} = 'IGNORE';  #- stupid send/write low-level API sending SIGPIPE when server closes connection, and stupid Perl
@@ -116,7 +115,7 @@ sub readline_() {
     $buffered_line = undef;
     eval {
         local $SIG{ALRM} = sub { die "alarm\n" };
-        alarm $timeout;
+        alarm 5;  #- in seconds
         while ($results !~ /\n/) {
             my $buf;
             my $bytes = sysread($sock, $buf, 1);
@@ -413,6 +412,8 @@ sub http_download($) {
     if ($@ =~ /^eof/) {
         close $sock;
         return $tmp;
+    } elsif ($@ =~ /^alarm/) {
+        die;
     } else {
         print STDERR "http_download: $@\n";
         close $sock;
@@ -531,7 +532,7 @@ sub grecv_get1msg_ifdata() {
 sub grecv_get1msg {
     eval {
         local $SIG{ALRM} = sub { die "alarm\n" };
-        alarm $timeout;
+        alarm 10;
         while (!@messages) {
             sleep($ping/1000/3);
             @messages = grecv();
