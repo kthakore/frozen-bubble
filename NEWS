@@ -22,7 +22,9 @@ What's new in version 2:
        - recording and playback of all games with non-predefined
          levels (1-player in random and multiplayer training,
          local 2-player, and network/LAN game with 2 to 5
-         players)
+         players) - trigger a record by hitting the Print Screen
+         key during a game, or record all games by starting with
+         --auto-record
 
        - realtime graphical effects in the menu screen (if your
          computer is fast enough)

@@ -28,25 +28,25 @@ sub die_ { die "\n   **ERROR**: @_\n\n" }
 
 system("sdl-config --cflags 2>/dev/null 1>/dev/null") == 0
   or
-  die_ 'SDL development environment seems to be missing (sdl-config command reports an error)';
+  die_ 'SDL development environment seems to be missing ("sdl-config --cflags" reports an error)';
 
 
-ccompile('#include <SDL/SDL.h>
-          #include <SDL/SDL_mixer.h>',
+ccompile('#include <SDL.h>
+          #include <SDL_mixer.h>',
 	 '',
-	 `sdl-config --cflags`,
+	 chomp_(`sdl-config --cflags`),
 	 chomp_(`sdl-config --libs`) . ' -lSDL_mixer')
   or
   die_ 'SDL_mixer is needed (and, version >= 1.2.2)';
 
 
-ccompile('#include <SDL/SDL.h>
-          #include <SDL/SDL_mixer.h>',
+ccompile('#include <SDL.h>
+          #include <SDL_mixer.h>',
 	 'Mix_FadeInMusicPos(NULL, 0, 0, 0);',
-	 `sdl-config --cflags`,
+	 chomp_(`sdl-config --cflags`),
 	 chomp_(`sdl-config --libs`) . ' -lSDL_mixer')
   or
-  die_ 'SDL_mixer >= 1.2.2 is needed (function Mix_FadeInMusicPos is missing)';
+  die_ 'SDL_mixer >= 1.2.2 is needed (impossible to create an executable with function Mix_FadeInMusicPos)';
 
 
 system("pkg-config SDL_Pango --cflags 2>/dev/null 1>/dev/null") == 0
@@ -56,18 +56,18 @@ system("pkg-config SDL_Pango --cflags 2>/dev/null 1>/dev/null") == 0
 
 ccompile('#include <SDL_Pango.h>',
 	 'SDLPango_Context *context;',
-	 `pkg-config SDL_Pango --cflags`,
-	 chomp_(`pkg-config SDL_Pango --libs`))
+	 chomp_(`sdl-config --cflags`) . ' ' . chomp_(`pkg-config SDL_Pango --cflags`) . ' ',
+	 chomp_(`sdl-config --libs`) . ' ' . chomp_(`pkg-config SDL_Pango --libs`) . ' ')
   or
-  die_ 'SDL_Pango is needed';
+  die_ 'SDL_Pango is needed (impossible to create an executable containing an SDLPango_Context pointer.';
 
 
 ccompile('#include <SDL_Pango.h>',
 	 'SDLPango_Context * context = SDLPango_CreateContext_GivenFontDesc(NULL);',
-	 `pkg-config SDL_Pango --cflags`,
-	 chomp_(`pkg-config SDL_Pango --libs`))
+	 chomp_(`sdl-config --cflags`) . ' ' . chomp_(`pkg-config SDL_Pango --cflags`) . ' ',
+	 chomp_(`sdl-config --libs`) . ' ' . chomp_(`pkg-config SDL_Pango --libs`) . ' ')
   or
-  die_ 'Frozen-Bubble patches are needed in SDL_Pango (tried SDLPango_CreateContext_GivenFontDesc)';
+  die_ 'Frozen-Bubble patches are needed in SDL_Pango (impossible to create an executable calling the function SDLPango_CreateContext_GivenFontDesc)';
 
 
 

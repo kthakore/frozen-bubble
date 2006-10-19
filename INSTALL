@@ -55,6 +55,11 @@ Example:
 
 $ make PREFIX=/usr
 
+Notice: as of SDL_Pango 0.1.2, the compiler may issue 5 warnings
+"missing braces around initializer" from SDL_Pango.h; this is
+normal because the SDL_Pango source is not fully correct, but
+this should not create problems.
+
 
 [*] Second, install the files on the system with GNU make with
     the argument "install". No more arguments are need, but you
