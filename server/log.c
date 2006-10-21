@@ -85,6 +85,14 @@ void logging_init(int portnum) {
         signal(SIGTERM, sigterm_catcher);
 }
 
+char* get_wanted_type(int wanted_output_type)
+{
+        return wanted_output_type == OUTPUT_TYPE_DEBUG ? "DEBUG"
+             : wanted_output_type == OUTPUT_TYPE_CONNECT ? "CONNECT"
+             : wanted_output_type == OUTPUT_TYPE_INFO ? "INFO"
+             : "ERROR";
+}
+
 void l_(int wanted_output_type, char* file, long line, const char* func, char* fmt, ...)
 {
     char *msg;
@@ -104,12 +112,12 @@ void l_(int wanted_output_type, char* file, long line, const char* func, char* f
                     level = LOG_ERR;
             }
             if (debug_mode)
-                    fprintf(stderr, "[%s] %s:%ld(%s): %s\n", get_current_date(), file, line, func, msg);
+                    fprintf(stderr, "[%s] %s %s:%ld(%s): %s\n", get_current_date(), get_wanted_type(wanted_output_type), file, line, func, msg);
             else {
                     if (output_type == OUTPUT_TYPE_DEBUG)
-                            syslog(level, "[%s] %s:%ld(%s): %s", get_current_date(), file, line, func, msg);
+                            syslog(level, "[%s] %s %s:%ld(%s): %s", get_current_date(), get_wanted_type(wanted_output_type), file, line, func, msg);
                     else
-                            syslog(level, msg);
+                            syslog(level, "%s %s", get_wanted_type(wanted_output_type), msg);
             }
             free(msg);
     }
