@@ -4844,7 +4844,8 @@ sub menu {
 
         if (++$time_counter == 1000) {  #- 20 seconds
             $pdata{demo} = 1;
-            replay("$FPATH/data/demo2.bz2");
+            my @files = glob("$FPATH/data/demo*");
+            replay($files[int(rand(@files))]);
             $pdata{demo} = 0;
           blacken:
             foreach my $step (1..100) {
@@ -4988,6 +4989,7 @@ sub replay {
         }
     }
     $playdata = undef;
+    srand $app->ticks;
 }
 
 #- ----------- main -------------------------------------------------------
