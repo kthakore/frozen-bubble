@@ -4088,7 +4088,7 @@ sub smg_choose_game() {
                                                                $end = "$c$end";
                                                            }
                                                            foreach my $nick (@wholist) {
-                                                               if (substr($nick, 0, length($end)) eq $end) {
+                                                               if (lc(substr($nick, 0, length($end))) eq lc($end)) {
                                                                    my $colon = !@typed ? ': ' : ' ';
                                                                    return @typed, split '', "$nick$colon";
                                                                }
