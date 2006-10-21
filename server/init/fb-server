@@ -25,7 +25,7 @@ start() {
 	gprintf "Starting Frozen-Bubble server(s): "
         ATLEASTONE=-1
         for file in $conffiles; do
-            fb-server -c $file >/dev/null && success || failure  
+            su -l fbuser -s /bin/sh -c "fb-server -c $file >/dev/null" && success || failure  
             RETVAL=$?
             if [ "$ATLEASTONE" -ne 0 ]; then
                 ATLEASTONE=$RETVAL
