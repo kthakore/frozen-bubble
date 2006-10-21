@@ -64,6 +64,7 @@ static char fl_client_nulbyte[] = "NUL_BYTE_BEFORE_NEWLINE (I bet you're not a r
 static char fl_server_full[] = "SERVER_IS_FULL";
 static char fl_server_overloaded[] = "SERVER_IS_OVERLOADED";
 static char fl_client_noactivity[] = "NO_ACTIVITY_WITHIN_GRACETIME";
+static char fl_client_blacklisted[] = "YOU_ARE_BLACKLISTED";
 
 static double date_amount_transmitted_reset;
 
@@ -86,6 +87,8 @@ static int quiet = 0;
 
 static char* external_hostname = "DISTANT_END";
 static int external_port = -1;
+
+static char* blacklisted_IPs = NULL;
 
 static GList * conns = NULL;
 static GList * conns_prio = NULL;
@@ -336,6 +339,7 @@ void connections_manager(void)
         ssize_t len = sizeof(client_addr);
         struct timeval tv;
         static char * greets_msg = NULL;
+        double now, delta, rate;
         if (!greets_msg)   // C sux
                 greets_msg = asprintf_(greets_msg_base, servername, serverlanguage);
 
@@ -390,41 +394,55 @@ void connections_manager(void)
                 if (tcp_server_socket != -1 && FD_ISSET(tcp_server_socket, &conns_set)) {
                         if ((fd = accept(tcp_server_socket, (struct sockaddr *) &client_addr, (socklen_t *) &len)) == -1) {
                                 l1(OUTPUT_TYPE_ERROR, "accept: %s", strerror(errno));
-
-                        } else {
-                                l2(OUTPUT_TYPE_CONNECT, "Accepted connection from %s: fd %d", inet_ntoa(client_addr.sin_addr), fd);
-                                if (fd > 255 || conns_nb() >= max_users || (lan_game_mode && g_list_length(conns_prio) > 0)) {
-                                        send_line_log_push(fd, fl_server_full);
-                                        l1(OUTPUT_TYPE_INFO, "[%d] Closing connection (server full)", fd);
-                                        close(fd);
-                                } else {
-                                        double now = get_current_time_exact();
-                                        double delta = now - date_amount_transmitted_reset;
-                                        double rate;
-                                        if (delta > 0) {
-                                                rate = get_reset_amount_transmitted() / delta;
-                                                l1(OUTPUT_TYPE_DEBUG, "Transmission rate: %.2f bytes/sec", rate);
-                                        } else {
-                                                rate = 0;
-                                        }
-                                        date_amount_transmitted_reset = now;
-                                        if (rate > max_transmission_rate) {
-                                                send_line_log_push(fd, fl_server_overloaded);
-                                                l1(OUTPUT_TYPE_INFO, "[%d] Closing connection (maximum transmission rate reached)", fd);
-                                                close(fd);
-                                        } else {
-                                                last_data_in[fd] = current_time;
-                                                nick[fd] = NULL;
-                                                geoloc[fd] = NULL;
-                                                send_line_log_push(fd, greets_msg);
-                                                conns = g_list_append(conns, GINT_TO_POINTER(fd));
-                                                player_connects(fd);
-                                                incoming_data_buffers[fd] = malloc_(sizeof(char) * INCOMING_DATA_BUFSIZE);
-                                                incoming_data_buffers_count[fd] = 0;
-                                                recalculate_list_games = 1;
-                                        }
-                                }
+                                continue;
                         }
+
+                        l2(OUTPUT_TYPE_CONNECT, "Accepted connection from %s: fd %d", inet_ntoa(client_addr.sin_addr), fd);
+                        if (fd > 255 || conns_nb() >= max_users || (lan_game_mode && g_list_length(conns_prio) > 0)) {
+                                send_line_log_push(fd, fl_server_full);
+                                l1(OUTPUT_TYPE_INFO, "[%d] Closing connection (server full)", fd);
+                                close(fd);
+                                continue;
+                        }
+
+                        if (blacklisted_IPs != NULL) {
+                                char* blacklist_search = asprintf_(",%s", inet_ntoa(client_addr.sin_addr));
+                                printf("<%s><%s>", blacklisted_IPs, blacklist_search);
+                                if (strstr(blacklisted_IPs, blacklist_search) != NULL) {
+                                        send_line_log_push(fd, fl_client_blacklisted);
+                                        l2(OUTPUT_TYPE_INFO, "[%d] Blacklisted client (%s)", fd, inet_ntoa(client_addr.sin_addr));
+                                        close(fd);
+                                        free(blacklist_search);
+                                        continue;
+                                }
+                                free(blacklist_search);
+                        }
+
+                        now = get_current_time_exact();
+                        delta = now - date_amount_transmitted_reset;
+                        if (delta > 0) {
+                                rate = get_reset_amount_transmitted() / delta;
+                                l1(OUTPUT_TYPE_DEBUG, "Transmission rate: %.2f bytes/sec", rate);
+                        } else {
+                                rate = 0;
+                        }
+                        date_amount_transmitted_reset = now;
+                        if (rate > max_transmission_rate) {
+                                send_line_log_push(fd, fl_server_overloaded);
+                                l1(OUTPUT_TYPE_INFO, "[%d] Closing connection (maximum transmission rate reached)", fd);
+                                close(fd);
+                                continue;
+                        }
+
+                        last_data_in[fd] = current_time;
+                        nick[fd] = NULL;
+                        geoloc[fd] = NULL;
+                        send_line_log_push(fd, greets_msg);
+                        conns = g_list_append(conns, GINT_TO_POINTER(fd));
+                        player_connects(fd);
+                        incoming_data_buffers[fd] = malloc_(sizeof(char) * INCOMING_DATA_BUFSIZE);
+                        incoming_data_buffers_count[fd] = 0;
+                        recalculate_list_games = 1;
                 }
 
                 if (udp_server_socket != -1 && FD_ISSET(udp_server_socket, &conns_set))
@@ -477,8 +495,9 @@ static void help(void)
         printf("     -q                        \"quiet\" mode: don't automatically register the server to www.frozen-bubble.org\n");
         printf("     -a lang                   set the preferred language of the server (it is just an indication used by players when choosing a server, so that they can chat using their native language - you can choose none with -z)\n");
         printf("     -z                        set that there is no preferred language for the server (see -a)\n");
-        printf("     -c conffile               specify the path of the configuration file\n");
         printf("     -g gracetime              set the gracetime after which a client with no network activity is terminated (in seconds, defaults to %d)\n", DEFAULT_GRACETIME);
+        printf("     -b IP1,IP2,IP3..          set the list of blacklisted IPs");
+        printf("     -c conffile               specify the path of the configuration file\n");
 }
 
 static void create_udp_server(void)
@@ -630,6 +649,9 @@ static void handle_parameter(char command, char * param) {
                         gracetime = DEFAULT_GRACETIME;
                 }
                 break;
+        case 'b':
+                blacklisted_IPs = asprintf_(",%s", param);
+                break;
         default:
                 fprintf(stderr, "unrecognized option %c, ignoring\n", command);
         }
@@ -641,7 +663,7 @@ void create_server(int argc, char **argv)
         int valone = 1;
 
         while (1) {
-                int c = getopt(argc, argv, "hn:lLp:u:t:o:c:dqH:P:a:zg:");
+                int c = getopt(argc, argv, "hn:lLp:u:t:o:c:dqH:P:a:zg:b:");
                 if (c == -1)
                         break;
                 
