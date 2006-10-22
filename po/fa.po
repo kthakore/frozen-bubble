@@ -11,7 +11,7 @@ msgstr ""
 "Project-Id-Version: fa\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2006-10-18 13:37+0200\n"
-"PO-Revision-Date: 2006-10-21 20:24+0330\n"
+"PO-Revision-Date: 2006-10-22 20:21+0330\n"
 "Last-Translator: Mostafa Hajizadeh <mostafa@hajizadeh.info>\n"
 "Language-Team: Persian <farsi@lists.sharif.edu>\n"
 "MIME-Version: 1.0\n"
@@ -260,7 +260,7 @@ msgstr "*** بازی‌کن‌های آماده: "
 msgid ""
 "*** Please wait, retrieving your geographical location from http://hostip."
 "info/..."
-msgstr "*** لطفاً صبر کنید، دارم مکان جغرافیائی شما را از http://hostip.info/ می‌گیرم..."
+msgstr "*** لطفاً صبر کنید، دارم مکان جغرافیائی شما را از http://hostip.info می‌گیرم..."
 
 #: ../frozen-bubble:3845
 msgid "*** Done - you can now create or join a game"
@@ -275,7 +275,7 @@ msgstr "*** گویا hostip.info مکان جغرافیائی آی‌پی شما 
 msgid ""
 "*** If you want that your location appears on the map, fix your entry at "
 "http://hostip.info/"
-msgstr "*** اگر می‌خواهید محل‌تان بر روی نقشه معلوم شود بخش خودتان را در http://hostip.info/ درست کنید"
+msgstr "*** اگر می‌خواهید محل‌تان بر روی نقشه معلوم شود بخش خودتان را در http://hostip.info درست کنید"
 
 #: ../frozen-bubble:3855
 msgid "*** hostip.info didn't reply within 5 seconds, giving up"
