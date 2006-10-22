@@ -2623,14 +2623,9 @@ sub init_game() {
     $imgbin{hiscore_levelset} = add_image('hiscore-levelset.png');
     $imgbin{hiscore_mptraining} = add_image('hiscore-mptraining.png');
     
-    print_step('.'); 
-    #- temporarily desactivate the intro storyboard because it's not finished yet
-    #- $imgbin{frozen} = add_image('intro/txt_frozen.png');
-    #- $imgbin{bubble} = add_image('intro/txt_bubble.png');
-    #- $imgbin{intro_penguin_imgs}->{$_} = add_image("intro/intro_$_.png") foreach 1..19;
-
     local @PLAYERS = @ALL_PLAYERS;  #- load all images even if -so commandline option was passed
     iter_players {
+        print_step('.'); 
 	$imgbin{hurry}{$::p} = add_image("hurry_$::p.png");
 	$imgbin{win}{$::p} = add_image("win_panel_$::p.png");
 	$::p ne 'p2' and $imgbin{net_lose}{$::p} = add_image("net_lose_$::p.png");
@@ -2650,7 +2645,6 @@ sub init_game() {
         $pinguin{$::p}{win} = [ map { add_image("pinguins/win_${p}_00$_.png") } ('01'..'68') ];
         $pinguin{$::p}{lose_to} = [ map { add_image("pinguins/loose_${p}_00$_.png") } ('01'..'64') ];
         $pinguin{$::p}{lose} = [ map { add_image("pinguins/loose_${p}_0$_.png") } ('065'..'158') ];
-        print_step('.'); 
     };
 
     #- the RGBA effects algorithms assume little endian RGBA surfaces
