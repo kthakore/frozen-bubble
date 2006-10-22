@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2006-10-18 13:37+0200\n"
-"PO-Revision-Date: 2006-10-18 14:06+0200\n"
+"PO-Revision-Date: 2006-10-22 21:32+0200\n"
 "Last-Translator: Guillaume Cottenceau>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=ISO-8859-1\n"
@@ -197,7 +197,7 @@ msgstr "*** Vérifiez votre configuration réseau ou réessayer ultérieurement"
 #: ../frozen-bubble:3425
 #, perl-format
 msgid "Available players:%s  Ping:%sms"
-msgstr "Joueurs disponibles:%s  Ping:%sms"
+msgstr "Joueurs disponibles : %s  Ping : %sms"
 
 #: ../frozen-bubble:3472
 msgid "*** No available game server"
@@ -253,7 +253,7 @@ msgstr "Rejoindre le jeu : %s"
 
 #: ../frozen-bubble:3820
 msgid "*** Players listening: "
-msgstr "*** Joueurs à l'écoute :"
+msgstr "*** Joueurs à l'écoute : "
 
 #: ../frozen-bubble:3837
 msgid ""
