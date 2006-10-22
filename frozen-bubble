@@ -1690,8 +1690,8 @@ sub lose {
             }
         }
         if ($pdata{$player}{left}) {
-            put_image_to_background(mini_graphics($player) ? $imgbin{"left_${player}_mini"} : $imgbin{left_rp1},
-                                    $POS{$player}{left}{x}, $POS{$player}{left}{y}); #}}
+            exists $POS{$player}{left} and put_image_to_background(mini_graphics($player) ? $imgbin{"left_${player}_mini"} : $imgbin{left_rp1},
+                                                                   $POS{$player}{left}{x}, $POS{$player}{left}{y}); #}}
             @{$sticked_bubbles{$player}} = ();
             play_sound('cancel');
         } else {
