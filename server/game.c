@@ -408,7 +408,7 @@ static int is_nick_ok(char* nick)
                 if (!((nick[i] >= 'a' && nick[i] <= 'z')
                       || (nick[i] >= 'A' && nick[i] <= 'Z')
                       || (nick[i] >= '0' && nick[i] <= '9')
-                      || nick[i] == '-' || nick[i] == '-')) {
+                      || nick[i] == '-' || nick[i] == '_')) {
                         return 0;
                 }
         }
