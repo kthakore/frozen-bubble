@@ -4952,6 +4952,7 @@ sub replay {
     %recorddata = ();
     $recorddata{pdatas} = shift @$playdata;  #- first record is used for pdatas, the rest will contain frame-indexed actions
     @PLAYERS = @{$recorddata{pdatas}{players}};
+    $pdata{$_}{score} = 0 foreach @PLAYERS;
     $pdata{gametype} = $recorddata{pdatas}{gametype};
     $levels{current} = $recorddata{pdatas}{current_level};
     $chainreaction = $recorddata{pdatas}{chainreaction};
