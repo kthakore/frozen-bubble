@@ -2843,7 +2843,7 @@ sub ask_from($) {
                 $txt = $k;
                 if ($k =~ /^joystick\|axisvalue\|(\d+)\|(\d+)\|([-\d]+)/) {
                     my $num = @joysticks > 1 ? $1 + 1 : '';
-                    $k = 'joy' . i18n_number($num) . (even($2) ? ($3 < 0 ? t("left") : t("right")) : ($3 < 0 ? t("up") : t("down")));
+                    $k = 'joy' . i18n_number($num) . '-' . (even($2) ? ($3 < 0 ? t("left") : t("right")) : ($3 < 0 ? t("up") : t("down")));
                 } elsif ($k =~ /^joystick\|buttondown\|(\d+)\|(\d+)/) {
                     my $num = @joysticks > 1 ? $1 + 1 : '';
                     my $button = $2 + 1;
