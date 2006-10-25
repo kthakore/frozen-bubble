@@ -507,10 +507,10 @@ sub grecv() {
         if (my ($msg, $rest) = $buf =~ /([^\n]+)\n(.*)?/s) {  #-?
             $buf = $rest;
             push @msg, { id => $id, msg => $msg };
-            print "\trecv-msg:", ord($id), ":$msg\n";
+#            print "\trecv-msg:", ord($id), ":$msg\n";
         } else {
             #- no match means that we received a partial packet
-            print "*** partial receive! for <$buf>, buffering (theoretically harmless)\n";
+ #           print "*** partial receive! for <$buf>, buffering (theoretically harmless)\n";
             $buffered_buf = $id . $buf;
             $buf = undef;
         }
@@ -542,6 +542,7 @@ sub grecv_get1msg {
     if ($@) {
         print STDERR "Sorry, we are not receiving the expected message. If the other ends are legal Frozen-Bubble\n" .
                      "clients, it means your computer or the network is too slow. Giving up.\n";
+        disconnect();
         die 'quit';
     } else {
         return shift @messages;

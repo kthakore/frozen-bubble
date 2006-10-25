@@ -43,7 +43,7 @@ use vars qw($TARGET_ANIM_SPEED $BUBBLE_SIZE $ROW_SIZE $LAUNCHER_SPEED $BUBBLE_SP
             $graphics_level @update_rects $CANON_ROTATIONS_NB %malus_bubble %falling_bubble %exploding_bubble %malus_gfx %pangocontext $private $no_time_limit
             %sticking_bubble $time %imgbin $TIME_HURRY_WARN $TIME_HURRY_MAX $TIMEOUT_PINGUIN_SLEEP $FREE_FALL_CONSTANT @joysticks $joysticksinfo
             $direct @PLAYERS @ALL_PLAYERS %levels $display_on_app_disabled $total_time $time_1pgame $time_netgame $fullscreen $rcfile %hiscorefiles $HISCORES $HISCORES_MPTRAIN
-            $lev_number $playermalus $mptrainingdiff $loaded_levelset $direct_levelset $chainreaction %chains %history %img_mini $frame $sock $gameserver $mynick);
+            $lev_number $playermalus $mptrainingdiff $loaded_levelset $direct_levelset $chainreaction %chains %img_mini $frame $sock $gameserver $mynick);
 
 use Getopt::Long;
 use Data::Dumper;
@@ -625,7 +625,6 @@ sub img2numb { my ($i, $f) = @_; each_index { $i eq $_ and $f = $::i } @bubbles_
 sub bubble_next_to($$$$$) {
     my ($x1, $y1, $x2, $y2, $player) = @_;
     $x1 == $x2 && $y1 == $y2 and die "bubble_next_to: assert failed -- same bubbles ($x1:$y1;$player)\n(are you using chain-reaction with network partners not doing so on their side too?)\n" . backtrace();
-#    $x1 == $x2 && $y1 == $y2 and history($player), die "bubble_next_to: assert failed -- same bubbles ($x1:$y1;$player)" . backtrace();
     return to_bool((sqr($x1+odd($y1+$pdata{$player}{oddswap})*0.5 - ($x2+odd($y2+$pdata{$player}{oddswap})*0.5)) + sqr($y1 - $y2)) < 3);
 }
 
@@ -646,25 +645,7 @@ sub next_positions($$) {
 
 #- bubble ends its life sticked somewhere
 sub real_stick_bubble {
-    my ($bubble, $xpos, $ypos, $player, $neighbours_ok, $name, $nostory) = @_;
-    if (!$nostory) {
-        my $newstory = { stick => { x => $xpos, y => $ypos, col => get_bubble_num($bubble) },  # = }
-                         sticked => [ map { { x => $_->{cx}, y => $_->{cy}, col => get_bubble_num($_) } }  # = } }
-                                      @{$sticked_bubbles{$player}} ],
-                         row => $pdata{$player}{stickstoryrow}++,
-                         gamenum => $pdata{gamenum},
-                         name => $name };
-        push @{$pdata{$player}{stickstory}}, $newstory;
-        #    my $msg = "stick[$pdata{$player}{stickstoryrow}]: $xpos:$ypos c" . get_bubble_num($bubble);
-        if (!is_local_player($player)) {
-#            print "sending stickstory r$newstory->{row} of $pdata{$player}{nick} n$pdata{gamenum}\n";
-#            my $serialize = join('-', $newstory->{stick}{x}, $newstory->{stick}{y}, $newstory->{stick}{col},
-#                                      $newstory->{row}, $newstory->{gamenum}, $newstory->{name}, join(',', map { "$_->{x}|$_->{y}|$_->{col}" } @{$newstory->{sticked}}));
-#            fb_net::gsend("stickstory:$pdata{$player}{nick}!$serialize");
-        } else {
-            #print "added local stickstory r$newstory->{row} $newstory->{stick}{x}|$newstory->{stick}{y}|$newstory->{stick}{col} $newstory->{name} n$pdata{gamenum}\n";
-        }
-    }
+    my ($bubble, $xpos, $ypos, $player, $neighbours_ok) = @_;
     $bubble->{cx} = $xpos;
     $bubble->{cy} = $ypos;
     foreach (@{$sticked_bubbles{$player}}) {
@@ -715,7 +696,7 @@ sub stick_bubble($$$$$) {
     if (@will_destroy <= 1) {
 	#- stick
 	play_sound('stick');
-	real_stick_bubble($bubble, $xpos, $ypos, $player, 1, 'stick');
+	real_stick_bubble($bubble, $xpos, $ypos, $player, 1);
 	$sticking_bubble{$player} = $bubble;
 	$pdata{$player}{sticking_step} = 0;
     } else {
@@ -854,7 +835,7 @@ sub stick_bubble($$$$$) {
 		print_compressor();
 	    } else {
 		@{$root_bubbles{$player}} = ();
-		real_stick_bubble(create_bubble_given_img_num($pdata{$player}{nextcolors}[$_]), $_, 0, $player, 0, 'newroot') foreach (0..(7-$pdata{$player}{oddswap}));
+		real_stick_bubble(create_bubble_given_img_num($pdata{$player}{nextcolors}[$_]), $_, 0, $player, 0) foreach (0..(7-$pdata{$player}{oddswap}));
                 delete $pdata{$player}{nextcolors};
 	    }
 	}
@@ -867,10 +848,6 @@ sub stick_bubble($$$$$) {
 	$background->blit($apprects{$player}, $app, $apprects{$player});
 	malus_change($malus_val, $player);
     }
-
-#    push @{$history{$player}}, { sticking => [ $xpos, $ypos, img2numb($bubble->{img}) ],
-#				 oddswap => $pdata{$player}{oddswap},
-#				 sticked => [ map { [ $_->{cx}, $_->{cy}, img2numb($_->{img}) ] } @{$sticked_bubbles{$player}} ] };
 }
 
 sub print_next_bubble($$;$) {
@@ -1231,7 +1208,6 @@ sub handle_mp_messages {
         }
         my ($command, $params) = $m->{msg} =~ /^(.)(.*)/;
         if ($command eq 'l') {
-            print "rcv leave from $player\n";
             iter_players { #- need iter_players to get the small graphics change for free
                 if ($::p eq $player) {
                     $pdata{$::p}{left} = 1;
@@ -1264,10 +1240,8 @@ sub handle_mp_messages {
             @{$pdata{$player}{nextcolors}} = split / /, $newrootcols;
         } elsif ($command eq 'g') {
             my ($destplayer, $numb) = $params =~ /(.+):(.+)/;
-            print "receive generate malus: $destplayer:$numb\n";
             iter_players {
                 if ($pdata{$::p}{nick} eq $destplayer) {
-                    print "=> adding to $::p\n";
                     update_malus(\&remove_image_from_background, $::p);
                     $pdata{$::p}{malus} += $numb;
                     update_malus(\&put_image_to_background, $::p);
@@ -1279,7 +1253,6 @@ sub handle_mp_messages {
             $b->{cx} = $cx;
             $b->{cy} = $cy;
             $b->{'stick_y'} = $sticky;
-            print "receive remote malus: $cx:$cy c$num sy$sticky\n";
             iter_players { #- need iter_players to get the small graphics change for free
                 if ($::p eq $player) {
                     calc_real_pos($b, $::p);
@@ -1305,7 +1278,6 @@ sub handle_mp_messages {
             }
         } elsif ($command eq 'F') {
             #- this is coming too soon. it needs to be collected in the algo to restart a game.
-            print "finished coming a little soon. delay and hope we're not in infinite loop.\n";
             unshift @$msg, $m;
             last;
         } elsif ($command eq 't') {
@@ -1671,9 +1643,7 @@ sub lose {
         $pdata{$player}{state} = 'lost';
         my @living = living_players();
         if (@living == 1) {
-            print "living == 1\n";
             if (any { $pdata{$_}{left} } @PLAYERS) {
-                $pdata{$_}{left} and print "$_ ($pdata{$_}{nick}) left!\n" foreach @PLAYERS;
                 #- if some players have left, directly go to won state
                 win($living[0]);
                 $pdata{state} = "won $living[0]";
@@ -1919,16 +1889,6 @@ sub update_game() {
                     }
                     if ($actions{$::p}{mp_stick}) {
                         $actions{$::p}{mp_stick} = 0;
-                        if (get_bubble_num($launched_bubble{$::p}) ne $pdata{$::p}{stickcol}) {
-                            print ">>>>>>>>>>>>>>>>> color inconsistency, I bet I will backtrace soon!\n";
-                        }
-                        if (defined($pdata{$::p}{localstickcx})) {
-                            print "<<< mp_stick: $pdata{$::p}{stickcx}:$pdata{$::p}{stickcy} <-> $pdata{$::p}{localstickcx}:$pdata{$::p}{localstickcy}\n";
-                            if ($pdata{$::p}{stickcx} != $pdata{$::p}{localstickcx} || $pdata{$::p}{stickcy} != $pdata{$::p}{localstickcy}) {
-                                print ">>>>>>>>>>>>>>>>> stick inconsistency (between locally and remotely calculated stick position -> normally not a problem)\n";
-                            }
-                            $pdata{$::p}{localstickcx} = $pdata{$::p}{localstickcy} = undef;
-                        }
                         stick_bubble($launched_bubble{$::p}, $pdata{$::p}{stickcx}, $pdata{$::p}{stickcy}, $::p, 1);
                         $launched_bubble{$::p} = undef;
                         $pdata{$::p}{freezelaunchedbubble} = 0;
@@ -1940,12 +1900,7 @@ sub update_game() {
                             stick_bubble($launched_bubble{$::p}, $cx, $cy, $::p, 1);
                             $launched_bubble{$::p} = undef;
                         } else {
-                            if (!defined($pdata{$::p}{localstickcx})) {
-                                print ">> local stick calc: $cx:$cy\n";
-                                $pdata{$::p}{localstickcx} = $cx;
-                                $pdata{$::p}{localstickcy} = $cy;
-                                $pdata{$::p}{freezelaunchedbubble} = 1;
-                            }
+                            $pdata{$::p}{freezelaunchedbubble} = 1;
                         }
                     } else {
                         foreach (@{$sticked_bubbles{$::p}}) {
@@ -1994,12 +1949,7 @@ sub update_game() {
                                     }
                                     
                                 } else {
-                                    if (!defined($pdata{$::p}{localstickcx})) {
-                                        print ">> local stick calc: $cx:$cy\n";
-                                        $pdata{$::p}{localstickcx} = $cx;
-                                        $pdata{$::p}{localstickcy} = $cy;
-                                        $pdata{$::p}{freezelaunchedbubble} = 1;
-                                    }
+                                    $pdata{$::p}{freezelaunchedbubble} = 1;
                                 }
                                 last;
                             }
@@ -2241,7 +2191,7 @@ sub update_game() {
 	    !$b->{freeze} and $b->{'y'} -= $MALUS_BUBBLE_SPEED;
 	    if (get_array_yclosest($b->{'y'}, $::p) <= $b->{'stick_y'}) {
                 if (is_local_player($::p)) {
-                    real_stick_bubble($b, $b->{'cx'}, $b->{'stick_y'}, $::p, 0, 'malus');
+                    real_stick_bubble($b, $b->{'cx'}, $b->{'stick_y'}, $::p, 0);
                     push @$malus_end, $b;
                     is_mp_game() and fb_net::gsend("M$b->{cx}:$b->{stick_y}");
                 } else {
@@ -2249,7 +2199,7 @@ sub update_game() {
                 }
 	    }
             if ($b->{mp_stick}) {
-                real_stick_bubble($b, $b->{'cx'}, $b->{'stick_y'}, $::p, 0, 'malus');
+                real_stick_bubble($b, $b->{'cx'}, $b->{'stick_y'}, $::p, 0);
                 push @$malus_end, $b;
             }
 	}
@@ -2676,7 +2626,7 @@ sub open_level($) {
     foreach my $l (@{$levels{$level}}) {
 	iter_players {
 	    my $img = $l->{img_num} =~ /^\d+$/ ? $bubbles_images[$l->{img_num}] : $bubbles_anim{lose};
-	    real_stick_bubble(create_bubble_given_img($img), $l->{cx}, $l->{cy}, $::p, 0, 'openlevel');
+	    real_stick_bubble(create_bubble_given_img($img), $l->{cx}, $l->{cy}, $::p, 0);
 	};
     }
 }
@@ -3061,18 +3011,15 @@ sub new_game() {
                     }
                 }
                 my $b = create_bubble_given_img_num($num);
-                real_stick_bubble($b, $cx, $cy, $PLAYERS[0], 0, 'randomlevel/1p', 'nostory');
+                real_stick_bubble($b, $cx, $cy, $PLAYERS[0], 0);
                 if (!is_1p_game()) {
                     iter_players_but_first {
-                        real_stick_bubble(create_bubble_given_img($b->{img}), $cx, $cy, $::p, 0, 'randomlevel/otherp', 'nostory');
+                        real_stick_bubble(create_bubble_given_img($b->{img}), $cx, $cy, $::p, 0);
                     };
                 }
 	    }
 	}
     }
-    @{$pdata{$_}{stickstory}} = () foreach @PLAYERS;
-    @{$pdata{$_}{pretendstickstory}} = () foreach @PLAYERS;
-    $pdata{$_}{stickstoryrow} = 0 foreach @PLAYERS;
     $pdata{gamenum}++;
 
     my ($next_num, $tobe_num);
