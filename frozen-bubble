@@ -2650,7 +2650,6 @@ sub init_game() {
     } else {
 	$mixer_enabled = init_sound();
     }
-    play_music('intro');
 
     #- the RGBA effects algorithms assume little endian RGBA surfaces
     my $replace = SDL::Surface->new(-width => $imgbin{menu_logo}->width, -height => $imgbin{menu_logo}->height, -depth => 32);
@@ -4438,7 +4437,7 @@ sub menu {
         handle_new_hiscores();
     }
 
-    $firsttime or play_music('intro');
+    play_music('intro');
     clean_server();
 
     my $back_start;
