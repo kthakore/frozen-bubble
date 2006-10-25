@@ -245,14 +245,14 @@ sub play_sound($) {
     $mixer_enabled && $mixer && !$sfx_disabled && $sound{$_[0]} and $mixer->play_channel(-1, $sound{$_[0]}, 0);
 }
 
-sub play_music($;$) {
-    my ($name, $pos) = @_;
+sub play_music($) {
+    my ($name) = @_;
     $mixer_enabled && $mixer && !$music_disabled or return;
     @playlist && $mixer->playing_music and return;
     $app->delay(10) while $mixer->fading_music;   #- mikmod will deadlock if we try to fade_out while still fading in
     $mixer->playing_music and $mixer->fade_out_music(500); $app->delay(400);
     $app->delay(10) while $mixer->playing_music;  #- mikmod will segfault if we try to load a music while old one is still fading out
-    my %musics = (intro => '/snd/introzik.xm', main1p => '/snd/frozen-mainzik-1p.ogg', main2p => '/snd/frozen-mainzik-2p.xm');
+    my %musics = (intro => '/snd/introzik.ogg', main1p => '/snd/frozen-mainzik-1p.ogg', main2p => '/snd/frozen-mainzik-2p.xm');
     my $mus if 0;                                 #- I need to keep a reference on the music or it will be collected at the end of this function, thus I manually collect previous music
     if (@playlist) {
 	my $tryanother = sub {
@@ -274,11 +274,7 @@ sub play_music($;$) {
     } else {
 	$mus = SDL::Music->new("$FPATH$musics{$name}");
         if ((UNIVERSAL::isa($mus, 'HASH') && $mus->{-data}) || $$mus) {
-            if ($pos) {
-                fb_c_stuff::fade_in_music_position(UNIVERSAL::isa($mus, 'HASH') ? $mus->{-data} : $$mus, -1, 500, $pos);
-            } else {
-                $mixer->play_music($mus, -1);
-            }
+            $mixer->play_music($mus, -1);
             $music{current} = $name;
         } else {
             print STDERR "Warning, could not create new music from `$FPATH$musics{$name}' (reason: ", $app->error, ").\n";
@@ -293,7 +289,7 @@ sub init_sound() {
 	print STDERR "\nWarning: can't initialize sound (reason: $@).\n";
 	return 0;
     }
-    print "[Sound Init]\n";
+    print "[Sound Init] ";
     my @sounds = qw(stick destroy_group newroot newroot_solo lose hurry pause menu_change menu_selected rebound launch malus noh snore cancel typewriter applause chatted);
     foreach (@sounds) {
 	my $sound_path = "$FPATH/snd/$_.ogg";
@@ -1465,7 +1461,7 @@ sub handle_game_events() {
 
                 if ($mixer_enabled && $mixer && @playlist && $keypressed eq $KEYS->{misc}{next_playlist_elem}) {
                     $mixer->halt_music;
-                    play_music('dummy', 0);
+                    play_music('dummy');
                 }
 
                 if ($levels{current} !~ /^\d+$/ && $keypressed eq $KEYS->{misc}{save_record}) {
@@ -2356,7 +2352,7 @@ sub update_game() {
     };
 
     #- advance playlist when the current song finished
-    $mixer_enabled && $mixer && @playlist && !$mixer->playing_music and play_music('dummy', 0);
+    $mixer_enabled && $mixer && @playlist && !$mixer->playing_music and play_music('dummy');
 }
 
 #- ----------- init stuff -------------------------------------------------
@@ -2647,6 +2643,15 @@ sub init_game() {
         $pinguin{$::p}{lose} = [ map { add_image("pinguins/loose_${p}_0$_.png") } ('065'..'158') ];
     };
 
+    print_step('] '); 
+
+    if ($mixer eq 'SOUND_DISABLED') {
+	$mixer_enabled = $mixer = undef;
+    } else {
+	$mixer_enabled = init_sound();
+    }
+    play_music('intro');
+
     #- the RGBA effects algorithms assume little endian RGBA surfaces
     my $replace = SDL::Surface->new(-width => $imgbin{menu_logo}->width, -height => $imgbin{menu_logo}->height, -depth => 32);
     $imgbin{menu_logo}->set_alpha(0, 0);  #- for RGBA->RGBA blits, SDL_SRCALPHA must be removed or destination alpha is preserved
@@ -2654,17 +2659,9 @@ sub init_game() {
     $imgbin{menu_logo} = $replace;
     add_default_rect($replace);
 
-    print_step('] '); 
-
     $lev_number = 0;
     print_step("[Levels] "); 
     load_levelset("$FPATH/data/levels");
-
-    if ($mixer eq 'SOUND_DISABLED') {
-	$mixer_enabled = $mixer = undef;
-    } else {
-	$mixer_enabled = init_sound();
-    }
 
     fb_c_stuff::init_effects($FPATH);
 
@@ -4435,12 +4432,13 @@ our $cursor_tmp;
 our %broken_cursors;
 
 sub menu {
+    my ($firsttime) = @_;
 
     if (is_1p_game() && $levels{current} ne 'mp_train') {
         handle_new_hiscores();
     }
 
-    play_music('intro', 8);
+    $firsttime or play_music('intro');
     clean_server();
 
     my $back_start;
@@ -4866,7 +4864,7 @@ sub menu {
             $menu_update->();
             $app->flip;
             $time_counter = 0;
-            play_music('intro', 8);
+            play_music('intro');
         }
     }
 
@@ -4968,9 +4966,9 @@ sub replay {
     }
     local $direct = 1;
     #- I'm wondering if the following is really more dirty than adding a $playdata test in the beginning of the three functions..
-    local *fb_net::gsend = sub { print "gsend: do nothing\n"; };
-    local *fb_net::grecv_get1msg_ifdata = sub { print "grecv_get1msg_ifdata: do nothing\n"; return; };
-    local *check_mp_connection = sub { print "check_mp_connection: do nothing\n"; };
+    local *fb_net::gsend = sub {};
+    local *fb_net::grecv_get1msg_ifdata = sub { return; };
+    local *check_mp_connection = sub {};
     new_game_once();
     new_game();
     while (1) {
@@ -4995,7 +4993,7 @@ if ($playdata) {
     replay($playdata);
 }
 
-$direct or menu();
+$direct or menu('first time');
 
 while (!new_game_once()) { menu() }
 new_game() or goto go_to_menu;
