@@ -250,8 +250,6 @@ static void handle_incoming_data_generic(gpointer data, gpointer user_data, int 
 
                                 } else {
                                         eol[0] = '\0';
-                                        if (strlen(ptr) > 0 && eol[-1] == '\r')  // let's try to behave in case of Windows and Mac ports
-                                                eol[-1] = '\0';
                                         if (process_msg(fd, ptr)) {
                                                 conn_terminated(fd, "process_msg said to shutdown this connection");
                                                 return;
