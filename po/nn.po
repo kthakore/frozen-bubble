@@ -7,245 +7,516 @@ msgid ""
 msgstr ""
 "Project-Id-Version: nn\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2006-06-19 21:47+0200\n"
-"PO-Revision-Date: 2006-08-06 19:55+0200\n"
+"POT-Creation-Date: 2006-10-18 13:37+0200\n"
+"PO-Revision-Date: 2006-10-24 20:34+0200\n"
 "Last-Translator: Karl Ove Hufthammer <karl@huftis.org>\n"
 "Language-Team: Norwegian Nynorsk <i18n-nn@lister.ping.uio.no>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: KBabel 1.11.2\n"
+"X-Generator: KBabel 1.11.4\n"
 "Plural-Forms:  nplurals=2; plural=(n != 1);\n"
 
-#: ../frozen-bubble:2633
+#: ../frozen-bubble:192
+msgid "0"
+msgstr "0"
+
+#: ../frozen-bubble:193
+msgid "1"
+msgstr "1"
+
+#: ../frozen-bubble:194
+msgid "2"
+msgstr "2"
+
+#: ../frozen-bubble:195
+msgid "3"
+msgstr "3"
+
+#: ../frozen-bubble:196
+msgid "4"
+msgstr "4"
+
+#: ../frozen-bubble:197
+msgid "5"
+msgstr "5"
+
+#: ../frozen-bubble:198
+msgid "6"
+msgstr "6"
+
+#: ../frozen-bubble:199
+msgid "7"
+msgstr "7"
+
+#: ../frozen-bubble:200
+msgid "8"
+msgstr "8"
+
+#: ../frozen-bubble:201
+msgid "9"
+msgstr "9"
+
+#: ../frozen-bubble:202
+msgid "."
+msgstr ","
+
+#: ../frozen-bubble:226
+#, perl-format
+msgid "%sh %sm %ss"
+msgstr "%s t %s m %s s"
+
+#: ../frozen-bubble:228
+#, perl-format
+msgid "%sm %ss"
+msgstr "%s m %s s"
+
+#: ../frozen-bubble:230
+#, perl-format
+msgid "%ss"
+msgstr "%s s"
+
+#: ../frozen-bubble:921 ../frozen-bubble:2805
+#, perl-format
+msgid "%s'%s\""
+msgstr "%s′%s″"
+
+#: ../frozen-bubble:1016
+msgid "Your score after two minutes:"
+msgstr "Poengsum etter to minutt:"
+
+#: ../frozen-bubble:1016
+msgid "Press any key."
+msgstr "Trykk ein tast."
+
+#: ../frozen-bubble:1174 ../frozen-bubble:1176
+msgid "Lost connection to server!"
+msgstr "Mista sambandet til tenaren."
+
+#: ../frozen-bubble:1174
+msgid "Hoster aborted the game."
+msgstr "Verten avbraut spelet."
+
+#: ../frozen-bubble:1176
+msgid "Your lag is probably too high."
+msgstr "Latenstida di er truleg for høg."
+
+#: ../frozen-bubble:1617
+msgid "Random level"
+msgstr "Tilfeldig brett"
+
+#: ../frozen-bubble:1618
+#, perl-format
+msgid "Score: %s"
+msgstr "Poeng: %s"
+
+#: ../frozen-bubble:1619
+#, perl-format
+msgid "Level %s"
+msgstr "Brett %s"
+
+#: ../frozen-bubble:1788
+msgid "Draw game!"
+msgstr "Uavgjort!"
+
+#: ../frozen-bubble:2129 ../frozen-bubble:2194
+msgid "Lost synchronization!"
+msgstr "Mista synkronsering."
+
+#: ../frozen-bubble:2802
+msgid "won!"
+msgstr "vann!"
+
+#: ../frozen-bubble:2802
+#, perl-format
+msgid "level %s"
+msgstr "brett %s"
+
+#: ../frozen-bubble:2905
+msgid "left"
+msgstr "venstre"
+
+#: ../frozen-bubble:2905
+msgid "right"
+msgstr "høgre"
+
+#: ../frozen-bubble:2905
+msgid "up"
+msgstr "opp"
+
+#: ../frozen-bubble:2905
+msgid "down"
+msgstr "ned"
+
+#: ../frozen-bubble:2909
+msgid "button"
+msgstr "knapp"
+
+#: ../frozen-bubble:3216
 msgid "Start 1-player game menu"
 msgstr "1-spelarspel"
 
-#: ../frozen-bubble:2735
+#: ../frozen-bubble:3334
 msgid "*** Please wait, probing for available servers on local network..."
 msgstr "*** Søkjer etter tilgjengelege tenarar på lokalnettet. Vent litt …"
 
-#: ../frozen-bubble:2738
+#: ../frozen-bubble:3337
 msgid "*** Unable to probe for available servers on local network!"
 msgstr "*** Klarte ikkje søkja etter tilgjengelege tenarar på lokalnettet."
 
-#: ../frozen-bubble:2740
+#: ../frozen-bubble:3339
 msgid "*** Verify your network setup"
 msgstr "*** Kontroller at nettverket er rett sett opp."
 
-#: ../frozen-bubble:2749
+#: ../frozen-bubble:3348
 msgid "*** No server found, and could not start server"
 msgstr "*** Fann ingen tenarar, og kunne ikkje starta tenar."
 
-#: ../frozen-bubble:2750
+#: ../frozen-bubble:3349
 msgid "*** Verify your installation or contact your vendor"
 msgstr "*** Kontroller at alt er rett installert, eller kontakt leverandøren."
 
-#: ../frozen-bubble:2757
+#: ../frozen-bubble:3356
 msgid "*** No server found, created server for local network game"
 msgstr "*** Fann ingen tenarar. Starta derfor tenar for lokalnettspel."
 
-#: ../frozen-bubble:2773
+#: ../frozen-bubble:3372
 msgid "*** Contacting master server..."
 msgstr "*** Kopla til hovudtenar …"
 
-#: ../frozen-bubble:2784
+#: ../frozen-bubble:3383
 msgid "*** Server list received properly"
 msgstr "*** Tenaroversikta er motteken."
 
-#: ../frozen-bubble:2786
+#: ../frozen-bubble:3385
 msgid "*** Unable to download server list from master server!"
 msgstr "*** Klarte ikkje lasta ned tenaroversikt frå hovudtenaren."
 
-#: ../frozen-bubble:2787
+#: ../frozen-bubble:3386
 msgid "*** Verify your network setup or retry later"
 msgstr "*** Kontroller at nettverket er rett sett opp, eller prøv på nytt seinare."
 
-#: ../frozen-bubble:2820
+#: ../frozen-bubble:3425
 #, perl-format
 msgid "Available players:%s  Ping:%sms"
 msgstr "Tilgjengelege spelarar: %s  Ping: %s ms"
 
-#: ../frozen-bubble:2857
+#: ../frozen-bubble:3472
 msgid "*** No available game server"
 msgstr "*** Ingen speltenar tilgjengeleg."
 
-#: ../frozen-bubble:2858
+#: ../frozen-bubble:3473
 msgid "*** Please retry later or try a local network game (lan game)"
 msgstr "*** Prøv på nytt seinare, eller prøv eit lokalnettspel."
 
-#: ../frozen-bubble:2865
+#: ../frozen-bubble:3479
 msgid "*** Please choose a server"
 msgstr "*** Vel tenar."
 
-#: ../frozen-bubble:2926
+#: ../frozen-bubble:3538
+msgid "*** Impossible to connect to specified server, going back to server list"
+msgstr "*** Klarte ikkje kopla til vald tenar. Går tilbake til tenaroversikta."
+
+#: ../frozen-bubble:3541
 #, perl-format
 msgid "*** Connected to server '%s'"
 msgstr "*** Kopla til tenaren «%s»."
 
-#: ../frozen-bubble:3042 ../frozen-bubble:3215 ../frozen-bubble:3314
+#: ../frozen-bubble:3565
+msgid ""
+"*** Sorry, your computer or the network is too slow, giving up - press any "
+"key"
+msgstr "*** Maskina di eller nettverket er for sakte. Gjev opp. Trykk ein tast."
+
+#: ../frozen-bubble:3709 ../frozen-bubble:4045 ../frozen-bubble:4194
 msgid "Chat"
 msgstr "Prat"
 
-#: ../frozen-bubble:3043
+#: ../frozen-bubble:3710
 msgid "Create new game"
-msgstr "Lag nytt spel"
+msgstr "Start nytt spel"
 
-#: ../frozen-bubble:3080
+#: ../frozen-bubble:3759
 msgid "Say: "
 msgstr "Sei: "
 
-#: ../frozen-bubble:3093
-#, perl-format
-msgid "Join game: %s"
-msgstr "Bli med: %s"
-
-#: ../frozen-bubble:3108
+#: ../frozen-bubble:3764
 #, perl-format
 msgid "Available Players: %s"
 msgstr "Tilgjengelege spelarar: %s"
 
-#: ../frozen-bubble:3132
-msgid "*** Leaving game..."
-msgstr "*** Koplar frå spel …"
+#: ../frozen-bubble:3801
+#, perl-format
+msgid "Join game: %s"
+msgstr "Bli med: %s"
 
-#: ../frozen-bubble:3203
+#: ../frozen-bubble:3820
+msgid "*** Players listening: "
+msgstr "*** Spelarar som lyttar: "
+
+#: ../frozen-bubble:3837
+msgid ""
+"*** Please wait, retrieving your geographical location from http://hostip."
+"info/..."
+msgstr ""
+"*** Vent litt mens det verta henta geografisk informasjon frå http://hostip."
+"info/…"
+
+#: ../frozen-bubble:3845
+msgid "*** Done - you can now create or join a game"
+msgstr "*** Ferdig. Du kan no starta eit nytt spel, eller verta med i eit eksisterande."
+
+#: ../frozen-bubble:3847
+msgid "*** hostip.info doesn't know the geographical location of your IP address"
+msgstr "*** hostip.info kjenner ikkje til den geografiske plasseringa til IP-adressa di."
+
+#: ../frozen-bubble:3848
+msgid ""
+"*** If you want that your location appears on the map, fix your entry at "
+"http://hostip.info/"
+msgstr "*** Viss du ønskjer at plasseringa skal visast på kartet, kan du ordna oppføringa di på http://hostip.info/."
+
+#: ../frozen-bubble:3855
+msgid "*** hostip.info didn't reply within 5 seconds, giving up"
+msgstr "*** hostip.info svarte ikkje innan fem sekund. Gjev opp."
+
+#: ../frozen-bubble:3902
+msgid "*** Leaving game..."
+msgstr "*** Koplar frå spelet …"
+
+#: ../frozen-bubble:3955
+#, perl-format
+msgid "*** You are now known as %s"
+msgstr "*** Du heiter no «%s»."
+
+#: ../frozen-bubble:3958
+msgid "*** Erroneous nickname"
+msgstr "*** Ugyldig kallenamn."
+
+#: ../frozen-bubble:3969
+msgid "*** Sado-masochist, hmm?"
+msgstr "*** Å! Ein sadomasokist!"
+
+#: ../frozen-bubble:3970
+msgid "*** You like when it hurts, don't you?"
+msgstr "*** Godt er vondt, eller kva?"
+
+#: ../frozen-bubble:3971
+msgid "*** Your butt already hurts enough! Stop that!"
+msgstr "*** Du begynner å verta alvorleg sår bak. Hald opp!"
+
+#: ../frozen-bubble:3975
+#, perl-format
+msgid "*** Can't kick %s: no such player in game"
+msgstr "*** Kan ikkje sparka %s: Det finst ingen med det namnet."
+
+#: ../frozen-bubble:3977
+#, perl-format
+msgid "*** Can't kick %s: '%s'"
+msgstr "*** Kan ikkje sparka %s: «%s»"
+
+#: ../frozen-bubble:3982
+#, perl-format
+msgid "*** Available commands: %s"
+msgstr "*** Tilgjengelege kommandoar: %s"
+
+#: ../frozen-bubble:3983
+#, perl-format
+msgid "%s <action>"
+msgstr "%s <handling>"
+
+#: ../frozen-bubble:3983
+#, perl-format
+msgid "%s <nick>"
+msgstr "%s <kallenamn>"
+
+#: ../frozen-bubble:3984
+#, perl-format
+msgid "%s <new_nick>"
+msgstr "%s <nytt kallenamn>"
+
+#: ../frozen-bubble:3987
+#, perl-format
+msgid "*** Unknown command. Try %s for help."
+msgstr "*** Ugyldig kommando. Skriv «%s» for hjelp."
+
+#: ../frozen-bubble:4023
+msgid ""
+"*** Open games already full. Join an existing game, or select a different "
+"server."
+msgstr "*** Dei opne spela er allereie fulle. Bli med i eit eksisterande spel, eller vel ein annan tenar."
+
+#: ../frozen-bubble:4026
+#, perl-format
+msgid "*** Failure: '%s'"
+msgstr "*** Feil: «%s»"
+
+#: ../frozen-bubble:4032
 msgid "*** Game created - now you need to wait for players to join"
 msgstr "*** Starta spel. Du må no venta på at andre spelarar skal verta med."
 
-#: ../frozen-bubble:3205
+#: ../frozen-bubble:4035
 msgid "*** Joined game"
 msgstr "*** Kopla til spel."
 
-#: ../frozen-bubble:3212
+#: ../frozen-bubble:4042
 msgid "*** Error: game just started or aborted"
 msgstr "*** Feil: Spelet er nett starta, eller er avbrote."
 
-#: ../frozen-bubble:3224
+#: ../frozen-bubble:4055
 #, perl-format
 msgid "*** Can't start game: '%s'"
 msgstr "*** Klarte ikkje starta spel: «%s»"
 
-#: ../frozen-bubble:3254
+#: ../frozen-bubble:4108
 #, perl-format
 msgid "*** %s joined the game!"
 msgstr "*** %s vart no med i spelet."
 
-#: ../frozen-bubble:3257
+#: ../frozen-bubble:4113
+msgid "*** Game creator left the game..."
+msgstr "*** Spelutviklaren kopla no frå spelet …"
+
+#: ../frozen-bubble:4118
 #, perl-format
 msgid "*** %s left the game..."
 msgstr "*** %s kopla no frå spelet …"
 
-#: ../frozen-bubble:3300
-msgid "*** Lost connection to server, abandoning..."
-msgstr "*** Mista samband til tenar. Avsluttar …"
+#: ../frozen-bubble:4123
+#, perl-format
+msgid "*** %s was kicked out of the game..."
+msgstr "*** %s vart sparka frå spelet …"
 
-#: ../frozen-bubble:3313
+#: ../frozen-bubble:4128
+msgid "*** You were kicked out of the game..."
+msgstr "*** Du vart sparka frå spelet …"
+
+#: ../frozen-bubble:4133
+msgid "*** You were disconnected because of too long inactivity"
+msgstr "*** Du vart kopla frå, då du var for lenge inaktiv."
+
+#: ../frozen-bubble:4178
+msgid "*** Lost connection to server, abandoning - press any key"
+msgstr "*** Mista sambandet til tenaren. Avsluttar. Trykk ein tast."
+
+#: ../frozen-bubble:4193
 #, perl-format
 msgid "Players in game: %s"
 msgstr "Spelarar i spelet: %s"
 
-#: ../frozen-bubble:3315
+#: ../frozen-bubble:4195
 msgid "Start game!"
 msgstr "Start spel!"
 
-#: ../frozen-bubble:3327
+#: ../frozen-bubble:4207
 #, perl-format
 msgid "*** Game finished, because the following player(s) left: %s"
-msgstr "*** Spel avslutta, då følgjande spelar(ar) kopla frå: %s"
+msgstr "*** Spelet vart avslutta, då følgjande spelar(ar) kopla frå: %s"
 
-#: ../frozen-bubble:3331
+#: ../frozen-bubble:4209
+#, perl-format
+msgid "*** Addicted for: %s"
+msgstr "*** Avhengig i: %s"
+
+#: ../frozen-bubble:4212
 #, perl-format
 msgid "*** Winner: %s"
 msgstr "*** Vinnar: %s"
 
-#: ../frozen-bubble:3333
+#: ../frozen-bubble:4214
 msgid "*** Draw game!"
 msgstr "*** Uavgjort!"
 
-#: ../frozen-bubble:3335
+#: ../frozen-bubble:4216
 #, perl-format
 msgid "*** Scores: %s"
 msgstr "*** Poeng: %s"
 
-#: ../frozen-bubble:3383
+#: ../frozen-bubble:4230
+msgid ""
+"*** Cannot connect to specified gameserver, fallbacking to contacting master "
+"server"
+msgstr "*** Klarte ikkje kopla til vald speltenar. Går tilbake til hovudtenaren."
+
+#: ../frozen-bubble:4264
 msgid "2-player game"
 msgstr "2-spelarspel"
 
-#: ../frozen-bubble:3383
+#: ../frozen-bubble:4264
 msgid "Enable chain-reaction?"
 msgstr "Vil du slå på kjedereaksjonar?"
 
-#: ../frozen-bubble:3384
+#: ../frozen-bubble:4265
 #, perl-format
 msgid "%s or %s?"
 msgstr "«%s» eller «%s»:"
 
-#: ../frozen-bubble:3385
+#: ../frozen-bubble:4266
 msgid "Enjoy the game!"
 msgstr "Kos deg!"
 
-#: ../frozen-bubble:3423
+#: ../frozen-bubble:4312 ../frozen-bubble:4340
 msgid "Congratulations!"
 msgstr "Gratulerer!"
 
-#: ../frozen-bubble:3423
+#: ../frozen-bubble:4312 ../frozen-bubble:4340
 msgid "You have a highscore!"
 msgstr "Du fekk ny rekord!"
 
-#: ../frozen-bubble:3424
+#: ../frozen-bubble:4313 ../frozen-bubble:4341
 msgid "Your name?"
 msgstr "Namnet ditt:"
 
-#: ../frozen-bubble:3425
+#: ../frozen-bubble:4314 ../frozen-bubble:4342
 msgid "Great game!"
 msgstr "Flott spelt!"
 
-#: ../frozen-bubble:3744
+#: ../frozen-bubble:4461
 msgid "Please enter new keys:"
 msgstr "Vel nye speltastar"
 
-#: ../frozen-bubble:3746
+#: ../frozen-bubble:4463
 msgid "Player 1; turn left?"
 msgstr "Spelar 1 – venstre:"
 
-#: ../frozen-bubble:3747
+#: ../frozen-bubble:4464
 msgid "Player 1; turn right?"
 msgstr "Spelar 1 – høgre:"
 
-#: ../frozen-bubble:3748
+#: ../frozen-bubble:4465
 msgid "Player 1; fire?"
 msgstr "Spelar 1 – skyt:"
 
-#: ../frozen-bubble:3749
+#: ../frozen-bubble:4466
 msgid "Player 1; center?"
 msgstr "Spelar 1 – midtstill:"
 
-#: ../frozen-bubble:3751
+#: ../frozen-bubble:4468
 msgid "Player 2; turn left?"
 msgstr "Spelar 2 – venstre:"
 
-#: ../frozen-bubble:3752
+#: ../frozen-bubble:4469
 msgid "Player 2; turn right?"
 msgstr "Spelar 2 – høgre:"
 
-#: ../frozen-bubble:3753
+#: ../frozen-bubble:4470
 msgid "Player 2; fire?"
 msgstr "Spelar 2 – skyt:"
 
-#: ../frozen-bubble:3754
+#: ../frozen-bubble:4471
 msgid "Player 2; center?"
 msgstr "Spelar 2 – midtstill:"
 
-#: ../frozen-bubble:3756
+#: ../frozen-bubble:4473
 msgid "Toggle fullscreen?"
 msgstr "Fullskjerm:"
 
-#: ../frozen-bubble:3757
+#: ../frozen-bubble:4474
 msgid "Chat (net/lan game)?"
 msgstr "Prat (i nettverksspel):"
 
-#: ../frozen-bubble:3759
+#: ../frozen-bubble:4476
 msgid "Thanks!"
 msgstr "Takk!"
+
 
