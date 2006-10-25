@@ -496,7 +496,7 @@ static void help(void)
         printf("     -a lang                   set the preferred language of the server (it is just an indication used by players when choosing a server, so that they can chat using their native language - you can choose none with -z)\n");
         printf("     -z                        set that there is no preferred language for the server (see -a)\n");
         printf("     -g gracetime              set the gracetime after which a client with no network activity is terminated (in seconds, defaults to %d)\n", DEFAULT_GRACETIME);
-        printf("     -b IP1,IP2,IP3..          set the list of blacklisted IPs");
+        printf("     -b IP1,IP2,IP3..          set the list of blacklisted IPs\n");
         printf("     -c conffile               specify the path of the configuration file\n");
 }
 
