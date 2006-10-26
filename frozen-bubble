@@ -2031,42 +2031,29 @@ sub update_game() {
 
         } else {
             $event->pump while $event->poll != 0;
-            print "$pdata{state}\n";
             #- mp game only state when we're trying to figure out if this is not a draw game
             
             if (my $msg = fb_net::grecv_get1msg_ifdata()) {
                 my $result = decode_postgame_message($msg);
-                print "msg: $result\n";
                 if ($result =~ /^(\S+) finished (\S+)/) {
-                    print "\tfinish msg\n";
                     my $remote_winner_nick = $2;
                     if ($remote_winner_nick ne $supposed_winner_nick) {
-                        print "\tdisagree, draw\n";
                         #- players don't agree with who won the game, this is a draw game
                         lose($supposed_winner_player);
                         $pdata{state} = "won ";
                     } else {
-                        print "\tagree..\n";
                         if (every { $pdata{$_}{still_game_messages} == 0 } @PLAYERS) {
-                            print "\tok, finish with $supposed_winner_player\n";
                             win($supposed_winner_player);
                             $pdata{state} = "won $supposed_winner_player";
-                        } else {
-                            print "\twaiting for: ";
-                            $pdata{$_}{still_game_messages} and print "$_ " foreach @PLAYERS;
-                            print "\n";
                         }
                     }
                 } elsif ($result =~ /^(\S+) other/) {
-                    print "finished state - $1 sends post-finish non-newgame $msg->{msg} - passing hand to won\n";
                     $pdata{$pdata{id2p}{$msg->{id}}}{left} = 1;
                     win($supposed_winner_player);
                     $pdata{state} = "won $supposed_winner_player";
                 } elsif ($result !~ /^(\S+) gamemsg/) {
-                    print "finished state, delaying $msg->{msg}\n";
                     fb_net::gdelay_messages($msg);
                 }
-                print "\tstate: $pdata{state}\n";
                 
             } else {
                 check_mp_connection();
@@ -2163,7 +2150,6 @@ sub update_game() {
                         if ($result =~ /^(\S+) newgame/) {
                             $mp_newgame->();
                         } elsif ($result =~ /^(\S+) other/) {
-                            print "quitting this game: $1 sends post-finish non-newgame $msg->{msg}\n";
                             $pdata{$pdata{id2p}{$msg->{id}}}{left} = 1;
                             die 'quit';
                         }
