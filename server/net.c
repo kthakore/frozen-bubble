@@ -89,6 +89,7 @@ static char* external_hostname = "DISTANT_END";
 static int external_port = -1;
 
 static char* blacklisted_IPs = NULL;
+char* pidfile = NULL;
 
 static GList * conns = NULL;
 static GList * conns_prio = NULL;
@@ -495,6 +496,7 @@ static void help(void)
         printf("     -z                        set that there is no preferred language for the server (see -a)\n");
         printf("     -g gracetime              set the gracetime after which a client with no network activity is terminated (in seconds, defaults to %d)\n", DEFAULT_GRACETIME);
         printf("     -b IP1,IP2,IP3..          set the list of blacklisted IPs\n");
+        printf("     -f pidfile                set the file in which the pid of the daemon must be written\n");
         printf("     -c conffile               specify the path of the configuration file\n");
 }
 
@@ -650,6 +652,9 @@ static void handle_parameter(char command, char * param) {
         case 'b':
                 blacklisted_IPs = asprintf_(",%s", param);
                 break;
+        case 'f':
+                pidfile = strdup(param);
+                break;
         default:
                 fprintf(stderr, "unrecognized option %c, ignoring\n", command);
         }
@@ -661,7 +666,7 @@ void create_server(int argc, char **argv)
         int valone = 1;
 
         while (1) {
-                int c = getopt(argc, argv, "hn:lLp:u:t:o:c:dqH:P:a:zg:b:");
+                int c = getopt(argc, argv, "hn:lLp:u:t:o:c:dqH:P:a:zg:b:f:");
                 if (c == -1)
                         break;
                 

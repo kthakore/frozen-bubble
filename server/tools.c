@@ -197,6 +197,18 @@ void daemonize() {
                 exit(EXIT_FAILURE);
         }
         if (pid > 0) {
+                // Save pid if needed
+                if (pidfile != NULL) {
+                        FILE* f = fopen(pidfile, "w");
+                        if (f == NULL) {
+                                l2(OUTPUT_TYPE_ERROR, "Cannot open pidfile '%s' for writing: %s", pidfile, strerror(errno));
+                        } else {
+                                char* pid_s = asprintf_("%d\n", pid);
+                                fwrite(pid_s, 1, strlen(pid_s), f);
+                                fclose(f);
+                                free(pid_s);
+                        }
+                }
                 // Need to register from a separate process because master server will test us
                 register_server();
                 exit(EXIT_SUCCESS);
