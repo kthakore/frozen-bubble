@@ -4873,8 +4873,10 @@ sub replay {
     if ($playdata =~ /\.bz2$/) {
         local *F;
         local $/ = undef;
-        open(F, "bzcat '$playdata'|" ) or die("Can't open '$playdata': $!");
+        my $filename = $playdata;
+        open(F, "bzcat '$filename'|" ) or print("Can't open '$filename': $!\n"), return;
         $playdata = <F>;
+        $playdata or print("Could not bzcat '$filename', not displaying playback.\n"), return;
     } else {
         $playdata = cat_($playdata);
     }
