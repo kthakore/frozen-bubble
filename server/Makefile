@@ -1,8 +1,8 @@
 PREFIX = /usr/local
 LIBDIR = $(PREFIX)/lib
 
-CFLAGS ?= -g -Wall -Werror -pipe `glib-config --cflags`
-LIBS ?= `glib-config --libs`
+CFLAGS ?= -g -Wall -Werror -pipe `pkg-config glib-2.0 --cflags`
+LIBS ?= `pkg-config glib-2.0 --libs`
 
 ALLSRC = fb-server.c log.c tools.c game.c net.c
 ALLOBJ = $(subst .c,.o,$(ALLSRC))
