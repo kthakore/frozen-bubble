@@ -2342,9 +2342,11 @@ sub rect {
     my ($rect) = @_;
     return $surfstyle eq 'hashref' ? $rect->{-rect} : $$rect;
 }
+our $evtstyle;
 sub evt {
     my ($evt) = @_;
-    return $surfstyle eq 'hashref' ? $evt->{-event} : $$evt;
+    $evtstyle ||= UNIVERSAL::isa($evt, 'HASH') ? 'hashref' : 'scalarref';
+    return $evtstyle eq 'hashref' ? $evt->{-event} : $$evt;
 }
 
 sub init_game() {
