@@ -106,7 +106,7 @@ msgstr "Nivel de azar"
 #: ../frozen-bubble:1618
 #, perl-format
 msgid "Score: %s"
-msgstr "Puntuaciones: %s"
+msgstr "Puntuación: %s"
 
 #: ../frozen-bubble:1619
 #, perl-format
@@ -498,7 +498,7 @@ msgstr "Jugador 2; ¿centrar?"
 
 #: ../frozen-bubble:4473
 msgid "Toggle fullscreen?"
-msgstr "¿Activar modo pantalla completa?"
+msgstr "¿Activar pantalla completa?"
 
 #: ../frozen-bubble:4474
 msgid "Chat (net/lan game)?"

@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2006-10-18 13:37+0200\n"
-"PO-Revision-Date: 2006-10-23 09:07+0400\n"
+"PO-Revision-Date: 2006-10-27 00:09+0400\n"
 "Last-Translator: Andrey 'Dragon' Vlasov <dragon1020@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -102,7 +102,7 @@ msgstr "Вероятно задержка слишком велика."
 
 #: ../frozen-bubble:1617
 msgid "Random level"
-msgstr "Случайный уровень"
+msgstr "Случайный"
 
 #: ../frozen-bubble:1618
 #, perl-format
