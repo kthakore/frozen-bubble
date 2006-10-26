@@ -219,7 +219,7 @@ static void handle_incoming_data_generic(gpointer data, gpointer user_data, int 
                                         conn_terminated(fd, "too much data without LF");
                                         return;
                                 }
-                                l2(OUTPUT_TYPE_DEBUG, "[%zd] ****** buffering %d bytes", fd, len);
+                                l2(OUTPUT_TYPE_DEBUG, "[%d] buffering %zd bytes (this is normal)", fd, len);
                                 memcpy(incoming_data_buffers[fd], buf, len);
                                 incoming_data_buffers_count[fd] = len;
                                 return;
