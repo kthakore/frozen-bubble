@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: sl\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2006-10-18 13:37+0200\n"
-"PO-Revision-Date: 2006-10-25 21:58+0200\n"
+"PO-Revision-Date: 2006-10-26 22:42+0200\n"
 "Last-Translator: Marko Burjek <email4marko@gmail.com>\n"
 "Language-Team:  <sl@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -104,7 +104,7 @@ msgstr "Vaš lag je najverjetneje previsok."
 
 #: ../frozen-bubble:1617
 msgid "Random level"
-msgstr "Naključna stopnja"
+msgstr "Naključen nivo"
 
 #: ../frozen-bubble:1618
 #, perl-format
@@ -114,7 +114,7 @@ msgstr "Točke: %s"
 #: ../frozen-bubble:1619
 #, perl-format
 msgid "Level %s"
-msgstr "Stopnja %s"
+msgstr "Nivo %s"
 
 #: ../frozen-bubble:1788
 msgid "Draw game!"
@@ -131,7 +131,7 @@ msgstr "zmaga!"
 #: ../frozen-bubble:2802
 #, perl-format
 msgid "level %s"
-msgstr "stopnja %s"
+msgstr "nivo %s"
 
 #: ../frozen-bubble:2905
 msgid "left"
@@ -231,7 +231,7 @@ msgstr "*** Omrežje ali pa računalnik je žal prepočasno - pritisnite katerok
 
 #: ../frozen-bubble:3709 ../frozen-bubble:4045 ../frozen-bubble:4194
 msgid "Chat"
-msgstr "Pomenek"
+msgstr "Klepet"
 
 #: ../frozen-bubble:3710
 msgid "Create new game"
@@ -508,11 +508,11 @@ msgstr "Igralec 2; center?"
 
 #: ../frozen-bubble:4473
 msgid "Toggle fullscreen?"
-msgstr "Preklopi celozaslonski način?"
+msgstr "Preklopi celoten zaslon?"
 
 #: ../frozen-bubble:4474
 msgid "Chat (net/lan game)?"
-msgstr "Pomenek(internet/LAN igra)?"
+msgstr "Klepet (internet/LAN)?"
 
 #: ../frozen-bubble:4476
 msgid "Thanks!"

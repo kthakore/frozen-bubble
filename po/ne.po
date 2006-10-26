@@ -126,11 +126,6 @@ msgstr "समन्बयन हरायो !"
 msgid "won!"
 msgstr "जितियो!"
 
-#: ../frozen-bubble:2802
-#, perl-format
-msgid "Level %s"
-msgstr "%s तह"
-
 #: ../frozen-bubble:2905
 msgid "left"
 msgstr "वांया"
@@ -437,8 +432,7 @@ msgstr "*** नतिजा: %s"
 msgid ""
 "*** Cannot connect to specified gameserver, fallbacking to contacting master "
 "server"
-msgstr "*** तोकिएको गेमसर्भरसँग संपर्क हुन सकेन, फेरी मुख्य सर्भरसँग संपर्क स्थापना गर्दै । 
-"
+msgstr "*** तोकिएको गेमसर्भरसँग संपर्क हुन सकेन, फेरी मुख्य सर्भरसँग संपर्क स्थापना गर्दै ।"
 
 #: ../frozen-bubble:4264
 msgid "2-player game"
