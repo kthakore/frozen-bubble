@@ -28,6 +28,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <glib.h>
+#include <pwd.h>
 
 #include "tools.h"
 #include "log.h"
@@ -214,7 +215,18 @@ void daemonize() {
                 register_server();
                 exit(EXIT_SUCCESS);
         }
-        
+
+        // Switch to specified used if needed
+        if (user_to_switch != NULL) {
+                struct passwd* user = getpwnam(user_to_switch);
+                if (user) {
+                        setgid(user->pw_gid);
+                        setuid(user->pw_uid);
+                } else {
+                        l2(OUTPUT_TYPE_ERROR, "Cannot switch user to %s: %s", user_to_switch, strerror(errno));
+                }
+        }
+
         // Don't stay orphan
         sid = setsid();
         if (sid < 0) {

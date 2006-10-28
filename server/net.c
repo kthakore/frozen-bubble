@@ -38,6 +38,7 @@
 #include <poll.h>
 #include <sys/utsname.h>
 #include <sys/time.h>
+#include <pwd.h>
 
 #include <glib.h>
 
@@ -90,6 +91,7 @@ static int external_port = -1;
 
 static char* blacklisted_IPs = NULL;
 char* pidfile = NULL;
+char* user_to_switch = NULL;
 
 static GList * conns = NULL;
 static GList * conns_prio = NULL;
@@ -487,7 +489,7 @@ static void help(void)
         printf("     -p port                   set the server port (defaults to %d)\n", DEFAULT_PORT);
         printf("     -H host                   set the hostname (or IP) as seen from outside (by default, when registering the server to www.frozen-bubble.org, the distant end at IP level will be used)\n");
         printf("     -P port                   set the server port as seen from outside (defaults to the port specified with -p)\n");
-        printf("     -u max_users              set the maximum of connected users (defaults to %d, physical maximum 255 in non debug mode)\n", DEFAULT_MAX_USERS);
+        printf("     -m max_users              set the maximum of connected users (defaults to %d, physical maximum 255 in non debug mode)\n", DEFAULT_MAX_USERS);
         printf("     -t max_transmission_rate  set the maximum transmission rate, in bytes per second (defaults to %d)\n", DEFAULT_MAX_TRANSMISSION_RATE);
         printf("     -o outputtype             set the output type; can be DEBUG, CONNECT, INFO, ERROR; each level includes messages of next level; defaults to INFO\n");
         printf("     -d                        debug mode: do not daemonize, and log on STDERR rather than through syslog (implies -q)\n");
@@ -497,6 +499,7 @@ static void help(void)
         printf("     -g gracetime              set the gracetime after which a client with no network activity is terminated (in seconds, defaults to %d)\n", DEFAULT_GRACETIME);
         printf("     -b IP1,IP2,IP3..          set the list of blacklisted IPs\n");
         printf("     -f pidfile                set the file in which the pid of the daemon must be written\n");
+        printf("     -u user                   switch daemon to specified user\n");
         printf("     -c conffile               specify the path of the configuration file\n");
 }
 
@@ -578,12 +581,12 @@ static void handle_parameter(char command, char * param) {
                         fprintf(stderr, "-p: %s not convertible to int, ignoring\n", param);
                 }
                 break;
-        case 'u':
+        case 'm':
                 max_users = charstar_to_int(param);
                 if (max_users > 0 && max_users <= 255)
-                        printf("-u: setting maximum users to %d\n", max_users);
+                        printf("-m: setting maximum users to %d\n", max_users);
                 else {
-                        fprintf(stderr, "-u: %s not convertible to int or not in 1..255, ignoring\n", param);
+                        fprintf(stderr, "-m: %s not convertible to int or not in 1..255, ignoring\n", param);
                         max_users = DEFAULT_MAX_USERS;
                 }
                 break;
@@ -650,13 +653,23 @@ static void handle_parameter(char command, char * param) {
                 }
                 break;
         case 'b':
+                printf("-b: blacklisted IPs: %s\n", param);
                 blacklisted_IPs = asprintf_(",%s", param);
                 break;
         case 'f':
+                printf("-f: will store pid of daemon into file '%s'\n", param);
                 pidfile = strdup(param);
                 break;
+        case 'u':
+                if (getpwnam(param) != NULL) {
+                        printf("-u: will switch user of daemon to '%s'\n", param);
+                        user_to_switch = strdup(param);
+                } else {
+                        fprintf(stderr, "-u: '%s' is not a valid user, ignoring\n", param);
+                }
+                break;
         default:
-                fprintf(stderr, "unrecognized option %c, ignoring\n", command);
+                fprintf(stderr, "unrecognized option '%c', ignoring\n", command);
         }
 }
 
@@ -666,7 +679,7 @@ void create_server(int argc, char **argv)
         int valone = 1;
 
         while (1) {
-                int c = getopt(argc, argv, "hn:lLp:u:t:o:c:dqH:P:a:zg:b:f:");
+                int c = getopt(argc, argv, "hn:lLp:m:t:o:c:dqH:P:a:zg:b:f:u:");
                 if (c == -1)
                         break;
                 
