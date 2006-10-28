@@ -33,7 +33,7 @@ use vars qw(@ISA @EXPORT $FPATH $FLPATH $FBLEVELS $colourblind %POS_1P %POS_2P %
              fold_left output append_to_file min max backtrace basename cp_af all partition ssort
              sum put_in_hash mapn mapn_ fastuniq deep_copy t);
 
-$version = '2.0.0';
+$version = '2.0.1';
 
 $FPATH = '@DATADIR@/frozen-bubble';
 $FLPATH = '@LIBDIR@/frozen-bubble';
