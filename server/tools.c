@@ -204,7 +204,8 @@ void daemonize() {
                                 l2(OUTPUT_TYPE_ERROR, "Cannot open pidfile '%s' for writing: %s", pidfile, strerror(errno));
                         } else {
                                 char* pid_s = asprintf_("%d\n", pid);
-                                fwrite(pid_s, 1, strlen(pid_s), f);
+                                if (fwrite(pid_s, 1, strlen(pid_s), f) < strlen(pid_s))
+                                        l1(OUTPUT_TYPE_ERROR, "Error writing pidfile to '%s'", pidfile);
                                 fclose(f);
                                 free(pid_s);
                         }

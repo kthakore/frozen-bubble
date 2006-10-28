@@ -1377,6 +1377,17 @@ sub display_levelset_list_browser {
     $app->flip;
 }
 
+our $surfstyle;
+sub surf {
+    my ($surface) = @_;
+    $surfstyle ||= UNIVERSAL::isa($surface, 'HASH') ? 'hashref' : 'scalarref';
+    return $surfstyle eq 'hashref' ? $surface->{-surface} : $$surface;
+}
+sub rect {
+    my ($rect) = @_;
+    return $surfstyle eq 'hashref' ? $rect->{-rect} : $$rect;
+}
+
 # display a scrrenshot (1/4 size) of the first level in a levelset on the current dialog
 sub display_levelset_screenshot {
 
@@ -1428,7 +1439,7 @@ sub display_levelset_screenshot {
             load_level($s, $nb, %ls);
             my $dest = SDL::Surface->new(-width => $rect{screenshot}->width / 4, -height => $rect{screenshot}->height / 4,
                                          -depth => 32, -Amask => "0 but true");
-            fb_c_stuff::shrink($dest->{-surface}, $s->{-surface}, 0, 0, $rect{screenshot}{-rect}, 4);
+            fb_c_stuff::shrink(surf($dest), surf($s), 0, 0, rect($rect{screenshot}), 4);
             $shrinks{$name}{$nb} = $dest;
         }
     }

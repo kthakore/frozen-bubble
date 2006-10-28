@@ -819,7 +819,12 @@ static char * http_get(char * host, int port, char * path)
         user_agent = asprintf_("Frozen-Bubble server version " VERSION " (protocol version %d.%d) on %s/%s\n", proto_major, proto_minor, uname_.sysname, uname_.machine);
         buf = asprintf_("GET %s HTTP/0.9\r\nHost: %s\r\nUser-Agent: %s\r\n\r\n", path, host, user_agent);
         free(user_agent);
-	write(sock, buf, strlen(buf));
+	if (write(sock, buf, strlen(buf)) != strlen(buf)) {
+                close(sock);
+                free(buf);
+                l2(OUTPUT_TYPE_ERROR, "HTTP_GET: cannot write to socket for connection to %s:%d", host, port);
+		return NULL;
+        }
         free(buf);
 
 	/* This is fun (well, fun for ewt); read the response a character at a time until we:
