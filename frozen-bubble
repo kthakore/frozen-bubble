@@ -2293,13 +2293,20 @@ sub update_game() {
 
 #- ----------- init stuff -------------------------------------------------
 
+our $init_step = 0;
 sub print_step($) {
     my ($txt) = @_;
     print $txt;
-    my $step if 0; $step ||= 0;
-    put_image($imgbin{loading_step}, 100 + $step*12, 10);
+    $event->pump;
+    while ($event->poll != 0) {
+        if ($event->type == SDL_QUIT
+            || $event->type == SDL_KEYDOWN && $event->key_sym == SDLK_ESCAPE) {
+            exit 0;
+        }
+    }
+    put_image($imgbin{loading_step}, 100 + $init_step*12, 10);
     $app->flip;
-    $step++;
+    $init_step++;
 }
 
 sub load_levelset {
