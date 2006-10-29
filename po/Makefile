@@ -14,7 +14,7 @@ all: $(MOFILES)
 
 $(PGOAL).pot: $(PL_FILES)
 	rm -f $@
-	xgettext --keyword=t --language=perl --default-domain=frozen-bubble -o $@ $(PL_FILES)
+	xgettext --keyword=t --language=perl --default-domain=frozen-bubble --from-code=UTF-8 -o $@ $(PL_FILES)
 
 merge: $(PGOAL).pot
 	@for n in $(POFILES); do \
