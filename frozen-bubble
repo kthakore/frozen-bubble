@@ -261,7 +261,7 @@ sub play_music($) {
 	    -f $elem or return 0;
 	    push @playlist, $elem;
 	    $mus = SDL::Music->new($elem);
-	    if ((UNIVERSAL::isa($mus, 'HASH') && $mus->{-data}) || $$mus) {
+	    if (UNIVERSAL::isa($mus, 'HASH') ? $mus->{-data} : $$mus) {
 		print STDERR "[Playlist] playing `$elem'\n";
 		$mixer->play_music($mus, 0);
 		return 1;
@@ -273,7 +273,7 @@ sub play_music($) {
 	while ($tryanother->() == 0) {};
     } else {
 	$mus = SDL::Music->new("$FPATH$musics{$name}");
-        if ((UNIVERSAL::isa($mus, 'HASH') && $mus->{-data}) || $$mus) {
+        if (UNIVERSAL::isa($mus, 'HASH') ? $mus->{-data} : $$mus) {
             $mixer->play_music($mus, -1);
             $music{current} = $name;
         } else {
@@ -294,7 +294,7 @@ sub init_sound() {
     foreach (@sounds) {
 	my $sound_path = "$FPATH/snd/$_.ogg";
 	$sound{$_} = SDL::Sound->new($sound_path);
-	if ((UNIVERSAL::isa($sound{$_}, 'HASH') && $sound{$_}{-data}) || ${$sound{$_}}) {
+	if (UNIVERSAL::isa($sound{$_}, 'HASH') ? $sound{$_}{-data} : ${$sound{$_}}) {
 	    $sound{$_}->volume(80);
 	} else {
 	    print STDERR "Warning, could not create new sound from `$sound_path'.\n";
