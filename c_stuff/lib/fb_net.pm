@@ -31,7 +31,7 @@ use Time::HiRes qw(gettimeofday sleep);
 use fb_stuff;
 
 our $proto_major = '1';
-our $proto_minor = '0';
+our $proto_minor = '1';
 
 my $udp_server_port = 1511;  #- a.k.a 0xF 0xB thx misc
 $SIG{PIPE} = 'IGNORE';  #- stupid send/write low-level API sending SIGPIPE when server closes connection, and stupid Perl

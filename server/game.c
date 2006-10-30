@@ -96,6 +96,25 @@ static char* list_game(const struct game * g)
         return memdup(list_game_str, strlen(list_game_str) + 1);
 }
 
+// calculate the list of players for a given game with geolocation
+static char* list_game_with_geolocation(const struct game * g)
+{
+        char list_game_str[8192] = "";
+        int i;
+        char* n;
+        for (i = 0; i < g->players_number; i++) {
+                strconcat(list_game_str, g->players_nick[i], sizeof(list_game_str));
+                n = geoloc[g->players_conn[i]];
+                if (n != NULL) {
+                        strconcat(list_game_str, ":", sizeof(list_game_str));
+                        strconcat(list_game_str, n, sizeof(list_game_str));
+                }
+                if (i < g->players_number - 1)
+                        strconcat(list_game_str, ",", sizeof(list_game_str));
+        }
+        return memdup(list_game_str, strlen(list_game_str) + 1);
+}
+
 static char list_games_str[16384] __attribute__((aligned(4096))) = "";
 static int players_in_game;
 static int games_open;
@@ -130,6 +149,9 @@ static void list_games_aux(gpointer data, gpointer user_data)
                 return;
         }
 }
+/* Game list is of the following scheme:
+ * <list-of-open-players format="NICK|NICK:GEOLOC"> [<list-of-open-games format=<list-of-players format="NICK">>] free:%d games:%d playing:%d
+ */
 void calculate_list_games(void)
 {
         char * free_players;
@@ -369,6 +391,18 @@ static void status(int fd, char* msg)
         }
 }
 
+static void status_geo(int fd, char* msg)
+{
+        struct game * g = find_game_by_fd(fd);
+        if (g) {
+                char* game = list_game_with_geolocation(g);
+                send_line_log(fd, game, msg);
+                free(game);
+        } else {
+                send_line_log(fd, wn_not_in_game, msg);
+        }
+}
+
 static gboolean nick_available_aux(gconstpointer data, gconstpointer user_data)
 {
         const struct game* g = data;
@@ -563,11 +597,17 @@ int process_msg(int fd, char* msg)
                 }
         } else if (streq(current_command, "LIST")) {
                 send_line_log(fd, list_games_str, msg_orig);
-        } else if (streq(current_command, "STATUS")) {
+        } else if (streq(current_command, "STATUS")) {  // 1.0 command
                 if (!already_in_game(fd)) {
                         send_line_log(fd, wn_not_in_game, msg_orig);
                 } else {
                         status(fd, msg_orig);
+                }
+        } else if (streq(current_command, "STATUSGEO")) {
+                if (!already_in_game(fd)) {
+                        send_line_log(fd, wn_not_in_game, msg_orig);
+                } else {
+                        status_geo(fd, msg_orig);
                 }
         } else if (streq(current_command, "TALK")) {
                 if (!args) {

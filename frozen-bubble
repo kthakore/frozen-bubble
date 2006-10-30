@@ -4158,8 +4158,18 @@ sub smg_choose_game() {
 
         if ($need4update) {
             if ($state ne 'game_select') {
-                $players_in_game = fb_net::send_and_receive('STATUS');
-                @wholist = split /,/, $players_in_game;
+                my $status = fb_net::send_and_receive('STATUSGEO');
+                if ($status eq 'UNKNOWN_COMMAND') {
+                    $status = fb_net::send_and_receive('STATUS');  #- 1.0 server
+                }
+                @wholist = ();
+                @geolocs = ();
+                foreach (split ',', $status) {
+                    my ($nick, undef, $latitude, $longitude) = $_ =~ /([^:]+)(:([^:]+):([^:]+))?/;
+                    push @wholist, $nick;
+                    $latitude && $latitude =~ /^-?\d+\.?\d*$/ && $longitude =~ /^-?\d+\.?\d*$/ and push @geolocs, [ $latitude, $longitude ];
+                }
+                $players_in_game = join ', ', @wholist;
                 @actions = { name => t("Chat"), action => 'CHAT', selected => 1 };
                 $can_start && $players_in_game =~ /,/ and push @actions, { name => t("Start game!"), action => 'START' };
             }

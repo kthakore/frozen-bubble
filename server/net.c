@@ -52,7 +52,7 @@
 char* current_command;
 
 const int proto_major = 1;
-const int proto_minor = 0;
+const int proto_minor = 1;
 
 static char greets_msg_base[] = "SERVER_READY %s %s";
 static char* servername = NULL;
