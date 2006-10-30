@@ -3993,6 +3993,10 @@ sub smg_choose_game() {
                             } elsif ($answer eq 'ALREADY_MAX_OPEN_GAMES') {
                                 smg_add_status_msg(t("*** Open games already full. Join an existing game, or select a different server."));
                                 goto not_in_game;
+                            } elsif ($curaction->()->{action} eq 'JOIN' && $answer eq 'NO_SUCH_GAME') {
+                                smg_add_status_msg(t("*** Error: game just started or aborted"));
+                                $list->();
+                                goto not_in_game;
                             } elsif ($answer) {
                                 smg_add_status_msg(t("*** Failure: '%s'", $answer));
                                 goto not_in_game;
@@ -4009,14 +4013,10 @@ sub smg_choose_game() {
                                 last;
                             }
                         }
-                        if ($answer) {
-                            smg_add_status_msg(t("*** Error: game just started or aborted"));
-                        } else {
-                            $erase->();
-                            @actions = { name => t("Chat"), action => 'CHAT', selected => 1 };
-                            $state = 'wait_for_start';
-                            $need4update = 1;
-                        }
+                        $erase->();
+                        @actions = { name => t("Chat"), action => 'CHAT', selected => 1 };
+                        $state = 'wait_for_start';
+                        $need4update = 1;
                     }
                   not_in_game:
                             
