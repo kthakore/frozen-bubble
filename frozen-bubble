@@ -3516,83 +3516,87 @@ sub smg_verify_command($;$) {
     }
 }
 
+our (@entry_typed, $entry_position, $entry_echo_blink_counter);
 sub callback_entry {
-    my ($action, $params) = @_;
-    my @typed if 0;
-    my $position if 0;
-    my $echo_blink_counter if 0;
+    my ($action, $params, @rest) = @_;
     if ($action eq 'reset') {
-        @typed = ();
-        $position = 0;
-        $echo_blink_counter = 51;
+        @entry_typed = ();
+        $entry_position = 0;
+        $entry_echo_blink_counter = 51;
     }
     if ($action eq 'moved') {
-        $echo_blink_counter = 75;
+        $entry_echo_blink_counter = 75;
     }
     if ($action eq 'keypressed') {
         if ($params->{event}->key_sym == SDLK_BACKSPACE()) {
-            if ($position >= 1) {
-                splice @typed, $position - 1, 1;
-                $position--;
+            if ($entry_position >= 1) {
+                splice @entry_typed, $entry_position - 1, 1;
+                $entry_position--;
                 $no_echo or play_sound('typewriter');
             } else {
                 play_sound('stick');
             }
         } elsif ($params->{event}->key_sym == SDLK_DELETE()) {
-            if ($position < $#typed + 1) {
-                splice @typed, $position, 1;
+            if ($entry_position < $#entry_typed + 1) {
+                splice @entry_typed, $entry_position, 1;
                 $no_echo or play_sound('typewriter');
             } else {
                 play_sound('stick');
             }
         } elsif ($params->{event}->key_sym == SDLK_LEFT()) {
-            if ($position >= 1) {
-                $position--;
+            if ($entry_position >= 1) {
+                $entry_position--;
                 $no_echo or play_sound('typewriter');
             } else {
                 play_sound('stick');
             }
         } elsif ($params->{event}->key_sym == SDLK_RIGHT()) {
-            if ($position <= $#typed) {
-                $position++;
+            if ($entry_position <= $#entry_typed) {
+                $entry_position++;
                 $no_echo or play_sound('typewriter');
             } else {
                 play_sound('stick');
             }
         } elsif ($params->{event}->key_sym == SDLK_HOME()) {
-            $position = 0;
+            $entry_position = 0;
             $no_echo or play_sound('typewriter');
         } elsif ($params->{event}->key_sym == SDLK_END()) {
-            $position = $#typed + 1;
+            $entry_position = $#entry_typed + 1;
             $no_echo or play_sound('typewriter');
         } elsif ($params->{event}->key_sym == SDLK_TAB()) {
             if (my $completion = $params->{completion}) {
-                @typed = $completion->(@typed);
-                $position = $#typed + 1;
+                @entry_typed = $completion->(@entry_typed);
+                $entry_position = $#entry_typed + 1;
             }
         } else {
             my $utf8char = fb_c_stuff::utf8key(evt($params->{event}));
             if ($utf8char ne '' && $utf8char ne "\n") {
-                splice @typed, $position, 0, $utf8char;
-                if (width($params->{font}, $params->{prefix} . join('', @typed)) >= $params->{maxlen}) {
-                    splice @typed, $position, 1;
+                splice @entry_typed, $entry_position, 0, $utf8char;
+                if (width($params->{font}, $params->{prefix} . join('', @entry_typed)) >= $params->{maxlen}) {
+                    splice @entry_typed, $entry_position, 1;
                     play_sound('stick');
                 } else {
-                    $position++;
+                    $entry_position++;
                     $no_echo or play_sound('typewriter');
                 }
             }
         }
     }
     if ($action eq 'gettext') {
-        return @typed;
+        return @entry_typed;
+    }
+    if ($action eq 'settext') {
+        @entry_typed = ($params, @rest);
+        $entry_position = $#entry_typed + 1;
+        $entry_echo_blink_counter = 51;
+        $no_echo or play_sound('typewriter');
     }
     if ($action eq 'print') {
         $params->{maxlen} or die("need maxlen\n".backtrace());
-        print_($params->{font}, $app, $params->{xpos}, $params->{ypos}, $params->{prefix} . join('', @typed), $params->{maxlen});
-        if ($echo_blink_counter > 25) {
-            my @before_echo = @typed;
-            splice @before_echo, $position;
+        print_($params->{font}, $app, $params->{xpos}, $params->{ypos}, $params->{prefix} . join('', @entry_typed), $params->{maxlen});
+        if ($entry_echo_blink_counter > 25) {
+            my @before_echo = @entry_typed;
+            splice @before_echo, $entry_position;
             my $width = width($params->{font}, $params->{prefix} . join('', @before_echo)) + ( $is_rtl ? 3 : -3 );
             if ($is_rtl) {
                 print_($params->{font}, $app, $params->{xpos} + $params->{maxlen} - $width, $params->{ypos}, '|');
@@ -3602,9 +3606,9 @@ sub callback_entry {
         }
     }
     if ($action eq 'ping') {
-        $echo_blink_counter--;
-        $echo_blink_counter or $echo_blink_counter = 50;
-        return $echo_blink_counter == 50 || $echo_blink_counter == 25;
+        $entry_echo_blink_counter--;
+        $entry_echo_blink_counter or $entry_echo_blink_counter = 50;
+        return $entry_echo_blink_counter == 50 || $entry_echo_blink_counter == 25;
     }
 }
 
@@ -3813,6 +3817,8 @@ sub smg_choose_game() {
     my $relist;
     my $can_start = 0;
     my $joined_leader;
+    my @history;
+    my $history_position;
     $list->();
     @wholist > 1 and $list_players->();
 
@@ -3865,32 +3871,52 @@ sub smg_choose_game() {
                     $redraw->();
 
                 } elsif ($k eq SDLK_DOWN()) {
-                    each_index {
-                        if ($actions[$::i]->{selected}
-                            && $::i < @actions - 1) {
-                            $actions[$::i]->{selected} = 0;
-                            $actions[$::i+1]->{selected} = 1;
-                            play_sound('menu_change');
-                            goto done2;
+                    if ($curaction->()->{action} eq 'CHAT' && $history_position <= $#history) {
+                        $history_position++;
+                        if ($history_position > $#history) {
+                            callback_entry('reset');
+                        } else {
+                            callback_entry('settext', @{$history[$history_position]});
                         }
-                    } @actions;
-                  done2:
-
-                } elsif ($k eq SDLK_UP()) {
-                    if (!$actions[0]->{selected}) {
+                    } else {
                         each_index {
-                            if ($actions[$::i]->{selected}) {
+                            if ($actions[$::i]->{selected}
+                                && $::i < @actions - 1) {
                                 $actions[$::i]->{selected} = 0;
-                                $actions[$::i-1]->{selected} = 1;
+                                $actions[$::i+1]->{selected} = 1;
                                 play_sound('menu_change');
+                                goto done2;
                             }
                         } @actions;
+                      done2:
+                    }
+
+                } elsif ($k eq SDLK_UP()) {
+                    if ($curaction->()->{action} eq 'CHAT') {
+                        $history_position--;
+                        if ($history_position == -1) {
+                            $history_position = 0;
+                        } else {
+                            callback_entry('settext', @{$history[$history_position]});
+                        }
+                    } else {
+                        if (!$actions[0]->{selected}) {
+                            each_index {
+                                if ($actions[$::i]->{selected}) {
+                                    $actions[$::i]->{selected} = 0;
+                                    $actions[$::i-1]->{selected} = 1;
+                                    play_sound('menu_change');
+                                }
+                            } @actions;
+                        }
                     }
 
                 } elsif ($k eq SDLK_RETURN() || $k eq SDLK_KP_ENTER()) {
                     if ($curaction->()->{action} eq 'CHAT' && callback_entry('gettext') > 0) {
                         play_sound('menu_selected');
                         my $text = join('', callback_entry('gettext'));
+                        push @history, [ callback_entry('gettext') ];
+                        $history_position = $#history + 1;
                         if ($text =~ m|^/me (.*)| || $text =~ m|^/action (.*)|) {
                             $text = "* $mynick $1";
                         } elsif ($text =~ m|^/nick (.*)| && !$ingame) {
