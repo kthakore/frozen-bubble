@@ -1340,13 +1340,12 @@ sub handle_game_events() {
         if ($keypressed) {
 
             if (is_mp_game() && $pdata{p1}{chatting}) {
-
                 if (($keypressed eq SDLK_RETURN() || $keypressed eq SDLK_KP_ENTER())) {
                     if (callback_entry('gettext') > 0) {
                         fb_net::gsend('t' . join('', callback_entry('gettext')));
                     }
                     cleanup_chatting();
-                } elsif (!member($keypressed, SDLK_RETURN(), SDLK_KP_ENTER(), SDLK_TAB())) {
+                } elsif ($event->type == SDL_KEYDOWN && !member($keypressed, SDLK_RETURN(), SDLK_KP_ENTER(), SDLK_TAB())) {
                     callback_entry('keypressed', { event => $event, maxlen => $imgbin{void_chat}->width - 30, font => 'ingame_chat' });
                     callback_entry('moved');
                     update_say_mp();
