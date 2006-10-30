@@ -15,7 +15,7 @@ dirs:
 	@if ! perl -e 'use SDL'; then echo -e "\n    *** I need perl-SDL installed"; false; fi
 	@if ! perl -e 'use SDL; ($$mj, $$mn, $$mc) = split /\./, $$SDL::VERSION; exit 0 if $$mj > 1 || $$mn >= 19; exit 1'; then echo -e "\n    *** I need perl-SDL version 1.19.0 or upper"; false; fi
 	@for n in . $(DIRS); do \
-		[ "$$n" = "." ] || $(MAKE) -C $$n ;\
+		[ "$$n" = "." ] || $(MAKE) -C $$n || exit $$? ;\
 	done
 	@if [ ! -d save_virgin ]; then mkdir save_virgin; cp c_stuff/lib/fb_stuff.pm save_virgin; fi
 	cp -f save_virgin/fb_stuff.pm c_stuff/lib/fb_stuff.pm

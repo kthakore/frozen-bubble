@@ -1,8 +1,9 @@
 PREFIX = /usr/local
 LIBDIR = $(PREFIX)/lib
 
-CFLAGS ?= -g -Wall -Werror -pipe `pkg-config glib-2.0 --cflags`
-LIBS ?= `pkg-config glib-2.0 --libs`
+CFLAGS ?= -g -Wall -Werror -pipe
+CPPFLAGS += -I. `pkg-config glib-2.0 --cflags` -DVERSION=\"$(shell cat ../VERSION)\"
+LDLIBS = `pkg-config glib-2.0 --libs`
 
 ALLSRC = fb-server.c log.c tools.c game.c net.c
 ALLOBJ = $(subst .c,.o,$(ALLSRC))
@@ -16,10 +17,6 @@ endif
 all: .depend fb-server
 
 fb-server: $(ALLOBJ)
-	$(CC) $(LIBS) -o $@ $^
-
-.c.o:
-	$(CC) -I. $(CFLAGS) -DVERSION=\"$(shell cat ../VERSION)\" -c $<
 
 clean: 
 	rm -f fb-server *.o .depend
@@ -29,7 +26,7 @@ install:
 	install fb-server $(DESTDIR)$(LIBDIR)/frozen-bubble
 
 .depend:
-	$(CPP) $(CFLAGS) -M $(ALLSRC) > .depend
+	$(CPP) $(CFLAGS) $(CPPFLAGS) -M $(ALLSRC) > .depend
 
 ifeq (.depend,$(wildcard .depend))
 include .depend
