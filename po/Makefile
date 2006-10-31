@@ -32,7 +32,7 @@ install: $(MOFILES)
 		echo install $$n $(DESTDIR)$(LOCALEDIR)/`echo $$n | sed -e 's/.mo//'`/LC_MESSAGES/frozen-bubble.mo; \
 		install -d $(DESTDIR)$(LOCALEDIR)/`echo $$n | sed -e 's/.mo//'`; \
 		install -d $(DESTDIR)$(LOCALEDIR)/`echo $$n | sed -e 's/.mo//'`/LC_MESSAGES; \
-		install $$n $(DESTDIR)$(LOCALEDIR)/`echo $$n | sed -e 's/.mo//'`/LC_MESSAGES/frozen-bubble.mo; \
+		install -m 0644 $$n $(DESTDIR)$(LOCALEDIR)/`echo $$n | sed -e 's/.mo//'`/LC_MESSAGES/frozen-bubble.mo; \
 	done
 
 clean:
