@@ -1,17 +1,17 @@
-# SOME DESCRIPTIVE TITLE.
-# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
-# This file is distributed under the same license as the PACKAGE package.
-# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+# Русский перевод для Frozen-Bubble
+# Copyright (C) 2006
+# This file is distributed under the same license as the Frozen-Bubble package.
+# Andrey 'Dragon' Vlasov <dragon1020 at gmail dot com>.
 #
 
 msgid ""
 msgstr ""
-"Project-Id-Version: PACKAGE VERSION\n"
+"Project-Id-Version: 2.0.0\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2006-10-18 13:37+0200\n"
-"PO-Revision-Date: 2006-10-27 00:09+0400\n"
-"Last-Translator: Andrey 'Dragon' Vlasov <dragon1020@gmail.com>\n"
-"Language-Team: LANGUAGE <LL@li.org>\n"
+"PO-Revision-Date: 2006-10-31 22:03+0400\n"
+"Last-Translator: Andrey 'Dragon' Vlasov <dragon1020 at gmail dot com>\n"
+"Language-Team: Russian\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -124,7 +124,7 @@ msgstr "Потеряна синхронизация!"
 
 #: ../frozen-bubble:2802
 msgid "won!"
-msgstr "выиграл(а)!"
+msgstr "победитель!"
 
 #: ../frozen-bubble:2802
 #, perl-format
@@ -263,7 +263,7 @@ msgid ""
 "info/..."
 msgstr ""
 "*** Ждите, идет получение информации о вашем местоположении с"
-"http://hostip.info/..."
+" http://hostip.info/..."
 
 #: ../frozen-bubble:3845
 msgid "*** Done - you can now create or join a game"
@@ -280,7 +280,7 @@ msgid ""
 "*** If you want that your location appears on the map, fix your entry at "
 "http://hostip.info/"
 msgstr ""
-"*** Если вы хотите, чтобы ваше местоположение отображалось на карте,"
+"*** Если вы хотите, чтобы ваше местоположение отображалось на карте, "
 "вы можете исправить запись на http://hostip.info/"
 
 #: ../frozen-bubble:3855
@@ -352,7 +352,7 @@ msgid ""
 "*** Open games already full. Join an existing game, or select a different "
 "server."
 msgstr ""
-"*** Исчерпан лимит количества игр. Войдите в уже созданную игру, или"
+"*** Исчерпан лимит количества игр. Войдите в уже созданную игру, или "
 "выберите другой сервер."
 
 #: ../frozen-bubble:4026
@@ -446,7 +446,7 @@ msgid ""
 "*** Cannot connect to specified gameserver, fallbacking to contacting master "
 "server"
 msgstr ""
-"*** Не удается соединиться с указанным сервером. Соединяемся с главным"
+"*** Не удается соединиться с указанным сервером. Соединяемся с главным "
 "сервером"
 
 #: ../frozen-bubble:4264
