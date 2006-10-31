@@ -3730,8 +3730,10 @@ sub smg_choose_game() {
     
     my @wholist;
     my $list = sub {
+        my ($firsttime) = @_;
         $state eq 'game_select' or return;
         my @games;
+        my @old_wholist = @wholist;
         eval {
             ($free_players, undef, my $freenicks, @games) = fb_net::list();
             @wholist = ();
@@ -3743,6 +3745,40 @@ sub smg_choose_game() {
             }
         };
         $@ and return;
+
+        if (!$firsttime) {
+            my @joined = sort(difference2(\@wholist, \@old_wholist));
+            my @left = sort(difference2(\@old_wholist, \@wholist));
+            if (@left == 1) {
+                smg_add_status_msg(t("*** %s has left the chat room", @left));
+            } else {
+                my $send = t("*** Several players left this chat room: ");
+                while (@left) {
+                    $send .= shift @left;
+                    if (!@left || width('netdialogs', $send) >= 520) {
+                        smg_add_status_msg($send);
+                        $send = '*** ';
+                    } else {
+                        $send .= ',';
+                    }
+                }
+            }
+            if (@joined == 1) {
+                smg_add_status_msg(t("*** %s has joined the chat room", @joined));
+            } else {
+                my $send = t("*** Several players joined this chat room: ");
+                while (@joined) {
+                    $send .= shift @joined;
+                    if (!@joined || width('netdialogs', $send) >= 520) {
+                        smg_add_status_msg($send);
+                        $send = '*** ';
+                    } else {
+                        $send .= ',';
+                    }
+                }
+            }
+        }
+        
         my ($join, $rest) = partition { $_->{action} eq 'JOIN' } @actions;
         $_->{ok} = 0 foreach @$join;
       listgames:
@@ -3766,16 +3802,20 @@ sub smg_choose_game() {
     };
 
     my $list_players = sub {
-        my @list = sort @wholist;
-        my $send = t("*** Players listening: ");
-        while (@list) {
-            $send .= shift @list;
-            if (!@list || width('netdialogs', $send) >= 520) {
-                smg_add_status_msg($send);
-                $send = '*** ';
-            } else {
-                $send .= ',';
+        if (@wholist > 1) {
+            my @list = sort @wholist;
+            my $send = t("*** Players listening: ");
+            while (@list) {
+                $send .= shift @list;
+                if (!@list || width('netdialogs', $send) >= 520) {
+                    smg_add_status_msg($send);
+                    $send = '*** ';
+                } else {
+                    $send .= ',';
+                }
             }
+        } else {
+            smg_add_status_msg(t("*** No one's listening here"));
         }
     };
 
@@ -3818,8 +3858,8 @@ sub smg_choose_game() {
     my $joined_leader;
     my @history;
     my $history_position;
-    $list->();
-    @wholist > 1 and $list_players->();
+    $list->('first time');
+    $list_players->();
 
     while (1) {
         $relist++;
@@ -3966,6 +4006,7 @@ sub smg_choose_game() {
                         }
                         if ($text) {
                             fb_net::send_("TALK $text");
+                            @wholist == 1 and smg_add_status_msg(t("*** No one's listening here"));
                         }
                         callback_entry('reset');
                     }
