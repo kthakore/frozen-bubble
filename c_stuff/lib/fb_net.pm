@@ -247,15 +247,17 @@ sub join($$) {
     }
 }
 
-my ($current_host, $current_port);
+my ($current_name, $current_host, $current_port);
 sub connect {
     my ($host, $port) = @_;
 
     my $perform_ping = 1;
+    my $tried_name;
     if (!defined $host) {
         #- reconnect
         $host = $current_host;
         $port = $current_port;
+        $tried_name = $current_name;
         $perform_ping = 0;
     } elsif (!defined $port) {
         #- first param was a hash
@@ -264,6 +266,7 @@ sub connect {
         $port = $params->{port};
         $ping = $params->{ping};
         $perform_ping = 0;
+        $tried_name = $params->{name};
     }
 
     $current_host = $current_port = undef;
@@ -344,9 +347,16 @@ sub connect {
 
     $current_host = $host;
     $current_port = $port;
+    $current_name = $tried_name;
     return { ping => $ping, name => $servername, language => $serverlanguage };
 }
 
+sub current_server_name() {
+    return $current_name;
+}
+sub current_server_hostport() {
+    return "$current_host:$current_port";
+}
 
 my @messages;
 sub reconnect() {
@@ -372,7 +382,7 @@ sub http_download($) {
     $sock->autoflush;
 
     my ($sysname, undef, undef, undef, $machine) = uname();
-    my $bytes = syswrite($sock, join("\r\n" =>
+    my $bytes = syswrite($sock, join("\r\n",
                                      "GET $path HTTP/1.0",
                                      "Host: $host:$port",
                                      "User-Agent: Frozen-Bubble client version $version (protocol version $proto_major.$proto_minor) on $sysname/$machine",
