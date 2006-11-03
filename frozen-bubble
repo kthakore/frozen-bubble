@@ -3413,7 +3413,7 @@ sub smg_choose_server(@) {
             fb_net::disconnect();
             push @scanned_servers, $server;
             my ($down, $available) = partition { $_->{disabled} } @scanned_servers;
-            my $weightfunc = sub { my $base = $_[0]->{players} - $_[0]->{ping}/10; $_[0]->{playing} < 100 ? $base + $_[0]->{playing}/3 : $base - $_[0]->{playing}/3; };
+            my $weightfunc = sub { my $base = $_[0]->{players} - $_[0]->{ping}/50; $_[0]->{playing} < 100 ? $base + $_[0]->{playing}/3 : $base - $_[0]->{playing}/3; };
             @sorted_servers = sort { $weightfunc->($b) <=> $weightfunc->($a) } @$available;
             if (@sorted_servers > $max_lines) {
                 $#sorted_servers = $max_lines - 1;
