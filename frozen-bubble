@@ -42,7 +42,8 @@ use vars qw($TARGET_ANIM_SPEED $BUBBLE_SIZE $ROW_SIZE $LAUNCHER_SPEED $BUBBLE_SP
             $shooter_lowgfx $sdl_flags $mixer $mixer_enabled $music_disabled $sfx_disabled $no_echo @playlist %sound %music %pinguin %canon $autorecord $comment
             $graphics_level @update_rects $CANON_ROTATIONS_NB %malus_bubble %falling_bubble %exploding_bubble %malus_gfx %pangocontext $private $no_time_limit
             %sticking_bubble $time %imgbin $TIME_HURRY_WARN $TIME_HURRY_MAX $TIMEOUT_PINGUIN_SLEEP $FREE_FALL_CONSTANT @joysticks $joysticksinfo
-            $direct @PLAYERS @ALL_PLAYERS %levels $display_on_app_disabled $total_time $time_1pgame $time_netgame $fullscreen $rcfile %hiscorefiles $HISCORES $HISCORES_MPTRAIN
+            $direct @PLAYERS @ALL_PLAYERS %levels $display_on_app_disabled $total_time $time_1pgame $time_netgame $fullscreen $rcfile %hiscorefiles
+            $HISCORES $HISCORES_MPTRAIN $HISCORES_MPTRAIN_CHAINREACTION
             $lev_number $playermalus $mptrainingdiff $loaded_levelset $direct_levelset $chainreaction %chains %img_mini $frame $sock $gameserver $mynick);
 
 use Getopt::Long;
@@ -89,6 +90,7 @@ $chainreaction = 0;
 $mynick = $ENV{USER};
 $HISCORES = [];
 $HISCORES_MPTRAIN = [];
+$HISCORES_MPTRAIN_CHAINREACTION = [];
 
 $rcfile = "$ENV{HOME}/.fbrc";
 my $keys_orig = $KEYS;
@@ -2755,19 +2757,34 @@ sub display_highscores {
         grab_key() eq SDLK_ESCAPE() and return;
     }
 
-    if (($type eq 'mptrain' || !defined($type)) && @$HISCORES_MPTRAIN) {
+    if (($type eq 'mptrain' || !defined($type)) && (@$HISCORES_MPTRAIN || @$HISCORES_MPTRAIN_CHAINREACTION)) {
         $imgbin{back_hiscores}->blit($apprects{main}, $app, $apprects{main});
         put_image($imgbin{hiscore_mptraining}, 640 - 10 - $imgbin{hiscore_mptraining}->width, 8);
 
-        my %parts = (rank => { xpos => 230, width => 40 },
-                     name => { xpos => 270, width => 150 });
+        print_('menu', $app, 0, 50, t("Regular"), 320, 'center');
+        my %parts = (rank => { xpos => 80, width => 40 },
+                     name => { xpos => 120, width => 150 });
         if ($is_rtl) {
             $parts{$_}{xpos} = 640 - $parts{$_}{xpos} - $parts{$_}{width} foreach keys %parts;
         }
-
-        my $y = 50;
+        my $y = 80;
         my $counter = 1;
         foreach my $high (ordered_mptrain_highscores()) {
+            print_('menu', $app, $parts{rank}{xpos}, $y, "$counter. ", $parts{rank}{width}, 'right');
+            print_('menu', $app, $parts{name}{xpos}, $y, "$high->{name}: $high->{score}", $parts{name}{width});
+            $y += $smg_lineheight + 2;
+            $counter++;
+        }
+
+        print_('menu', $app, 320, 50, t("Chain-reaction enabled"), 320, 'center');
+        %parts = (rank => { xpos => 420, width => 40 },
+                  name => { xpos => 460, width => 150 });
+        if ($is_rtl) {
+            $parts{$_}{xpos} = 640 - $parts{$_}{xpos} - $parts{$_}{width} foreach keys %parts;
+        }
+        $y = 80;
+        my $counter = 1;
+        foreach my $high (ordered_mptrain_highscores_chainreaction()) {
             print_('menu', $app, $parts{rank}{xpos}, $y, "$counter. ", $parts{rank}{width}, 'right');
             print_('menu', $app, $parts{name}{xpos}, $y, "$high->{name}: $high->{score}", $parts{name}{width});
             $y += $smg_lineheight + 2;
@@ -3187,6 +3204,11 @@ sub choose_1p_game_mode() {
                         $levels{current} = 'random';
                     } elsif ($ordered_names[$active_menu] eq 'mp_train') {
                         $levels{current} = 'mp_train';
+                        my $answ;
+                        ask_from({ intro => [ t("Multiplayer training"), '', '', t("Enable chain-reaction?"), '' ],
+                                   entries => [ { 'q' => t("%s or %s?", 'Y', 'N'), 'a' => \$answ, f => 'ONE_CHAR' } ],
+                                   outro => t("Enjoy the game!") }) or return;
+                        $chainreaction = $answ == SDLK_y; #;;
                     }
                     $cancel or return 1;
                 } elsif ($event->key_sym == SDLK_ESCAPE) {
@@ -4319,6 +4341,7 @@ sub lvl_cmp($$) { $_[0] eq 'WON' ? ($_[1] eq 'WON' ? 0 : 1) : ($_[1] eq 'WON' ? 
 
 sub ordered_highscores { return sort { lvl_cmp($b->{level}, $a->{level}) || $a->{time} <=> $b->{time} } @$HISCORES }
 sub ordered_mptrain_highscores { return sort { $b->{score} <=> $a->{score} } @$HISCORES_MPTRAIN }
+sub ordered_mptrain_highscores_chainreaction { return sort { $b->{score} <=> $a->{score} } @$HISCORES_MPTRAIN_CHAINREACTION }
 
 sub handle_new_hiscores() {
     is_1p_game() && $levels{current} && $levels{current} ne 'random' && !$playdata or return;
@@ -4358,9 +4381,15 @@ sub handle_new_hiscores() {
 
     } else {
         #- mp training hiscores
-        my @ordered = ordered_mptrain_highscores();
+        my @ordered;
+        if ($chainreaction) {
+            @ordered = ordered_mptrain_highscores_chainreaction();
+        } else {
+            @ordered = ordered_mptrain_highscores();
+        }
+        my $scores = $chainreaction ? $HISCORES_MPTRAIN_CHAINREACTION : $HISCORES_MPTRAIN;
         my $worst = pop @ordered;
-        if (@$HISCORES_MPTRAIN == 20 && $pdata{p1}{score} < $worst->{score}) {
+        if (@$scores == 20 && $pdata{p1}{score} < $worst->{score}) {
             return;
         }
         play_sound('applause');
@@ -4375,13 +4404,14 @@ sub handle_new_hiscores() {
 
         return if $new_entry{name} eq '';
 
-        push @$HISCORES_MPTRAIN, \%new_entry;
-        if (@$HISCORES_MPTRAIN == 21) {
+        push @$scores, \%new_entry;
+        if (@$scores == 21) {
             my @high = ordered_mptrain_highscores();
             pop @high;
-            $HISCORES_MPTRAIN = \@high;
+            $scores = \@high;
         }
-        output($hiscorefiles{mptrain}, Data::Dumper->Dump([$HISCORES_MPTRAIN], [qw(HISCORES_MPTRAIN)]));
+        output($hiscorefiles{mptrain}, Data::Dumper->Dump([$HISCORES_MPTRAIN], [qw(HISCORES_MPTRAIN)]) . ' ' .
+                                       Data::Dumper->Dump([$HISCORES_MPTRAIN_CHAINREACTION], [qw(HISCORES_MPTRAIN_CHAINREACTION)]));
         display_highscores('mptrain');
     }
 }
