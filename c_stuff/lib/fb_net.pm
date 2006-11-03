@@ -208,16 +208,17 @@ sub send_and_receive($;$) {
 
 sub list() {
     my $msg = send_and_receive('LIST');
-    if ($msg =~ /(\S*) (\S*) free:(\d+) games:(\d+)/) {
+    if ($msg =~ /(\S*) (\S*) free:(\d+) games:(\d+) playing:(\d+)/) {
         my $freenicks = $1;
         my $freegames = $2;
         my $free = $3;
         my $games = $4;
+        my $playing = $5;
         my @games;
         while ($freegames =~ /\[([^\]]+)\]/g) {
             push @games, [ split /,/, $1 ];
         }
-        return ($free, $games, $freenicks, @games);
+        return ($free, $games, $freenicks, $playing, @games);
     } else {
         return;
     }

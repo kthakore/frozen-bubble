@@ -1398,9 +1398,13 @@ sub handle_game_events() {
                             }
                             my $keypressed = extended_keypress($event);
                             if ($keypressed) {
-                                last pause_label if $event->key_sym ne $KEYS->{misc}{fs};
-                                $fullscreen = !$fullscreen;
-                                $app->fullscreen;
+                                if ($keypressed eq $KEYS->{misc}{fs}) {
+                                    $fullscreen = !$fullscreen;
+                                    $app->fullscreen;
+                                }
+                                if (member($keypressed, SDLK_PAUSE, SDLK_ESCAPE, SDLK_RETURN, SDLK_SPACE)) {
+                                    last pause_label;
+                                }
                             }
                         }
                         if (++$index == @{$imgbin{paused}}) {
@@ -1417,6 +1421,7 @@ sub handle_game_events() {
                     $total_time += $app->ticks - $time_pause;
                     is_1p_game() and $time_1pgame += $app->ticks - $time_pause;
                     $levels{current} eq 'mp_train' and $pdata{origticks} += $app->ticks - $time_pause;
+                    return;
                 }
 
                 if (is_mp_game()) {
@@ -3350,8 +3355,8 @@ sub smg_choose_server(@) {
         $imgbin{back_netgame}->blit($drect, $app, $drect);
 
         my %parts = (flag =>    { xpos => $smg_startx,                    width => 30 },
-                     name =>    { xpos => $smg_startx + 30 + 4,           width => 164 },
-                     details => { xpos => $smg_startx + 30 + 4 + 164 + 4, width => 300 });
+                     name =>    { xpos => $smg_startx + 30 + 4,           width => 120 },
+                     details => { xpos => $smg_startx + 30 + 4 + 120 + 4, width => 344 });
         if ($is_rtl) {
             $parts{$_}{xpos} = 640 - $parts{$_}{xpos} - $parts{$_}{width} foreach keys %parts;
         }
@@ -3362,7 +3367,7 @@ sub smg_choose_server(@) {
             }
             exists $imgbin{flag}{$server->{language}} and put_image($imgbin{flag}{$server->{language}}, $parts{flag}{xpos}, $y);
             print_('netdialogs', $app, $parts{name}{xpos}, $y, $server->{name}, $parts{name}{width}, $is_rtl ? 'right' : 'left');  #- ASCII
-            my $details = t("Available players:%s  Ping:%sms", i18n_number($server->{players}), i18n_number($server->{ping}));
+            my $details = t("Available players: %s (playing: %s) Ping: %sms", i18n_number($server->{players}), i18n_number($server->{playing}), i18n_number($server->{ping}));
             print_('netdialogs', $app, $parts{details}{xpos}, $y, $details, $parts{details}{width});
             my $pingimg = $server->{ping} < 50 ? "ping_low" : $server->{ping} < 100 ? "ping_mid" : "ping_high";
             put_image($imgbin{$pingimg}, $is_rtl ? $parts{details}{xpos} + $parts{details}{width} - width('netdialogs', $details) - 17
@@ -3380,13 +3385,14 @@ sub smg_choose_server(@) {
             if (!$ret->{ping}) {
                 $server->{disabled} = $ret->{failure};
             } else {
-                ($server->{players}) = fb_net::list();
+                ($server->{players}, undef, undef, $server->{playing}) = fb_net::list();
             }
             put_in_hash($server, $ret);
             fb_net::disconnect();
             push @scanned_servers, $server;
             my ($down, $available) = partition { $_->{disabled} } @scanned_servers;
-            @sorted_servers = sort { $a->{ping} <=> $b->{ping} } @$available;
+            my $weightfunc = sub { my $base = $_[0]->{players} - $_[0]->{ping}/10; $_[0]->{playing} < 100 ? $base + $_[0]->{playing}/3 : $base - $_[0]->{playing}/3; };
+            @sorted_servers = sort { $weightfunc->($b) <=> $weightfunc->($a) } @$available;
             if (@sorted_servers > $max_lines) {
                 $#sorted_servers = $max_lines - 1;
                 last;
@@ -3735,7 +3741,7 @@ sub smg_choose_game() {
         my @games;
         my @old_wholist = @wholist;
         eval {
-            ($free_players, undef, my $freenicks, @games) = fb_net::list();
+            ($free_players, undef, my $freenicks, undef, @games) = fb_net::list();
             @wholist = ();
             @geolocs = ();
             foreach (split ',', $freenicks) {
