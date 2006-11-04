@@ -2561,7 +2561,8 @@ sub init_game() {
 
     #- net game setup images
     $imgbin{back_netgame} = add_image('back_netgame.png');
-    $imgbin{netspot} = add_image('netspot.png');
+    $imgbin{netspot_free} = add_image('netspot.png');
+    $imgbin{netspot_playing} = add_image('netspot-playing.png');
     $imgbin{netspot_self} = [ map { add_image("netspot-self-$_.png") } qw(1 2 3 4 5 6 7 8 9 A B C D) ];
 
     #- hiscore
@@ -3650,8 +3651,8 @@ sub get_spot_location {
 }
 
 sub print_spot {
-    my ($latitude, $longitude, $surface, $back) = @_;
-    $surface ||= $imgbin{netspot};
+    my ($latitude, $longitude, $kind, $surface, $back) = @_;
+    $surface ||= $kind eq 'free' ? $imgbin{netspot_free} : $imgbin{netspot_playing};
     my ($x, $y) = get_spot_location($latitude, $longitude);
     $x -= $surface->width/2;
     $y -= $surface->height/2;
@@ -3701,7 +3702,7 @@ sub smg_choose_game() {
         $imgbin{back_netgame}->blit($drect, $app, $drect);
     };
     callback_entry('reset');
-    my @geolocs;
+    my (@free_geolocs, @playing_geolocs);
     my $index_selfspot = 0;
     my $back_selfspot;
     my $free_players;
@@ -3711,10 +3712,11 @@ sub smg_choose_game() {
         $erase->();
 
         #- geoloc spots
-        print_spot($_->[0], $_->[1]) foreach @geolocs;
+        print_spot($_->[0], $_->[1], 'free') foreach @free_geolocs;
+        print_spot($_->[0], $_->[1], 'playing') foreach @playing_geolocs;
         $back_selfspot = undef;
         if ($mylatitude && $index_selfspot >= 0) {
-            print_spot($mylatitude, $mylongitude, $imgbin{netspot_self}[$index_selfspot], \$back_selfspot);
+            print_spot($mylatitude, $mylongitude, 'free', $imgbin{netspot_self}[$index_selfspot], \$back_selfspot);
         }
         
         #- actions (chat, joins, create)
@@ -3746,7 +3748,7 @@ sub smg_choose_game() {
     };
     my $print_selfspot = sub {
         if ($mylatitude) {
-            $index_selfspot >= 0 and print_spot($mylatitude, $mylongitude, $imgbin{netspot_self}[$index_selfspot], \$back_selfspot);
+            $index_selfspot >= 0 and print_spot($mylatitude, $mylongitude, 'free', $imgbin{netspot_self}[$index_selfspot], \$back_selfspot);
             $index_selfspot++;
             if ($index_selfspot == @{$imgbin{netspot_self}}) {
                 my ($x, $y) = get_spot_location($mylatitude, $mylongitude);
@@ -3763,13 +3765,18 @@ sub smg_choose_game() {
         my @games;
         my @old_wholist = @wholist;
         eval {
-            ($free_players, undef, my $freenicks, undef, @games) = fb_net::list();
+            ($free_players, undef, my $freenicks, undef, my $playing_geolocs, @games) = fb_net::list();
             @wholist = ();
-            @geolocs = ();
+            @free_geolocs = ();
+            @playing_geolocs = ();
             foreach (split ',', $freenicks) {
                 my ($nick, undef, $latitude, $longitude) = $_ =~ /([^:]+)(:([^:]+):([^:]+))?/;
                 push @wholist, $nick;
-                $latitude && $latitude =~ /^-?\d+\.?\d*$/ && $longitude =~ /^-?\d+\.?\d*$/ and push @geolocs, [ $latitude, $longitude ];
+                defined($latitude) && $latitude =~ /^-?\d+\.?\d*$/ && $longitude =~ /^-?\d+\.?\d*$/ and push @free_geolocs, [ $latitude, $longitude ];
+            }
+            foreach (split ',', $playing_geolocs) {
+                my ($latitude, $longitude) = $_ =~ /([^:]+):([^:]+)/;
+                $latitude =~ /^-?\d+\.?\d*$/ && $longitude =~ /^-?\d+\.?\d*$/ and push @playing_geolocs, [ $latitude, $longitude ];
             }
         };
         $@ and return;
@@ -4232,15 +4239,12 @@ sub smg_choose_game() {
         if ($need4update) {
             if ($state ne 'game_select') {
                 my $status = fb_net::send_and_receive('STATUSGEO');
-                if ($status eq 'UNKNOWN_COMMAND') {
-                    $status = fb_net::send_and_receive('STATUS');  #- 1.0 server
-                }
                 @wholist = ();
-                @geolocs = ();
+                @free_geolocs = ();
                 foreach (split ',', $status) {
                     my ($nick, undef, $latitude, $longitude) = $_ =~ /([^:]+)(:([^:]+):([^:]+))?/;
                     push @wholist, $nick;
-                    $latitude && $latitude =~ /^-?\d+\.?\d*$/ && $longitude =~ /^-?\d+\.?\d*$/ and push @geolocs, [ $latitude, $longitude ];
+                    $latitude && $latitude =~ /^-?\d+\.?\d*$/ && $longitude =~ /^-?\d+\.?\d*$/ and push @free_geolocs, [ $latitude, $longitude ];
                 }
                 $players_in_game = join ', ', @wholist;
                 @actions = { name => t("Chat"), action => 'CHAT', selected => 1 };

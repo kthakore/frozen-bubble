@@ -30,8 +30,8 @@ use POSIX qw(uname);
 use Time::HiRes qw(gettimeofday sleep);
 use fb_stuff;
 
-our $proto_major = '1';  #- this is the minimum required server protocol level
-our $proto_minor = '0';  #-
+our $proto_major = '1';  #- this is our protocol level
+our $proto_minor = '1';  #-
 
 my $udp_server_port = 1511;  #- a.k.a 0xF 0xB thx misc
 $SIG{PIPE} = 'IGNORE';  #- stupid send/write low-level API sending SIGPIPE when server closes connection, and stupid Perl
@@ -67,7 +67,7 @@ sub discover_lan_servers {
             return { failure => 'Cannot read answer from broadcast.' };
         }
         my ($port, $ipaddr) = sockaddr_in($srcpaddr);
-        if ($rcvmsg =~ m|^FB/$proto_major\.$proto_minor SERVER HERE AT PORT (\d+)|) {
+        if ($rcvmsg =~ m|^FB/$proto_major\.\d SERVER HERE AT PORT (\d+)|) {
             push @servers, { host => inet_ntoa($ipaddr), port => $1 };
         } else {
             print STDERR "\nReceive weird/incompatible answer to UDP broadcast looking for LAN servers from $ipaddr:$port:\t$rcvmsg\n";
@@ -208,17 +208,18 @@ sub send_and_receive($;$) {
 
 sub list() {
     my $msg = send_and_receive('LIST');
-    if ($msg =~ /(\S*) (\S*) free:(\d+) games:(\d+) playing:(\d+)/) {
+    if ($msg =~ /(\S*) (\S*) free:(\d+) games:(\d+) playing:(\d+) at:(\S*)/) {
         my $freenicks = $1;
         my $freegames = $2;
         my $free = $3;
         my $games = $4;
         my $playing = $5;
+        my $playing_geolocs = $6;
         my @games;
         while ($freegames =~ /\[([^\]]+)\]/g) {
             push @games, [ split /,/, $1 ];
         }
-        return ($free, $games, $freenicks, $playing, @games);
+        return ($free, $games, $freenicks, $playing, $playing_geolocs, @games);
     } else {
         return;
     }
@@ -352,10 +353,10 @@ sub connect {
     return { ping => $ping, name => $servername, language => $serverlanguage };
 }
 
-sub current_server_name() {
+sub current_server_name {
     return $current_name;
 }
-sub current_server_hostport() {
+sub current_server_hostport {
     return "$current_host:$current_port";
 }
 

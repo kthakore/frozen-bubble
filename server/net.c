@@ -296,9 +296,11 @@ static void handle_incoming_data_prio(gpointer data, gpointer user_data)
 
 static void handle_udp_request(void)
 {
-        static char ok_input_base[] = "FB/%d.%d SERVER PROBE";
-        static char * ok_input = NULL;
-        static char fl_unrecognized[] = "FB/1.0 You don't exist, go away.\n";
+        static char ok_input_beginning_base[] = "FB/%d.";
+        static char * ok_input_beginning = NULL;
+        static char ok_input_end[] = " SERVER PROBE";
+        static char fl_unrecognized_base[] = "FB/%d.%d You don't exist, go away.\n";
+        static char * fl_unrecognized = NULL;
         static char ok_answer_base[] = "FB/%d.%d SERVER HERE AT PORT %d";
         static char * ok_answer = NULL;
         int n;
@@ -307,11 +309,12 @@ static void handle_udp_request(void)
         socklen_t client_len = sizeof(client_addr);
         char * answer;
         
-        if (!ok_input)   // C sux
-                ok_input = asprintf_(ok_input_base, proto_major, proto_minor);
+        if (!ok_input_beginning)   // C sux
+                ok_input_beginning = asprintf_(ok_input_beginning_base, proto_major);
         if (!ok_answer)
                 ok_answer = asprintf_(ok_answer_base, proto_major, proto_minor, port);
-
+        if (!fl_unrecognized)
+                fl_unrecognized = asprintf_(fl_unrecognized_base, proto_major, proto_minor);
 
         memset(msg, 0, sizeof(msg));
         n = recvfrom(udp_server_socket, msg, sizeof(msg), 0, (struct sockaddr *) &client_addr, &client_len);
@@ -321,7 +324,7 @@ static void handle_udp_request(void)
         }
         
         l2(OUTPUT_TYPE_DEBUG, "UDP server receives %d bytes from %s.", n, inet_ntoa(client_addr.sin_addr));
-        if (strcmp(msg, ok_input) || (lan_game_mode && g_list_length(conns_prio) > 0)) {
+        if (strncmp(msg, ok_input_beginning_base, strlen(ok_input_beginning)) || !strstr(msg, ok_input_end) || (lan_game_mode && g_list_length(conns_prio) > 0)) {
                 answer = fl_unrecognized;
                 l0(OUTPUT_TYPE_DEBUG, "Unrecognized/full.");
         } else {
@@ -435,9 +438,11 @@ void connections_manager(void)
                                 continue;
                         }
 
+                        // We've really accepted this new connection. Init data.
                         last_data_in[fd] = current_time;
                         nick[fd] = NULL;
                         geoloc[fd] = NULL;
+                        remote_proto_minor[fd] = -1;
                         send_line_log_push(fd, greets_msg);
                         conns = g_list_append(conns, GINT_TO_POINTER(fd));
                         player_connects(fd);

@@ -35,3 +35,4 @@ void process_msg_prio(int fd, char* msg, ssize_t len);
 
 extern char * nick[256];
 extern char * geoloc[256];
+extern int remote_proto_minor[256];

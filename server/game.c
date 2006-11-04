@@ -82,6 +82,7 @@ static char fl_proto_mismatch[] = "INCOMPATIBLE_PROTOCOL";
 
 char * nick[256];
 char * geoloc[256];
+int remote_proto_minor[256];
 
 // calculate the list of players for a given game
 static char* list_game(const struct game * g)
@@ -116,6 +117,7 @@ static char* list_game_with_geolocation(const struct game * g)
 }
 
 static char list_games_str[16384] __attribute__((aligned(4096))) = "";
+static char list_playing_geolocs_str[16384] __attribute__((aligned(4096))) = "";
 static int players_in_game;
 static int games_open;
 static int games_running;
@@ -144,25 +146,38 @@ static void list_games_aux(gpointer data, gpointer user_data)
                 free(game);
                 strconcat(list_games_str, "]", sizeof(list_games_str));
         } else {
+                int i;
+                char* geo;
                 players_in_game += g->players_number;
                 games_running++;
+                for (i = 0; i < g->players_number; i++) {
+                        geo = geoloc[g->players_conn[i]];
+                        if (geo != NULL) {
+                                strconcat(list_playing_geolocs_str, geo, sizeof(list_playing_geolocs_str));
+                                strconcat(list_playing_geolocs_str, ",", sizeof(list_playing_geolocs_str));
+                        }
+                }
                 return;
         }
 }
 /* Game list is of the following scheme:
+ * 1.1 protocol:
+ * <list-of-open-players format="NICK|NICK:GEOLOC"> [<list-of-open-games format=<list-of-players format="NICK">>] free:%d games:%d playing:%d at:<list-of-playing-geolocs>
+ * 1.0 protocol:
  * <list-of-open-players format="NICK|NICK:GEOLOC"> [<list-of-open-games format=<list-of-players format="NICK">>] free:%d games:%d playing:%d
  */
 void calculate_list_games(void)
 {
         char * free_players;
         list_games_str[0] = '\0';
+        list_playing_geolocs_str[0] = '\0';
         players_in_game = 0;
         games_open = 0;
         games_running = 0;
         g_list_foreach(open_players, list_open_nicks_aux, NULL);
         strconcat(list_games_str, " ", sizeof(list_games_str));
         g_list_foreach(games, list_games_aux, NULL);
-        free_players = asprintf_(" free:%d games:%d playing:%d", conns_nb() - players_in_game - 1, games_running, players_in_game);  // 1: don't count myself
+        free_players = asprintf_(" free:%d games:%d playing:%d at:%s", conns_nb() - players_in_game - 1, games_running, players_in_game, list_playing_geolocs_str);  // 1: don't count myself
         strconcat(list_games_str, free_players, sizeof(list_games_str));
         free(free_players);
 }
@@ -452,8 +467,8 @@ static int is_nick_ok(char* nick)
 /* true return value indicates that connection must be closed */
 int process_msg(int fd, char* msg)
 {
-        int remote_proto_major;
-        int remote_proto_minor;
+        int client_proto_major;
+        int client_proto_minor;
         char * args;
         char * ptr, * ptr2;
         char * msg_orig;
@@ -465,14 +480,19 @@ int process_msg(int fd, char* msg)
                 return 1;
         }
     
-        /* check if remote protocol is compatible */
-        remote_proto_major = charstar_to_int(msg + 3);
-        remote_proto_minor = charstar_to_int(msg + 5);
-        if (remote_proto_major != proto_major
-            || remote_proto_minor > proto_minor) {
+        /* check if client protocol is compatible; for simplicity, we don't support client protocol more recent
+         * than server protocol, we suppose that our servers are upgraded when a new release appears (but of
+         * course client protocol older is supported within the major protocol) */
+        client_proto_major = charstar_to_int(msg + 3);
+        client_proto_minor = charstar_to_int(msg + 5);
+        if (client_proto_major != proto_major
+            || client_proto_minor > proto_minor) {
                 send_line_log(fd, fl_proto_mismatch, msg);
                 return 1;
         }
+
+        if (remote_proto_minor[fd] == -1)
+                remote_proto_minor[fd] = client_proto_minor;
 
         msg_orig = strdup(msg);
 
