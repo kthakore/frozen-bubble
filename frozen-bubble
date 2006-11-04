@@ -4248,7 +4248,7 @@ sub smg_choose_game() {
                 }
                 $players_in_game = join ', ', @wholist;
                 @actions = { name => t("Chat"), action => 'CHAT', selected => 1 };
-                $can_start && $players_in_game =~ /,/ and push @actions, { name => t("Start game!"), action => 'START' };
+                $can_start && @wholist > 1 and push @actions, { name => t("Start game!"), action => 'START' };
             }
             $redraw->();
             $need4update = 0;
