@@ -28,7 +28,6 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <syslog.h>
-#include <signal.h>
 
 #include "tools.h"
 #include "log.h"
@@ -66,13 +65,6 @@ char* get_current_date(void)
     return current_date;
 }
 
-void sigterm_catcher(int signum) {
-        l0(OUTPUT_TYPE_INFO, "Received SIGTERM, terminating.");
-        close_server();
-        unregister_server();
-        exit(EXIT_SUCCESS);
-}
-
 void logging_init(int portnum) {
         openlog(asprintf_("fb-server[TCP%d]", portnum), LOG_PID, LOG_DAEMON);
         if (output_type == OUTPUT_TYPE_DEBUG) {
@@ -82,7 +74,6 @@ void logging_init(int portnum) {
         } else if (output_type == OUTPUT_TYPE_INFO) {
                 l0(OUTPUT_TYPE_INFO, "Starting log. Messages displayed: INFO, ERROR.");
         }
-        signal(SIGTERM, sigterm_catcher);
 }
 
 char* get_wanted_type(int wanted_output_type)

@@ -75,6 +75,7 @@ static char wn_not_in_game[] = "NOT_IN_GAME";
 static char wn_alone_in_the_dark[] = "ALONE_IN_THE_DARK";
 static char wn_not_creator[] = "NOT_CREATOR";
 static char wn_no_such_player[] = "NO_SUCH_PLAYER";
+static char wn_denied[] = "DENIED";
 
 static char fl_line_unrecognized[] = "MISSING_FB_PROTOCOL_TAG";
 static char fl_proto_mismatch[] = "INCOMPATIBLE_PROTOCOL";
@@ -82,6 +83,7 @@ static char fl_proto_mismatch[] = "INCOMPATIBLE_PROTOCOL";
 char * nick[256];
 char * geoloc[256];
 int remote_proto_minor[256];
+int admin_authorized[256];
 
 // calculate the list of players for a given game
 static char* list_game(const struct game * g)
@@ -708,6 +710,13 @@ int process_msg(int fd, char* msg)
                         send_line_log(fd, wn_not_in_game, msg_orig);
                 } else {
                         ok_start_game(fd);
+                }
+        } else if (streq(current_command, "ADMIN_REREAD")) {
+                if (!admin_authorized[fd]) {
+                        send_line_log(fd, wn_denied, msg_orig);
+                } else {
+                        reread();
+                        send_ok(fd, "ADMIN_REREAD");
                 }
         } else {
                 send_line_log(fd, wn_unknown_command, msg);

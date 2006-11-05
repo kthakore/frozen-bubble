@@ -285,10 +285,11 @@ sub connect {
     eval { $msg = readline_(); };
     $@ and return { failure => 'Server or computer too slow' };
     my ($remote_major, $remote_minor, $isready) = $msg =~ m|^FB/(\d+).(\d+) (.*)|;
-    my ($servername, $serverlanguage);
-    if ($isready =~ /^PUSH: SERVER_READY (.*) (.*)/) {
+    my ($servername, $serverlanguage, $servermotd);
+    if ($isready =~ /^PUSH: SERVER_READY (.*) (.*) "(.*)"/) {
         $servername = $1;
         $serverlanguage = $2;
+        $servermotd = $3;
     } else {
         disconnect();
         if ($isready eq 'PUSH: SERVER_IS_FULL') {
@@ -350,7 +351,7 @@ sub connect {
     $current_host = $host;
     $current_port = $port;
     $current_name = $tried_name;
-    return { ping => $ping, name => $servername, language => $serverlanguage };
+    return { ping => $ping, name => $servername, language => $serverlanguage, motd => $servermotd };
 }
 
 sub current_server_name {

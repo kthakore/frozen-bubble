@@ -40,6 +40,7 @@ void create_server(int argc, char **argv);
 void register_server();
 void unregister_server();
 void close_server();
+void reread();
 
 int conns_nb(void);
 void add_prio(int fd);
