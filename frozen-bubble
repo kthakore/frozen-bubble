@@ -2099,8 +2099,8 @@ sub update_game() {
                 $events_pumped = 1;
 
                 my $mp_newgame = sub {
-                    iter_players {
-                        $pdata{$::p}{left} and die 'quit';
+                    if (any { $pdata{$_}{left} || $pdata{$_}{score} == $pdata{scorelimit} } @PLAYERS) {
+                        die 'quit';
                     };
                     fb_net::gsend('n');
                     my $timeout_counter;
@@ -3887,16 +3887,36 @@ sub smg_choose_game() {
             fb_net::send_and_receive('GEOLOC', "$mylatitude:$mylongitude");
         }
     }
-
+    
     my $need4update;
     my $relist;
     my $can_start = 0;
     my $joined_leader;
     my $chain_reaction_state = t("disabled");
+    my @victories_limits = ({ value => undef,
+                              text => t("none (unlimited)") },
+                            { value => 3,
+                              text => i18n_number(3) },
+                            { value => 6,
+                              text => i18n_number(6) },
+                            { value => 10,
+                              text => i18n_number(10) },
+                            { value => 20,
+                              text => i18n_number(20) },
+                            { value => 50,
+                              text => i18n_number(50) },
+                            { value => 100,
+                              text => i18n_number(100) });
+    my $victories_limit_index = 0;
     my @history;
     my $history_position;
     $list->('first time');
     $list_players->();
+
+    my $setoptions = sub {
+        smg_verify_command('SETOPTIONS', 'CHAINREACTION:' . to_bool($chain_reaction_state eq t("enabled")) . ','
+                                       . "VICTORIESLIMIT:$victories_limits[$victories_limit_index]{value}");
+    };
 
     while (1) {
         $relist++;
@@ -3956,10 +3976,11 @@ sub smg_choose_game() {
                         }
                     } else {
                         each_index {
-                            if ($actions[$::i]->{selected}
-                                && $::i < @actions - 1) {
-                                $actions[$::i]->{selected} = 0;
-                                $actions[$::i+1]->{selected} = 1;
+                            if ($actions[$::i]{selected}
+                                && $::i < @actions - 1
+                                && ! $actions[$::i+1]{readonly}) {
+                                $actions[$::i]{selected} = 0;
+                                $actions[$::i+1]{selected} = 1;
                                 play_sound('menu_change');
                                 goto done2;
                             }
@@ -4076,7 +4097,7 @@ sub smg_choose_game() {
                                 smg_add_status_msg(t("*** Open games already full. Join an existing game, or select a different server."));
                                 goto not_in_game;
                             } elsif ($curaction->()->{action} eq 'JOIN' && $answer eq 'NO_SUCH_GAME') {
-                                smg_add_status_msg(t("*** Error: game just started or aborted"));
+                                smg_add_status_msg(t("*** Cannot join game, game was just started or aborted"));
                                 $list->();
                                 goto not_in_game;
                             } elsif ($answer) {
@@ -4105,15 +4126,32 @@ sub smg_choose_game() {
                             my $level = fb_net::send_and_receive('PROTOCOL_LEVEL');
                             if ($level < 1) {  #- available from minor level 1 onwards
                                 smg_add_status_msg(t("*** Can't enable chain-reaction, as a player is using a too old version of Frozen-Bubble"));
+                                play_sound('cancel');
                             } else {
                                 $chain_reaction_state = t("enabled");
                                 $actions[1]{name} = t("Chain-reaction: %s", $chain_reaction_state);
                                 $redraw->();
+                                $setoptions->();
                             }
                         } else {
                             $chain_reaction_state = t("disabled");
                             $actions[1]{name} = t("Chain-reaction: %s", $chain_reaction_state);
                             $redraw->();
+                            $setoptions->();
+                        }
+                    }
+
+                    if ($curaction->()->{action} eq 'SWITCH_VICTORIES_LIMIT') {
+                        my $level = fb_net::send_and_receive('PROTOCOL_LEVEL');
+                        if ($level < 1) {  #- available from minor level 1 onwards
+                            smg_add_status_msg(t("*** Can't set a victories limit, as a player is using a too old version of Frozen-Bubble"));
+                            play_sound('cancel');
+                        } else {
+                            $victories_limit_index++;
+                            $victories_limit_index == @victories_limits and $victories_limit_index = 0;
+                            $actions[2]{name} = t("Victories limit: %s", $victories_limits[$victories_limit_index]{text});
+                            $redraw->();
+                            $setoptions->();
                         }
                     }
 
@@ -4124,17 +4162,22 @@ sub smg_choose_game() {
                             fb_c_stuff::fbdelay(2000);
                             return;
                         }
-                        #- game is closed, need to check one last time if CR is really possible, if activated
-                        if ($chain_reaction_state eq t("enabled")) {
+                        #- game is closed, need to check one last time if options are really possible
+                        if ($chain_reaction_state eq t("enabled") || $victories_limit_index > 0) {
                             my $level = fb_net::send_and_receive('PROTOCOL_LEVEL');
                             if ($level < 1) {  #- CR available from minor level 1 onwards
-                                smg_add_status_msg(t("*** Must disable chain-reaction, as a player is using a too old version of Frozen-Bubble"));
-                                $chain_reaction_state = t("disabled");
+                                if ($chain_reaction_state eq t("enabled")) {
+                                    smg_add_status_msg(t("*** Must disable chain-reaction, as a player is using a too old version of Frozen-Bubble"));
+                                    $chain_reaction_state = t("disabled");
+                                }
+                                if ($victories_limit_index > 0) {
+                                    smg_add_status_msg(t("*** Must reset victories limit as a player is using a too old version of Frozen-Bubble"));
+                                    $victories_limit_index = 0;
+                                }
                                 fb_c_stuff::fbdelay(2000);
                             }
                         }
-                        my $setoptions = smg_verify_command('SETOPTIONS', 'CHAINREACTION:' . to_bool($chain_reaction_state eq t("enabled")));
-                        if ($setoptions) {
+                        if ($setoptions->()) {
                             smg_add_status_msg(t("*** Can't start game: '%s'", $setoptions));
                             fb_c_stuff::fbdelay(2000);
                             return;
@@ -4198,13 +4241,18 @@ sub smg_choose_game() {
                     smg_add_status_msg(t("*** %s joined the game!", $1));
                     push @wholist, $1;
                     play_sound('newroot_solo');
-                    if ($chain_reaction_state eq t("enabled")) {
+                    if ($chain_reaction_state eq t("enabled") || $victories_limit_index > 0) {
                         my $level = fb_net::send_and_receive('PROTOCOL_LEVEL');
                         if ($level < 1) {  #- available from minor level 1 onwards
-                            smg_add_status_msg(t("*** Chain-reaction disabled, %s is using a too old version of Frozen-Bubble", $1));
-                            $chain_reaction_state = t("disabled");
-                            $actions[1]{name} = t("Chain-reaction: %s", $chain_reaction_state);
-                            $redraw->();
+                            if ($chain_reaction_state eq t("enabled")) {
+                                smg_add_status_msg(t("*** Chain-reaction disabled, %s is using a too old version of Frozen-Bubble", $1));
+                                $chain_reaction_state = t("disabled");
+                            }
+                            if ($victories_limit_index > 0) {
+                                smg_add_status_msg(t("*** Victories limit reset, %s is using a too old version of Frozen-Bubble", $1));
+                                $victories_limit_index = 0;
+                            }
+                            $setoptions->();
                         }
                     }
                 } elsif ($message =~ /^PARTED: (.+)/) {
@@ -4239,10 +4287,13 @@ sub smg_choose_game() {
                         my $option = $1;
                         if ($option =~ /^CHAINREACTION:(.)/) {
                             $chainreaction = $1;
+                        } elsif ($option =~ /^VICTORIESLIMIT:(\d*)/) {
+                            $pdata{scorelimit} = $1;
                         } else {
                             print "Unrecognized option: $option\n";
                         }
                     }
+                    play_sound('menu_selected');
                 } elsif ($message =~ /^GAME_CAN_START: (.+)/) {
                     fb_net::send_("OK_GAME_START");
                     @PLAYERS = qw(p1);
@@ -4305,9 +4356,21 @@ sub smg_choose_game() {
                     $latitude && $latitude =~ /^-?\d+\.?\d*$/ && $longitude =~ /^-?\d+\.?\d*$/ and push @free_geolocs, [ $latitude, $longitude ];
                 }
                 $players_in_game = join ', ', @wholist;
-                @actions = { name => t("Chat"), action => 'CHAT', selected => 1 };
-                $can_start and push @actions, { name => t("Chain-reaction: %s", $chain_reaction_state), action => 'TOGGLE_CHAIN_REACTION' };
-                $can_start && @wholist > 1 and push @actions, { name => t("Start game!"), action => 'START' };
+                my $selected;
+                each_index { $actions[$::i]{selected} and $selected = $::i; } @actions;
+                @actions = { name => t("Chat"), action => 'CHAT' };
+                if ($can_start) {
+                    #- creator
+                    push @actions, { name => t("Chain-reaction: %s", $chain_reaction_state), action => 'TOGGLE_CHAIN_REACTION' };
+                    push @actions, { name => t("Victories limit: %s", $victories_limits[$victories_limit_index]{text}), action => 'SWITCH_VICTORIES_LIMIT' };
+                    @wholist > 1 and push @actions, { name => t("Start game!"), action => 'START' };
+                } else {
+                    #- joiner
+                    push @actions, { name => t("Chain-reaction: %s", $chainreaction ? t("enabled") : t("disabled")), readonly => 1};
+                    push @actions, { name => t("Victories limit: %s", $pdata{scorelimit} ? i18n_number($pdata{scorelimit}) : t("none (unlimited)")), readonly => 1 };
+                }
+                $selected-- while $selected > $#actions || $actions[$selected]{readonly};
+                $actions[$selected]{selected} = 1;
             }
             $redraw->();
             $need4update = 0;
@@ -4318,8 +4381,12 @@ sub smg_choose_game() {
 sub show_mp_scores() {
     $imgbin{back_netgame}->blit($apprects{main}, $app, $apprects{main});
 
-    if (any { $pdata{$_}{left} } @PLAYERS) {
-        smg_add_status_msg(t("*** Game finished, because the following player(s) left: %s", join(', ', map { if_($pdata{$_}{left}, $pdata{$_}{nick}) } @PLAYERS)));
+    if (any { $pdata{$_}{score} == $pdata{scorelimit} } @PLAYERS) {
+        smg_add_status_msg(t("*** Game finished, because victories limit of %s was reached.", $pdata{scorelimit}));
+    } else {
+        if (any { $pdata{$_}{left} } @PLAYERS) {
+            smg_add_status_msg(t("*** Game finished, because the following player(s) left: %s", join(', ', map { if_($pdata{$_}{left}, $pdata{$_}{nick}) } @PLAYERS)));
+        }
     }
     smg_add_status_msg(t("*** Addicted for: %s", format_addiction(($app->ticks - $time_netgame)/1000, 1)));
     @PLAYERS = reverse ssort { $pdata{$_}{score} } @PLAYERS;

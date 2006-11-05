@@ -330,10 +330,6 @@ static void setoptions(int fd, char* options)
                 if (g->players_conn[0] == fd) {
                         int i;
                         char* msg;
-                        if (g->players_number == 1) {
-                                send_line_log(fd, wn_alone_in_the_dark, "SETOPTIONS");
-                                return;
-                        }
                         send_ok(fd, "SETOPTIONS");
                         msg = asprintf_("OPTIONS: %s", options);
                         for (i = 0; i < g->players_number; i++)
