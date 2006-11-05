@@ -37,7 +37,7 @@
 #include "log.h"
 #include "game.h"
 
-enum game_status { GAME_STATUS_OPEN, GAME_STATUS_PLAYING };
+enum game_status { GAME_STATUS_OPEN, GAME_STATUS_CLOSED, GAME_STATUS_PLAYING };
 
 #define MAX_PLAYERS_PER_GAME 5
 struct game
@@ -59,7 +59,6 @@ static char ok_player_joined[] = "JOINED: %s";
 static char ok_player_parted[] = "PARTED: %s";
 static char ok_player_kicked[] = "KICKED: %s";
 static char ok_talk[] = "TALK: %s";
-static char ok_stop[] = "STOP: %s";
 static char ok_can_start[] = "GAME_CAN_START: %s";
 
 static char wn_unknown_command[] = "UNKNOWN_COMMAND";
@@ -300,6 +299,54 @@ static void start_game(int fd)
         }
 }
 
+static void close_game(int fd)
+{
+        struct game * g = find_game_by_fd(fd);
+        if (g) {
+                if (g->players_conn[0] == fd) {
+                        if (g->players_number == 1) {
+                                send_line_log(fd, wn_alone_in_the_dark, "CLOSE");
+                                return;
+                        }
+                        send_ok(fd, "CLOSE");
+                        g->status = GAME_STATUS_CLOSED;
+                        calculate_list_games();
+                } else {
+                        send_line_log(fd, wn_not_creator, "CLOSE");
+                }
+
+        } else {
+                l0(OUTPUT_TYPE_ERROR, "Internal error");
+                exit(EXIT_FAILURE);
+        }
+}
+
+static void setoptions(int fd, char* options)
+{
+        struct game * g = find_game_by_fd(fd);
+        if (g) {
+                if (g->players_conn[0] == fd) {
+                        int i;
+                        char* msg;
+                        if (g->players_number == 1) {
+                                send_line_log(fd, wn_alone_in_the_dark, "SETOPTIONS");
+                                return;
+                        }
+                        send_ok(fd, "SETOPTIONS");
+                        msg = asprintf_("OPTIONS: %s", options);
+                        for (i = 0; i < g->players_number; i++)
+                                send_line_log_push(g->players_conn[i], msg);
+                        free(msg);
+                } else {
+                        send_line_log(fd, wn_not_creator, "SETOPTIONS");
+                }
+
+        } else {
+                l0(OUTPUT_TYPE_ERROR, "Internal error");
+                exit(EXIT_FAILURE);
+        }
+}
+
 static void ok_start_game(int fd)
 {
         struct game * g = find_game_by_fd(fd);
@@ -338,29 +385,6 @@ static void kick_player(int fd, struct game * g, char * nick)
                 }
         }
         send_line_log(fd, wn_no_such_player, "KICK");
-}
-
-static void stop_game(int fd)
-{
-        struct game * g = find_game_by_fd(fd);
-        if (g) {
-                char stop_msg[1000];
-                int j = find_player_number(g, fd);
-                if (g->status == GAME_STATUS_OPEN) {
-                        send_line_log(fd, wn_not_started, "STOP");
-                        return;
-                }
-                g->status = GAME_STATUS_OPEN;
-                send_ok(fd, "STOP");
-                snprintf(stop_msg, sizeof(stop_msg), ok_stop, g->players_nick[j]);
-                for (j = 0; j < g->players_number; j++)
-                        if (g->players_conn[j] != fd)
-                                send_line_log_push(g->players_conn[j], stop_msg);
-                player_part_game(fd);
-        } else {
-                l0(OUTPUT_TYPE_ERROR, "Internal error");
-                exit(EXIT_FAILURE);
-        }
 }
 
 void player_connects(int fd)
@@ -413,6 +437,24 @@ static void status_geo(int fd, char* msg)
                 char* game = list_game_with_geolocation(g);
                 send_line_log(fd, game, msg);
                 free(game);
+        } else {
+                send_line_log(fd, wn_not_in_game, msg);
+        }
+}
+
+static void protocol_level(int fd, char* msg)
+{
+        // Find the smallest minor protocol level among players in game
+        struct game * g = find_game_by_fd(fd);
+        if (g) {
+                int i;
+                char* response;
+                int minor = remote_proto_minor[g->players_conn[0]];
+                for (i = 1; i < g->players_number; i++)
+                        minor = MIN(minor, remote_proto_minor[g->players_conn[i]]);
+                response = asprintf_("%d", minor);
+                send_line_log(fd, response, msg);
+                free(response);
         } else {
                 send_line_log(fd, wn_not_in_game, msg);
         }
@@ -629,6 +671,12 @@ int process_msg(int fd, char* msg)
                 } else {
                         status_geo(fd, msg_orig);
                 }
+        } else if (streq(current_command, "PROTOCOL_LEVEL")) {
+                if (!already_in_game(fd)) {
+                        send_line_log(fd, wn_not_in_game, msg_orig);
+                } else {
+                        protocol_level(fd, msg_orig);
+                }
         } else if (streq(current_command, "TALK")) {
                 if (!args) {
                         send_line_log(fd, wn_missing_arguments, msg_orig);
@@ -641,11 +689,19 @@ int process_msg(int fd, char* msg)
                 } else {
                         start_game(fd);
                 }
-        } else if (streq(current_command, "STOP")) {
+        } else if (streq(current_command, "CLOSE")) {
                 if (!already_in_game(fd)) {
                         send_line_log(fd, wn_not_in_game, msg_orig);
                 } else {
-                        stop_game(fd);
+                        close_game(fd);
+                }
+        } else if (streq(current_command, "SETOPTIONS")) {
+                if (!args) {
+                        send_line_log(fd, wn_missing_arguments, msg_orig);
+                } else if (!already_in_game(fd)) {
+                        send_line_log(fd, wn_not_in_game, msg_orig);
+                } else {
+                        setoptions(fd, args);
                 }
         } else if (streq(current_command, "OK_GAME_START")) {
                 if (!already_in_game(fd)) {
