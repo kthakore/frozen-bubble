@@ -4382,7 +4382,7 @@ sub show_mp_scores() {
     $imgbin{back_netgame}->blit($apprects{main}, $app, $apprects{main});
 
     if (any { $pdata{$_}{score} == $pdata{scorelimit} } @PLAYERS) {
-        smg_add_status_msg(t("*** Game finished, because victories limit of %s was reached.", $pdata{scorelimit}));
+        smg_add_status_msg(t("*** Game finished, because victories limit of %s was reached.", i18n_number($pdata{scorelimit})));
     } else {
         if (any { $pdata{$_}{left} } @PLAYERS) {
             smg_add_status_msg(t("*** Game finished, because the following player(s) left: %s", join(', ', map { if_($pdata{$_}{left}, $pdata{$_}{nick}) } @PLAYERS)));
