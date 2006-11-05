@@ -257,7 +257,7 @@ msgstr "*** プレイヤー一覧: %s"
 msgid ""
 "*** Please wait, retrieving your geographical location from http://hostip."
 "info/..."
-msgstr "あなたの場所情報をhttp://hostip.info/...から取得しています。"
+msgstr "*** あなたの場所情報をhttp://hostip.info/...から取得しています。"
 
 #: ../frozen-bubble:3845
 msgid "*** Done - you can now create or join a game"
@@ -340,7 +340,7 @@ msgstr "*** 不明なコマンドです。%sでヘルプを表示します。"
 msgid ""
 "*** Open games already full. Join an existing game, or select a different "
 "server."
-msgstr "オープン中のゲームはすでにいっぱいです。すでに存在するゲームに参加するか、違うサーバを選択してください。"
+msgstr "*** オープン中のゲームはすでにいっぱいです。すでに存在するゲームに参加するか、違うサーバを選択してください。"
 
 #: ../frozen-bubble:4026
 msgid "*** Failure: '%s'"
@@ -429,7 +429,7 @@ msgstr "*** スコア: %s"
 msgid ""
 "*** Cannot connect to specified gameserver, fallbacking to contacting master "
 "server"
-msgstr "指定されたゲームサーバに接続できませんでした。マスタサーバに接続し直します。"
+msgstr "*** 指定されたゲームサーバに接続できませんでした。マスタサーバに接続し直します。"
 
 #: ../frozen-bubble:4264
 msgid "2-player game"
