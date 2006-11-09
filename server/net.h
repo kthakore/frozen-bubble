@@ -17,10 +17,16 @@
  *
  ******************************************************************************/
 
+#include <sys/types.h>
+#include <sys/socket.h>
 #include <stdlib.h>
 #include <unistd.h>
 
 #include <glib.h>
+
+#ifndef MSG_NOSIGNAL
+#define MSG_NOSIGNAL 0
+#endif
 
 extern const int proto_major;
 extern const int proto_minor;
