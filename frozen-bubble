@@ -51,6 +51,7 @@ use Data::Dumper;
 use Locale::gettext;
 use POSIX;
 use Math::Trig;
+use IO::File;
 
 use SDL;
 use SDL::App;
@@ -148,7 +149,7 @@ GetOptions("fullscreen|fs!" => \$fullscreen,
            "joysticks-info" => \$joysticksinfo,
            "record=s" => sub { if (!-d $_[1]) { die("$_[1] does not exist.\n") } else { $recorddir = $_[1] } },
            "auto-record" => \$autorecord,
-           "playback=s" => sub { if (!-f $_[1]) { die("$_[1] does not exist.\n") } else { $playdata = $_[1] } },
+           "playback=s" => \$playdata,
            "comment=s" => \$comment,
            "help" => sub { print "Usage: ", basename($0), " [OPTION]...
  --fullscreen             start in fullscreen mode
@@ -177,7 +178,7 @@ GetOptions("fullscreen|fs!" => \$fullscreen,
  --record <dir>           specify the recording directory (normally, records are saved in the directory '$ENV{HOME}/.fb_records')
  --auto-record            automatically record all applicable games (normally, a record is triggered by hitting the Print Screen key during a game)
  --comment '...'          add the comment enclosed between simple quotes to records (must not contain anything else than ASCII), it will be shown on console when playing back the record later
- --playback <file>        playback the specified record file
+ --playback <file|URL>    playback the specified record file
 ";
                            exit(0);
            });
@@ -5171,15 +5172,35 @@ sub choose_levelset() {
 
 sub replay {
     ($playdata) = @_;
-    if ($playdata =~ /\.bz2$/) {
-        local *F;
-        local $/ = undef;
+    if ($playdata =~ /^http/) {
         my $filename = $playdata;
-        open(F, "bzcat '$filename'|" ) or print("Can't open '$filename': $!\n"), return;
-        $playdata = <F>;
-        $playdata or print("Could not bzcat '$filename', not displaying playback.\n"), return;
+        $playdata = fb_net::http_download($playdata);
+        $playdata or return;
+        if ($filename =~ /\.bz2$/) {
+            my $fh;
+            do { $filename = tmpnam() }
+              until $fh = IO::File->new($filename, O_WRONLY|O_CREAT|O_EXCL);
+            print $fh $playdata;
+            $fh->close;
+            local *F;
+            local $/ = undef;
+            open(F, "bzcat '$filename'|" ) or print("Can't open '$filename': $!\n"), return;
+            $playdata = <F>;
+            close F;
+            unlink($filename);
+            $playdata or print("Could not bzcat '$filename', not displaying playback.\n"), return;
+        }
     } else {
-        $playdata = cat_($playdata);
+        if ($playdata =~ /\.bz2$/) {
+            local *F;
+            local $/ = undef;
+            my $filename = $playdata;
+            open(F, "bzcat '$filename'|" ) or print("Can't open '$filename': $!\n"), return;
+            $playdata = <F>;
+            $playdata or print("Could not bzcat '$filename', not displaying playback.\n"), return;
+        } else {
+            $playdata = cat_($playdata);
+        }
     }
     eval($playdata);  #- fills up $playdata
     %recorddata = ();
