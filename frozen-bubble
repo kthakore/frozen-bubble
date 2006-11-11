@@ -3787,8 +3787,8 @@ sub smg_choose_game() {
         $@ and return;
 
         if (!$firsttime) {
-            my @joined = sort(difference2(\@wholist, \@old_wholist));
-            my @left = sort(difference2(\@old_wholist, \@wholist));
+            my @joined = difference2([ sort(difference2(\@wholist, \@old_wholist)) ], [ $mynick ]);
+            my @left = difference2([ sort(difference2(\@old_wholist, \@wholist)) ], [ $mynick ]);
             if (@left == 1) {
                 smg_add_status_msg(t("*** %s has left the chat room", @left));
             } else {
@@ -4211,13 +4211,23 @@ sub smg_choose_game() {
                                                                }
                                                                $end = "$c$end";
                                                            }
-                                                           foreach my $nick (@wholist) {
-                                                               if (lc(substr($nick, 0, length($end))) eq lc($end)) {
-                                                                   my $colon = !@typed ? ': ' : ' ';
-                                                                   return @typed, split '', "$nick$colon";
+                                                           my @matches = grep { lc(substr($_, 0, length($end))) eq lc($end) } @wholist;
+                                                           if (@matches == 0) {
+                                                               return @_;
+                                                           } else {
+                                                               my $colon = !@typed ? ': ' : ' ';
+                                                               if (@matches == 1) {
+                                                                   return @typed, split '', "$matches[0]$colon";
+                                                               } else {
+                                                                   my @chars = stringchars($matches[0]);
+                                                                   my $counter = 0;
+                                                                   while (every { (stringchars($_))[$counter] eq $chars[$counter] } @matches) {
+                                                                       $counter++;
+                                                                   }
+                                                                   play_sound('stick');
+                                                                   return @typed, split '', substr($matches[0], 0, $counter);
                                                                }
                                                            }
-                                                           return @_;
                                                        } });
                     
                     } elsif ($k eq $KEYS->{misc}{fs}) {

@@ -31,7 +31,7 @@ use vars qw(@ISA @EXPORT $FPATH $FLPATH $FBLEVELS $colourblind %POS_1P %POS_2P %
 @EXPORT = qw($version $FPATH $FLPATH $colourblind $FBLEVELS %POS_1P %POS_2P %POS_MP $BUBBLE_SIZE $ROW_SIZE
              $PI cat_ member difference2 any every even odd sqr to_bool to_int if_ chomp_
              fold_left output append_to_file min max backtrace basename cp_af all partition ssort
-             sum put_in_hash mapn mapn_ fastuniq deep_copy t);
+             sum put_in_hash mapn mapn_ fastuniq deep_copy stringchars t);
 
 $version = '2.0.1';
 
@@ -295,6 +295,10 @@ sub deep_copy {
     } else {
         die "what type is $_?"
     }
+}
+
+sub stringchars {
+    return split //, $_[0];
 }
 
 sub t {
