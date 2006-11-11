@@ -967,6 +967,10 @@ sub handle_graphics($) {
                 remove_image_from_background($img, $POS{$::p}{chatting}{x}, $POS{$::p}{chatting}{'y'});
                 $pdata{current_chat_messages}{$::p} = undef;
                 print_next_bubble($next_bubble{$::p}{img}, $::p);
+                if (member($::p, 'rp3', 'rp4')) {
+                    print_scores($background);
+                    print_scores($app);
+                }
             }
         }
 
