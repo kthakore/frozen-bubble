@@ -8,13 +8,13 @@ msgstr ""
 "Project-Id-Version: eo\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2006-11-05 22:40+0100\n"
-"PO-Revision-Date: 2006-10-22 21:46+0200\n"
+"PO-Revision-Date: 2006-11-06 21:48+0100\n"
 "Last-Translator: Stéphane Fillod <f8cfe@free.fr>\n"
-"Language-Team: Esperanto <eo@li.org>\n"
+"Language-Team: Esperanto\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: KBabel 1.11.2\n"
+"X-Generator: KBabel 1.11.4\n"
 "Plural-Forms:  nplurals=2; plural=(n != 1);\n"
 
 #: ../frozen-bubble:194
@@ -87,7 +87,7 @@ msgstr "Viaj poentoj post du minutoj:"
 
 #: ../frozen-bubble:991
 msgid "Press any key."
-msgstr "Premu iun klavon."
+msgstr "Premu iun ajn klavon."
 
 #: ../frozen-bubble:1149 ../frozen-bubble:1151
 msgid "Lost connection to server!"
@@ -134,11 +134,11 @@ msgstr "nivelo %s"
 
 #: ../frozen-bubble:2765
 msgid "Regular"
-msgstr ""
+msgstr "Regula"
 
 #: ../frozen-bubble:2780
 msgid "Chain-reaction enabled"
-msgstr ""
+msgstr "Ĉenreago enŝaltita"
 
 #: ../frozen-bubble:2863
 msgid "left"
@@ -166,7 +166,7 @@ msgstr "Eku sola-ludo menuon"
 
 #: ../frozen-bubble:3209
 msgid "Multiplayer training"
-msgstr ""
+msgstr "Plurludantaj trejnado"
 
 #: ../frozen-bubble:3209 ../frozen-bubble:4446
 msgid "Enable chain-reaction?"
@@ -195,7 +195,7 @@ msgstr "*** Kontrolu vian retagordon"
 
 #: ../frozen-bubble:3316
 msgid "*** No server found, and could not start server"
-msgstr "*** Neniu servilo trovita,kaj ne povis starti servilon "
+msgstr "*** Neniu servilo trovita, kaj ne povis starti servilon "
 
 #: ../frozen-bubble:3317
 msgid "*** Verify your installation or contact your vendor"
@@ -203,7 +203,7 @@ msgstr "*** Kontrolu vian instalon aŭ kontaktu vian vendiston"
 
 #: ../frozen-bubble:3324
 msgid "*** No server found, created server for local network game"
-msgstr "*** Neniu servilon trovita, kreis servilon por loka reta ludo"
+msgstr "*** Neniu servilo trovita, kreis servilon por loka reta ludo"
 
 #: ../frozen-bubble:3340
 msgid "*** Contacting master server..."
@@ -222,9 +222,9 @@ msgid "*** Verify your network setup or retry later"
 msgstr "*** Kontrolu vian retan agordon aŭ reprovu poste"
 
 #: ../frozen-bubble:3393
-#, fuzzy, perl-format
+#, perl-format
 msgid "Available players: %s (playing: %s) Ping: %sms"
-msgstr "Disponeblaj ludantoj:%s  Ping:%sms"
+msgstr "Disponeblaj ludantoj:%s (ludante: %s) Ping: %sms"
 
 #: ../frozen-bubble:3441
 msgid "*** No available game server"
@@ -239,8 +239,7 @@ msgid "*** Please choose a server"
 msgstr "*** B.v. elekti servilon"
 
 #: ../frozen-bubble:3507
-msgid ""
-"*** Impossible to connect to specified server, going back to server list"
+msgid "*** Impossible to connect to specified server, going back to server list"
 msgstr "*** Malsukcesis konekti al elektita servilo, reen al servilo listo"
 
 #: ../frozen-bubble:3510
@@ -249,9 +248,9 @@ msgid "*** Connected to server '%s'"
 msgstr "*** Konektita al servilon '%s'"
 
 #: ../frozen-bubble:3511
-#, fuzzy, perl-format
+#, perl-format
 msgid "*** Server's MOTD: %s"
-msgstr "*** Poentoj: %s"
+msgstr "*** Servilo Mesagô De La Tago: %s"
 
 #: ../frozen-bubble:3535
 msgid ""
@@ -267,7 +266,7 @@ msgstr "Babiladi"
 
 #: ../frozen-bubble:3684
 msgid "Create new game"
-msgstr "Kreu novan ludon"
+msgstr "Krei novan ludon"
 
 #: ../frozen-bubble:3736
 msgid "Say: "
@@ -284,36 +283,35 @@ msgid "Available Players: %s"
 msgstr "Disponeblaj Ludantoj: %s"
 
 #: ../frozen-bubble:3789
-#, fuzzy, perl-format
+#, perl-format
 msgid "*** %s has left the chat room"
-msgstr "*** %s forlasis la ludon..."
+msgstr "*** %s forlasis la babilejon"
 
 #: ../frozen-bubble:3791
 msgid "*** Several players left this chat room: "
-msgstr ""
+msgstr "*** Pluraj ludantoj forlasis la babilejon: "
 
 #: ../frozen-bubble:3803
-#, fuzzy, perl-format
+#, perl-format
 msgid "*** %s has joined the chat room"
-msgstr "*** %s aliĝis la ludon!"
+msgstr "*** %s aliĝis la babilejon"
 
 #: ../frozen-bubble:3805
 msgid "*** Several players joined this chat room: "
-msgstr ""
+msgstr "*** Pluraj ludantoj aliĝis tiun babilejon: "
 
 #: ../frozen-bubble:3823
 #, perl-format
 msgid "Join game: %s"
-msgstr "Aliĝi al ludon: %s"
+msgstr "Aliĝi ludon: %s"
 
 #: ../frozen-bubble:3843
 msgid "*** Players listening: "
 msgstr "*** Ludantoj babilante: "
 
 #: ../frozen-bubble:3854 ../frozen-bubble:4072
-#, fuzzy
 msgid "*** No one's listening here"
-msgstr "*** Ludantoj babilante: "
+msgstr "*** Neniu ĉeestante"
 
 #: ../frozen-bubble:3863
 msgid ""
@@ -328,8 +326,7 @@ msgid "*** Done - you can now create or join a game"
 msgstr "*** Farita - vi nun povas krei aŭ aliĝi ludon"
 
 #: ../frozen-bubble:3873
-msgid ""
-"*** hostip.info doesn't know the geographical location of your IP address"
+msgid "*** hostip.info doesn't know the geographical location of your IP address"
 msgstr "*** hostip.info ne konas la geografian lokon de via IP adreso"
 
 #: ../frozen-bubble:3874
@@ -347,17 +344,17 @@ msgstr "*** hostip.info ne respondis antaŭ 5 sekundoj, rezignas"
 #: ../frozen-bubble:3895 ../frozen-bubble:4125 ../frozen-bubble:4137
 #: ../frozen-bubble:4171 ../frozen-bubble:4249 ../frozen-bubble:4369
 msgid "disabled"
-msgstr ""
+msgstr "malŝaltita"
 
 #: ../frozen-bubble:3897 ../frozen-bubble:4370
 msgid "none (unlimited)"
-msgstr ""
+msgstr "nenian (senlimite)"
 
 #: ../frozen-bubble:3917 ../frozen-bubble:4131 ../frozen-bubble:4166
 #: ../frozen-bubble:4169 ../frozen-bubble:4244 ../frozen-bubble:4247
 #: ../frozen-bubble:4369
 msgid "enabled"
-msgstr ""
+msgstr "enŝaltita"
 
 #: ../frozen-bubble:3949
 msgid "*** Leaving game..."
@@ -373,13 +370,13 @@ msgid "*** Erroneous nickname"
 msgstr "*** Erara karesnomo"
 
 #: ../frozen-bubble:4036
-#, fuzzy, perl-format
+#, perl-format
 msgid "*** You're connected to server '%s'"
-msgstr "*** Konektita al servilon '%s'"
+msgstr "*** Vi estas konektita al servilo '%s'"
 
 #: ../frozen-bubble:4042
 msgid "*** Sado-masochist, hmm?"
-msgstr "*** Sadismo- masoĥano, hmm?"
+msgstr "*** Sadisma masoĥano, hmm?"
 
 #: ../frozen-bubble:4043
 msgid "*** You like when it hurts, don't you?"
@@ -387,17 +384,17 @@ msgstr "*** Vi ĝuas la doloron, ĉu ne?"
 
 #: ../frozen-bubble:4044
 msgid "*** Your butt already hurts enough! Stop that!"
-msgstr "*** Ĉu vi intencas kabei?"
+msgstr "*** Ĉu vi estas kabeemulo?"
 
 #: ../frozen-bubble:4048
 #, perl-format
 msgid "*** Can't kick %s: no such player in game"
-msgstr "*** Ne povas forigi %s: neniu ludanto en ludo"
+msgstr "*** Ne povas forigi %s-n: neniu ludanto en ludo"
 
 #: ../frozen-bubble:4050
 #, perl-format
 msgid "*** Can't kick %s: '%s'"
-msgstr "*** Ne povas forigi %s: '%s'"
+msgstr "*** Ne povas forigi %s-n: '%s'"
 
 #: ../frozen-bubble:4055
 #, perl-format
@@ -433,9 +430,8 @@ msgstr ""
 "servilon."
 
 #: ../frozen-bubble:4100
-#, fuzzy
 msgid "*** Cannot join game, game was just started or aborted"
-msgstr "*** Eraro: ludo ĵus startis aŭ malsukcesis"
+msgstr "*** Ne povas aliĝi ludon, ludo ĵus startis aŭ ĉesiĝis"
 
 #: ../frozen-bubble:4104
 #, perl-format
@@ -444,7 +440,7 @@ msgstr "*** Malsukceso: '%s'"
 
 #: ../frozen-bubble:4110
 msgid "*** Game created - now you need to wait for players to join"
-msgstr "*** Ludon kreita - nun vi devas atendi aliĝontajn ludantojn"
+msgstr "*** Ludo kreita - nun vi devas atendi aliĝontajn ludantojn"
 
 #: ../frozen-bubble:4113
 msgid "*** Joined game"
@@ -455,23 +451,27 @@ msgid ""
 "*** Can't enable chain-reaction, as a player is using a too old version of "
 "Frozen-Bubble"
 msgstr ""
+"*** Ne povas ŝalti ĉenreagon, ĉar iu ludanto uzas tro malnovan version de "
+"Frozen-Bubble"
 
 #: ../frozen-bubble:4132 ../frozen-bubble:4138 ../frozen-bubble:4364
 #: ../frozen-bubble:4369
-#, fuzzy, perl-format
+#, perl-format
 msgid "Chain-reaction: %s"
-msgstr "Enŝaltu ĉenreagon?"
+msgstr "Ĉenreago: %s"
 
 #: ../frozen-bubble:4147
 msgid ""
 "*** Can't set a victories limit, as a player is using a too old version of "
 "Frozen-Bubble"
 msgstr ""
+"*** Ne povas difini venkolimiton, ĉar iu ludanto uzas tro malnovan version de "
+"Frozen-Bubble"
 
 #: ../frozen-bubble:4152 ../frozen-bubble:4365 ../frozen-bubble:4370
 #, perl-format
 msgid "Victories limit: %s"
-msgstr ""
+msgstr "Venkolimito: %s"
 
 #: ../frozen-bubble:4161 ../frozen-bubble:4181 ../frozen-bubble:4187
 #, perl-format
@@ -483,12 +483,16 @@ msgid ""
 "*** Must disable chain-reaction, as a player is using a too old version of "
 "Frozen-Bubble"
 msgstr ""
+"*** Devas malŝalti ĉenreagon, ĉar iu ludanto uzas tro malnovan version de "
+"Frozen-Bubble"
 
 #: ../frozen-bubble:4174
 msgid ""
 "*** Must reset victories limit as a player is using a too old version of "
 "Frozen-Bubble"
 msgstr ""
+"*** Devas nuligi venkolimiton, ĉar iu ludanto uzas tro malnovan version de "
+"Frozen-Bubble"
 
 #: ../frozen-bubble:4241
 #, perl-format
@@ -497,15 +501,13 @@ msgstr "*** %s aliĝis la ludon!"
 
 #: ../frozen-bubble:4248
 #, perl-format
-msgid ""
-"*** Chain-reaction disabled, %s is using a too old version of Frozen-Bubble"
-msgstr ""
+msgid "*** Chain-reaction disabled, %s is using a too old version of Frozen-Bubble"
+msgstr "*** Ĉenreago malŝaltita, %s uzas tro malnovan version de Frozen-Bubble"
 
 #: ../frozen-bubble:4252
 #, perl-format
-msgid ""
-"*** Victories limit reset, %s is using a too old version of Frozen-Bubble"
-msgstr ""
+msgid "*** Victories limit reset, %s is using a too old version of Frozen-Bubble"
+msgstr "*** Venkolimito nuligita, %s uzas tro malnovan version de Frozen-Bubble"
 
 #: ../frozen-bubble:4260
 msgid "*** Game creator left the game..."
@@ -538,9 +540,9 @@ msgid "Start game!"
 msgstr "Startu ludon!"
 
 #: ../frozen-bubble:4385
-#, fuzzy, perl-format
+#, perl-format
 msgid "*** Game finished, because victories limit of %s was reached."
-msgstr "*** Ludo finita, ĉar la jena(j) ludanto(j) forlasis: %s"
+msgstr "*** Ludo finita, ĉar venkolimito de %s estis atingita."
 
 #: ../frozen-bubble:4388
 #, perl-format
@@ -550,7 +552,7 @@ msgstr "*** Ludo finita, ĉar la jena(j) ludanto(j) forlasis: %s"
 #: ../frozen-bubble:4391
 #, perl-format
 msgid "*** Addicted for: %s"
-msgstr "*** Emita por: %s"
+msgstr "*** Emita dum: %s"
 
 #: ../frozen-bubble:4394
 #, perl-format
@@ -570,8 +572,7 @@ msgstr "*** Poentoj: %s"
 msgid ""
 "*** Cannot connect to specified gameserver, fallbacking to contacting master "
 "server"
-msgstr ""
-"*** Ne konekteblas elektitan ludservilon, reen kontakti mastran servilon"
+msgstr "*** Ne konekteblas elektitan ludservilon, reen kontakti mastran servilon"
 
 #: ../frozen-bubble:4446
 msgid "2-player game"
@@ -595,7 +596,7 @@ msgstr "Bonega ludo!"
 
 #: ../frozen-bubble:4652
 msgid "Please enter new keys:"
-msgstr "B.v. doni novajn klavojn:"
+msgstr "B.v. enigi novajn klavojn:"
 
 #: ../frozen-bubble:4654
 msgid "Player 1; turn left?"
@@ -607,11 +608,11 @@ msgstr "Ludanto 1: dekstren?"
 
 #: ../frozen-bubble:4656
 msgid "Player 1; fire?"
-msgstr "Ludanto 1: pafu?"
+msgstr "Ludanto 1: pafi?"
 
 #: ../frozen-bubble:4657
 msgid "Player 1; center?"
-msgstr "Ludanto 1: mezu?"
+msgstr "Ludanto 1: mezen?"
 
 #: ../frozen-bubble:4659
 msgid "Player 2; turn left?"
@@ -623,20 +624,22 @@ msgstr "Ludanto 2: dekstren?"
 
 #: ../frozen-bubble:4661
 msgid "Player 2; fire?"
-msgstr "Ludanto 2: pafu?"
+msgstr "Ludanto 2: pafi?"
 
 #: ../frozen-bubble:4662
 msgid "Player 2; center?"
-msgstr "Ludanto 2: mezu?"
+msgstr "Ludanto 2: mezen?"
 
 #: ../frozen-bubble:4664
 msgid "Toggle fullscreen?"
-msgstr "Komutu tutekranon?"
+msgstr "Komuti tutekranon?"
 
 #: ../frozen-bubble:4665
 msgid "Chat (net/lan game)?"
-msgstr "Babiladu (retludo)?"
+msgstr "Babiladi (retludo)?"
 
 #: ../frozen-bubble:4667
 msgid "Thanks!"
 msgstr "Dankon!"
+
+

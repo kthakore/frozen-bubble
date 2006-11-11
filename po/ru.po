@@ -5,10 +5,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: 2.0.0\n"
+"Project-Id-Version: 2.1.0\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2006-11-05 22:40+0100\n"
-"PO-Revision-Date: 2006-10-31 22:03+0400\n"
+"PO-Revision-Date: 2006-11-06 18:01+0400\n"
 "Last-Translator: Andrey 'Dragon' Vlasov <dragon1020 at gmail dot com>\n"
 "Language-Team: Russian\n"
 "MIME-Version: 1.0\n"
@@ -81,7 +81,7 @@ msgstr "%s:%s"
 
 #: ../frozen-bubble:991
 msgid "Your score after two minutes:"
-msgstr "Ваш счет спустя две минуты:"
+msgstr "Ваш счет спустя две минуты: "
 
 #: ../frozen-bubble:991
 msgid "Press any key."
@@ -132,11 +132,11 @@ msgstr "уровень %s"
 
 #: ../frozen-bubble:2765
 msgid "Regular"
-msgstr ""
+msgstr "Обычная"
 
 #: ../frozen-bubble:2780
 msgid "Chain-reaction enabled"
-msgstr ""
+msgstr "Цепная реакция включена"
 
 #: ../frozen-bubble:2863
 msgid "left"
@@ -164,7 +164,7 @@ msgstr "Одиночная игра"
 
 #: ../frozen-bubble:3209
 msgid "Multiplayer training"
-msgstr ""
+msgstr "Мультиплеер (тренировка)"
 
 #: ../frozen-bubble:3209 ../frozen-bubble:4446
 msgid "Enable chain-reaction?"
@@ -205,7 +205,7 @@ msgstr "*** Серверов не найдено, создан сервер дл
 
 #: ../frozen-bubble:3340
 msgid "*** Contacting master server..."
-msgstr "*** Связываюсь с основным сервером..."
+msgstr "*** Идет соединение с основным сервером..."
 
 #: ../frozen-bubble:3351
 msgid "*** Server list received properly"
@@ -217,12 +217,12 @@ msgstr "*** Невозможно получить список серверов 
 
 #: ../frozen-bubble:3354
 msgid "*** Verify your network setup or retry later"
-msgstr "*** Проверьте сеть, или попробуйте позже"
+msgstr "*** Проверьте настройки сети, или попробуйте позже"
 
 #: ../frozen-bubble:3393
-#, fuzzy, perl-format
+#, perl-format
 msgid "Available players: %s (playing: %s) Ping: %sms"
-msgstr "Доступных игроков:%s  Ping:%sms"
+msgstr "Доступных игроков: %s (играют: %s) Ping: %sms"
 
 #: ../frozen-bubble:3441
 msgid "*** No available game server"
@@ -239,17 +239,17 @@ msgstr "*** Выберите сервер"
 #: ../frozen-bubble:3507
 msgid ""
 "*** Impossible to connect to specified server, going back to server list"
-msgstr "*** Невозможно соединиться с указанным сервером, возвращаемся к списку"
+msgstr "*** Невозможно соединиться с указанным сервером"
 
 #: ../frozen-bubble:3510
 #, perl-format
 msgid "*** Connected to server '%s'"
-msgstr "*** Связываюсь с сервером '%s'"
+msgstr "*** Произошло соединение с сервером '%s'"
 
 #: ../frozen-bubble:3511
-#, fuzzy, perl-format
+#, perl-format
 msgid "*** Server's MOTD: %s"
-msgstr "*** Счет: %s"
+msgstr "*** Сообщение от сервера: %s"
 
 #: ../frozen-bubble:3535
 msgid ""
@@ -281,36 +281,35 @@ msgid "Available Players: %s"
 msgstr "Доступные игроки: %s"
 
 #: ../frozen-bubble:3789
-#, fuzzy, perl-format
+#, perl-format
 msgid "*** %s has left the chat room"
-msgstr "*** %s покинул игру..."
+msgstr "*** %s покинул чат"
 
 #: ../frozen-bubble:3791
 msgid "*** Several players left this chat room: "
-msgstr ""
+msgstr "*** Игроки, покинувшие чат: "
 
 #: ../frozen-bubble:3803
-#, fuzzy, perl-format
+#, perl-format
 msgid "*** %s has joined the chat room"
-msgstr "*** %s присоединился к игре!"
+msgstr "*** %s присоединился к чату"
 
 #: ../frozen-bubble:3805
 msgid "*** Several players joined this chat room: "
-msgstr ""
+msgstr "*** Игроки, присоединившиеся к чату: "
 
 #: ../frozen-bubble:3823
 #, perl-format
 msgid "Join game: %s"
-msgstr "Присоединяемся к игре: %s"
+msgstr "Присоединиться к игре: %s"
 
 #: ../frozen-bubble:3843
 msgid "*** Players listening: "
 msgstr "*** Присутствуют игроки: "
 
 #: ../frozen-bubble:3854 ../frozen-bubble:4072
-#, fuzzy
 msgid "*** No one's listening here"
-msgstr "*** Присутствуют игроки: "
+msgstr "*** Чат пуст"
 
 #: ../frozen-bubble:3863
 msgid ""
@@ -322,7 +321,7 @@ msgstr ""
 
 #: ../frozen-bubble:3871
 msgid "*** Done - you can now create or join a game"
-msgstr "*** Ок, теперь вы можете создать или присоединиться к игре"
+msgstr "*** Теперь вы можете создать игру или присоединиться к существующей"
 
 #: ../frozen-bubble:3873
 msgid ""
@@ -339,26 +338,26 @@ msgstr ""
 
 #: ../frozen-bubble:3881
 msgid "*** hostip.info didn't reply within 5 seconds, giving up"
-msgstr "*** hostip.info не отвечает в течении 5 секунд, сдаюсь"
+msgstr "*** hostip.info не отвечает в течении 5 секунд"
 
 #: ../frozen-bubble:3895 ../frozen-bubble:4125 ../frozen-bubble:4137
 #: ../frozen-bubble:4171 ../frozen-bubble:4249 ../frozen-bubble:4369
 msgid "disabled"
-msgstr ""
+msgstr "выключено"
 
 #: ../frozen-bubble:3897 ../frozen-bubble:4370
 msgid "none (unlimited)"
-msgstr ""
+msgstr "не ограничено"
 
 #: ../frozen-bubble:3917 ../frozen-bubble:4131 ../frozen-bubble:4166
 #: ../frozen-bubble:4169 ../frozen-bubble:4244 ../frozen-bubble:4247
 #: ../frozen-bubble:4369
 msgid "enabled"
-msgstr ""
+msgstr "включено"
 
 #: ../frozen-bubble:3949
 msgid "*** Leaving game..."
-msgstr "*** Выходим из игры..."
+msgstr "*** Выход из игры..."
 
 #: ../frozen-bubble:4023
 #, perl-format
@@ -370,9 +369,9 @@ msgid "*** Erroneous nickname"
 msgstr "*** Неверный ник"
 
 #: ../frozen-bubble:4036
-#, fuzzy, perl-format
+#, perl-format
 msgid "*** You're connected to server '%s'"
-msgstr "*** Связываюсь с сервером '%s'"
+msgstr "*** Текущий сервер: '%s'"
 
 #: ../frozen-bubble:4042
 msgid "*** Sado-masochist, hmm?"
@@ -430,9 +429,8 @@ msgstr ""
 "выберите другой сервер."
 
 #: ../frozen-bubble:4100
-#, fuzzy
 msgid "*** Cannot join game, game was just started or aborted"
-msgstr "*** Ошибка: игра только началась, или была прервана"
+msgstr "*** Нельзя войти в игру: игра только началась, или была прервана"
 
 #: ../frozen-bubble:4104
 #, perl-format
@@ -445,47 +443,55 @@ msgstr "*** Игра создана. Подождите, пока присоед
 
 #: ../frozen-bubble:4113
 msgid "*** Joined game"
-msgstr "*** Присоединились к игре"
+msgstr "*** Вы присоединились к игре"
 
 #: ../frozen-bubble:4128
 msgid ""
 "*** Can't enable chain-reaction, as a player is using a too old version of "
 "Frozen-Bubble"
 msgstr ""
+"*** Нельзя включить цепную реакцию, так как у игрока старая версия "
+"Frozen-Bubble"
 
 #: ../frozen-bubble:4132 ../frozen-bubble:4138 ../frozen-bubble:4364
 #: ../frozen-bubble:4369
-#, fuzzy, perl-format
+#, perl-format
 msgid "Chain-reaction: %s"
-msgstr "Включить цепную реакцию?"
+msgstr "Цепная реакция: %s"
 
 #: ../frozen-bubble:4147
 msgid ""
 "*** Can't set a victories limit, as a player is using a too old version of "
 "Frozen-Bubble"
 msgstr ""
+"*** Лимит побед не может быть установлен, так как у игрока старая версия "
+"Frozen-Bubble"
 
 #: ../frozen-bubble:4152 ../frozen-bubble:4365 ../frozen-bubble:4370
 #, perl-format
 msgid "Victories limit: %s"
-msgstr ""
+msgstr "Лимит побед: %s"
 
 #: ../frozen-bubble:4161 ../frozen-bubble:4181 ../frozen-bubble:4187
 #, perl-format
 msgid "*** Can't start game: '%s'"
-msgstr "*** Нельзя создать игру: '%s'"
+msgstr "*** Не удалось начать игру: '%s'"
 
 #: ../frozen-bubble:4170
 msgid ""
 "*** Must disable chain-reaction, as a player is using a too old version of "
 "Frozen-Bubble"
 msgstr ""
+"*** Цепная реакция отключена, так как один из игроков использует старую "
+"версию Frozen-Bubble"
 
 #: ../frozen-bubble:4174
 msgid ""
 "*** Must reset victories limit as a player is using a too old version of "
 "Frozen-Bubble"
 msgstr ""
+"*** Лимит побед отключен, так как один из игроков использует старую версию "
+"Frozen-Bubble"
 
 #: ../frozen-bubble:4241
 #, perl-format
@@ -497,12 +503,16 @@ msgstr "*** %s присоединился к игре!"
 msgid ""
 "*** Chain-reaction disabled, %s is using a too old version of Frozen-Bubble"
 msgstr ""
+"*** Цепная реакция отключена, так как %s использует старую версию "
+"Frozen-Bubble"
 
 #: ../frozen-bubble:4252
 #, perl-format
 msgid ""
 "*** Victories limit reset, %s is using a too old version of Frozen-Bubble"
 msgstr ""
+"*** Лимит побед отключен, так как %s использует старую версию "
+"Frozen-Bubble"
 
 #: ../frozen-bubble:4260
 msgid "*** Game creator left the game..."
@@ -535,19 +545,19 @@ msgid "Start game!"
 msgstr "Начать игру!"
 
 #: ../frozen-bubble:4385
-#, fuzzy, perl-format
+#, perl-format
 msgid "*** Game finished, because victories limit of %s was reached."
-msgstr "*** Игра закончена, т.к. следующие игроки вышли: %s"
+msgstr "*** Игра закончена, так как лимит в %s побед был достигнут."
 
 #: ../frozen-bubble:4388
 #, perl-format
 msgid "*** Game finished, because the following player(s) left: %s"
-msgstr "*** Игра закончена, т.к. следующие игроки вышли: %s"
+msgstr "*** Игра закончена, так как следующие игроки вышли: %s"
 
 #: ../frozen-bubble:4391
 #, perl-format
 msgid "*** Addicted for: %s"
-msgstr "*** Наслаждался %s"
+msgstr "*** Наслаждался игрой %s"
 
 #: ../frozen-bubble:4394
 #, perl-format
@@ -568,8 +578,8 @@ msgid ""
 "*** Cannot connect to specified gameserver, fallbacking to contacting master "
 "server"
 msgstr ""
-"*** Не удается соединиться с указанным сервером. Соединяемся с главным "
-"сервером"
+"*** Не удалось соединиться с указанным сервером. Идет возврат на основной "
+"сервер"
 
 #: ../frozen-bubble:4446
 msgid "2-player game"
@@ -629,7 +639,7 @@ msgstr "Игрок 2; центровка?"
 
 #: ../frozen-bubble:4664
 msgid "Toggle fullscreen?"
-msgstr "На весь экран?"
+msgstr "Полноэкранный режим?"
 
 #: ../frozen-bubble:4665
 msgid "Chat (net/lan game)?"
@@ -638,3 +648,4 @@ msgstr "Чат (сетевая игра)?"
 #: ../frozen-bubble:4667
 msgid "Thanks!"
 msgstr "Спасибо!"
+
