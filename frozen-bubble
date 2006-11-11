@@ -77,8 +77,8 @@ $FREE_FALL_CONSTANT = 0.5;
 $KEYS = { p1 => { left => SDLK_LEFT, right => SDLK_RIGHT, fire => SDLK_UP, center => SDLK_DOWN },
           p2 => { left => SDLK_x,    right => SDLK_v,     fire => SDLK_c,  center => SDLK_d },
 	  misc => { fs => SDLK_f, chat => SDLK_RETURN, send_malus_to_rp1 => SDLK_F1, send_malus_to_rp2 => SDLK_F2, send_malus_to_rp3 => SDLK_F3,
-                    send_malus_to_rp4 => SDLK_F4, send_malus_to_all => SDLK_F10, next_playlist_elem => SDLK_TAB, save_record => SDLK_PRINT } };
-
+                    send_malus_to_rp4 => SDLK_F4, send_malus_to_all => SDLK_F10, next_playlist_elem => SDLK_TAB, save_record => SDLK_PRINT,
+                    toggle_music => SDLK_F11, toggle_sound => SDLK_F12, raise_volume => SDLK_KP_PLUS, lower_volume => SDLK_KP_MINUS } };
 $sdl_flags = SDL_ANYFORMAT | SDL_HWSURFACE | SDL_DOUBLEBUF | SDL_HWACCEL | SDL_ASYNCBLIT;
 $mixer = 0;
 $graphics_level = 3;
@@ -247,8 +247,10 @@ sub play_sound($) {
     $mixer_enabled && $mixer && !$sfx_disabled && $sound{$_[0]} and $mixer->play_channel(-1, $sound{$_[0]}, 0);
 }
 
+our $current_theoretical_music;
 sub play_music($) {
     my ($name) = @_;
+    $current_theoretical_music = $name;
     $mixer_enabled && $mixer && !$music_disabled or return;
     @playlist && $mixer->playing_music and return;
     $app->delay(10) while $mixer->fading_music;   #- mikmod will deadlock if we try to fade_out while still fading in
@@ -1314,6 +1316,53 @@ sub handle_mp_messages {
             
 }
 
+sub handle_whenever_events {
+    my ($keypressed) = @_;
+
+    if ($keypressed eq $KEYS->{misc}{fs}) {
+        $fullscreen = !$fullscreen;
+        $app->fullscreen;
+    }
+    if ($keypressed eq $KEYS->{misc}{toggle_sound}) {
+	if (!$mixer_enabled) {
+            if ($mixer || init_sound()) {
+                $mixer_enabled = 1;
+                play_music($current_theoretical_music);
+            }
+        } else {
+            if ($mixer_enabled && $mixer && $mixer->playing_music) {
+                $app->delay(10) while $mixer->fading_music;   #- mikmod will deadlock if we try to fade_out while still fading in
+                $mixer->playing_music and $mixer->halt_music;
+                $app->delay(10) while $mixer->playing_music;  #- mikmod will segfault if we try to load a music while old one is still fading out
+            }
+            $mixer_enabled = undef;
+        }
+    }
+    if ($mixer_enabled && $mixer && $keypressed eq $KEYS->{misc}{toggle_music}) {
+        if ($music_disabled) {
+            $music_disabled = undef;
+            play_music($current_theoretical_music);
+        } else {
+            $music_disabled = 1;
+            $mixer->halt_music;
+        }
+    }
+    if ($mixer_enabled && $mixer && @playlist && $keypressed eq $KEYS->{misc}{next_playlist_elem}) {
+        $mixer->halt_music;
+        play_music('dummy');
+    }
+    if ($mixer_enabled && $mixer && $keypressed eq $KEYS->{misc}{raise_volume}) {
+        my $to = int(min($mixer->music_volume(-1) + SDL::Mixer::MIX_MAX_VOLUME()/10, SDL::Mixer::MIX_MAX_VOLUME()));
+        $mixer->music_volume($to);
+        $mixer->channel_volume(-1, $to);
+    }
+    if ($mixer_enabled && $mixer && $keypressed eq $KEYS->{misc}{lower_volume}) {
+        my $to = int(max($mixer->music_volume(-1) - SDL::Mixer::MIX_MAX_VOLUME()/10, 0));
+        $mixer->music_volume($to);
+        $mixer->channel_volume(-1, $to);
+    }
+}
+
 sub handle_game_events() {
 
     if ($levels{current} eq 'mp_train' && @{$malus_bubble{p1}} == 0 && $pdata{p1}{malus} == 0) {
@@ -1330,10 +1379,8 @@ sub handle_game_events() {
                 exit 0;
             }
             my $keypressed = extended_keypress($event);
-            if ($keypressed eq $KEYS->{misc}{fs}) {
-                $fullscreen = !$fullscreen;
-                $app->fullscreen;
-            } elsif ($keypressed) {
+            handle_whenever_events($keypressed);
+            if ($keypressed eq SDLK_ESCAPE) {
                 die 'quit';
             }
         }
@@ -1371,11 +1418,6 @@ sub handle_game_events() {
                     }
                 };
                 
-                if ($keypressed eq $KEYS->{misc}{fs}) {
-                    $fullscreen = !$fullscreen;
-                    $app->fullscreen;
-                }
-
                 if ($keypressed eq $KEYS->{misc}{chat} && is_mp_game()) {
                     callback_entry('reset');
                     $pdata{p1}{chatting} = 1;
@@ -1404,10 +1446,7 @@ sub handle_game_events() {
                             }
                             my $keypressed = extended_keypress($event);
                             if ($keypressed) {
-                                if ($keypressed eq $KEYS->{misc}{fs}) {
-                                    $fullscreen = !$fullscreen;
-                                    $app->fullscreen;
-                                }
+                                handle_whenever_events($keypressed);
                                 if (member($keypressed, SDLK_PAUSE, SDLK_ESCAPE, SDLK_RETURN, SDLK_SPACE)) {
                                     last pause_label;
                                 }
@@ -1441,15 +1480,12 @@ sub handle_game_events() {
                     }
                 }
 
-                if ($mixer_enabled && $mixer && @playlist && $keypressed eq $KEYS->{misc}{next_playlist_elem}) {
-                    $mixer->halt_music;
-                    play_music('dummy');
-                }
-
                 if ($levels{current} !~ /^\d+$/ && $keypressed eq $KEYS->{misc}{save_record}) {
                     print "This game will be recorded when it's over.\n";
                     $recorddata{save} = 1;
                 }
+
+                handle_whenever_events($keypressed);
             }
         }
 
@@ -3489,13 +3525,12 @@ sub smg_choose_server(@) {
                         } @sorted_servers;
                     }
 
-                } elsif ($k eq $KEYS->{misc}{fs}) {
-                    $fullscreen = !$fullscreen;
-                    $app->fullscreen;
-
                 } elsif ($k eq SDLK_RETURN() || $k eq SDLK_KP_ENTER()) {
                     play_sound('menu_selected');
                     goto ok_smg_choose_server;
+
+                } else {
+                    handle_whenever_events($k);
                 }
             }
             $redraw->();
@@ -4230,9 +4265,8 @@ sub smg_choose_game() {
                                                            }
                                                        } });
                     
-                    } elsif ($k eq $KEYS->{misc}{fs}) {
-                        $fullscreen = !$fullscreen;
-                        $app->fullscreen;
+                    } else {
+                        handle_whenever_events($k);
                     }
                 }
 
@@ -4891,10 +4925,7 @@ sub menu {
 		    }
                     $menu_update->();
 		}
-                if ($keypressed eq $KEYS->{misc}{fs}) {
-                    $fullscreen = !$fullscreen;
-                    $app->fullscreen;
-                }
+                handle_whenever_events($keypressed);
 
                 if ($keypressed eq SDLK_ESCAPE) {
 		    exit 0;
