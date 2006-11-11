@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: frozen-bubble\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2006-11-05 22:40+0100\n"
-"PO-Revision-Date: 2006-10-18 19:10+0300\n"
+"PO-Revision-Date: 2006-11-07 16:44+0200\n"
 "Last-Translator: Anssi Hannula <anssi.hannula@gmail.com>\n"
 "Language-Team: Finnish\n"
 "MIME-Version: 1.0\n"
@@ -134,11 +134,11 @@ msgstr "taso %s"
 
 #: ../frozen-bubble:2765
 msgid "Regular"
-msgstr ""
+msgstr "Tavallinen"
 
 #: ../frozen-bubble:2780
 msgid "Chain-reaction enabled"
-msgstr ""
+msgstr "Ketjureaktio päällä"
 
 #: ../frozen-bubble:2863
 msgid "left"
@@ -166,7 +166,7 @@ msgstr "Yksinpelin aloitusvalikko"
 
 #: ../frozen-bubble:3209
 msgid "Multiplayer training"
-msgstr ""
+msgstr "Moninpeliharjoitus"
 
 #: ../frozen-bubble:3209 ../frozen-bubble:4446
 msgid "Enable chain-reaction?"
@@ -222,9 +222,9 @@ msgid "*** Verify your network setup or retry later"
 msgstr "*** Tarkista verkkoasetuksesi tai yritä myöhemmin uudelleen"
 
 #: ../frozen-bubble:3393
-#, fuzzy, perl-format
+#, perl-format
 msgid "Available players: %s (playing: %s) Ping: %sms"
-msgstr "Vapaita pelaajia:%s  Ping:%sms"
+msgstr "Vapaita pelaajia:%s (pelaamassa: %s) Ping:%sms"
 
 #: ../frozen-bubble:3441
 msgid "*** No available game server"
@@ -239,8 +239,7 @@ msgid "*** Please choose a server"
 msgstr "*** Valitse palvelin"
 
 #: ../frozen-bubble:3507
-msgid ""
-"*** Impossible to connect to specified server, going back to server list"
+msgid "*** Impossible to connect to specified server, going back to server list"
 msgstr ""
 "*** Valittuun palvelimeen ei saada yhteyttä, siirrytään takaisin "
 "palvelinlistaan"
@@ -251,9 +250,9 @@ msgid "*** Connected to server '%s'"
 msgstr "*** Yhdistetty palvelimeen '%s'"
 
 #: ../frozen-bubble:3511
-#, fuzzy, perl-format
+#, perl-format
 msgid "*** Server's MOTD: %s"
-msgstr "*** Pisteet: %s"
+msgstr "*** Palvelimen viesti: %s"
 
 #: ../frozen-bubble:3535
 msgid ""
@@ -286,22 +285,22 @@ msgid "Available Players: %s"
 msgstr "Vapaita pelaajia: %s"
 
 #: ../frozen-bubble:3789
-#, fuzzy, perl-format
+#, perl-format
 msgid "*** %s has left the chat room"
-msgstr "*** %s poistui pelistä..."
+msgstr "*** %s poistui keskustelusta"
 
 #: ../frozen-bubble:3791
 msgid "*** Several players left this chat room: "
-msgstr ""
+msgstr "*** Useita pelaajia poistui keskustelusta:"
 
 #: ../frozen-bubble:3803
-#, fuzzy, perl-format
+#, perl-format
 msgid "*** %s has joined the chat room"
-msgstr "*** %s liittyi peliin!"
+msgstr "*** %s liittyi keskusteluun"
 
 #: ../frozen-bubble:3805
 msgid "*** Several players joined this chat room: "
-msgstr ""
+msgstr "*** Useita pelaajia liittyi keskusteluun:"
 
 #: ../frozen-bubble:3823
 #, perl-format
@@ -313,9 +312,8 @@ msgid "*** Players listening: "
 msgstr "Keskustelussa: %s"
 
 #: ../frozen-bubble:3854 ../frozen-bubble:4072
-#, fuzzy
 msgid "*** No one's listening here"
-msgstr "Keskustelussa: %s"
+msgstr "*** Keskustelussa ei ole muita pelaajia"
 
 #: ../frozen-bubble:3863
 msgid ""
@@ -330,8 +328,7 @@ msgid "*** Done - you can now create or join a game"
 msgstr "*** Valmis - voit nyt luoda pelin tai liittyä jo luotuun peliin"
 
 #: ../frozen-bubble:3873
-msgid ""
-"*** hostip.info doesn't know the geographical location of your IP address"
+msgid "*** hostip.info doesn't know the geographical location of your IP address"
 msgstr "*** hostip.info ei tiedä IP-osoitteesi maantieteellistä sijaintia"
 
 #: ../frozen-bubble:3874
@@ -349,17 +346,17 @@ msgstr "*** hostip.info ei vastannut 5 sekunnin kuluessa, luovutetaan"
 #: ../frozen-bubble:3895 ../frozen-bubble:4125 ../frozen-bubble:4137
 #: ../frozen-bubble:4171 ../frozen-bubble:4249 ../frozen-bubble:4369
 msgid "disabled"
-msgstr ""
+msgstr "pois"
 
 #: ../frozen-bubble:3897 ../frozen-bubble:4370
 msgid "none (unlimited)"
-msgstr ""
+msgstr "ei rajaa"
 
 #: ../frozen-bubble:3917 ../frozen-bubble:4131 ../frozen-bubble:4166
 #: ../frozen-bubble:4169 ../frozen-bubble:4244 ../frozen-bubble:4247
 #: ../frozen-bubble:4369
 msgid "enabled"
-msgstr ""
+msgstr "päällä"
 
 #: ../frozen-bubble:3949
 msgid "*** Leaving game..."
@@ -375,9 +372,9 @@ msgid "*** Erroneous nickname"
 msgstr "*** Virheellinen nimimerkki"
 
 #: ../frozen-bubble:4036
-#, fuzzy, perl-format
+#, perl-format
 msgid "*** You're connected to server '%s'"
-msgstr "*** Yhdistetty palvelimeen '%s'"
+msgstr "*** Yhdistettynä palvelimeen '%s'"
 
 #: ../frozen-bubble:4042
 msgid "*** Sado-masochist, hmm?"
@@ -389,7 +386,7 @@ msgstr "*** Pidät siitä kun sattuu, etkö vain?"
 
 #: ../frozen-bubble:4044
 msgid "*** Your butt already hurts enough! Stop that!"
-msgstr "*** Takapuoltasi sattuu jo tarpeeksi! Lopeta tuo!"
+msgstr "*** Takamuksesi on jo tarpeeksi kipeä! Lopeta tuo!"
 
 #: ../frozen-bubble:4048
 #, perl-format
@@ -435,9 +432,8 @@ msgstr ""
 "peliin tai valitse toinen palvelin."
 
 #: ../frozen-bubble:4100
-#, fuzzy
 msgid "*** Cannot join game, game was just started or aborted"
-msgstr "*** Virhe: peli on juuri aloitettu tai peruutit liittymisen"
+msgstr "*** Peliin ei voida liittyä, koska peli on juuri aloitettu tai keskeytetty"
 
 #: ../frozen-bubble:4104
 #, perl-format
@@ -456,24 +452,24 @@ msgstr "*** Liitytty peliin"
 msgid ""
 "*** Can't enable chain-reaction, as a player is using a too old version of "
 "Frozen-Bubble"
-msgstr ""
+msgstr "*** Ei voida ottaa ketjureaktiota käyttöön, koska jollakin pelaajalla on liian vanha versio Frozen-Bubblesta"
 
 #: ../frozen-bubble:4132 ../frozen-bubble:4138 ../frozen-bubble:4364
 #: ../frozen-bubble:4369
-#, fuzzy, perl-format
+#, perl-format
 msgid "Chain-reaction: %s"
-msgstr "Aktivoidaanko ketjureaktio?"
+msgstr "Ketjureaktio: %s"
 
 #: ../frozen-bubble:4147
 msgid ""
 "*** Can't set a victories limit, as a player is using a too old version of "
 "Frozen-Bubble"
-msgstr ""
+msgstr "*** Ei voida asettaa voittorajaa, koska jollakin pelaajalla on liian vanha versio Frozen-Bubblesta"
 
 #: ../frozen-bubble:4152 ../frozen-bubble:4365 ../frozen-bubble:4370
 #, perl-format
 msgid "Victories limit: %s"
-msgstr ""
+msgstr "Voittoraja: %s"
 
 #: ../frozen-bubble:4161 ../frozen-bubble:4181 ../frozen-bubble:4187
 #, perl-format
@@ -484,13 +480,13 @@ msgstr "*** Peliä ei voida aloittaa: '%s'"
 msgid ""
 "*** Must disable chain-reaction, as a player is using a too old version of "
 "Frozen-Bubble"
-msgstr ""
+msgstr "*** Ketjureaktio täytyy ottaa pois käytöstä, koska jollakin pelaajalla on liian vanha versio Frozen-Bubblesta"
 
 #: ../frozen-bubble:4174
 msgid ""
 "*** Must reset victories limit as a player is using a too old version of "
 "Frozen-Bubble"
-msgstr ""
+msgstr "*** Voittoraja täytyy nollata, koska jollakin pelaajalla on liian vanha versio Frozen-Bubblesta"
 
 #: ../frozen-bubble:4241
 #, perl-format
@@ -499,15 +495,13 @@ msgstr "*** %s liittyi peliin!"
 
 #: ../frozen-bubble:4248
 #, perl-format
-msgid ""
-"*** Chain-reaction disabled, %s is using a too old version of Frozen-Bubble"
-msgstr ""
+msgid "*** Chain-reaction disabled, %s is using a too old version of Frozen-Bubble"
+msgstr "*** Ketjureaktio poistettu käytöstä, pelaajalla %s on liian vanha versio Frozen-Bubblesta"
 
 #: ../frozen-bubble:4252
 #, perl-format
-msgid ""
-"*** Victories limit reset, %s is using a too old version of Frozen-Bubble"
-msgstr ""
+msgid "*** Victories limit reset, %s is using a too old version of Frozen-Bubble"
+msgstr "*** Voittoraja nollattu, pelaajalla %s on liian vanha versio Frozen-Bubblesta"
 
 #: ../frozen-bubble:4260
 msgid "*** Game creator left the game..."
@@ -540,9 +534,9 @@ msgid "Start game!"
 msgstr "Aloita peli!"
 
 #: ../frozen-bubble:4385
-#, fuzzy, perl-format
+#, perl-format
 msgid "*** Game finished, because victories limit of %s was reached."
-msgstr "*** Peli päättyi, koska seuraava(t) pelaaja(t) poistui(vat): %s"
+msgstr "*** Peli päättyi, koska voittoraja %s on saavutettu."
 
 #: ../frozen-bubble:4388
 #, perl-format
@@ -643,3 +637,5 @@ msgstr "Keskustelu (verkkopeli)?"
 #: ../frozen-bubble:4667
 msgid "Thanks!"
 msgstr "Kiitos!"
+
+
