@@ -309,6 +309,7 @@ sub connect {
 
         my @pings;
         foreach (1..4) {
+          reping:
             my $t0 = gettimeofday;
             send_('PING');
             eval { $msg = readline_(); };
@@ -318,6 +319,9 @@ sub connect {
                 disconnect();
                 print STDERR "Dropping $host:$port: imcompatible Frozen-Bubble server\n";
                 return { failure => 'Incompatible server' };
+            } elsif ($msg =~ /PUSH/) {
+                #- drop PUSHes, server might be sending TALK messages which we don't care at that point
+                goto reping;
             } elsif ($msg !~ /PONG/) {
                 print STDERR "$host:$port answer to PING was not recognized. Server said:\n\t$msg\n";
                 disconnect();
