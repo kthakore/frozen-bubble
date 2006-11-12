@@ -2165,7 +2165,7 @@ sub update_game() {
                 $events_pumped = 1;
 
                 my $mp_newgame = sub {
-                    if (any { $pdata{$_}{left} || $pdata{$_}{score} == $pdata{scorelimit} } @PLAYERS) {
+                    if (any { $pdata{$_}{left} || $pdata{scorelimit} && $pdata{$_}{score} == $pdata{scorelimit} } @PLAYERS) {
                         die 'quit';
                     };
                     fb_net::gsend('n');
