@@ -1196,8 +1196,11 @@ sub handle_mp_messages {
         my ($m, $player) = @_;
         #- we check also the presence of malus bubbles, because if the malus order has lagged much
         #- we might receive a fire or even a stick command before the malus bubbles are sticked,
-        #- this would provoke a local inconsistency
-        if ($actions{$player}{mp_fire} || $actions{$player}{mp_stick} || @{$malus_bubble{$player}}) {
+        #- this would provoke a local inconsistency; same for chain reacted bubbles not finished yet
+        if ($actions{$player}{mp_fire}
+            || $actions{$player}{mp_stick}
+            || @{$malus_bubble{$player}}
+            || $chainreaction && any { exists $_->{chaindestx} } @{$falling_bubble{$player}}) {
             unshift @$msg, $m;
             return 0;
         } else {
