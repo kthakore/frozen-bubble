@@ -1495,7 +1495,7 @@ sub handle_game_events() {
                     return;
                 }
 
-                if (is_mp_game()) {
+                if (is_mp_game() && @PLAYERS >= 3) {
                     foreach my $rp (qw(rp1 rp2 rp3 rp4)) {
                         if ($keypressed eq $KEYS->{misc}{"send_malus_to_$rp"}) {
                             set_sendmalustoone($rp);
