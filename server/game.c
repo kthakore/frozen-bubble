@@ -326,6 +326,15 @@ static void close_game(int fd)
         }
 }
 
+static int min_protocol_level(struct game* g)
+{
+        int i;
+        int minor = remote_proto_minor[g->players_conn[0]];
+        for (i = 1; i < g->players_number; i++)
+                minor = MIN(minor, remote_proto_minor[g->players_conn[i]]);
+        return minor;
+}
+
 static void setoptions(int fd, char* options)
 {
         struct game * g = find_game_by_fd(fd);
@@ -334,7 +343,7 @@ static void setoptions(int fd, char* options)
                         int i;
                         char* msg;
                         send_ok(fd, "SETOPTIONS");
-                        msg = asprintf_("OPTIONS: %s", options);
+                        msg = asprintf_("OPTIONS: %s,PROTOCOLLEVEL:%d", options, min_protocol_level(g));
                         for (i = 0; i < g->players_number; i++)
                                 if (remote_proto_minor[g->players_conn[i]] >= 1)
                                         send_line_log_push(g->players_conn[i], msg);
@@ -470,12 +479,9 @@ static void protocol_level(int fd, char* msg)
         // Find the smallest minor protocol level among players in game
         struct game * g = find_game_by_fd(fd);
         if (g) {
-                int i;
                 char* response;
-                int minor = remote_proto_minor[g->players_conn[0]];
-                for (i = 1; i < g->players_number; i++)
-                        minor = MIN(minor, remote_proto_minor[g->players_conn[i]]);
-                response = asprintf_("%d", minor);
+                int level = min_protocol_level(g);
+                response = asprintf_("%d", level);
                 send_line_log(fd, response, msg);
                 free(response);
         } else {

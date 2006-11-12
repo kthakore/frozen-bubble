@@ -461,17 +461,18 @@ sub setmyid($) {
 #- data is command:parameters
 #- supported commands:
 #-   ! (synchro)      [this one is special, server propagates also to emitter]
-#-   r (rotate)
 #-   a (angle)
+#-   A (attack)
 #-   b (bubble)
 #-   f (fire)
 #-   F (finished)
-#-   l (leave)
 #-   g (generatemalus)
+#-   l (leave)
 #-   m (malus)
 #-   M (malusstick)
 #-   n (newgame)
 #-   N (nextbubble)
+#-   r (rotate)
 #-   p (ping)         [this one is special, server doesn't propagate back]
 #-   s (stick)
 #-   t (talk)

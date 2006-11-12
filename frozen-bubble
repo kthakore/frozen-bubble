@@ -1183,6 +1183,9 @@ sub set_sendmalustoone {
         $pdata{sendmalustoone} = $whoto;
         put_image_to_background($imgbin{attack}{$pdata{sendmalustoone}}, $POS{$pdata{sendmalustoone}}{attack}{x}, $POS{$pdata{sendmalustoone}}{attack}{'y'});
     }
+    if ($pdata{protocollevel} >= 1) {
+        fb_net::gsend("A$pdata{$pdata{sendmalustoone}}{nick}");
+    }
 }
 
 sub handle_mp_messages {
@@ -1298,6 +1301,28 @@ sub handle_mp_messages {
             play_sound('chatted');
             $pdata{$player}{chat_msg_delay} = 500;
             $pdata{current_chat_messages}{$player} = $params;
+        } elsif ($command eq 'A') {
+            if ($params eq '') {
+                @{$pdata{attackingme}} = difference2($pdata{attackingme}, [ $player ]);
+            } else {
+                if ($params eq $pdata{p1}{nick}) {
+                    if (!member($player, @{$pdata{attackingme}})) {
+                        push @{$pdata{attackingme}}, $player;
+                    }
+                } else {
+                    @{$pdata{attackingme}} = difference2($pdata{attackingme}, [ $player ]);
+                }
+            }
+            my $xpos = $POS{p1}{attackme}{x};
+            my $drect = SDL::Rect->new(-width => 3*24 + $imgbin{attackme}{rp1}->width, -height => $imgbin{attackme}{rp1}->height,
+                                       -x => $xpos, '-y' => $POS{p1}{attackme}{'y'});
+            $background_orig->blit($drect, $background, $drect);
+            $background_orig->blit($drect, $app, $drect);
+            push @update_rects, $drect;
+            foreach my $attackingme (@{$pdata{attackingme}}) {
+                put_image_to_background($imgbin{attackme}{$attackingme}, $xpos, $POS{p1}{attackme}{'y'});
+                $xpos += 24;
+            }
         } else {
             print STDERR "****** Unrecognized command: $m->{msg}\n";
         }
@@ -2618,7 +2643,10 @@ sub init_game() {
 	$imgbin{hurry}{$::p} = add_image("hurry_$::p.png");
 	$imgbin{win}{$::p} = add_image("win_panel_$::p.png");
 	$::p ne 'p2' and $imgbin{net_lose}{$::p} = add_image("net_lose_$::p.png");
-        $::p =~ /^r/ and $imgbin{attack}{$::p} = add_image("attack_$::p.png");
+        if ($::p =~ /^r/) {
+            $imgbin{attack}{$::p} = add_image("attack_$::p.png");
+            $imgbin{attackme}{$::p} = add_image("attackme_$::p.png");
+        }
 	$pdata{$::p}{score} = 0;
         my $p = $::p;
         $pinguin{$::p}{normal} = [ add_image("pinguins/anime-shooter_${p}_0020.png") ];
@@ -3175,6 +3203,8 @@ sub new_game() {
         }
         
         fb_net::gdelay_messages(@keep_messages);
+
+        @{$pdata{attackingme}} = ();
     }
 
     if ($levels{current} eq 'mp_train') {
@@ -4338,6 +4368,8 @@ sub smg_choose_game() {
                             $chainreaction = $1;
                         } elsif ($option =~ /^VICTORIESLIMIT:(\d*)/) {
                             $pdata{scorelimit} = $1;
+                        } elsif ($option =~ /^PROTOCOLLEVEL:(\d+)/) {
+                            $pdata{protocollevel} = $1;
                         } else {
                             print "Unrecognized option: $option\n";
                         }

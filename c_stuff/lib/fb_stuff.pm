@@ -88,6 +88,7 @@ $POS_2P{rp1} = $POS_2P{p2};  #- in net/lan 2p mode, use bigger graphics and posi
                     malus => { x => 169, 'y' => 464 },
                     scores => { x => 320, 'y' => 12 },
                     chatting => { x => 215, 'y' => 442 },
+                    attackme => { x => 185, 'y' => 448 },
                   },
             rp1 => { left_limit => 20, right_limit => 148, top_limit => 19, 'initial_bubble_y' => 192,
                      canon => { x => 59, 'y' => 175 },
