@@ -3466,7 +3466,7 @@ sub smg_choose_server(@) {
             print_('netdialogs', $app, $parts{name}{xpos}, $y, $server->{name}, $parts{name}{width}, $is_rtl ? 'right' : 'left');  #- ASCII
             my $details = t("Available players: %s (playing: %s) Ping: %sms", i18n_number($server->{players}), i18n_number($server->{playing}), i18n_number($server->{ping}));
             print_('netdialogs', $app, $parts{details}{xpos}, $y, $details, $parts{details}{width});
-            my $pingimg = $server->{ping} < 50 ? "ping_low" : $server->{ping} < 100 ? "ping_mid" : "ping_high";
+            my $pingimg = $server->{ping} < 80 ? "ping_low" : $server->{ping} < 200 ? "ping_mid" : "ping_high";
             put_image($imgbin{$pingimg}, $is_rtl ? $parts{details}{xpos} + $parts{details}{width} - width('netdialogs', $details) - 17
                                                  : $parts{details}{xpos} + width('netdialogs', $details), $y);
                                                      
