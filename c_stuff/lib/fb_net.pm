@@ -275,7 +275,7 @@ sub connect {
 
     $sock = IO::Socket::INET->new(PeerAddr => $host, PeerPort => $port, Proto => 'tcp', Timeout => 2);
     if (!$sock) {
-        print STDERR "Couldn't connect to $host:$port: $@\n";
+        #print STDERR "Couldn't connect to $host:$port: $@\n";
         return { failure => 'Server is down' };
     }
     $sock->autoflush;
