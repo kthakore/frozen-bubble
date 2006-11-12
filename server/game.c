@@ -367,6 +367,8 @@ static void ok_start_game(int fd)
                         for (i = 0; i < g->players_number; i++) {
                                 if (g->players_conn[i] == fd) {
                                         if (!g->players_started[i]) {
+                                                if (remote_proto_minor[g->players_conn[i]] >= 1)
+                                                        send_ok(fd, "OK_GAME_START");
                                                 g->players_started[i] = 1;
                                                 l1(OUTPUT_TYPE_DEBUG, "[%d] entering prio mode", g->players_conn[i]);
                                                 add_prio(g->players_conn[i]);

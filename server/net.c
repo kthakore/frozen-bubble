@@ -109,6 +109,7 @@ static int incoming_data_buffers_count[256];
 static time_t last_data_in[256];
 static time_t minute_for_talk_flood[256];
 int amount_talk_flood[256];
+static int prio[256];
 
 /* send line adding the protocol in front of the supplied msg */
 static ssize_t send_line(int fd, char* msg)
@@ -139,13 +140,19 @@ ssize_t send_line_log(int fd, char* dest_msg, char* inco_msg)
 
 ssize_t send_line_log_push(int fd, char* dest_msg)
 {
-        char * tmp = current_command;
-        ssize_t b;
-        current_command = "PUSH";
-        l2(OUTPUT_TYPE_DEBUG, "[%d] PUSH %s", fd, dest_msg);
-        b = send_line(fd, dest_msg);
-        current_command = tmp;
-        return b;
+        // drop pre-prio messages for connections in prio mode; there can be some remaining uninteresting
+        // messages arriving right in between (TALK)
+        if (prio[fd])
+                return 0;
+        else {
+                char * tmp = current_command;
+                ssize_t b;
+                current_command = "PUSH";
+                l2(OUTPUT_TYPE_DEBUG, "[%d] PUSH %s", fd, dest_msg);
+                b = send_line(fd, dest_msg);
+                current_command = tmp;
+                return b;
+        }
 }
 
 ssize_t send_line_log_push_binary(int fd, char* dest_msg, char* printable_msg)
@@ -482,6 +489,7 @@ void connections_manager(void)
                         nick[fd] = NULL;
                         geoloc[fd] = NULL;
                         IP[fd] = strdup_(inet_ntoa(client_addr.sin_addr));
+                        prio[fd] = 0;
                         remote_proto_minor[fd] = -1;
                         send_line_log_push(fd, get_greets_msg());
                         conns = g_list_append(conns, GINT_TO_POINTER(fd));
@@ -507,6 +515,7 @@ void add_prio(int fd)
 {
         conns_prio = g_list_append(conns_prio, GINT_TO_POINTER(fd));
         new_conns = g_list_remove(new_conns, GINT_TO_POINTER(fd));
+        prio[fd] = 1;
         if (lan_game_mode && g_list_length(conns_prio) > 0 && udp_server_socket != -1) {
                 close(tcp_server_socket);
                 close(udp_server_socket);

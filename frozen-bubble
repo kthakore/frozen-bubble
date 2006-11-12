@@ -4376,7 +4376,7 @@ sub smg_choose_game() {
                     }
                     play_sound('menu_selected');
                 } elsif ($message =~ /^GAME_CAN_START: (.+)/) {
-                    fb_net::send_("OK_GAME_START");
+                    smg_verify_command('OK_GAME_START');
                     @PLAYERS = qw(p1);
                     my $msg = $1;
                     my @mappings;
