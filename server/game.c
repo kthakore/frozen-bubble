@@ -78,6 +78,7 @@ static char wn_not_creator[] = "NOT_CREATOR";
 static char wn_no_such_player[] = "NO_SUCH_PLAYER";
 static char wn_denied[] = "DENIED";
 static char wn_flooding[] = "FLOODING";
+static char wn_others_not_ready[] = "OTHERS_NOT_READY";
 
 static char fl_line_unrecognized[] = "MISSING_FB_PROTOCOL_TAG";
 static char fl_proto_mismatch[] = "INCOMPATIBLE_PROTOCOL";
@@ -352,6 +353,30 @@ static void setoptions(int fd, char* options)
                         send_line_log(fd, wn_not_creator, "SETOPTIONS");
                 }
 
+        } else {
+                l0(OUTPUT_TYPE_ERROR, "Internal error");
+                exit(EXIT_FAILURE);
+        }
+}
+
+static void leader_check_game_start(int fd)
+{
+        struct game * g = find_game_by_fd(fd);
+        if (g) {
+                if (g->status == GAME_STATUS_PLAYING) {
+                        int i;
+                        for (i = 0; i < g->players_number; i++) {
+                                if (fd != g->players_conn[i]) {
+                                        if (!g->players_started[i]) {
+                                                send_line_log(fd, wn_others_not_ready, "LEADER_CHECK_GAME_START");
+                                                return;
+                                        }
+                                }
+                        }
+                        send_ok(fd, "LEADER_CHECK_GAME_START");
+                } else {
+                        send_line_log(fd, wn_not_started, "LEADER_CHECK_GAME_START");
+                }
         } else {
                 l0(OUTPUT_TYPE_ERROR, "Internal error");
                 exit(EXIT_FAILURE);
@@ -734,6 +759,12 @@ int process_msg(int fd, char* msg)
                         send_line_log(fd, wn_not_in_game, msg_orig);
                 } else {
                         setoptions(fd, args);
+                }
+        } else if (streq(current_command, "LEADER_CHECK_GAME_START")) {
+                if (!already_in_game(fd)) {
+                        send_line_log(fd, wn_not_in_game, msg_orig);
+                } else {
+                        leader_check_game_start(fd);
                 }
         } else if (streq(current_command, "OK_GAME_START")) {
                 if (!already_in_game(fd)) {

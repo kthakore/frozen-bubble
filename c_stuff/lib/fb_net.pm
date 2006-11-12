@@ -67,10 +67,11 @@ sub discover_lan_servers {
             return { failure => 'Cannot read answer from broadcast.' };
         }
         my ($port, $ipaddr) = sockaddr_in($srcpaddr);
+        $ipaddr = inet_ntoa($ipaddr);
         if ($rcvmsg =~ m|^FB/$proto_major\.\d SERVER HERE AT PORT (\d+)|) {
-            push @servers, { host => inet_ntoa($ipaddr), port => $1 };
+            push @servers, { host => $ipaddr, port => $1 };
         } else {
-            print STDERR "\nReceive weird/incompatible answer to UDP broadcast looking for LAN servers from $ipaddr:$port:\t$rcvmsg\n";
+            print STDERR "\nReceive weird/incompatible answer to UDP broadcast looking for LAN servers from $ipaddr:$port:\n\t$rcvmsg\n";
         }
     }
 
@@ -298,6 +299,9 @@ sub connect {
         } elsif ($isready eq 'PUSH: SERVER_IS_OVERLOADED') {
             print STDERR "Dropping $host:$port: server is overloaded\n";
             return { failure => 'Server overloaded' };
+        } elsif ($remote_minor < $proto_minor) {
+            print STDERR "Dropping $host:$port: deprecated protocol $remote_major.$remote_minor\n";
+            return { failure => 'Server deprecated' };
         } else {
             print STDERR "Dropping $host:$port: not a Frozen-Bubble server\n";
             return { failure => 'Not an FB server' };
@@ -453,6 +457,10 @@ sub get_server_list() {
 our $myid;
 sub setmyid($) {
     $myid = $_[0];
+}
+
+sub sleep_reasonably {
+    sleep($ping/1000/3);
 }
 
 

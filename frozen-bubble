@@ -4383,7 +4383,6 @@ sub smg_choose_game() {
                     }
                     play_sound('menu_selected');
                 } elsif ($message =~ /^GAME_CAN_START: (.+)/) {
-                    smg_verify_command('OK_GAME_START');
                     @PLAYERS = qw(p1);
                     my $msg = $1;
                     my @mappings;
@@ -4412,6 +4411,22 @@ sub smg_choose_game() {
                     }
                     fb_net::setmyid($pdata{p1}{id});
                     $pdata{$_}{score} = 0 foreach @PLAYERS;
+                    #- leader must wait for all others being in prio mode before sending a prio message,
+                    #- else first messages might not get properly received on the other end and startup fails.
+                    if (is_leader()) {
+                      leader_check_game_start:
+                        my $can_start = smg_verify_command('LEADER_CHECK_GAME_START');
+                        if ($can_start eq 'OTHERS_NOT_READY') {
+                            fb_net::sleep_reasonably();
+                            goto leader_check_game_start;
+                        } elsif ($can_start) {
+                            smg_add_status_msg(t("*** Failure: '%s'", $can_start));
+                            play_sound('cancel');
+                            fb_net::reconnect();
+                            return smg_choose_game();
+                        }
+                    }
+                    smg_verify_command('OK_GAME_START');
                     return 1;
                 } else {
                     print "unrecognized message received: $msg\n";
@@ -4469,7 +4484,7 @@ sub smg_choose_game() {
 sub show_mp_scores() {
     $imgbin{back_netgame}->blit($apprects{main}, $app, $apprects{main});
 
-    if (any { $pdata{$_}{score} == $pdata{scorelimit} } @PLAYERS) {
+    if ($pdata{scorelimit} && any { $pdata{$_}{score} == $pdata{scorelimit} } @PLAYERS) {
         smg_add_status_msg(t("*** Game finished, because victories limit of %s was reached.", i18n_number($pdata{scorelimit})));
     } else {
         if (any { $pdata{$_}{left} } @PLAYERS) {
