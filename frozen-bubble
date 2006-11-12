@@ -4393,7 +4393,11 @@ sub smg_choose_game() {
                         $msg = $rest;
                         push @mappings, { id => $id, nick => $nick };
                     }
-                    delete $pdata{$_}{id} foreach @ALL_PLAYERS;
+                    foreach (@ALL_PLAYERS) {
+                        delete $pdata{$_}{id};
+                        delete $pdata{$_}{nick};
+                    }
+                    %{$pdata{id2p}} = ();
                     foreach my $m (@mappings) {
                         my $player;
                         if ($m->{nick} eq $mynick) {
