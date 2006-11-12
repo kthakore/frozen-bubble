@@ -346,7 +346,7 @@ static void handle_udp_request(void)
         }
         
         l2(OUTPUT_TYPE_DEBUG, "UDP server receives %d bytes from %s.", n, inet_ntoa(client_addr.sin_addr));
-        if (strncmp(msg, ok_input_beginning_base, strlen(ok_input_beginning)) || !strstr(msg, ok_input_end) || (lan_game_mode && g_list_length(conns_prio) > 0)) {
+        if (strncmp(msg, ok_input_beginning, strlen(ok_input_beginning)) || !strstr(msg, ok_input_end) || (lan_game_mode && g_list_length(conns_prio) > 0)) {
                 answer = fl_unrecognized;
                 l0(OUTPUT_TYPE_DEBUG, "Unrecognized/full.");
         } else {
