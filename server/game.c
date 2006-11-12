@@ -436,6 +436,7 @@ static void talk(int fd, char* msg)
                 l1(OUTPUT_TYPE_INFO, "'%s' is flooding!", IP[fd]);
                 send_line_log(fd, wn_flooding, msg);
                 conn_terminated(fd, "flooding");
+                return;
         }
 
         snprintf(talk_msg, sizeof(talk_msg), ok_talk, msg);
