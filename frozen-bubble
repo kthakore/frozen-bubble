@@ -2466,6 +2466,7 @@ sub init_game() {
     $pangocontext{netdialogs} =           { params => { desc => 'sans 10', fg => 'white', bg => 'black' } };
     $pangocontext{netdialogs_servermsg} = { params => { desc => 'sans italic 10', fg => 'white', bg => 'black' } };
     $pangocontext{menu} =                 { params => { desc => 'sans 11', fg => 'white', bg => 'black' } };
+    $pangocontext{bold_menu} =            { params => { desc => 'sans 11 bold', fg => 'white', bg => 'black' } };
     $pangocontext{ingame} =               { params => { desc => 'sans 14', fg => 'white', bg => 'black' } };
     $pangocontext{ingame_chat} =          { params => { desc => 'sans 10', fg => 'black', bg => 'white' } };
     $pangocontext{ingame_small} =         { params => { desc => 'sans 8', fg => 'white', bg => 'black' } };
@@ -2756,7 +2757,7 @@ sub grab_key {
 }
 
 sub display_highscores {
-    my ($type) = @_;
+    my ($type, $new_entry) = @_;
 
     $display_on_app_disabled = 1;
     @PLAYERS = ('p1');
@@ -2772,8 +2773,8 @@ sub display_highscores {
                                        '-width' => ($POS{p1}{right_limit}-$POS{p1}{left_limit}) & 0xFFFFFFFC, -height => ($POS{p1}{'initial_bubble_y'}-$POS{p1}{top_limit}-10) & 0xFFFFFFFC);
 
         my $centered_print = sub($$$) {
-            my ($x, $y, $txt) = @_;
-            print_('menu', $app, $x, $y + $imgbin{hiscore_frame}->height - 8, $txt, $imgbin{hiscore_frame}->width + 12, 'center');
+            my ($x, $y, $txt, $bold) = @_;
+            print_($bold ? 'bold_menu' : 'menu', $app, $x, $y + $imgbin{hiscore_frame}->height - 8, $txt, $imgbin{hiscore_frame}->width + 12, 'center');
         };
         
         my $old_levelset = $loaded_levelset;
@@ -2810,11 +2811,11 @@ sub display_highscores {
                                         -depth => 32, -Amask => "0 but true")->display_format;
             fb_c_stuff::shrink(surf($tmp), surf($background->display_format), 0, 0, rect($high_rect), 4);
             $tmp->blit(undef, $app, SDL::Rect->new(-x => $high_posx, '-y' => $high_posy));
-            $centered_print->($high_posx - 15, $high_posy,      $high->{name});
-            $centered_print->($high_posx - 15, $high_posy + 20, $high->{level} eq 'WON' ? t("won!") : t("level %s", i18n_number($high->{level})));
+            $centered_print->($high_posx - 15, $high_posy, $high->{name}, $new_entry == $high);
+            $centered_print->($high_posx - 15, $high_posy + 20, $high->{level} eq 'WON' ? t("won!") : t("level %s", i18n_number($high->{level})), $new_entry == $high);
             my $min = int($high->{time}/60);
             my $sec = int($high->{time} - $min*60); length($sec) == 1 and $sec = "0$sec";
-            $centered_print->($high_posx - 15, $high_posy + 40, t("%s'%s\"", i18n_number($min), i18n_number($sec)));
+            $centered_print->($high_posx - 15, $high_posy + 40, t("%s'%s\"", i18n_number($min), i18n_number($sec)), $new_entry == $high);
             $high_posx += 98;
             $high_posx > 550 and $high_posx = $initial_high_posx, $high_posy += 175;
             $high_posy > 440 and last;
@@ -2840,8 +2841,9 @@ sub display_highscores {
         my $y = 80;
         my $counter = 1;
         foreach my $high (ordered_mptrain_highscores()) {
-            print_('menu', $app, $parts{rank}{xpos}, $y, "$counter. ", $parts{rank}{width}, 'right');
-            print_('menu', $app, $parts{name}{xpos}, $y, "$high->{name}: $high->{score}", $parts{name}{width});
+            my $font = $new_entry == $high ? 'bold_menu' : 'menu';
+            print_($font, $app, $parts{rank}{xpos}, $y, "$counter. ", $parts{rank}{width}, 'right');
+            print_($font, $app, $parts{name}{xpos}, $y, "$high->{name}: $high->{score}", $parts{name}{width});
             $y += $smg_lineheight + 2;
             $counter++;
         }
@@ -2855,8 +2857,9 @@ sub display_highscores {
         $y = 80;
         my $counter = 1;
         foreach my $high (ordered_mptrain_highscores_chainreaction()) {
-            print_('menu', $app, $parts{rank}{xpos}, $y, "$counter. ", $parts{rank}{width}, 'right');
-            print_('menu', $app, $parts{name}{xpos}, $y, "$high->{name}: $high->{score}", $parts{name}{width});
+            my $font = $new_entry == $high ? 'bold_menu' : 'menu';
+            print_($font, $app, $parts{rank}{xpos}, $y, "$counter. ", $parts{rank}{width}, 'right');
+            print_($font, $app, $parts{name}{xpos}, $y, "$high->{name}: $high->{score}", $parts{name}{width});
             $y += $smg_lineheight + 2;
             $counter++;
         }
@@ -4578,7 +4581,6 @@ sub handle_new_hiscores() {
                    outro => t("Great game!"),
                    erase_background => $background,
                  });
-
         return if $new_entry{name} eq '';
 
         push @$HISCORES, \%new_entry;
@@ -4588,7 +4590,7 @@ sub handle_new_hiscores() {
             $HISCORES = \@high;
         }
         output($hiscorefiles{levels}, Data::Dumper->Dump([$HISCORES], [qw(HISCORES)]));
-        display_highscores('levels');
+        display_highscores('levels', \%new_entry);
 
     } else {
         #- mp training hiscores
@@ -4612,7 +4614,6 @@ sub handle_new_hiscores() {
                    outro => t("Great game!"),
                    erase_background => $background,
                  });
-
         return if $new_entry{name} eq '';
 
         push @$scores, \%new_entry;
@@ -4623,7 +4624,7 @@ sub handle_new_hiscores() {
         }
         output($hiscorefiles{mptrain}, Data::Dumper->Dump([$HISCORES_MPTRAIN], [qw(HISCORES_MPTRAIN)]) . ' ' .
                                        Data::Dumper->Dump([$HISCORES_MPTRAIN_CHAINREACTION], [qw(HISCORES_MPTRAIN_CHAINREACTION)]));
-        display_highscores('mptrain');
+        display_highscores('mptrain', \%new_entry);
     }
 }
 
