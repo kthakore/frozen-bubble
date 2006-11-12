@@ -4547,6 +4547,10 @@ sub setup_mp_game() {
 
 sub new_game_once {
 
+    if ($direct_levelset) {
+        load_levelset("$FBLEVELS/$direct_levelset");
+        $direct_levelset = '';
+    }
     if (!$direct) {
         if (is_1p_game()) {
             choose_1p_game_mode() or return;
@@ -5194,11 +5198,7 @@ sub choose_levelset() {
 
     my @levelsets = sort glob("$FBLEVELS/*");
 
-    if ($direct_levelset) {
-        load_levelset("$FBLEVELS/$direct_levelset");
-        $direct_levelset = '';
-
-    } elsif (!@levelsets && !$choose_level) {
+    if (!@levelsets && !$choose_level) {
         # no .fblevels directory or void directory, just return and let the
         # game continue (means that the level editor has never been opened)
 
