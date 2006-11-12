@@ -328,7 +328,7 @@ sub connect {
                 return { failure => 'Incompatible server' };
             }
             push @pings, ($t1-$t0) * 1000;
-            if ($_ == 2 && $pings[0] > 150 && $pings[1] > 150) {
+            if ($_ == 2 && $pings[0] > 250 && $pings[1] > 250) {
                 #- don't wait too much on slower servers
                 last;
             }
