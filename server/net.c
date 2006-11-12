@@ -207,26 +207,36 @@ void conn_terminated(int fd, char* reason)
 
 static int prio_processed;
 static time_t current_time;
+static int need_another_run;
 static void handle_incoming_data_generic(gpointer data, gpointer user_data, int prio)
 {
         int fd = GPOINTER_TO_INT(data);
 
-        if (!interrupt_loop_processing && FD_ISSET(fd, (fd_set *) user_data)) {
+        if (!interrupt_loop_processing
+            && (FD_ISSET(fd, (fd_set *) user_data)
+                || (incoming_data_buffers_count[fd] > 0 && incoming_data_buffers[fd][incoming_data_buffers_count[fd]-1] == '\n'))) {
                 char buf[INCOMING_DATA_BUFSIZE];
                 ssize_t len;
                 ssize_t offset = incoming_data_buffers_count[fd];
                 incoming_data_buffers_count[fd] = 0;
                 memcpy(buf, incoming_data_buffers[fd], offset);
-                len = recv(fd, buf + offset, INCOMING_DATA_BUFSIZE - 1 - offset, 0);
-                if (len <= 0) {
-                        if (len == -1)
-                                l2(OUTPUT_TYPE_DEBUG, "[%d] System error on recv: %s", fd, strerror(errno));
-                        conn_terminated(fd, "peer shutdown on recv");
+                len = recv(fd, buf + offset, INCOMING_DATA_BUFSIZE - 1 - offset, MSG_DONTWAIT);
+                if (len == -1 && errno != EAGAIN) {
+                        l2(OUTPUT_TYPE_DEBUG, "[%d] System error on recv: %s", fd, strerror(errno));
+                        conn_terminated(fd, "system error on recv");
+                        return;
+
+                } else if (len == 0) {
+                        conn_terminated(fd, "peer shutdown");
                         return;
 
                 } else {
+
                         char* ptr;
                         char* eol;
+
+                        if (len == -1)
+                                len = 0;
 
                         last_data_in[fd] = current_time;
                         if (minute_for_talk_flood[fd] != current_time/60) {
@@ -285,6 +295,7 @@ static void handle_incoming_data_generic(gpointer data, gpointer user_data, int 
                                                 l2(OUTPUT_TYPE_DEBUG, "multiple non-prio messages for %d, buffering (%zd bytes)", fd, remaining);
                                                 memcpy(incoming_data_buffers[fd], eol + 1, remaining);
                                                 incoming_data_buffers_count[fd] = remaining;
+                                                need_another_run = 1;
                                         }
                                         /* must handle only one message, because we might have multiple and subsequent might need to be
                                            treated as prio message if the one before is about starting the game */
@@ -403,29 +414,33 @@ void connections_manager(void)
                         calculate_list_games();
                 recalculate_list_games = 0;
 
-                FD_ZERO(&conns_set);
-                g_list_foreach(conns, fill_conns_set, &conns_set);
-                g_list_foreach(conns_prio, fill_conns_set, &conns_set);
-                if (tcp_server_socket != -1)
-                        FD_SET(tcp_server_socket, &conns_set);
-                if (udp_server_socket != -1)
-                        FD_SET(udp_server_socket, &conns_set);
+                if (!need_another_run) {
+                        FD_ZERO(&conns_set);
+                        g_list_foreach(conns, fill_conns_set, &conns_set);
+                        g_list_foreach(conns_prio, fill_conns_set, &conns_set);
+                        if (tcp_server_socket != -1)
+                                FD_SET(tcp_server_socket, &conns_set);
+                        if (udp_server_socket != -1)
+                                FD_SET(udp_server_socket, &conns_set);
                
-                tv.tv_sec = 30;
-                tv.tv_usec = 0;
+                        tv.tv_sec = 30;
+                        tv.tv_usec = 0;
 
-                if ((retval = select(FD_SETSIZE, &conns_set, NULL, NULL, &tv)) == -1) {
-                        l1(OUTPUT_TYPE_ERROR, "select: %s", strerror(errno));
-                        exit(EXIT_FAILURE);
+                        if ((retval = select(FD_SETSIZE, &conns_set, NULL, NULL, &tv)) == -1) {
+                                l1(OUTPUT_TYPE_ERROR, "select: %s", strerror(errno));
+                                exit(EXIT_FAILURE);
+                        }
+
+                        // timeout
+                        if (!retval)
+                                continue;
                 }
 
-                // timeout
-                if (!retval)
-                        continue;
-
+                printf("processing\n");
                 current_time = get_current_time();  // a bit of caching
                 prio_processed = 0;
                 interrupt_loop_processing = 0;
+                need_another_run = 0;
                 new_conns = g_list_copy(conns_prio);
                 g_list_foreach(conns_prio, handle_incoming_data_prio, &conns_set);
                 g_list_free(conns_prio);
