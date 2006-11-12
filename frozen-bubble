@@ -2697,7 +2697,7 @@ sub open_level($) {
 
     $level eq 'WON' and $level = $lev_number;
 
-    @{$levels{$level}} or die "No such level or void level ($level).\n";
+    $levels{$level} or die "No such level or void level ($level).\n";
     foreach my $l (@{$levels{$level}}) {
 	iter_players {
 	    my $img = $l->{img_num} =~ /^\d+$/ ? $bubbles_images[$l->{img_num}] : $bubbles_anim{lose};
