@@ -357,6 +357,18 @@ static char * get_greets_msg(void)
         return greets_msg;
 }
 
+static char * http_get(char* host, int port, char* path);
+static void download_blacklisted_IPs()
+{
+        char* doc = http_get("www.frozen-bubble.org", 80, "/servers/blacklisted_IPs");
+        if (doc) {
+                if (blacklisted_IPs)
+                        free(blacklisted_IPs);
+                blacklisted_IPs = asprintf_(",%s", doc);
+                free(doc);
+        }
+}
+
 void connections_manager(void)
 {
         struct sockaddr_in client_addr;
@@ -364,6 +376,8 @@ void connections_manager(void)
         struct timeval tv;
         double now, delta, rate;
 
+        if (!quiet)
+                download_blacklisted_IPs();
         date_amount_transmitted_reset = get_current_time_exact();
 
         while (1) {
@@ -507,7 +521,6 @@ static void help(void)
         printf("\n");
         printf("     -a lang                   set the preferred language of the server (it is just an indication used by players when choosing a server, so that they can chat using their native language - you can choose none with -z)\n");
         printf("     -A alert_words_file       set the file containing alert words (one POSIX regexp by line) - this file is reread when receiving the ADMIN_REREAD command from 127.0.0.1\n");
-        printf("     -b IP1,IP2,IP3..          set the list of blacklisted IPs\n");
         printf("     -c conffile               specify the path of the configuration file\n");
         printf("     -d                        debug mode: do not daemonize, and log on STDERR rather than through syslog (implies -q)\n");
         printf("     -f pidfile                set the file in which the pid of the daemon must be written\n");
@@ -592,11 +605,10 @@ static char* read_alert_words(char* file)
         return NULL;
 }
 
-
 void reread()
 {
-        FILE* f;
         if (motd_file) {
+                FILE* f;
                 char buf[512];
                 l1(OUTPUT_TYPE_INFO, "Rereading MOTD file '%s'.", motd_file);
                 f = fopen(motd_file, "r");
@@ -615,6 +627,7 @@ void reread()
                         fclose(f);
                 }
         }
+
         if (alert_words_file) {
                 char* response;
                 l1(OUTPUT_TYPE_INFO, "Rereading alert words file '%s'.", alert_words_file);
@@ -624,6 +637,9 @@ void reread()
                         free(response);
                 }
         }
+
+        l0(OUTPUT_TYPE_INFO, "Downloading latest blacklisted IPs.");
+        download_blacklisted_IPs();
 }
 
 static void handle_parameter(char command, char * param) {
@@ -657,10 +673,6 @@ static void handle_parameter(char command, char * param) {
                         printf("-A: successfully read alert words file '%s'\n", param);
                         alert_words_file = strdup(param);
                 }
-                break;
-        case 'b':
-                printf("-b: blacklisted IPs: '%s'\n", param);
-                blacklisted_IPs = asprintf_(",%s", param);
                 break;
         case 'd':
                 printf("-d: debug mode on: will not daemonize and will display log messages on STDERR\n");
@@ -818,7 +830,7 @@ void create_server(int argc, char **argv)
         int valone = 1;
 
         while (1) {
-                int c = getopt(argc, argv, "a:A:b:c:df:g:hH:lLm:M:n:o:p:P:qt:u:z");
+                int c = getopt(argc, argv, "a:A:c:df:g:hH:lLm:M:n:o:p:P:qt:u:z");
                 if (c == -1)
                         break;
                 
@@ -1130,6 +1142,7 @@ void register_server() {
                                         }
                                 }
                         }
+                        free(doc);
                 }
         }
 }
@@ -1161,6 +1174,7 @@ void unregister_server() {
                                         }
                                 }
                         }
+                        free(doc);
                 }
         }
 }
