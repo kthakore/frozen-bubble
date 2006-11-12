@@ -336,7 +336,8 @@ static void setoptions(int fd, char* options)
                         send_ok(fd, "SETOPTIONS");
                         msg = asprintf_("OPTIONS: %s", options);
                         for (i = 0; i < g->players_number; i++)
-                                send_line_log_push(g->players_conn[i], msg);
+                                if (remote_proto_minor[g->players_conn[i]] >= 1)
+                                        send_line_log_push(g->players_conn[i], msg);
                         free(msg);
                 } else {
                         send_line_log(fd, wn_not_creator, "SETOPTIONS");
