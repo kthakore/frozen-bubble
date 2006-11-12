@@ -4331,9 +4331,9 @@ sub smg_choose_game() {
                                 smg_add_status_msg(t("*** Victories limit reset, %s is using a too old version of Frozen-Bubble", $1));
                                 $victories_limit_index = 0;
                             }
-                            $setoptions->();
                         }
                     }
+                    $can_start and $setoptions->();  #- new joiner needs to get parameters
                 } elsif ($message =~ /^PARTED: (.+)/) {
                     if ($1 eq $joined_leader) {
                         smg_add_status_msg(t("*** Game creator left the game..."));
