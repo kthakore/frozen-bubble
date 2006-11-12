@@ -569,9 +569,87 @@ void reread()
 static void handle_parameter(char command, char * param) {
         FILE* f;
         switch (command) {
+        case 'a':
+                if (streq(param, "af") || streq(param, "ar") || streq(param, "az") || streq(param, "bg") || streq(param, "br")
+                    || streq(param, "bs") || streq(param, "ca") || streq(param, "cs") || streq(param, "cy") || streq(param, "da")
+                    || streq(param, "de") || streq(param, "el") || streq(param, "en") || streq(param, "eo") || streq(param, "eu")
+                    || streq(param, "es") || streq(param, "fi") || streq(param, "fr") || streq(param, "ga") || streq(param, "gl")
+                    || streq(param, "hr") || streq(param, "hu") || streq(param, "id") || streq(param, "ir") || streq(param, "is") || streq(param, "it")
+                    || streq(param, "ja") || streq(param, "ko") || streq(param, "lt") || streq(param, "lv") || streq(param, "mk")
+                    || streq(param, "ms") || streq(param, "nl") || streq(param, "ne") || streq(param, "no") || streq(param, "pl") || streq(param, "pt")
+                    || streq(param, "pt_BR") || streq(param, "ro") || streq(param, "ru") || streq(param, "sk") || streq(param, "sl")
+                    || streq(param, "sq") || streq(param, "sv") || streq(param, "tg") || streq(param, "tr") || streq(param, "uk")
+                    || streq(param, "uz") || streq(param, "vi") || streq(param, "wa") || streq(param, "zh_CN") || streq(param, "zh_TW")) {
+                        serverlanguage = strdup(param);
+                        printf("-a: setting preferred language for users of the server to '%s'\n", serverlanguage);
+                } else {
+                        fprintf(stderr, "-a: %s not a valid language, ignoring\n", param);
+                        fprintf(stderr, "    valid languages are: af, ar, az, bg, br, bs, ca, cs, cy, da, de, el, en, eo, eu, es, fi, fr, ga, gl, hr, hu, id, ir, is, it, ja, ko, lt, lv, mk, ms, nl, ne, no, pl, pt, pt_BR, ro, ru, sk, sl, sq, sv, tg, tr, uk, uz, vi, wa, zh_CN, zh_TW\n" );
+                }
+                break;
+        case 'b':
+                printf("-b: blacklisted IPs: %s\n", param);
+                blacklisted_IPs = asprintf_(",%s", param);
+                break;
+        case 'd':
+                printf("-d: debug mode on: will not daemonize and will display log messages on STDERR\n");
+                debug_mode = TRUE;
+                quiet = TRUE;
+                break;
+        case 'f':
+                printf("-f: will store pid of daemon into file '%s'\n", param);
+                pidfile = strdup(param);
+                break;
+        case 'g':
+                gracetime = charstar_to_int(param);
+                if (gracetime != 0)
+                        printf("-g: setting gracetime to %d seconds (%d minutes)\n", gracetime, gracetime/60);
+                else {
+                        fprintf(stderr, "-g: %s not convertible to int, ignoring\n", param);
+                        gracetime = DEFAULT_GRACETIME;
+                }
+                break;
         case 'h':
                 help();
                 exit(EXIT_SUCCESS);
+        case 'H':
+                printf("-H: setting hostname as seen from outside to %s\n", param);
+                external_hostname = strdup(param);
+                break;
+        case 'l':
+                create_udp_server();
+                break;
+        case 'L':
+                create_udp_server();
+                lan_game_mode = 1;
+                break;
+        case 'm':
+                max_users = charstar_to_int(param);
+                if (max_users > 0 && max_users <= 255)
+                        printf("-m: setting maximum users to %d\n", max_users);
+                else {
+                        fprintf(stderr, "-m: %s not convertible to int or not in 1..255, ignoring\n", param);
+                        max_users = DEFAULT_MAX_USERS;
+                }
+                break;
+        case 'M':
+                f = fopen(param, "r");
+                if (!f) {
+                        fprintf(stderr, "-M: error opening %s, ignoring\n", param);
+                } else {
+                        char buf[512];
+                        if (fgets(buf, sizeof(buf), f)) {
+                                printf("-M: reading MOTD from: %s\n", param);
+                                if (buf[strlen(buf)-1] == '\n')
+                                        buf[strlen(buf)-1] = '\0';
+                                motd = strdup(buf);
+                                motd_file = param;
+                        }
+                        if (ferror(f))
+                                fprintf(stderr, "-M: error reading %s\n", param);
+                        fclose(f);
+                }
+                break;
         case 'n':
                 if (strlen(param) > 12) {
                         fprintf(stderr, "-n: name is too long, maximum is 12 characters\n");
@@ -606,13 +684,6 @@ static void handle_parameter(char command, char * param) {
                         output_type = OUTPUT_TYPE_ERROR;
                 }
                 break;
-        case 'l':
-                create_udp_server();
-                break;
-        case 'L':
-                create_udp_server();
-                lan_game_mode = 1;
-                break;
         case 'p':
                 port = charstar_to_int(param);
                 if (port != 0) {
@@ -624,14 +695,18 @@ static void handle_parameter(char command, char * param) {
                         fprintf(stderr, "-p: %s not convertible to int, ignoring\n", param);
                 }
                 break;
-        case 'm':
-                max_users = charstar_to_int(param);
-                if (max_users > 0 && max_users <= 255)
-                        printf("-m: setting maximum users to %d\n", max_users);
+        case 'P':
+                external_port = charstar_to_int(param);
+                if (external_port != 0)
+                        printf("-P: setting port as seen from outside to %d\n", port);
                 else {
-                        fprintf(stderr, "-m: %s not convertible to int or not in 1..255, ignoring\n", param);
-                        max_users = DEFAULT_MAX_USERS;
+                        fprintf(stderr, "-P: %s not convertible to int, ignoring\n", param);
+                        external_port = -1;
                 }
+                break;
+        case 'q':
+                printf("-q: quiet mode: will not register to www.frozen-bubble.org\n");
+                quiet = TRUE;
                 break;
         case 't':
                 max_transmission_rate = charstar_to_int(param);
@@ -642,67 +717,6 @@ static void handle_parameter(char command, char * param) {
                         max_transmission_rate = DEFAULT_MAX_TRANSMISSION_RATE;
                 }
                 break;
-        case 'd':
-                printf("-d: debug mode on: will not daemonize and will display log messages on STDERR\n");
-                debug_mode = TRUE;
-                quiet = TRUE;
-                break;
-        case 'q':
-                printf("-q: quiet mode: will not register to www.frozen-bubble.org\n");
-                quiet = TRUE;
-                break;
-        case 'H':
-                printf("-H: setting hostname as seen from outside to %s\n", param);
-                external_hostname = strdup(param);
-                break;
-        case 'P':
-                external_port = charstar_to_int(param);
-                if (external_port != 0)
-                        printf("-P: setting port as seen from outside to %d\n", port);
-                else {
-                        fprintf(stderr, "-P: %s not convertible to int, ignoring\n", param);
-                        external_port = -1;
-                }
-                break;
-        case 'a':
-                if (streq(param, "af") || streq(param, "ar") || streq(param, "az") || streq(param, "bg") || streq(param, "br")
-                    || streq(param, "bs") || streq(param, "ca") || streq(param, "cs") || streq(param, "cy") || streq(param, "da")
-                    || streq(param, "de") || streq(param, "el") || streq(param, "en") || streq(param, "eo") || streq(param, "eu")
-                    || streq(param, "es") || streq(param, "fi") || streq(param, "fr") || streq(param, "ga") || streq(param, "gl")
-                    || streq(param, "hr") || streq(param, "hu") || streq(param, "id") || streq(param, "ir") || streq(param, "is") || streq(param, "it")
-                    || streq(param, "ja") || streq(param, "ko") || streq(param, "lt") || streq(param, "lv") || streq(param, "mk")
-                    || streq(param, "ms") || streq(param, "nl") || streq(param, "ne") || streq(param, "no") || streq(param, "pl") || streq(param, "pt")
-                    || streq(param, "pt_BR") || streq(param, "ro") || streq(param, "ru") || streq(param, "sk") || streq(param, "sl")
-                    || streq(param, "sq") || streq(param, "sv") || streq(param, "tg") || streq(param, "tr") || streq(param, "uk")
-                    || streq(param, "uz") || streq(param, "vi") || streq(param, "wa") || streq(param, "zh_CN") || streq(param, "zh_TW")) {
-                        serverlanguage = strdup(param);
-                        printf("-a: setting preferred language for users of the server to '%s'\n", serverlanguage);
-                } else {
-                        fprintf(stderr, "-a: %s not a valid language, ignoring\n", param);
-                        fprintf(stderr, "    valid languages are: af, ar, az, bg, br, bs, ca, cs, cy, da, de, el, en, eo, eu, es, fi, fr, ga, gl, hr, hu, id, ir, is, it, ja, ko, lt, lv, mk, ms, nl, ne, no, pl, pt, pt_BR, ro, ru, sk, sl, sq, sv, tg, tr, uk, uz, vi, wa, zh_CN, zh_TW\n" );
-                }
-                break;
-        case 'z':
-                printf("-z: no preferred language for users of the server\n");
-                serverlanguage = "zz";
-                break;
-        case 'g':
-                gracetime = charstar_to_int(param);
-                if (gracetime != 0)
-                        printf("-g: setting gracetime to %d seconds (%d minutes)\n", gracetime, gracetime/60);
-                else {
-                        fprintf(stderr, "-g: %s not convertible to int, ignoring\n", param);
-                        gracetime = DEFAULT_GRACETIME;
-                }
-                break;
-        case 'b':
-                printf("-b: blacklisted IPs: %s\n", param);
-                blacklisted_IPs = asprintf_(",%s", param);
-                break;
-        case 'f':
-                printf("-f: will store pid of daemon into file '%s'\n", param);
-                pidfile = strdup(param);
-                break;
         case 'u':
                 if (getpwnam(param) != NULL) {
                         printf("-u: will switch user of daemon to '%s'\n", param);
@@ -711,23 +725,9 @@ static void handle_parameter(char command, char * param) {
                         fprintf(stderr, "-u: '%s' is not a valid user, ignoring\n", param);
                 }
                 break;
-        case 'M':
-                f = fopen(param, "r");
-                if (!f) {
-                        fprintf(stderr, "-M: error opening %s, ignoring\n", param);
-                } else {
-                        char buf[512];
-                        if (fgets(buf, sizeof(buf), f)) {
-                                printf("-M: reading MOTD from: %s\n", param);
-                                if (buf[strlen(buf)-1] == '\n')
-                                        buf[strlen(buf)-1] = '\0';
-                                motd = strdup(buf);
-                                motd_file = param;
-                        }
-                        if (ferror(f))
-                                fprintf(stderr, "-M: error reading %s\n", param);
-                        fclose(f);
-                }
+        case 'z':
+                printf("-z: no preferred language for users of the server\n");
+                serverlanguage = "zz";
                 break;
         default:
                 fprintf(stderr, "unrecognized option '%c', ignoring\n", command);
@@ -747,7 +747,7 @@ void create_server(int argc, char **argv)
         int valone = 1;
 
         while (1) {
-                int c = getopt(argc, argv, "hn:lLp:m:t:o:c:dqH:P:a:zg:b:f:u:M:");
+                int c = getopt(argc, argv, "a:b:c:df:g:hH:lLm:M:n:o:p:P:qt:u:z");
                 if (c == -1)
                         break;
                 
