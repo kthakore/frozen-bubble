@@ -3833,6 +3833,7 @@ sub smg_choose_game() {
     };
     
     my @wholist;
+    my $myoldnick;
     my $list = sub {
         my ($firsttime) = @_;
         $state eq 'game_select' or return;
@@ -3857,7 +3858,7 @@ sub smg_choose_game() {
 
         if (!$firsttime) {
             my @joined = difference2([ sort(difference2(\@wholist, \@old_wholist)) ], [ $mynick ]);
-            my @left = difference2([ sort(difference2(\@old_wholist, \@wholist)) ], [ $mynick ]);
+            my @left = difference2([ sort(difference2(\@old_wholist, \@wholist)) ], [ $myoldnick ]);
             if (@left == 1) {
                 smg_add_status_msg(t("*** %s has left the chat room", @left));
             } else {
@@ -4095,6 +4096,7 @@ sub smg_choose_game() {
                             if ($mynick) {
                                 smg_add_status_msg(t("*** You are now known as %s", $mynick));
                                 fb_net::send_and_receive('NICK', $mynick);
+                                $myoldnick = $save_mynick;
                             } else {
                                 smg_add_status_msg(t("*** Erroneous nickname"));
                                 $mynick = $save_mynick;
@@ -4317,7 +4319,9 @@ sub smg_choose_game() {
             my ($command, $message) = fb_net::decode_msg($msg);
             if ($command eq 'PUSH') {
                 if ($message =~ /^TALK: (.*)/) {
-                    smg_add_status_msg($1);
+                    my $message = $1;
+                    my (undef, $min, $hour) = localtime();
+                    smg_add_status_msg("$hour:$min $message");
                     play_sound('typewriter');
                 } elsif ($message =~ /^JOINED: (.+)/) {
                     smg_add_status_msg(t("*** %s joined the game!", $1));
