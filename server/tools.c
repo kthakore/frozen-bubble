@@ -88,6 +88,16 @@ void * realloc_(void * ptr, size_t size)
         return ret;
 }
 
+char* strdup_(char* input)
+{
+        char* ret = strdup(input);
+        if (ret == NULL) {
+                fprintf(stderr, "Out of memory, exiting - input was %s.\n", input);
+                exit(EXIT_FAILURE);
+        }
+        return ret;
+}
+
 void * memdup(void *src, size_t size)
 {
         void * r = malloc_(size);

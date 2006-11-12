@@ -29,6 +29,7 @@
 #include <string.h>
 #include <ctype.h>
 #include <sys/socket.h>
+#include <regex.h>
 
 #include <glib.h>
 
@@ -80,8 +81,9 @@ static char wn_denied[] = "DENIED";
 static char fl_line_unrecognized[] = "MISSING_FB_PROTOCOL_TAG";
 static char fl_proto_mismatch[] = "INCOMPATIBLE_PROTOCOL";
 
-char * nick[256];
-char * geoloc[256];
+char* nick[256];
+char* geoloc[256];
+char* IP[256];
 int remote_proto_minor[256];
 int admin_authorized[256];
 
@@ -400,10 +402,22 @@ static void talk_serverwide_aux(gpointer data, gpointer user_data)
         send_line_log_push(GPOINTER_TO_INT(data), user_data);
 }
 
+static gboolean check_match_alert_words(gconstpointer data, gconstpointer user_data)
+{
+        const regex_t* preg = data;
+        const char* msg = user_data;
+        if (regexec(preg, msg, 0, NULL, 0) == 0) {
+                return TRUE;
+        }
+        return FALSE;
+}
+
 static void talk(int fd, char* msg)
 {
         struct game * g = find_game_by_fd(fd);
         char talk_msg[1000];
+        if (g_list_any(alert_words, check_match_alert_words, msg))
+                l2(OUTPUT_TYPE_INFO, "message '%s' from %s matches alert words!", msg, IP[fd]);
         snprintf(talk_msg, sizeof(talk_msg), ok_talk, msg);
         if (g) {
                 // player is in a game, it's a game-only chat

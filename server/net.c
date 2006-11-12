@@ -40,6 +40,7 @@
 #include <sys/time.h>
 #include <pwd.h>
 #include <signal.h>
+#include <regex.h>
 
 #include <glib.h>
 
@@ -93,8 +94,11 @@ static int external_port = -1;
 static char* blacklisted_IPs = NULL;
 char* pidfile = NULL;
 char* user_to_switch = NULL;
+
 static char* motd_file = NULL;
 static char* motd = NULL;
+static char* alert_words_file = NULL;
+GList * alert_words = NULL;
 
 static GList * conns = NULL;
 static GList * conns_prio = NULL;
@@ -179,6 +183,7 @@ void conn_terminated(int fd, char* reason)
                 if (geoloc[fd] != NULL) {
                         free(geoloc[fd]);
                 }
+                free(IP[fd]);
                 new_conns = g_list_remove(new_conns, GINT_TO_POINTER(fd));
                 player_part_game(fd);                       // this is where the recursive call can come from (process_msg_prio with a failed send)
                 player_disconnects(fd);
@@ -453,6 +458,7 @@ void connections_manager(void)
                         last_data_in[fd] = current_time;
                         nick[fd] = NULL;
                         geoloc[fd] = NULL;
+                        IP[fd] = strdup_(inet_ntoa(client_addr.sin_addr));
                         remote_proto_minor[fd] = -1;
                         send_line_log_push(fd, get_greets_msg());
                         conns = g_list_append(conns, GINT_TO_POINTER(fd));
@@ -499,26 +505,27 @@ static void help(void)
 {
         printf("Usage: fb-server [OPTION]...\n");
         printf("\n");
+        printf("     -a lang                   set the preferred language of the server (it is just an indication used by players when choosing a server, so that they can chat using their native language - you can choose none with -z)\n");
+        printf("     -A alert_words_file       set the file containing alert words (one POSIX regexp by line) - this file is reread when receiving the ADMIN_REREAD command from 127.0.0.1\n");
+        printf("     -b IP1,IP2,IP3..          set the list of blacklisted IPs\n");
+        printf("     -c conffile               specify the path of the configuration file\n");
+        printf("     -d                        debug mode: do not daemonize, and log on STDERR rather than through syslog (implies -q)\n");
+        printf("     -f pidfile                set the file in which the pid of the daemon must be written\n");
+        printf("     -g gracetime              set the gracetime after which a client with no network activity is terminated (in seconds, defaults to %d)\n", DEFAULT_GRACETIME);
         printf("     -h                        display this help then exits\n");
-        printf("     -n name                   set the server name presented to players (if unset, defaults to hostname)\n");
+        printf("     -H host                   set the hostname (or IP) as seen from outside (by default, when registering the server to www.frozen-bubble.org, the distant end at IP level will be used)\n");
         printf("     -l                        LAN mode: create an UDP server (on port %d) to answer broadcasts of clients discovering where are the servers\n", DEFAULT_PORT);
         printf("     -L                        LAN/game mode: create an UDP server as above, but limit number of games to 1 (this is for an FB client hosting a LAN server)\n");
-        printf("     -p port                   set the server port (defaults to %d)\n", DEFAULT_PORT);
-        printf("     -H host                   set the hostname (or IP) as seen from outside (by default, when registering the server to www.frozen-bubble.org, the distant end at IP level will be used)\n");
-        printf("     -P port                   set the server port as seen from outside (defaults to the port specified with -p)\n");
         printf("     -m max_users              set the maximum of connected users (defaults to %d, physical maximum 255 in non debug mode)\n", DEFAULT_MAX_USERS);
-        printf("     -t max_transmission_rate  set the maximum transmission rate, in bytes per second (defaults to %d)\n", DEFAULT_MAX_TRANSMISSION_RATE);
-        printf("     -o outputtype             set the output type; can be DEBUG, CONNECT, INFO, ERROR; each level includes messages of next level; defaults to INFO\n");
-        printf("     -d                        debug mode: do not daemonize, and log on STDERR rather than through syslog (implies -q)\n");
-        printf("     -q                        \"quiet\" mode: don't automatically register the server to www.frozen-bubble.org\n");
-        printf("     -a lang                   set the preferred language of the server (it is just an indication used by players when choosing a server, so that they can chat using their native language - you can choose none with -z)\n");
-        printf("     -z                        set that there is no preferred language for the server (see -a)\n");
-        printf("     -g gracetime              set the gracetime after which a client with no network activity is terminated (in seconds, defaults to %d)\n", DEFAULT_GRACETIME);
-        printf("     -b IP1,IP2,IP3..          set the list of blacklisted IPs\n");
-        printf("     -f pidfile                set the file in which the pid of the daemon must be written\n");
-        printf("     -u user                   switch daemon to specified user\n");
         printf("     -M motd_file              set the file from which Message Of The Day is extracted (must be UTF-8 encoded, 50 characters max, with no newline) - this file is reread when receiving the ADMIN_REREAD command from 127.0.0.1\n");
-        printf("     -c conffile               specify the path of the configuration file\n");
+        printf("     -n name                   set the server name presented to players (if unset, defaults to hostname)\n");
+        printf("     -o outputtype             set the output type; can be DEBUG, CONNECT, INFO, ERROR; each level includes messages of next level; defaults to INFO\n");
+        printf("     -p port                   set the server port (defaults to %d)\n", DEFAULT_PORT);
+        printf("     -P port                   set the server port as seen from outside (defaults to the port specified with -p)\n");
+        printf("     -q                        \"quiet\" mode: don't automatically register the server to www.frozen-bubble.org\n");
+        printf("     -t max_transmission_rate  set the maximum transmission rate, in bytes per second (defaults to %d)\n", DEFAULT_MAX_TRANSMISSION_RATE);
+        printf("     -u user                   switch daemon to specified user\n");
+        printf("     -z                        set that there is no preferred language for the server (see -a)\n");
 }
 
 static void create_udp_server(void)
@@ -542,15 +549,59 @@ static void create_udp_server(void)
         }
 }
 
+static void cleanup_alert_words(gpointer data, gpointer user_data)
+{
+        regex_t* preg = data;
+        regfree(preg);
+        free(preg);
+}
+
+static char* read_alert_words(char* file)
+{
+        char buf[512];
+        FILE* f;
+        if (alert_words) {
+                g_list_foreach(alert_words, cleanup_alert_words, NULL);
+                g_list_free(alert_words);
+                alert_words = NULL;
+        }
+        f = fopen(file, "r");
+        if (!f) {
+                return asprintf_("Error opening file");
+        } else {
+                while (fgets(buf, sizeof(buf), f)) {
+                        char errbuf[512];
+                        int errcode;
+                        regex_t* preg = (regex_t*) malloc_(sizeof(regex_t));
+                        if (buf[strlen(buf)-1] == '\n')
+                                buf[strlen(buf)-1] = '\0';
+                        if ((errcode = regcomp(preg, buf, REG_EXTENDED|REG_ICASE)) != 0) {
+                                regerror(errcode, preg, errbuf, sizeof(errbuf));
+                                fclose(f);
+                                return asprintf_("Problem compiling '%s': %s", buf, errbuf);
+                        } else {
+                                alert_words = g_list_append(alert_words, preg);
+                        }
+                }
+                if (ferror(f)) {
+                        fclose(f);
+                        return asprintf_("Error reading file");
+                }
+                fclose(f);
+        }
+        return NULL;
+}
+
+
 void reread()
 {
         FILE* f;
         if (motd_file) {
                 char buf[512];
-                l1(OUTPUT_TYPE_INFO, "Rereading MOTD file %s.", motd_file);
+                l1(OUTPUT_TYPE_INFO, "Rereading MOTD file '%s'.", motd_file);
                 f = fopen(motd_file, "r");
                 if (!f) {
-                        l1(OUTPUT_TYPE_ERROR, "Error opening MOTD file %s.", motd_file);
+                        l1(OUTPUT_TYPE_ERROR, "Error opening MOTD file '%s'.", motd_file);
                 } else {
                         if (fgets(buf, sizeof(buf), f)) {
                                 if (buf[strlen(buf)-1] == '\n')
@@ -560,13 +611,23 @@ void reread()
                                 greets_msg = NULL;
                         }
                         if (ferror(f))
-                                l1(OUTPUT_TYPE_ERROR, "Error reading MOTD file %s.", motd_file);
+                                l1(OUTPUT_TYPE_ERROR, "Error reading MOTD file '%s'.", motd_file);
                         fclose(f);
+                }
+        }
+        if (alert_words_file) {
+                char* response;
+                l1(OUTPUT_TYPE_INFO, "Rereading alert words file '%s'.", alert_words_file);
+                response = read_alert_words(alert_words_file);
+                if (response) {
+                        l1(OUTPUT_TYPE_ERROR, "Error rereading alert words file: '%s'\n", response);
+                        free(response);
                 }
         }
 }
 
 static void handle_parameter(char command, char * param) {
+        char* response;
         FILE* f;
         switch (command) {
         case 'a':
@@ -583,12 +644,22 @@ static void handle_parameter(char command, char * param) {
                         serverlanguage = strdup(param);
                         printf("-a: setting preferred language for users of the server to '%s'\n", serverlanguage);
                 } else {
-                        fprintf(stderr, "-a: %s not a valid language, ignoring\n", param);
+                        fprintf(stderr, "-a: '%s' not a valid language, ignoring\n", param);
                         fprintf(stderr, "    valid languages are: af, ar, az, bg, br, bs, ca, cs, cy, da, de, el, en, eo, eu, es, fi, fr, ga, gl, hr, hu, id, ir, is, it, ja, ko, lt, lv, mk, ms, nl, ne, no, pl, pt, pt_BR, ro, ru, sk, sl, sq, sv, tg, tr, uk, uz, vi, wa, zh_CN, zh_TW\n" );
                 }
                 break;
+        case 'A':
+                response = read_alert_words(param);
+                if (response) {
+                        fprintf(stderr, "-A: error reading alert words file '%s': %s\n", param, response);
+                        free(response);
+                } else {
+                        printf("-A: successfully read alert words file '%s'\n", param);
+                        alert_words_file = strdup(param);
+                }
+                break;
         case 'b':
-                printf("-b: blacklisted IPs: %s\n", param);
+                printf("-b: blacklisted IPs: '%s'\n", param);
                 blacklisted_IPs = asprintf_(",%s", param);
                 break;
         case 'd':
@@ -603,9 +674,9 @@ static void handle_parameter(char command, char * param) {
         case 'g':
                 gracetime = charstar_to_int(param);
                 if (gracetime != 0)
-                        printf("-g: setting gracetime to %d seconds (%d minutes)\n", gracetime, gracetime/60);
+                        printf("-g: setting gracetime to '%d' seconds (equals '%d' minutes)\n", gracetime, gracetime/60);
                 else {
-                        fprintf(stderr, "-g: %s not convertible to int, ignoring\n", param);
+                        fprintf(stderr, "-g: '%s' not convertible to int, ignoring\n", param);
                         gracetime = DEFAULT_GRACETIME;
                 }
                 break;
@@ -613,7 +684,7 @@ static void handle_parameter(char command, char * param) {
                 help();
                 exit(EXIT_SUCCESS);
         case 'H':
-                printf("-H: setting hostname as seen from outside to %s\n", param);
+                printf("-H: setting hostname as seen from outside to '%s'\n", param);
                 external_hostname = strdup(param);
                 break;
         case 'l':
@@ -626,27 +697,27 @@ static void handle_parameter(char command, char * param) {
         case 'm':
                 max_users = charstar_to_int(param);
                 if (max_users > 0 && max_users <= 255)
-                        printf("-m: setting maximum users to %d\n", max_users);
+                        printf("-m: setting maximum users to '%d'\n", max_users);
                 else {
-                        fprintf(stderr, "-m: %s not convertible to int or not in 1..255, ignoring\n", param);
+                        fprintf(stderr, "-m: '%s' not convertible to int or not in 1..255, ignoring\n", param);
                         max_users = DEFAULT_MAX_USERS;
                 }
                 break;
         case 'M':
                 f = fopen(param, "r");
                 if (!f) {
-                        fprintf(stderr, "-M: error opening %s, ignoring\n", param);
+                        fprintf(stderr, "-M: error opening '%s', ignoring\n", param);
                 } else {
                         char buf[512];
                         if (fgets(buf, sizeof(buf), f)) {
-                                printf("-M: reading MOTD from: %s\n", param);
+                                printf("-M: reading MOTD from '%s'\n", param);
                                 if (buf[strlen(buf)-1] == '\n')
                                         buf[strlen(buf)-1] = '\0';
                                 motd = strdup(buf);
                                 motd_file = param;
                         }
                         if (ferror(f))
-                                fprintf(stderr, "-M: error reading %s\n", param);
+                                fprintf(stderr, "-M: error reading '%s'\n", param);
                         fclose(f);
                 }
                 break;
@@ -665,7 +736,7 @@ static void handle_parameter(char command, char * param) {
                                         exit(EXIT_FAILURE);
                                 }
                         }
-                        printf("-n: setting servername to %s\n", param);
+                        printf("-n: setting servername to '%s'\n", param);
                         servername = strdup(param);
                 }
                 break;
@@ -687,20 +758,20 @@ static void handle_parameter(char command, char * param) {
         case 'p':
                 port = charstar_to_int(param);
                 if (port != 0) {
-                        printf("-p: setting port to %d\n", port);
+                        printf("-p: setting port to '%d'\n", port);
                         if (external_port == -1)
                                 external_port = port;
                 } else {
                         port = DEFAULT_PORT;
-                        fprintf(stderr, "-p: %s not convertible to int, ignoring\n", param);
+                        fprintf(stderr, "-p: '%s' not convertible to int, ignoring\n", param);
                 }
                 break;
         case 'P':
                 external_port = charstar_to_int(param);
                 if (external_port != 0)
-                        printf("-P: setting port as seen from outside to %d\n", port);
+                        printf("-P: setting port as seen from outside to '%d'\n", port);
                 else {
-                        fprintf(stderr, "-P: %s not convertible to int, ignoring\n", param);
+                        fprintf(stderr, "-P: '%s' not convertible to int, ignoring\n", param);
                         external_port = -1;
                 }
                 break;
@@ -711,9 +782,9 @@ static void handle_parameter(char command, char * param) {
         case 't':
                 max_transmission_rate = charstar_to_int(param);
                 if (max_transmission_rate != 0)
-                        printf("-t: setting maximum transmission rate to %d bytes/sec\n", max_transmission_rate);
+                        printf("-t: setting maximum transmission rate to '%d' bytes/sec\n", max_transmission_rate);
                 else {
-                        fprintf(stderr, "-t: %s not convertible to int, ignoring\n", param);
+                        fprintf(stderr, "-t: '%s' not convertible to int, ignoring\n", param);
                         max_transmission_rate = DEFAULT_MAX_TRANSMISSION_RATE;
                 }
                 break;
@@ -747,7 +818,7 @@ void create_server(int argc, char **argv)
         int valone = 1;
 
         while (1) {
-                int c = getopt(argc, argv, "a:b:c:df:g:hH:lLm:M:n:o:p:P:qt:u:z");
+                int c = getopt(argc, argv, "a:A:b:c:df:g:hH:lLm:M:n:o:p:P:qt:u:z");
                 if (c == -1)
                         break;
                 

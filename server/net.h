@@ -34,6 +34,7 @@ extern const int proto_minor;
 extern char* current_command;
 extern char* pidfile;
 extern char* user_to_switch;
+extern GList* alert_words;
 
 ssize_t send_line_log(int fd, char* dest_msg, char* inco_msg);
 ssize_t send_line_log_push(int fd, char* dest_msg);

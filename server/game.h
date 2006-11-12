@@ -33,7 +33,8 @@ int process_msg(int fd, char* msg);
 ssize_t get_reset_amount_transmitted(void);
 void process_msg_prio(int fd, char* msg, ssize_t len);
 
-extern char * nick[256];
-extern char * geoloc[256];
+extern char* nick[256];
+extern char* geoloc[256];
+extern char* IP[256];
 extern int remote_proto_minor[256];
 extern int admin_authorized[256];

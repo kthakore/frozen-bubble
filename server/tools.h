@@ -22,12 +22,13 @@
 
 #include <glib.h>
 
-int charstar_to_int(const char * s);
-char * asprintf_(const char *msg, ...);
-char * vasprintf_(const char *msg, va_list args);
-void * malloc_(size_t size);
-void * realloc_(void * ptr, size_t size);
-void * memdup(void *src, size_t size);
+int charstar_to_int(const char* s);
+char* asprintf_(const char* msg, ...);
+char* vasprintf_(const char* msg, va_list args);
+void* malloc_(size_t size);
+void* realloc_(void* ptr, size_t size);
+char* strdup_(char* input);
+void* memdup(void* src, size_t size);
 size_t strconcat(char *dst, const char *src, size_t size);
 
 void * GListp2data(GList * elem);
