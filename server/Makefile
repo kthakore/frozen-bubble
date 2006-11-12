@@ -1,5 +1,4 @@
-PREFIX = /usr/local
-LIBDIR = $(PREFIX)/lib
+include ../settings.mk
 
 CFLAGS ?= -g -Wall -Werror -pipe
 CPPFLAGS += -I. `pkg-config glib-2.0 --cflags` -DVERSION=\"$(shell cat ../VERSION)\"

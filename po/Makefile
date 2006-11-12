@@ -1,6 +1,4 @@
-PREFIX = /usr/local
-DATADIR = $(PREFIX)/share
-LOCALEDIR = $(DATADIR)/locale
+include ../settings.mk
 
 PGOAL = frozen-bubble
 

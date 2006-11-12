@@ -1,10 +1,6 @@
-DIRS = c_stuff po server
+include settings.mk
 
-PREFIX = /usr/local
-DATADIR = $(PREFIX)/share
-LIBDIR = $(PREFIX)/lib
-BINDIR = $(PREFIX)/bin
-MANDIR = $(DATADIR)/man
+DIRS = c_stuff po server
 
 all: prepare dirs
 

@@ -1,3 +1,5 @@
+include ../settings.mk
+
 .PHONY: clean
 
 fb_c_stuff: %: %.xs
