@@ -107,6 +107,8 @@ static GList * conns_prio = NULL;
 static char * incoming_data_buffers[256];
 static int incoming_data_buffers_count[256];
 static time_t last_data_in[256];
+static time_t minute_for_talk_flood[256];
+int amount_talk_flood[256];
 
 /* send line adding the protocol in front of the supplied msg */
 static ssize_t send_line(int fd, char* msg)
@@ -220,6 +222,11 @@ static void handle_incoming_data_generic(gpointer data, gpointer user_data, int 
                         char* eol;
 
                         last_data_in[fd] = current_time;
+                        if (minute_for_talk_flood[fd] != current_time/60) {
+                                minute_for_talk_flood[fd] = current_time/60;
+                                amount_talk_flood[fd] = 0;
+                        }
+
                         len += offset;
                         // If we don't have a newline, it means we are seeing a partial send. Buffer
                         // them, since we can't synchronously wait for newline now or else we'd offer a
@@ -470,6 +477,8 @@ void connections_manager(void)
 
                         // We've really accepted this new connection. Init data.
                         last_data_in[fd] = current_time;
+                        minute_for_talk_flood[fd] = current_time/60;
+                        amount_talk_flood[fd] = 0;
                         nick[fd] = NULL;
                         geoloc[fd] = NULL;
                         IP[fd] = strdup_(inet_ntoa(client_addr.sin_addr));

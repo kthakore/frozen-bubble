@@ -77,6 +77,7 @@ static char wn_alone_in_the_dark[] = "ALONE_IN_THE_DARK";
 static char wn_not_creator[] = "NOT_CREATOR";
 static char wn_no_such_player[] = "NO_SUCH_PLAYER";
 static char wn_denied[] = "DENIED";
+static char wn_flooding[] = "FLOODING";
 
 static char fl_line_unrecognized[] = "MISSING_FB_PROTOCOL_TAG";
 static char fl_proto_mismatch[] = "INCOMPATIBLE_PROTOCOL";
@@ -416,8 +417,17 @@ static void talk(int fd, char* msg)
 {
         struct game * g = find_game_by_fd(fd);
         char talk_msg[1000];
+
         if (g_list_any(alert_words, check_match_alert_words, msg))
                 l2(OUTPUT_TYPE_INFO, "message '%s' from %s matches alert words!", msg, IP[fd]);
+
+        amount_talk_flood[fd]++;
+        if (amount_talk_flood[fd] == 15) {
+                l1(OUTPUT_TYPE_INFO, "'%s' is flooding!", IP[fd]);
+                send_line_log(fd, wn_flooding, msg);
+                conn_terminated(fd, "flooding");
+        }
+
         snprintf(talk_msg, sizeof(talk_msg), ok_talk, msg);
         if (g) {
                 // player is in a game, it's a game-only chat
