@@ -579,6 +579,7 @@ sub create_bubble_given_img($) {
     my %bubble;
     ref($img) eq 'SDL::Surface' or die "<$img> seems to not be a valid image\n" . backtrace();
     $bubble{img} = $img;
+    $bubble{neighbours} = [];
     return \%bubble;
 }
 
@@ -2000,7 +2001,7 @@ sub update_game() {
                                                 $b->{'cx'} = int(rand(7));
                                             } while (member($b->{'cx'}, map { $_->{'cx'} } @{$malus_bubble{$::p}}));
                                             $b->{'cy'} = 12;
-                                            $b->{'stick_y'} = 0;
+                                            $b->{'stick_y'} = -1;
                                             foreach (@{$sticked_bubbles{$::p}}) {
                                                 if ($_->{'cy'} > $b->{'stick_y'}) {
                                                     if ($_->{'cx'} == $b->{'cx'}
