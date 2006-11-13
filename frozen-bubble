@@ -3025,7 +3025,9 @@ sub new_game() {
         if ($levels{current} eq 'mp_train') {
             $pdata{$PLAYERS[0]}{score} = 0;
         } else {
-            $chainreaction = 0;
+            if ($levels{current} ne 'random') {
+                $chainreaction = 0;
+            }
             $TIME_APPEARS_NEW_ROOT = 8;
             $TIME_HURRY_WARN = 400;
             $TIME_HURRY_MAX = 525;
@@ -3280,6 +3282,11 @@ sub choose_1p_game_mode() {
                         }
                     } elsif ($ordered_names[$active_menu] eq 'play_random_levels') {
                         $levels{current} = 'random';
+                        my $answ;
+                        ask_from({ intro => [ t("Random level"), '', '', t("Enable chain-reaction?"), '' ],
+                                   entries => [ { 'q' => t("%s or %s?", 'Y', 'N'), 'a' => \$answ, f => 'ONE_CHAR' } ],
+                                   outro => t("Enjoy the game!") }) or return;
+                        $chainreaction = $answ == SDLK_y; #;;
                     } elsif ($ordered_names[$active_menu] eq 'mp_train') {
                         $levels{current} = 'mp_train';
                         my $answ;
