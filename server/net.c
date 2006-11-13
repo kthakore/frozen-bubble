@@ -436,7 +436,6 @@ void connections_manager(void)
                                 continue;
                 }
 
-                printf("processing\n");
                 current_time = get_current_time();  // a bit of caching
                 prio_processed = 0;
                 interrupt_loop_processing = 0;

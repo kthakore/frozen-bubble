@@ -523,7 +523,11 @@ sub mp_propagate {
         my $m = fb_net::grecv_get1msg();
         mp_ping_if_needed($ticks);
         if ($m->{msg} !~ /^\Q$key\E(.+)/) {
-            print "Network protocol error: waiting for $key, received $m->{msg}.\n";
+            if ($m->{msg} eq 'l') {
+                print "Server said that one of the players left - probably because of too high lag.\n";
+            } else {
+                print "Network protocol error: waiting for $key, received $m->{msg}.\n";
+            }
             die 'quit';
         } else {
             return $1;
