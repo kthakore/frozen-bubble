@@ -2276,7 +2276,8 @@ sub update_game() {
 	    if ($b->{wait_fall}) {
 		$b->{wait_fall}--;
 	    } else {
-		if (exists $b->{chaindestx} && ($b->{'y'} > 375 || $b->{chaingoingup})) {
+                my $maxy = member($::p, 'rp1', 'rp2') ? 190 : 375;
+		if (exists $b->{chaindestx} && ($b->{'y'} > $maxy || $b->{chaingoingup})) {
 		    my $acceleration = $FREE_FALL_CONSTANT*3;
 		    if (!$b->{chaingoingup}) {
 			my $time_to_zero = $b->{speed}/$acceleration;
