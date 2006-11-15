@@ -2283,7 +2283,12 @@ sub update_game() {
 			my $time_to_zero = $b->{speed}/$acceleration;
 			my $distance_to_zero = $b->{speed} * ($b->{speed}/$acceleration + 1) / 2;
 			my $time_to_destination = (-1 + sqrt(1 + 8/$acceleration*($b->{'y'}-$b->{chaindesty}+$distance_to_zero))) / 2;
-			$b->{speedx} = ($b->{chaindestx} - $b->{x}) / ($time_to_zero + $time_to_destination);
+                        if ($time_to_zero + $time_to_destination == 0) {
+                            #- avoid division by zero
+                            $b->{speedx} = 0;
+                        } else {
+                            $b->{speedx} = ($b->{chaindestx} - $b->{x}) / ($time_to_zero + $time_to_destination);
+                        }
 			$b->{chaingoingup} = 1;
 		    }
 		    $b->{speed} -= $acceleration;
