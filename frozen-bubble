@@ -1176,6 +1176,7 @@ sub cleanup_chatting {
     $event->set_key_repeat(0, 0);
     remove_image_from_background($imgbin{void_chat}, $POS{p1}{chatting}{x}, $POS{p1}{chatting}{'y'});
     print_next_bubble($next_bubble{p1}{img}, 'p1');
+    redraw_attackingme();
 }
 
 sub set_sendmalustoone {
@@ -1190,6 +1191,20 @@ sub set_sendmalustoone {
     }
     if ($pdata{protocollevel} >= 1) {
         fb_net::gsend("A$pdata{$pdata{sendmalustoone}}{nick}");
+    }
+}
+
+sub redraw_attackingme {
+    $pdata{p1}{chatting} and return;
+    my $xpos = $POS{p1}{attackme}{x};
+    my $drect = SDL::Rect->new(-width => 3*24 + $imgbin{attackme}{rp1}->width, -height => $imgbin{attackme}{rp1}->height,
+                               -x => $xpos, '-y' => $POS{p1}{attackme}{'y'});
+    $background_orig->blit($drect, $background, $drect);
+    $background_orig->blit($drect, $app, $drect);
+    push @update_rects, $drect;
+    foreach my $attackingme (@{$pdata{attackingme}}) {
+        put_image_to_background($imgbin{attackme}{$attackingme}, $xpos, $POS{p1}{attackme}{'y'});
+        $xpos += 24;
     }
 }
 
@@ -1321,16 +1336,7 @@ sub handle_mp_messages {
                     @{$pdata{attackingme}} = difference2($pdata{attackingme}, [ $player ]);
                 }
             }
-            my $xpos = $POS{p1}{attackme}{x};
-            my $drect = SDL::Rect->new(-width => 3*24 + $imgbin{attackme}{rp1}->width, -height => $imgbin{attackme}{rp1}->height,
-                                       -x => $xpos, '-y' => $POS{p1}{attackme}{'y'});
-            $background_orig->blit($drect, $background, $drect);
-            $background_orig->blit($drect, $app, $drect);
-            push @update_rects, $drect;
-            foreach my $attackingme (@{$pdata{attackingme}}) {
-                put_image_to_background($imgbin{attackme}{$attackingme}, $xpos, $POS{p1}{attackme}{'y'});
-                $xpos += 24;
-            }
+            redraw_attackingme();
         } else {
             print STDERR "****** Unrecognized command: $m->{msg}\n";
         }
