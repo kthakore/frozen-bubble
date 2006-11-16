@@ -1735,7 +1735,7 @@ sub lose {
                 $pdata{state} = "finished $living[0]:$winnernick 0";
             }
         } else {
-            if ($pdata{sendmalustoone} eq $player) {
+            if ($pdata{sendmalustoone} eq $player || $player eq 'p1') {
                 set_sendmalustoone(undef);
             }
         }
