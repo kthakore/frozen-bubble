@@ -1912,7 +1912,9 @@ sub update_game() {
                 if (is_mp_game() && is_local_player($::p) && ($actions{$::p}{left} || $actions{$::p}{right} || $actions{$::p}{center})) {
                     fb_net::gsend(sprintf("a%.2f", $angle{$::p}));
                 }
-                $pdata{$::p}{hurry}++;
+                if (every { ! exists $_->{chaindestx} } @{$falling_bubble{$::p}}) {
+                    $pdata{$::p}{hurry}++;
+                }
                 if ((!$no_time_limit || is_mp_game()) && $pdata{$::p}{hurry} > $TIME_HURRY_WARN) {
                     my $oddness = odd(int(($pdata{$::p}{hurry}-$TIME_HURRY_WARN)/(500/$TARGET_ANIM_SPEED))+1);
                     if ($pdata{$::p}{hurry_oddness} xor $oddness) {
