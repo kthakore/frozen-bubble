@@ -1804,10 +1804,10 @@ sub update_lost {
         
         if (@{$sticked_bubbles{$player}} == 0) {
             if ($graphics_level == 1 && $pdata{state} =~ /^lost (.*)/ && !is_1p_game()) {
-                put_image($imgbin{win}{$player eq 'p1' ? 'p2' : 'p1'}, $POS{centerpanel}{x}, $POS{centerpanel}{'y'});
+                put_image_to_background($imgbin{win}{$player eq 'p1' ? 'p2' : 'p1'}, $POS{centerpanel}{x}, $POS{centerpanel}{'y'});
             }
             if (is_1p_game()) {
-                put_image($imgbin{lose}, $POS{centerpanel}{'x'}, $POS{centerpanel}{'y'});
+                put_image_to_background($imgbin{lose}, $POS{centerpanel}{'x'}, $POS{centerpanel}{'y'});
                 play_sound('noh');
             }
         }
