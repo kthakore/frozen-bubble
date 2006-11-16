@@ -634,7 +634,7 @@ sub img2numb { my ($i, $f) = @_; each_index { $i eq $_ and $f = $::i } @bubbles_
 
 sub bubble_next_to($$$$$) {
     my ($x1, $y1, $x2, $y2, $player) = @_;
-    $x1 == $x2 && $y1 == $y2 and die "bubble_next_to: assert failed -- same bubbles ($x1:$y1;$player)\n(are you using chain-reaction with network partners not doing so on their side too?)\n" . backtrace();
+    $x1 == $x2 && $y1 == $y2 and die "bubble_next_to: assert failed -- same bubbles ($x1:$y1;$player)\n" . backtrace();
     return to_bool((sqr($x1+odd($y1+$pdata{$player}{oddswap})*0.5 - ($x2+odd($y2+$pdata{$player}{oddswap})*0.5)) + sqr($y1 - $y2)) < 3);
 }
 
@@ -1734,6 +1734,10 @@ sub lose {
                 fb_net::gsend("F$winnernick");
                 $pdata{state} = "finished $living[0]:$winnernick 0";
             }
+        } else {
+            if ($pdata{sendmalustoone} eq $player) {
+                set_sendmalustoone(undef);
+            }
         }
         if ($pdata{$player}{left}) {
             exists $POS{$player}{left} and put_image_to_background(mini_graphics($player) ? $imgbin{"left_${player}_mini"} : $imgbin{left_rp1},
@@ -1742,9 +1746,6 @@ sub lose {
             play_sound('cancel');
         } else {
             play_sound('lose');
-        }
-        if ($pdata{sendmalustoone} eq $player) {
-            set_sendmalustoone(undef);
         }
 
     } else {
@@ -2183,7 +2184,6 @@ sub update_game() {
                         if (my $msg = fb_net::grecv_get1msg_ifdata()) {
                             my $result = decode_postgame_message($msg);
                             if ($result =~ /^(\S+) other/) {
-                                print "quitting this game: $1 sends post-finish non-newgame $msg->{msg}\n";
                                 $pdata{$pdata{id2p}{$msg->{id}}}{left} = 1;
                                 die 'quit';
                             }
