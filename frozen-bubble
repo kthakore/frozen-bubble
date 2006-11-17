@@ -4676,7 +4676,11 @@ sub handle_new_hiscores() {
         if (@$scores == 21) {
             my @high = ordered_mptrain_highscores();
             pop @high;
-            $scores = \@high;
+            if ($chainreaction) {
+                $HISCORES_MPTRAIN_CHAINREACTION = \@high;
+            } else {
+                $HISCORES_MPTRAIN = \@high;
+            }
         }
         output($hiscorefiles{mptrain}, Data::Dumper->Dump([$HISCORES_MPTRAIN], [qw(HISCORES_MPTRAIN)]) . ' ' .
                                        Data::Dumper->Dump([$HISCORES_MPTRAIN_CHAINREACTION], [qw(HISCORES_MPTRAIN_CHAINREACTION)]));
