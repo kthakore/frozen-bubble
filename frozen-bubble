@@ -282,7 +282,7 @@ sub play_music($) {
             $mixer->play_music($mus, -1);
             $music{current} = $name;
         } else {
-            print STDERR "Warning, could not create new music from `$FPATH$musics{$name}' (reason: ", $app->error, ").\n";
+            print STDERR "Warning, could not create new music from '$FPATH$musics{$name}' (reason: ", $app->error, ").\n";
         }
     }
 }
@@ -302,7 +302,7 @@ sub init_sound() {
 	if (UNIVERSAL::isa($sound{$_}, 'HASH') ? $sound{$_}{-data} : ${$sound{$_}}) {
 	    $sound{$_}->volume(80);
 	} else {
-	    print STDERR "Warning, could not create new sound from `$sound_path'.\n";
+	    print STDERR "Warning, could not create new sound from '$sound_path'.\n";
 	}
     }
     return 1;
