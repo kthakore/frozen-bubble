@@ -4139,6 +4139,10 @@ sub smg_choose_game() {
                             $servername or $servername = fb_net::current_server_hostport();
                             smg_add_status_msg(t("*** You're connected to server '%s'", $servername));
                             $text = undef;
+                        } elsif ($text =~ m|^/fs|) {
+                            $fullscreen = !$fullscreen;
+                            $app->fullscreen;
+                            $text = undef;
                         } elsif ($text =~ m|^/kick (.*)| && $can_start) {
                             my $kicked = $1;
                             if ($kicked eq $mynick) {
@@ -4158,7 +4162,7 @@ sub smg_choose_game() {
                         } elsif ($text =~ m|^/help|) {
                             smg_add_status_msg(t("*** Available commands: %s",
                                                  join(', ', t("%s <action>", '/me'), if_($can_start, t("%s <nick>", '/kick')), if_(!$ingame, '/list'),
-                                                      if_(!$ingame, t("%s <new_nick>", '/nick')), '/server')));
+                                                      if_(!$ingame, t("%s <new_nick>", '/nick')), '/server', '/fs')));
                             $text = undef;
                         } elsif ($text =~ m|^/|) {
                             smg_add_status_msg(t("*** Unknown command. Try %s for help.", '/help'));
