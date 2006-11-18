@@ -2287,18 +2287,24 @@ sub update_game() {
 	    if ($b->{wait_fall}) {
 		$b->{wait_fall}--;
 	    } else {
-                my $maxy = member($::p, 'rp1', 'rp2') ? 190 : 375;
+                my $maxy = @PLAYERS == 2 ? 380 : member($::p, 'rp1', 'rp2') ? 185 : member($::p, 'rp3', 'rp4') ? 415 : 380;
 		if (exists $b->{chaindestx} && ($b->{'y'} > $maxy || $b->{chaingoingup})) {
 		    my $acceleration = $FREE_FALL_CONSTANT*3;
 		    if (!$b->{chaingoingup}) {
 			my $time_to_zero = $b->{speed}/$acceleration;
 			my $distance_to_zero = $b->{speed} * ($b->{speed}/$acceleration + 1) / 2;
-			my $time_to_destination = (-1 + sqrt(1 + 8/$acceleration*($b->{'y'}-$b->{chaindesty}+$distance_to_zero))) / 2;
-                        if ($time_to_zero + $time_to_destination == 0) {
-                            #- avoid division by zero
+                        my $tobe_sqrted = 1 + 8/$acceleration*($b->{'y'}-$b->{chaindesty}+$distance_to_zero);
+                        if ($tobe_sqrted < 0) {
+                            #- avoid SQRT of a negative number
                             $b->{speedx} = 0;
                         } else {
-                            $b->{speedx} = ($b->{chaindestx} - $b->{x}) / ($time_to_zero + $time_to_destination);
+                            my $time_to_destination = (-1 + sqrt($tobe_sqrted)) / 2;
+                            if ($time_to_zero + $time_to_destination == 0) {
+                                #- avoid division by zero
+                                $b->{speedx} = 0;
+                            } else {
+                                $b->{speedx} = ($b->{chaindestx} - $b->{x}) / ($time_to_zero + $time_to_destination);
+                            }
                         }
 			$b->{chaingoingup} = 1;
 		    }
