@@ -4571,6 +4571,8 @@ sub setup_mp_game() {
     $forget_because_kicked = undef;
     smg_choose_game() or return;
 
+    save_config();
+
     $time_netgame = $app->ticks;
     return 1;
 }
@@ -4764,6 +4766,28 @@ our ($blink_green, $blink_purple);
 our %cursor_save_bg;
 our $cursor_tmp;
 our %broken_cursors;
+
+sub save_config {
+    #- for $KEYS, try hard to keep SDLK_<key> instead of integer value in rcfile
+    my $KEYS_;
+    foreach my $p (keys %$KEYS) {
+	foreach my $k (keys %{$KEYS->{$p}}) {
+            if ($KEYS->{$p}{$k} =~ /^\d+$/) {
+                foreach (@fbsyms::syms) {
+                    if (eval("$KEYS->{$p}{$k} eq SDLK_$_")) {
+                        $KEYS_->{$p}{$k} = "SDLK_$_";
+                        goto nextkey;
+                    }
+                }
+            }
+            $KEYS_->{$p}{$k} = $KEYS->{$p}{$k};  #- fallback to numeric
+          nextkey:
+	}
+    }
+    my $dump = Data::Dumper->Dump([$fullscreen, $graphics_level, $mynick, $KEYS_], [qw(fullscreen graphics_level mynick KEYS)]);
+    $dump =~ s/'SDLK_(\w+)'/SDLK_$1/g;
+    output($rcfile, $dump);
+}
 
 sub menu {
     my ($firsttime) = @_;
@@ -5199,25 +5223,7 @@ sub menu {
         }
     }
 
-    #- for $KEYS, try hard to keep SDLK_<key> instead of integer value in rcfile
-    my $KEYS_;
-    foreach my $p (keys %$KEYS) {
-	foreach my $k (keys %{$KEYS->{$p}}) {
-            if ($KEYS->{$p}{$k} =~ /^\d+$/) {
-                foreach (@fbsyms::syms) {
-                    if (eval("$KEYS->{$p}{$k} eq SDLK_$_")) {
-                        $KEYS_->{$p}{$k} = "SDLK_$_";
-                        goto nextkey;
-                    }
-                }
-            }
-            $KEYS_->{$p}{$k} = $KEYS->{$p}{$k};  #- fallback to numeric
-          nextkey:
-	}
-    }
-    my $dump = Data::Dumper->Dump([$fullscreen, $graphics_level, $KEYS_], [qw(fullscreen graphics_level KEYS)]);
-    $dump =~ s/'SDLK_(\w+)'/SDLK_$1/g;
-    output($rcfile, $dump);
+    save_config();
 
     iter_players {
        !is_1p_game() and $pdata{$::p}{score} = 0;
