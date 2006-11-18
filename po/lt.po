@@ -112,7 +112,7 @@ msgstr "Taškai: %s"
 #: ../frozen-bubble:1595
 #, perl-format
 msgid "Level %s"
-msgstr " Lygis %s "
+msgstr "Lygis %s"
 
 #: ../frozen-bubble:1761
 msgid "Draw game!"
@@ -124,7 +124,7 @@ msgstr "Prarasta sinchronizacija!"
 
 #: ../frozen-bubble:2745
 msgid "won!"
-msgstr "Laimėjote!"
+msgstr "laimėjote!"
 
 #: ../frozen-bubble:2745
 #, perl-format
@@ -133,11 +133,11 @@ msgstr "lygis %s "
 
 #: ../frozen-bubble:2765
 msgid "Regular"
-msgstr ""
+msgstr "Įprastinis"
 
 #: ../frozen-bubble:2780
 msgid "Chain-reaction enabled"
-msgstr ""
+msgstr "Su grandinine reakcija"
 
 #: ../frozen-bubble:2863
 msgid "left"
@@ -165,7 +165,7 @@ msgstr "Paleisti 1-žaidėjo žaidimo meniu"
 
 #: ../frozen-bubble:3209
 msgid "Multiplayer training"
-msgstr ""
+msgstr "Daugiažaidėjų treniruotės"
 
 #: ../frozen-bubble:3209 ../frozen-bubble:4446
 msgid "Enable chain-reaction?"
@@ -221,9 +221,8 @@ msgid "*** Verify your network setup or retry later"
 msgstr "*** Patikrinkite tinklo ryšį arba pabandykite vėliau"
 
 #: ../frozen-bubble:3393
-#, fuzzy, perl-format
 msgid "Available players: %s (playing: %s) Ping: %sms"
-msgstr "Esami žaidėjai:%s  Atsakas:%sms"
+msgstr "Esami žaidėjai:%s (žaidžia: %s) Atsakas: %sms"
 
 #: ../frozen-bubble:3441
 msgid "*** No available game server"
@@ -248,17 +247,16 @@ msgid "*** Connected to server '%s'"
 msgstr "*** Prisijungta prie serverio '%s'"
 
 #: ../frozen-bubble:3511
-#, fuzzy, perl-format
 msgid "*** Server's MOTD: %s"
-msgstr "*** Taškai: %s"
+msgstr "*** Serverio MOTD: %s"
 
 #: ../frozen-bubble:3535
 msgid ""
 "*** Sorry, your computer or the network is too slow, giving up - press any "
 "key"
 msgstr ""
-"Atsiprašome, jūsų kompiuteris per lėtas tinkle, pasiduodama - paspauskite "
-"bet kokį klavišą"
+"*** Atsiprašome, jūsų kompiuteris per lėtas tinkle, pasiduodama - "
+"paspauskite bet kokį klavišą"
 
 #: ../frozen-bubble:3683 ../frozen-bubble:4361
 msgid "Chat"
@@ -283,22 +281,20 @@ msgid "Available Players: %s"
 msgstr "Galimi žaidėjai: %s"
 
 #: ../frozen-bubble:3789
-#, fuzzy, perl-format
 msgid "*** %s has left the chat room"
-msgstr "*** %s paliko žaidimą..."
+msgstr "*** %s paliko pokalbius"
 
 #: ../frozen-bubble:3791
 msgid "*** Several players left this chat room: "
-msgstr ""
+msgstr "*** Keletas žaidėjų paliko pokalbį: "
 
 #: ../frozen-bubble:3803
-#, fuzzy, perl-format
 msgid "*** %s has joined the chat room"
-msgstr "*** %s prisijungė prie žaidimo!"
+msgstr "*** %s prisijungė prie pokalbio"
 
 #: ../frozen-bubble:3805
 msgid "*** Several players joined this chat room: "
-msgstr ""
+msgstr "*** Keletas žaidėjų prisijungė prie pokalbio: "
 
 #: ../frozen-bubble:3823
 #, perl-format
@@ -307,12 +303,11 @@ msgstr "Prisijungti prie žaidimo: %s"
 
 #: ../frozen-bubble:3843
 msgid "*** Players listening: "
-msgstr "*** Laisvų žaidėjų: "
+msgstr "*** Klausančių žaidėjų: "
 
 #: ../frozen-bubble:3854 ../frozen-bubble:4072
-#, fuzzy
 msgid "*** No one's listening here"
-msgstr "*** Laisvų žaidėjų: "
+msgstr "*** Čia nieko nėra"
 
 #: ../frozen-bubble:3863
 msgid ""
@@ -344,17 +339,17 @@ msgstr "*** hostip.info neatsakė per 5 sekundes, pasiduodama"
 #: ../frozen-bubble:3895 ../frozen-bubble:4125 ../frozen-bubble:4137
 #: ../frozen-bubble:4171 ../frozen-bubble:4249 ../frozen-bubble:4369
 msgid "disabled"
-msgstr ""
+msgstr "išjungta"
 
 #: ../frozen-bubble:3897 ../frozen-bubble:4370
 msgid "none (unlimited)"
-msgstr ""
+msgstr "joks (neribota)"
 
 #: ../frozen-bubble:3917 ../frozen-bubble:4131 ../frozen-bubble:4166
 #: ../frozen-bubble:4169 ../frozen-bubble:4244 ../frozen-bubble:4247
 #: ../frozen-bubble:4369
 msgid "enabled"
-msgstr ""
+msgstr "įgalinta"
 
 #: ../frozen-bubble:3949
 msgid "*** Leaving game..."
@@ -370,9 +365,8 @@ msgid "*** Erroneous nickname"
 msgstr "*** Klaidingas slapyvardis"
 
 #: ../frozen-bubble:4036
-#, fuzzy, perl-format
 msgid "*** You're connected to server '%s'"
-msgstr "*** Prisijungta prie serverio '%s'"
+msgstr "*** Jūs prisijungę prie '%s' serverio"
 
 #: ../frozen-bubble:4042
 msgid "*** Sado-masochist, hmm?"
@@ -426,13 +420,12 @@ msgid ""
 "*** Open games already full. Join an existing game, or select a different "
 "server."
 msgstr ""
-"*** Atviri žaidimai pilni. Prisijunkite prie esamo žaidimo, arbapasirinkite "
-"kitą serverį."
+"*** Atviri žaidimai pilni. Prisijunkite prie esamo žaidimo, arba "
+"pasirinkite kitą serverį."
 
 #: ../frozen-bubble:4100
-#, fuzzy
 msgid "*** Cannot join game, game was just started or aborted"
-msgstr "*** Klaida: žaidimas ką tik pradėtas arba atšauktas"
+msgstr "*** Negalima prisijungti, žaidimas ką tik pradėtas arba atšauktas"
 
 #: ../frozen-bubble:4104
 #, perl-format
@@ -452,24 +445,26 @@ msgstr "*** Prisijungta prie žaidimo"
 msgid ""
 "*** Can't enable chain-reaction, as a player is using a too old version of "
 "Frozen-Bubble"
-msgstr ""
+msgstr "*** Negalima įjungti grandininės reakcijos, nes žaidėjas naudoja per"
+" seną Frozen-Bubble versiją"
 
 #: ../frozen-bubble:4132 ../frozen-bubble:4138 ../frozen-bubble:4364
 #: ../frozen-bubble:4369
-#, fuzzy, perl-format
 msgid "Chain-reaction: %s"
-msgstr "Įgalinti grandininę reakciją?"
+msgstr "Grandininė reakcija: %s"
 
 #: ../frozen-bubble:4147
 msgid ""
 "*** Can't set a victories limit, as a player is using a too old version of "
 "Frozen-Bubble"
 msgstr ""
+"Negalima nustatyti pergalių limito, nes žaidėjas naudoja per seną "
+"Frozen-Bubble versiją"
 
 #: ../frozen-bubble:4152 ../frozen-bubble:4365 ../frozen-bubble:4370
 #, perl-format
 msgid "Victories limit: %s"
-msgstr ""
+msgstr "Pergalių limitas: %s"
 
 #: ../frozen-bubble:4161 ../frozen-bubble:4181 ../frozen-bubble:4187
 #, perl-format
@@ -480,13 +475,15 @@ msgstr "*** Neįmanoma pradėti žaidimo: '%s'"
 msgid ""
 "*** Must disable chain-reaction, as a player is using a too old version of "
 "Frozen-Bubble"
-msgstr ""
+msgstr "*** Privalau išjungti grandininę reakciją, nes žaidėjas naudoja per "
+"seną Frozen-Bubble versiją"
 
 #: ../frozen-bubble:4174
 msgid ""
 "*** Must reset victories limit as a player is using a too old version of "
 "Frozen-Bubble"
-msgstr ""
+msgstr "*** Privalau atstatyti pergalių limitą, nes žaidėjas naudoja per "
+"seną Frozen-Bubble versiją"
 
 #: ../frozen-bubble:4241
 #, perl-format
@@ -498,12 +495,14 @@ msgstr "*** %s prisijungė prie žaidimo!"
 msgid ""
 "*** Chain-reaction disabled, %s is using a too old version of Frozen-Bubble"
 msgstr ""
+"*** Grandininė reakcija išjungta, %s naudoja per seną Frozen-Bubble versiją"
 
 #: ../frozen-bubble:4252
 #, perl-format
 msgid ""
 "*** Victories limit reset, %s is using a too old version of Frozen-Bubble"
 msgstr ""
+"*** Pergalių limitas atstatytas, %s naudoja per seną Frozen-Bubble versiją"
 
 #: ../frozen-bubble:4260
 msgid "*** Game creator left the game..."
@@ -517,11 +516,11 @@ msgstr "*** %s paliko žaidimą..."
 #: ../frozen-bubble:4270
 #, perl-format
 msgid "*** %s was kicked out of the game..."
-msgstr "*** %s buvo išmestas..."
+msgstr "*** %s buvo išmestas iš žaidimo..."
 
 #: ../frozen-bubble:4275
 msgid "*** You were kicked out of the game..."
-msgstr "*** Jūs buvote išmestas..."
+msgstr "*** Jūs buvote išmestas iš žaidimo..."
 
 #: ../frozen-bubble:4280
 msgid "*** You were disconnected because of too long inactivity"
@@ -536,9 +535,8 @@ msgid "Start game!"
 msgstr "Pradėti žaidimą!"
 
 #: ../frozen-bubble:4385
-#, fuzzy, perl-format
 msgid "*** Game finished, because victories limit of %s was reached."
-msgstr "*** Žaidimas baigtas, nes šis žaidėjas(-ai) išėjo: %s"
+msgstr "*** Žaidimas baigtas, nes %s pergalių limitas buvo pasiektas."
 
 #: ../frozen-bubble:4388
 #, perl-format
@@ -569,7 +567,8 @@ msgid ""
 "*** Cannot connect to specified gameserver, fallbacking to contacting master "
 "server"
 msgstr ""
-"*** Negalima prisijungti prie nurodyto serverio, jungiamasi priepagrindinio"
+"*** Negalima prisijungti prie nurodyto serverio, jungiamasi prie pagrindinio "
+"serverio"
 
 #: ../frozen-bubble:4446
 msgid "2-player game"
