@@ -860,6 +860,17 @@ sub stick_bubble($$$$$) {
     }
 }
 
+sub redraw_chat_message_if_needed {
+    my ($player) = @_;
+    if ($pdata{current_chat_messages}{$player}) {
+        my $img = @PLAYERS == 2 ? $imgbin{void_chat_small_p2} : member($player, qw(rp1 rp3)) ? $imgbin{void_chat_small_rp1_rp3} : $imgbin{void_chat_small_rp2_rp4};
+        put_image_to_background($img, $POS{$player}{chatting}{x}, $POS{$player}{chatting}{'y'});
+        print_('ingame_small_chat', $background,
+               $POS{$player}{chatting}{x} + 3, $POS{$player}{chatting}{'y'} + 3, $pdata{current_chat_messages}{$player}, $img->width - 6, 'center');
+        erase_image($img, $POS{$player}{chatting}{x}, $POS{$player}{chatting}{'y'});
+    }
+}
+
 sub print_next_bubble($$;$) {
     my ($img, $player, $not_on_top_next) = @_;
     if (is_mp_game() && $player eq 'p1' && $pdata{p1}{chatting}) {
@@ -869,13 +880,7 @@ sub print_next_bubble($$;$) {
     $not_on_top_next or put_image_to_background($bubbles_anim{on_top_next},
                                                 $POS{$player}{left_limit} + $POS{$player}{next_bubble}{x} + $POS{$player}{on_top_next_relpos}{x},
                                                 $POS{$player}{next_bubble}{'y'} + $POS{$player}{on_top_next_relpos}{'y'});
-    if ($pdata{current_chat_messages}{$player}) {
-        my $img = @PLAYERS == 2 ? $imgbin{void_chat_small_p2} : member($player, qw(rp1 rp3)) ? $imgbin{void_chat_small_rp1_rp3} : $imgbin{void_chat_small_rp2_rp4};
-        put_image_to_background($img, $POS{$player}{chatting}{x}, $POS{$player}{chatting}{'y'});
-        print_('ingame_small_chat', $background,
-               $POS{$player}{chatting}{x} + 3, $POS{$player}{chatting}{'y'} + 3, $pdata{current_chat_messages}{$player}, $img->width - 6, 'center');
-        erase_image($img, $POS{$player}{chatting}{x}, $POS{$player}{chatting}{'y'});
-    }
+    redraw_chat_message_if_needed($player);
 }
 
 sub generate_new_bubble($$) {
@@ -1316,14 +1321,11 @@ sub handle_mp_messages {
             unshift @$msg, $m;
             last;
         } elsif ($command eq 't') {
-            my $img = @PLAYERS == 2 ? $imgbin{void_chat_small_p2} : member($player, qw(rp1 rp3)) ? $imgbin{void_chat_small_rp1_rp3} : $imgbin{void_chat_small_rp2_rp4};
-            put_image_to_background($img, $POS{$player}{chatting}{x}, $POS{$player}{chatting}{'y'});
-            print_('ingame_small_chat', $background, $POS{$player}{chatting}{x} + 3, $POS{$player}{chatting}{'y'} + 3, $params, $img->width - 6, 'center');
-            erase_image($img, $POS{$player}{chatting}{x}, $POS{$player}{chatting}{'y'});
-            push @update_rects, $apprects{main};
-            play_sound('chatted');
-            $pdata{$player}{chat_msg_delay} = 500;
             $pdata{current_chat_messages}{$player} = $params;
+            $pdata{$player}{chat_msg_delay} = 500;
+            play_sound('chatted');
+            redraw_chat_message_if_needed($player);
+            push @update_rects, $apprects{main};
         } elsif ($command eq 'A') {
             if ($params eq '') {
                 @{$pdata{attackingme}} = difference2($pdata{attackingme}, [ $player ]);
@@ -1684,6 +1686,7 @@ sub print_scores($) {
         } else {
             print_('ingame', $surface, $xpos, $POS{$::p_}{scores}{'y'}, $score);
         }
+        redraw_chat_message_if_needed($::p_);
     };
 }
 
