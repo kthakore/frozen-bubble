@@ -4024,6 +4024,46 @@ sub smg_choose_game() {
                                        . "VICTORIESLIMIT:$victories_limits[$victories_limit_index]{value}");
     };
 
+    my $change_victories_limit = sub {
+        my ($action) = @_;
+        my $level = fb_net::send_and_receive('PROTOCOL_LEVEL');
+        if ($level < 1) {  #- available from minor level 1 onwards
+            smg_add_status_msg(t("*** Can't set a victories limit, as a player is using a too old version of Frozen-Bubble"));
+            play_sound('cancel');
+        } else {
+            if ($action eq 'inc') {
+                $victories_limit_index++;
+                $victories_limit_index == @victories_limits and $victories_limit_index = 0;
+            } else {
+                $victories_limit_index--;
+                $victories_limit_index == -1 and $victories_limit_index = @victories_limits - 1;
+            }
+            $actions[2]{name} = t("Victories limit: %s", $victories_limits[$victories_limit_index]{text});
+            $redraw->();
+            $setoptions->();
+        }
+    };
+
+    my $toggle_chain_reaction = sub {
+        if ($chain_reaction_state eq t("disabled")) {
+            my $level = fb_net::send_and_receive('PROTOCOL_LEVEL');
+            if ($level < 1) {  #- available from minor level 1 onwards
+                smg_add_status_msg(t("*** Can't enable chain-reaction, as a player is using a too old version of Frozen-Bubble"));
+                play_sound('cancel');
+            } else {
+                $chain_reaction_state = t("enabled");
+                $actions[1]{name} = t("Chain-reaction: %s", $chain_reaction_state);
+                $redraw->();
+                $setoptions->();
+            }
+        } else {
+            $chain_reaction_state = t("disabled");
+            $actions[1]{name} = t("Chain-reaction: %s", $chain_reaction_state);
+            $redraw->();
+            $setoptions->();
+        }
+    };
+
     while (1) {
         $relist++;
         $relist % (5*(1000/$TARGET_ANIM_SPEED)) == 0 and $list->();
@@ -4233,37 +4273,11 @@ sub smg_choose_game() {
                   not_in_game:
                             
                     if ($curaction->()->{action} eq 'TOGGLE_CHAIN_REACTION') {
-                        if ($chain_reaction_state eq t("disabled")) {
-                            my $level = fb_net::send_and_receive('PROTOCOL_LEVEL');
-                            if ($level < 1) {  #- available from minor level 1 onwards
-                                smg_add_status_msg(t("*** Can't enable chain-reaction, as a player is using a too old version of Frozen-Bubble"));
-                                play_sound('cancel');
-                            } else {
-                                $chain_reaction_state = t("enabled");
-                                $actions[1]{name} = t("Chain-reaction: %s", $chain_reaction_state);
-                                $redraw->();
-                                $setoptions->();
-                            }
-                        } else {
-                            $chain_reaction_state = t("disabled");
-                            $actions[1]{name} = t("Chain-reaction: %s", $chain_reaction_state);
-                            $redraw->();
-                            $setoptions->();
-                        }
+                        $toggle_chain_reaction->();
                     }
 
                     if ($curaction->()->{action} eq 'SWITCH_VICTORIES_LIMIT') {
-                        my $level = fb_net::send_and_receive('PROTOCOL_LEVEL');
-                        if ($level < 1) {  #- available from minor level 1 onwards
-                            smg_add_status_msg(t("*** Can't set a victories limit, as a player is using a too old version of Frozen-Bubble"));
-                            play_sound('cancel');
-                        } else {
-                            $victories_limit_index++;
-                            $victories_limit_index == @victories_limits and $victories_limit_index = 0;
-                            $actions[2]{name} = t("Victories limit: %s", $victories_limits[$victories_limit_index]{text});
-                            $redraw->();
-                            $setoptions->();
-                        }
+                        $change_victories_limit->('inc');
                     }
 
                     if ($curaction->()->{action} eq 'START') {
@@ -4301,6 +4315,24 @@ sub smg_choose_game() {
                         }
                     }
                     
+
+                } elsif ($k eq SDLK_RIGHT() && $curaction->()->{action} ne 'CHAT') {
+                    if ($curaction->()->{action} eq 'TOGGLE_CHAIN_REACTION') {
+                        $toggle_chain_reaction->();
+                    }
+
+                    if ($curaction->()->{action} eq 'SWITCH_VICTORIES_LIMIT') {
+                        $change_victories_limit->('inc');
+                    }
+
+                } elsif ($k eq SDLK_LEFT() && $curaction->()->{action} ne 'CHAT') {
+                    if ($curaction->()->{action} eq 'TOGGLE_CHAIN_REACTION') {
+                        $toggle_chain_reaction->();
+                    }
+
+                    if ($curaction->()->{action} eq 'SWITCH_VICTORIES_LIMIT') {
+                        $change_victories_limit->('dec');
+                    }
 
                 } else {
                     if ($curaction->()->{action} eq 'CHAT') {
