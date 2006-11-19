@@ -1190,7 +1190,7 @@ sub set_sendmalustoone {
     iter_distant_players_ {
         remove_image_from_background($imgbin{attack}{$::p_}, $POS{$::p_}{attack}{x}, $POS{$::p_}{attack}{'y'});
     };
-    if (member($whoto, living_players())) {
+    if (member($whoto, living_players()) && $pdata{p1}{state} ne 'lost') {
         $pdata{sendmalustoone} = $whoto;
         put_image_to_background($imgbin{attack}{$pdata{sendmalustoone}}, $POS{$pdata{sendmalustoone}}{attack}{x}, $POS{$pdata{sendmalustoone}}{attack}{'y'});
     }
