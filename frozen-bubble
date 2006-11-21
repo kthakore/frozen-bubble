@@ -1427,6 +1427,27 @@ sub handle_game_events() {
             if ($keypressed eq SDLK_ESCAPE) {
                 die 'quit';
             }
+            if ($keypressed eq SDLK_PAUSE) {
+                my $time_pause = $app->ticks;
+                $event->pump while $event->poll != 0;
+              pause_playdata:
+                while (1) {
+                    while ($event->poll != 0) {
+                        if ($event->type == SDL_QUIT) {
+                            exit 0;
+                        }
+                        my $keypressed = extended_keypress($event);
+                        if ($keypressed) {
+                            $total_time += $app->ticks - $time_pause;
+                            $levels{current} eq 'mp_train' and $pdata{origticks} += $app->ticks - $time_pause;
+                            return;
+                        }
+                    }
+                }
+            }
+            if ($keypressed && $pdata{demo}) {
+                die 'quit';
+            }
         }
         return;
     }
