@@ -39,7 +39,7 @@ use strict;
 use vars qw($TARGET_ANIM_SPEED $BUBBLE_SIZE $ROW_SIZE $LAUNCHER_SPEED $BUBBLE_SPEED $MALUS_BUBBLE_SPEED $TIME_APPEARS_NEW_ROOT
             %POS %POS_1P %POS_2P %MENUPOS $KEYS %actions %angle %pdata $app %apprects $event %rects %sticked_bubbles %root_bubbles
             $background $background_orig @bubbles_images $gcwashere %bubbles_anim %launched_bubble %tobe_launched %next_bubble $recorddir %recorddata $playdata
-            $shooter_lowgfx $sdl_flags $mixer $mixer_enabled $music_disabled $sfx_disabled $no_echo @playlist %sound %music %pinguin %canon $autorecord $comment
+            $shooter_lowgfx $sdl_flags $mixer $mixer_enabled $music_disabled $sfx_disabled $no_echo @playlist %sound %music %pinguin %canon
             $graphics_level @update_rects $CANON_ROTATIONS_NB %malus_bubble %falling_bubble %exploding_bubble %malus_gfx %pangocontext $private $no_time_limit
             %sticking_bubble $time %imgbin $TIME_HURRY_WARN $TIME_HURRY_MAX $TIMEOUT_PINGUIN_SLEEP $FREE_FALL_CONSTANT @joysticks $joysticksinfo
             $direct @PLAYERS @ALL_PLAYERS %levels $display_on_app_disabled $total_time $time_1pgame $time_netgame $fullscreen $rcfile %hiscorefiles
@@ -147,10 +147,6 @@ GetOptions("fullscreen|fs!" => \$fullscreen,
            "my-nick=s" => \$mynick,
            "private" => \$private,
            "joysticks-info" => \$joysticksinfo,
-           "record=s" => sub { if (!-d $_[1]) { die("$_[1] does not exist.\n") } else { $recorddir = $_[1] } },
-           "auto-record" => \$autorecord,
-           "playback=s" => \$playdata,
-           "comment=s" => \$comment,
            "help" => sub { print "Usage: ", basename($0), " [OPTION]...
  --fullscreen             start in fullscreen mode
  --no-fullscreen          don't start in fullscreen mode
@@ -175,10 +171,6 @@ GetOptions("fullscreen|fs!" => \$fullscreen,
  --no-echo                when sound is enabled, disable echoing each typed character with a typewriter sound
  --my-nick <nick>         for net/lan games, use this nick instead of username (max 10 chars, ASCII alphanumeric plus dash and underscore only)
  --private                when starting a net game, don't use http://hostip.info/ to retrieve your geographical position to send it to other players
- --record <dir>           specify the recording directory (normally, records are saved in the directory '$ENV{HOME}/.fb_records')
- --auto-record            automatically record all applicable games (normally, a record is triggered by hitting the Print Screen key during a game)
- --comment '...'          add the comment enclosed between simple quotes to records (must not contain anything else than ASCII), it will be shown on console when playing back the record later
- --playback <file|URL>    playback the specified record file
 ";
                            exit(0);
            });
@@ -1643,7 +1635,7 @@ sub record {
 
 our $recordnumber = 0;
 sub save_record_if_needed {
-    if (($recorddata{save} || $autorecord) && $levels{current} !~ /^\d+$/ && @{$recorddata{data}} > 1 && !$pdata{p1}{left}) {
+    if ($recorddata{save} && $levels{current} !~ /^\d+$/ && @{$recorddata{data}} > 1 && !$pdata{p1}{left}) {
         if (!$recorddir) {
             print "Notice: no recorddir was specified on commandline; recording in '$ENV{HOME}/.fb_records'\n";
             $recorddir = "$ENV{HOME}/.fb_records";
@@ -1656,7 +1648,6 @@ sub save_record_if_needed {
         $recorddata{data}[0]{current_level} = $levels{current};
         $recorddata{data}[0]{chainreaction} = $chainreaction;
         $recorddata{data}[0]{time} = time();
-        $comment and $recorddata{data}[0]{comment} = $comment;
         if (is_mp_game()) {
             $recorddata{data}[0]{mp_result} = $pdata{state};
             iter_players {
@@ -1669,7 +1660,7 @@ sub save_record_if_needed {
         if (system("bzip2 '$filename' >/dev/null 2>/dev/null") == 0) {
             $filename .= ".bz2";
         }
-        print "Record saved in '$filename'. Start Frozen-Bubble with '--playback $filename' to replay the game.\n";
+        print "Record saved in '$filename'.\n";
     }
 }
 
@@ -5407,10 +5398,6 @@ sub replay {
 #- ----------- main -------------------------------------------------------
 
 init_game();
-
-if ($playdata) {
-    replay($playdata);
-}
 
 $direct or menu('first time');
 
