@@ -1067,15 +1067,17 @@ sub malus_change($$) {
             if (is_local_player($player)) {  #- remote players handled when receiving the 'g' message
                 if (!$pdata{sendmalustoone}) {
                     my @living = living_players();
-                    $numb = int($numb/(@living-1) + 0.99);
-                    iter_players_ {
-                        if ($::p_ ne $player && member($::p_, @living)) {
-                            is_mp_game() and fb_net::gsend("g$pdata{$::p_}{nick}:$numb");
-                            update_malus(\&remove_image_from_background, $::p_);
-                            $pdata{$::p_}{malus} += $numb;
-                            update_malus(\&put_image_to_background, $::p_);
-                        }
-                    };
+                    if (@living > 1) {
+                        $numb = int($numb/(@living-1) + 0.99);
+                        iter_players_ {
+                            if ($::p_ ne $player && member($::p_, @living)) {
+                                is_mp_game() and fb_net::gsend("g$pdata{$::p_}{nick}:$numb");
+                                update_malus(\&remove_image_from_background, $::p_);
+                                $pdata{$::p_}{malus} += $numb;
+                                update_malus(\&put_image_to_background, $::p_);
+                            }
+                        };
+                    }
                 } else {
                     my $p = $pdata{sendmalustoone};
                     is_mp_game() and fb_net::gsend("g$pdata{$p}{nick}:$numb");
