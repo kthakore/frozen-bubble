@@ -20,7 +20,7 @@ fb-server: $(ALLOBJ)
 clean: 
 	rm -f fb-server *.o .depend
 
-install:
+install: fb-server
 	install -d $(DESTDIR)$(LIBDIR)/frozen-bubble
 	install fb-server $(DESTDIR)$(LIBDIR)/frozen-bubble
 
