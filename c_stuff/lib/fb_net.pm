@@ -287,7 +287,7 @@ sub connect {
     $@ and return { failure => 'Server or computer too slow' };
     my ($remote_major, $remote_minor, $isready) = $msg =~ m|^FB/(\d+).(\d+) (.*)|;
     my ($servername, $serverlanguage, $servermotd);
-    if ($isready =~ /^PUSH: SERVER_READY (.*) (.*) "(.*)"/) {
+    if ($isready =~ /^PUSH: SERVER_READY (.*) (.*)/) {
         $servername = $1;
         $serverlanguage = $2;
         $servermotd = $3;
