@@ -56,7 +56,7 @@ char* current_command;
 const int proto_major = 1;
 const int proto_minor = 1;
 
-static char greets_msg_base[] = "SERVER_READY %s %s \"%s\"";
+static char greets_msg_base[] = "SERVER_READY %s %s";
 static char* servername = NULL;
 static char* serverlanguage = NULL;
 
@@ -95,8 +95,6 @@ static char* blacklisted_IPs = NULL;
 char* pidfile = NULL;
 char* user_to_switch = NULL;
 
-static char* motd_file = NULL;
-static char* motd = NULL;
 static char* alert_words_file = NULL;
 GList * alert_words = NULL;
 
@@ -374,10 +372,7 @@ static char * greets_msg = NULL;
 static char * get_greets_msg(void)
 {
         if (!greets_msg) {
-                if (motd) 
-                        greets_msg = asprintf_(greets_msg_base, servername, serverlanguage, motd);
-                else
-                        greets_msg = asprintf_(greets_msg_base, servername, serverlanguage, "");
+                greets_msg = asprintf_(greets_msg_base, servername, serverlanguage);
         }
         return greets_msg;
 }
@@ -562,7 +557,6 @@ static void help(void)
         printf("     -l                        LAN mode: create an UDP server (on port %d) to answer broadcasts of clients discovering where are the servers\n", DEFAULT_PORT);
         printf("     -L                        LAN/game mode: create an UDP server as above, but limit number of games to 1 (this is for an FB client hosting a LAN server)\n");
         printf("     -m max_users              set the maximum of connected users (defaults to %d, physical maximum 255 in non debug mode)\n", DEFAULT_MAX_USERS);
-        printf("     -M motd_file              set the file from which Message Of The Day is extracted (must be UTF-8 encoded, 50 characters max, with no newline) - this file is reread when receiving the ADMIN_REREAD command from 127.0.0.1\n");
         printf("     -n name                   set the server name presented to players (if unset, defaults to hostname)\n");
         printf("     -o outputtype             set the output type; can be DEBUG, CONNECT, INFO, ERROR; each level includes messages of next level; defaults to INFO\n");
         printf("     -p port                   set the server port (defaults to %d)\n", DEFAULT_PORT);
@@ -639,27 +633,6 @@ static char* read_alert_words(char* file)
 
 void reread()
 {
-        if (motd_file) {
-                FILE* f;
-                char buf[512];
-                l1(OUTPUT_TYPE_INFO, "Rereading MOTD file '%s'.", motd_file);
-                f = fopen(motd_file, "r");
-                if (!f) {
-                        l1(OUTPUT_TYPE_ERROR, "Error opening MOTD file '%s'.", motd_file);
-                } else {
-                        if (fgets(buf, sizeof(buf), f)) {
-                                if (buf[strlen(buf)-1] == '\n')
-                                        buf[strlen(buf)-1] = '\0';
-                                free(motd);
-                                motd = strdup(buf);
-                                greets_msg = NULL;
-                        }
-                        if (ferror(f))
-                                l1(OUTPUT_TYPE_ERROR, "Error reading MOTD file '%s'.", motd_file);
-                        fclose(f);
-                }
-        }
-
         if (alert_words_file) {
                 char* response;
                 l1(OUTPUT_TYPE_INFO, "Rereading alert words file '%s'.", alert_words_file);
@@ -676,7 +649,6 @@ void reread()
 
 static void handle_parameter(char command, char * param) {
         char* response;
-        FILE* f;
         switch (command) {
         case 'a':
                 if (streq(param, "af") || streq(param, "ar") || streq(param, "az") || streq(param, "bg") || streq(param, "br")
@@ -745,24 +717,6 @@ static void handle_parameter(char command, char * param) {
                 else {
                         fprintf(stderr, "-m: '%s' not convertible to int or not in 1..255, ignoring\n", param);
                         max_users = DEFAULT_MAX_USERS;
-                }
-                break;
-        case 'M':
-                f = fopen(param, "r");
-                if (!f) {
-                        fprintf(stderr, "-M: error opening '%s', ignoring\n", param);
-                } else {
-                        char buf[512];
-                        if (fgets(buf, sizeof(buf), f)) {
-                                printf("-M: reading MOTD from '%s'\n", param);
-                                if (buf[strlen(buf)-1] == '\n')
-                                        buf[strlen(buf)-1] = '\0';
-                                motd = strdup(buf);
-                                motd_file = param;
-                        }
-                        if (ferror(f))
-                                fprintf(stderr, "-M: error reading '%s'\n", param);
-                        fclose(f);
                 }
                 break;
         case 'n':
@@ -862,7 +816,7 @@ void create_server(int argc, char **argv)
         int valone = 1;
 
         while (1) {
-                int c = getopt(argc, argv, "a:A:c:df:g:hH:lLm:M:n:o:p:P:qt:u:z");
+                int c = getopt(argc, argv, "a:A:c:df:g:hH:lLm:n:o:p:P:qt:u:z");
                 if (c == -1)
                         break;
                 
