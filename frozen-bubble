@@ -3344,13 +3344,17 @@ sub choose_1p_game_mode() {
                 } elsif ($k == SDLK_DOWN()) {
                     if ($active_menu < @ordered_names - 1) {
                         $active_menu++;
-                        play_sound('menu_change');
+                    } else {
+                        $active_menu = 0;
                     }
+                    play_sound('menu_change');
                 } elsif ($k == SDLK_UP()) {
                     if ($active_menu > 0) {
                         $active_menu--;
-                        play_sound('menu_change');
+                    } else {
+                        $active_menu = @ordered_names - 1;
                     }
+                    play_sound('menu_change');
                 }
                 $redraw->();
             }
@@ -5071,15 +5075,25 @@ sub menu {
 	while ($event->poll != 0) {
             my $keypressed = extended_keypress($event);
             if ($keypressed) {
-		if (member($keypressed, (SDLK_DOWN, SDLK_RIGHT)) && $current_pos < max(map { $menu_entries{$_}->{pos} } keys %menu_entries)) {
-		    $current_pos++;
-		    push @menu_invalids, $current_pos-1, $current_pos;
-		    play_sound('menu_change');
+		if (member($keypressed, (SDLK_DOWN, SDLK_RIGHT))) {
+                    push @menu_invalids, $current_pos;
+                    if ($current_pos < max(map { $menu_entries{$_}->{pos} } keys %menu_entries)) {
+                        $current_pos++;
+                    } else {
+                        $current_pos = 1;
+                    }
+                    push @menu_invalids, $current_pos;
+                    play_sound('menu_change');
                     $menu_update->();
 		}
-		if (member($keypressed, (SDLK_UP, SDLK_LEFT)) && $current_pos > 1) {
-		    $current_pos--;
-		    push @menu_invalids, $current_pos, $current_pos+1;
+		if (member($keypressed, (SDLK_UP, SDLK_LEFT))) {
+                    push @menu_invalids, $current_pos;
+                    if ($current_pos > 1) {
+                        $current_pos--;
+                    } else {
+                        $current_pos = max(map { $menu_entries{$_}->{pos} } keys %menu_entries);
+                    }
+		    push @menu_invalids, $current_pos;
 		    play_sound('menu_change');
                     $menu_update->();
 		}
