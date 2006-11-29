@@ -2885,12 +2885,14 @@ sub display_highscores {
         }
         my $y = 80;
         my $counter = 1;
+        my $lastvalue;
         foreach my $high (ordered_mptrain_highscores()) {
             my $font = $new_entry == $high ? 'bold_menu' : 'menu';
-            print_($font, $app, $parts{rank}{xpos}, $y, "$counter. ", $parts{rank}{width}, 'right');
+            $high->{score} ne $lastvalue and print_($font, $app, $parts{rank}{xpos}, $y, "$counter. ", $parts{rank}{width}, 'right');
             print_($font, $app, $parts{name}{xpos}, $y, "$high->{name}: $high->{score}", $parts{name}{width});
             $y += $smg_lineheight + 2;
             $counter++;
+            $lastvalue = $high->{score};
         }
 
         print_('menu', $app, 320, 50, t("Chain-reaction enabled"), 320, 'center');
@@ -2900,13 +2902,15 @@ sub display_highscores {
             $parts{$_}{xpos} = 640 - $parts{$_}{xpos} - $parts{$_}{width} foreach keys %parts;
         }
         $y = 80;
-        my $counter = 1;
+        $counter = 1;
+        $lastvalue = undef;
         foreach my $high (ordered_mptrain_highscores_chainreaction()) {
             my $font = $new_entry == $high ? 'bold_menu' : 'menu';
-            print_($font, $app, $parts{rank}{xpos}, $y, "$counter. ", $parts{rank}{width}, 'right');
+            $high->{score} ne $lastvalue and print_($font, $app, $parts{rank}{xpos}, $y, "$counter. ", $parts{rank}{width}, 'right');
             print_($font, $app, $parts{name}{xpos}, $y, "$high->{name}: $high->{score}", $parts{name}{width});
             $y += $smg_lineheight + 2;
             $counter++;
+            $lastvalue = $high->{score};
         }
 
         $app->flip;
@@ -4738,7 +4742,7 @@ sub handle_new_hiscores() {
 
         push @$scores, \%new_entry;
         if (@$scores == 21) {
-            my @high = ordered_mptrain_highscores();
+            my @high = sort { $b->{score} <=> $a->{score} } @$scores;
             pop @high;
             if ($chainreaction) {
                 $HISCORES_MPTRAIN_CHAINREACTION = \@high;
