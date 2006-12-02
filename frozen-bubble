@@ -4416,7 +4416,7 @@ sub smg_choose_game() {
                 if ($message =~ /^TALK: (.*)/) {
                     my $message = $1;
                     my (undef, $min, $hour) = localtime();
-                    smg_add_status_msg(sprintf("%02d:%02d $message", $hour, $min));
+                    smg_add_status_msg(sprintf("%02d:%02d ", $hour, $min) . $message);
                     play_sound('typewriter');
                 } elsif ($message =~ /^JOINED: (.+)/) {
                     smg_add_status_msg(t("*** %s joined the game!", $1));
