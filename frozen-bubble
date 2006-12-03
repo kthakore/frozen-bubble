@@ -3731,7 +3731,7 @@ sub callback_entry {
             }
         } else {
             my $utf8char = fb_c_stuff::utf8key(evt($params->{event}));
-            if ($utf8char ne '' && $utf8char ne "\n") {
+            if ($utf8char ne '' && $utf8char ne "\n" && $utf8char ne "\r") {
                 splice @entry_typed, $entry_position, 0, $utf8char;
                 if (width($params->{font}, $params->{prefix} . join('', @entry_typed)) >= $params->{maxlen}) {
                     splice @entry_typed, $entry_position, 1;
