@@ -2493,7 +2493,6 @@ sub init_game() {
     $event = SDL::Event->new;
     $event->set_unicode(1);
     SDL::Cursor::show(0);
-    $total_time = $app->ticks;
     $imgbin{loading} = add_image('loading.png');
     put_image($imgbin{loading}, 10, 10);
     $app->flip;
@@ -2730,6 +2729,7 @@ sub init_game() {
     load_levelset("$FPATH/data/levels");
 
     fb_c_stuff::init_effects($FPATH);
+    $total_time = $app->ticks;
 
     print "Ready.\n";
 }
