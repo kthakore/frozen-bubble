@@ -696,8 +696,6 @@ int process_msg(int fd, char* msg)
                                 args[10] = '\0';
                         if (!already_in_game(fd)) {
                                 send_line_log(fd, wn_not_in_game, msg_orig);
-                        } else if (!already_in_game(fd)) {
-                                send_line_log(fd, wn_not_creator, msg_orig);
                         } else {
                                 struct game * g = find_game_by_fd(fd);
                                 if (g->players_conn[0] != fd) {
