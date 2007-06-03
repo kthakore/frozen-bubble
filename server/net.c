@@ -457,6 +457,10 @@ void connections_manager(void)
 
                         l2(OUTPUT_TYPE_CONNECT, "Accepted connection from %s: fd %d", inet_ntoa(client_addr.sin_addr), fd);
                         if (fd > 255 || conns_nb() >= max_users || (lan_game_mode && g_list_length(conns_prio) > 0)) {
+                                // don't overrun prio in send_line_log_push
+                                if (fd <= 255) {
+                                        send_line_log_push(fd, fl_server_full);
+                                }
                                 send_line_log_push(fd, fl_server_full);
                                 l1(OUTPUT_TYPE_INFO, "[%d] Closing connection (server full)", fd);
                                 close(fd);
@@ -616,6 +620,7 @@ static char* read_alert_words(char* file)
                                 buf[strlen(buf)-1] = '\0';
                         if ((errcode = regcomp(preg, buf, REG_EXTENDED|REG_ICASE)) != 0) {
                                 regerror(errcode, preg, errbuf, sizeof(errbuf));
+                                free(preg);
                                 fclose(f);
                                 return asprintf_("Problem compiling '%s': %s", buf, errbuf);
                         } else {
@@ -1066,6 +1071,7 @@ static char * http_get(char * host, int port, char * path)
                 if (bytes == -1) {
                         l1(OUTPUT_TYPE_ERROR, "HTTP_GET: read: %s", strerror(errno));
                         close(sock);
+                        free(buf);
                         return NULL;
                 } else if (bytes == 0) {
                         // 0 == EOF
