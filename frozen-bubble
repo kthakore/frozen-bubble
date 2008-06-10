@@ -1413,7 +1413,7 @@ sub handle_game_events() {
         $event->pump;
         while ($event->poll != 0) {
             if ($event->type == SDL_QUIT) {
-                exit 0;
+                cleanup_and_exit();
             }
             my $keypressed = extended_keypress($event);
             handle_whenever_events($keypressed);
@@ -1427,7 +1427,7 @@ sub handle_game_events() {
                 while (1) {
                     while ($event->poll != 0) {
                         if ($event->type == SDL_QUIT) {
-                            exit 0;
+                            cleanup_and_exit();
                         }
                         my $keypressed = extended_keypress($event);
                         if ($keypressed) {
@@ -1500,7 +1500,7 @@ sub handle_game_events() {
                         $event->pump;
                         while ($event->poll != 0) {
                             if ($event->type == SDL_QUIT) {
-                                exit 0;
+                                cleanup_and_exit();
                             }
                             my $keypressed = extended_keypress($event);
                             if ($keypressed) {
@@ -1590,7 +1590,7 @@ sub handle_game_events() {
             }
 	}
         if ($event->type == SDL_QUIT) {
-            exit 0;
+            cleanup_and_exit();
         }
     }
 
@@ -1841,7 +1841,7 @@ sub update_lost {
         $event->pump;
         while ($event->poll != 0) {
             if ($event->type == SDL_QUIT) {
-                exit 0;
+                cleanup_and_exit();
             }
             if ($event->type == SDL_KEYDOWN && $event->key_sym == SDLK_ESCAPE) {
                 die 'new_game';
@@ -2419,7 +2419,7 @@ sub print_step($) {
     while ($event->poll != 0) {
         if ($event->type == SDL_QUIT
             || $event->type == SDL_KEYDOWN && $event->key_sym == SDLK_ESCAPE) {
-            exit 0;
+            cleanup_and_exit();
         }
     }
     put_image($imgbin{loading_step}, 100 + $init_step*12, 10);
@@ -4108,7 +4108,7 @@ sub smg_choose_game() {
         $event->pump;
         while ($event->poll != 0) {
             if ($event->type == SDL_QUIT) {
-                exit 0;
+                cleanup_and_exit();
             }
             my $k;
             if ($event->type == SDL_KEYDOWN) {
@@ -4817,6 +4817,10 @@ sub maingame() {
     $to_wait > 0 and fb_c_stuff::fbdelay($to_wait);
 }
 
+sub cleanup_and_exit {
+    save_config();
+    exit 0;
+}
 
 #- ----------- menu stuff -------------------------------------------------
 
@@ -5126,13 +5130,13 @@ sub menu {
                 handle_whenever_events($keypressed);
 
                 if ($keypressed eq SDLK_ESCAPE) {
-		    exit 0;
+                    cleanup_and_exit();
 		}
                 $synchro_ticks = $app->ticks;  #- avoid stopping candy
                 $time_counter = 0;  #- reset counter for demos
 	    }
             if ($event->type == SDL_QUIT) {
-                exit 0;
+                cleanup_and_exit();
             }
 	}
 
@@ -5283,7 +5287,7 @@ sub menu {
                 $event->pump;
                 while ($event->poll != 0) {
                     if ($event->type == SDL_QUIT) {
-                        exit 0;
+                        cleanup_and_exit();
                     }
                     if (extended_keypress($event)) {
                         last blacken;
