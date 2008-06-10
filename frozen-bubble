@@ -787,7 +787,7 @@ sub stick_bubble($$$$$) {
 	}
 
 	#- prepare falling bubbles
-	if ($graphics_level > 1) {
+	if ($graphics_level > 1 || $chainreaction) {
 	    my $max_cy_falling = fold_left { $::b->{cy} > $::a ? $::b->{cy} : $::a } 0, @falling;  #- I have a fold_left in my prog! :-)
 	    my ($shift_on_same_line, $line) = (0, $max_cy_falling);
 	    foreach (sort { $b->{cy}*8 + $b->{cx} <=> $a->{cy}*8 + $a->{cx} } @falling) {  #- sort bottom-to-up / right-to-left
