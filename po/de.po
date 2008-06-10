@@ -202,7 +202,7 @@ msgstr "*** Installation überprüfen oder den Anbieter kontaktieren"
 
 #: ../frozen-bubble:3324
 msgid "*** No server found, created server for local network game"
-msgstr "*** Es konnte kein Server gefunden werden, Server für lokales Netzwerk Spiel "
+msgstr "*** Es konnte kein Server gefunden werden, Server für lokales Netzwerkspiel "
 "wurde erstellt"
 
 #: ../frozen-bubble:3340
@@ -219,12 +219,12 @@ msgstr "*** Die Serverliste konnte nicht vom Masterserver abgerufen werden!"
 
 #: ../frozen-bubble:3354
 msgid "*** Verify your network setup or retry later"
-msgstr "*** Netzwerk Konfiguration überprüfen oder später nochmal probieren"
+msgstr "*** Netzwerkkonfiguration überprüfen oder später nochmal probieren"
 
 #: ../frozen-bubble:3393
 #, perl-format
 msgid "Available players: %s (playing: %s) Ping: %sms"
-msgstr "Bereite Spieler: %s (davon spielen: %s) Ping: %sms"
+msgstr "Bereite Spieler: %s (spielend: %s) Ping: %sms"
 
 #: ../frozen-bubble:3441
 msgid "*** No available game server"
@@ -232,7 +232,7 @@ msgstr "*** Kein Spieleserver verfügbar"
 
 #: ../frozen-bubble:3442
 msgid "*** Please retry later or try a local network game (lan game)"
-msgstr "*** Bitte später nochmal probieren oder ein lokales Netzwerk Spiel starten"
+msgstr "*** Bitte später nochmal probieren oder ein lokales Netzwerkspiel starten"
 
 #: ../frozen-bubble:3448
 msgid "*** Please choose a server"
@@ -330,7 +330,7 @@ msgstr "*** Fertig - Es kann jetzt ein Spiel erstellt oder einem beigetretem wer
 msgid ""
 "*** hostip.info doesn't know the geographical location of your IP address"
 msgstr ""
-"*** hostip.info konnten keine geographischen Position zu deiner IP Adresse "
+"*** hostip.info konnte keine geographische Position zu deiner IP Adresse "
 "ermitteln"
 
 #: ../frozen-bubble:3874
@@ -338,12 +338,12 @@ msgid ""
 "*** If you want that your location appears on the map, fix your entry at "
 "http://hostip.info/"
 msgstr ""
-"*** Wenn die geographischen Position auf der Karte angezeigt werden soll, "
+"*** Soll Ihre Position auf der Karte erscheinen, "
 "muss der Eintrag auf http://hostip.info/ berichtigt werden"
 
 #: ../frozen-bubble:3881
 msgid "*** hostip.info didn't reply within 5 seconds, giving up"
-msgstr "*** hostip.info hat nicht innerhalb von 5 Sekundne geantwortet, Abbruch"
+msgstr "*** hostip.info hat nicht innerhalb von 5 Sekunden geantwortet, Abbruch"
 
 #: ../frozen-bubble:3895 ../frozen-bubble:4125 ../frozen-bubble:4137
 #: ../frozen-bubble:4171 ../frozen-bubble:4249 ../frozen-bubble:4369
@@ -468,7 +468,7 @@ msgstr "Kettenreaktion: %s"
 msgid ""
 "*** Can't set a victories limit, as a player is using a too old version of "
 "Frozen-Bubble"
-msgstr "Gewinnpunkte Limit kann nicht gestetzt werden, weil einer der Spieler eine zu alte Frozen-Bubble Version benutzt"
+msgstr "Gewinnpunkte Limit kann nicht gesetzt werden, weil einer der Spieler eine zu alte Frozen-Bubble Version benutzt"
 
 #: ../frozen-bubble:4152 ../frozen-bubble:4365 ../frozen-bubble:4370
 #, perl-format
@@ -507,7 +507,7 @@ msgstr "Kettenreaktion deaktiviert, %s benutzt eine zu alte Version von Frozen-B
 #, perl-format
 msgid ""
 "*** Victories limit reset, %s is using a too old version of Frozen-Bubble"
-msgstr "*** Gewinnpunkte Limit zurückgesetzt, ,%s benutzt eine zu alte Version von Frozen-Bubble"
+msgstr "*** Gewinnpunkte Limit zurückgesetzt, %s benutzt eine zu alte Version von Frozen-Bubble"
 
 #: ../frozen-bubble:4260
 msgid "*** Game creator left the game..."
