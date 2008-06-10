@@ -44,7 +44,8 @@ use vars qw($TARGET_ANIM_SPEED $BUBBLE_SIZE $ROW_SIZE $LAUNCHER_SPEED $BUBBLE_SP
             %sticking_bubble $time %imgbin $TIME_HURRY_WARN $TIME_HURRY_MAX $TIMEOUT_PINGUIN_SLEEP $FREE_FALL_CONSTANT @joysticks $joysticksinfo
             $direct @PLAYERS @ALL_PLAYERS %levels $display_on_app_disabled $total_time $time_1pgame $time_netgame $fullscreen $rcfile %hiscorefiles
             $HISCORES $HISCORES_MPTRAIN $HISCORES_MPTRAIN_CHAINREACTION
-            $lev_number $playermalus $mptrainingdiff $loaded_levelset $direct_levelset $chainreaction %chains %img_mini $frame $sock $gameserver $mynick);
+            $lev_number $playermalus $mptrainingdiff $loaded_levelset $direct_levelset $chainreaction %chains %img_mini $frame $sock $gameserver $mynick
+            $mylatitude $mylongitude);
 
 use Getopt::Long;
 use Data::Dumper;
@@ -1371,7 +1372,7 @@ sub handle_whenever_events {
                 $mixer->playing_music and $mixer->halt_music;
                 $app->delay(10) while $mixer->playing_music;  #- mikmod will segfault if we try to load a music while old one is still fading out
             }
-            $mixer_enabled = undef;
+            $mixer_enabled = 0;
         }
     }
     if ($mixer_enabled && $mixer && $keypressed eq $KEYS->{misc}{toggle_music}) {
@@ -2712,8 +2713,8 @@ sub init_game() {
     print_step('] '); 
 
     if ($mixer eq 'SOUND_DISABLED') {
-	$mixer_enabled = $mixer = undef;
-    } else {
+        $mixer_enabled = 0; $mixer = undef;
+    } elsif (!defined($mixer_enabled) || $mixer_enabled) {
 	$mixer_enabled = init_sound();
     }
 
@@ -3810,7 +3811,6 @@ sub is_only_ascii {
     return 1;
 }
 
-our ($mylatitude, $mylongitude);
 sub smg_choose_game() {
     my @actions = ({ name => t("Chat"), action => 'CHAT', selected => 1 },
                    { name => t("Create new game"), action => 'CREATE' });
@@ -4846,7 +4846,11 @@ sub save_config {
           nextkey:
 	}
     }
-    my $dump = Data::Dumper->Dump([$fullscreen, $graphics_level, $mynick, $KEYS_], [qw(fullscreen graphics_level mynick KEYS)]);
+    my $dump = Data::Dumper->Dump([$fullscreen, $graphics_level,
+    $mynick, $music_disabled, $mixer_enabled, $mylatitude, $mylongitude,
+    $KEYS_],
+    [qw(fullscreen graphics_level mynick music_disabled mixer_enabled
+    mylatitude mylongitude KEYS)]);
     $dump =~ s/'SDLK_(\w+)'/SDLK_$1/g;
     output($rcfile, $dump);
 }
