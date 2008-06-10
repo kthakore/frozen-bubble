@@ -34,7 +34,7 @@ extern int output_type;
 #  define __attribute__(x) /*nothing*/
 #endif
 
-void logging_init();
+void logging_init(int portnum);
 void l_(int wanted_output_type, char* file, long line, const char* func, char* fmt, ...) __attribute__((format(printf,5,6)));
 
 #define l0(wanted_output_type, f)                 l_(wanted_output_type, __FILE__, (long) __LINE__, __func__, f)
