@@ -3850,7 +3850,7 @@ sub smg_choose_game() {
         print_spot($_->[0], $_->[1], 'free') foreach @free_geolocs;
         print_spot($_->[0], $_->[1], 'playing') foreach @playing_geolocs;
         $back_selfspot = undef;
-        if ($mylatitude && $index_selfspot >= 0) {
+        if ($mylatitude && !$private && $index_selfspot >= 0) {
             print_spot($mylatitude, $mylongitude, 'free', $imgbin{netspot_self}[$index_selfspot], \$back_selfspot);
         }
         
@@ -3882,7 +3882,7 @@ sub smg_choose_game() {
         smg_printstatus();
     };
     my $print_selfspot = sub {
-        if ($mylatitude) {
+        if ($mylatitude && !$private) {
             $index_selfspot >= 0 and print_spot($mylatitude, $mylongitude, 'free', $imgbin{netspot_self}[$index_selfspot], \$back_selfspot);
             $index_selfspot++;
             if ($index_selfspot == @{$imgbin{netspot_self}}) {
@@ -3992,8 +3992,8 @@ sub smg_choose_game() {
 
     fb_net::send_and_receive('NICK', $mynick);
 
-    if ($pdata{gametype} eq 'net') {
-        if (!defined($mylatitude) && !$private) {
+    if ($pdata{gametype} eq 'net' && !$private) {
+        if (!defined($mylatitude)) {
             $erase->();
             smg_add_status_msg(t("*** Please wait, retrieving your geographical location from http://hostip.info/..."));
             eval {
