@@ -461,7 +461,6 @@ void connections_manager(void)
                                 if (fd <= 255) {
                                         send_line_log_push(fd, fl_server_full);
                                 }
-                                send_line_log_push(fd, fl_server_full);
                                 l1(OUTPUT_TYPE_INFO, "[%d] Closing connection (server full)", fd);
                                 close(fd);
                                 continue;
