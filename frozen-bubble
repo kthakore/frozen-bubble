@@ -3743,6 +3743,8 @@ sub callback_entry {
                     $entry_position++;
                     $no_echo or play_sound('typewriter');
                 }
+            } else {
+                handle_whenever_events($params->{event}->key_sym);
             }
         }
     }
