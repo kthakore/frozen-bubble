@@ -4030,10 +4030,24 @@ sub smg_choose_game() {
     my $chain_reaction_state = t("disabled");
     my @victories_limits = ({ value => undef,
                               text => t("none (unlimited)") },
+                            { value => 1,
+                              text => i18n_number(1) },
+                            { value => 2,
+                              text => i18n_number(2) },
                             { value => 3,
                               text => i18n_number(3) },
+                            { value => 4,
+                              text => i18n_number(4) },
+                            { value => 5,
+                              text => i18n_number(5) },
                             { value => 6,
                               text => i18n_number(6) },
+                            { value => 7,
+                              text => i18n_number(7) },
+                            { value => 8,
+                              text => i18n_number(8) },
+                            { value => 9,
+                              text => i18n_number(9) },
                             { value => 10,
                               text => i18n_number(10) },
                             { value => 20,
@@ -4063,9 +4077,16 @@ sub smg_choose_game() {
             if ($action eq 'inc') {
                 $victories_limit_index++;
                 $victories_limit_index == @victories_limits and $victories_limit_index = 0;
-            } else {
+            } elsif ($action eq 'dec') {
                 $victories_limit_index--;
                 $victories_limit_index == -1 and $victories_limit_index = @victories_limits - 1;
+            } else {
+                for (my $i = 0; $i < @victories_limits; $i++) {
+                    if ((!$action && !$victories_limits[$i]{value})
+                        || ($action && $victories_limits[$i]{value} && $victories_limits[$i]{value} eq $action)) {
+                        $victories_limit_index = $i;
+                    }
+                }
             }
             $actions[2]{name} = t("Victories limit: %s", $victories_limits[$victories_limit_index]{text});
             $redraw->();
@@ -4399,6 +4420,11 @@ sub smg_choose_game() {
                                                        } });
                     
                     } else {
+                        if ($curaction->()->{action} eq 'SWITCH_VICTORIES_LIMIT') {
+                            my $utf8char = fb_c_stuff::utf8key(evt($event));
+                            $change_victories_limit->($utf8char) if defined $utf8char && $utf8char eq int($utf8char);
+                        }
+
                         handle_whenever_events($k);
                     }
                 }
