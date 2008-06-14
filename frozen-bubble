@@ -4858,11 +4858,11 @@ sub save_config {
           nextkey:
 	}
     }
-    my $dump = Data::Dumper->Dump([$fullscreen, $graphics_level,
-    $mynick, $music_disabled, $mixer_enabled, $mylatitude, $mylongitude,
-    $KEYS_],
-    [qw(fullscreen graphics_level mynick music_disabled mixer_enabled
-    mylatitude mylongitude KEYS)]);
+    #- special hook for $mylatitude as we don't want to save an empty value
+    my $dump = Data::Dumper->Dump([$fullscreen, $graphics_level, $mynick, $music_disabled,
+                                   $mixer_enabled, $mylatitude || undef, $mylongitude, $KEYS_],
+                                  [qw(fullscreen graphics_level mynick music_disabled mixer_enabled
+                                      mylatitude mylongitude KEYS)]);
     $dump =~ s/'SDLK_(\w+)'/SDLK_$1/g;
     output($rcfile, $dump);
 }
