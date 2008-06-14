@@ -149,29 +149,29 @@ GetOptions("fullscreen|fs!" => \$fullscreen,
            "private" => \$private,
            "joysticks-info" => \$joysticksinfo,
            "help" => sub { print "Usage: ", basename($0), " [OPTION]...
- --fullscreen             start in fullscreen mode
- --no-fullscreen          don't start in fullscreen mode
- --no-sound               don't try to start any sound stuff
- --no-music               disable music (only)
- --no-sfx                 disable sound effects (only)
- --playlist <file>        use all files listed in the given file as music files and play them
- --playlist <directory>   use all files inside the given directory as music files and play them
- --slow-machine           enable slow machine mode (disable a few animations)
- --very-slow-machine      enable very slow machine mode (disable all that can be disabled)
- --solo                   directly start solo (1p) game, with random levels if no -l<#n> is given
- --direct                 directly start (2p) game (don't display menu)
- --gameserver <host:port> directly start NET/LAN game connecting to this game server
- --level <#n>             directly start the n-th level (implies -so)
- --levelset<name>         directly start with the specified levelset name
- --no-time-limit          disable time limit for shooting (e.g. kids mode)
- --chain-reaction         enable chain-reaction (if you use NET/LAN game, pay crucial attention that all players do so!)
- --player-malus <#n>      add a malus of n to the left player (can be negative)
+ --fullscreen           start in fullscreen mode
+ --no-fullscreen        don't start in fullscreen mode
+ --no-sound             don't try to start any sound stuff
+ --no-music             disable music (only)
+ --no-sfx               disable sound effects (only)
+ --playlist <file>      use all files listed in the given file as music files and play them
+ --playlist <directory> use all files inside the given directory as music files and play them
+ --slow-machine         enable slow machine mode (disable a few animations)
+ --very-slow-machine    enable very slow machine mode (disable all that can be disabled)
+ --solo                 directly start solo (1p) game, with random levels if no -l<#n> is given
+ --direct               directly start (2p) game (don't display menu)
+ --gameserver <host[:port]> directly start NET/LAN game connecting to this game server (if port is omitted, default port is used)
+ --level <#n>           directly start the n-th level (implies -so)
+ --levelset<name>       directly start with the specified levelset name
+ --no-time-limit        disable time limit for shooting (e.g. kids mode)
+ --chain-reaction       enable chain-reaction (if you use NET/LAN game, pay crucial attention that all players do so!)
+ --player-malus <#n>    add a malus of n to the left player (can be negative)
  --mp-training-difficulty <#n> set the average duration between receiving malus bubbles in 1 player multiplayer training (default 30 (= every 30 seconds on average), the lower the harder)
- --colour-blind           use bubbles for colourblind people
- --joysticks-info         print information about detected joystick(s) on startup
- --no-echo                when sound is enabled, disable echoing each typed character with a typewriter sound
- --my-nick <nick>         for net/lan games, use this nick instead of username (max 10 chars, ASCII alphanumeric plus dash and underscore only)
- --private                when starting a net game, don't use http://hostip.info/ to retrieve your geographical position to send it to other players
+ --colour-blind         use bubbles for colourblind people
+ --joysticks-info       print information about detected joystick(s) on startup
+ --no-echo              when sound is enabled, disable echoing each typed character with a typewriter sound
+ --my-nick <nick>       for net/lan games, use this nick instead of username (max 10 chars, ASCII alphanumeric plus dash and underscore only)
+ --private              when starting a net game, don't use http://hostip.info/ to retrieve your geographical position to send it to other players
 ";
                            exit(0);
            });
@@ -4609,6 +4609,10 @@ sub setup_mp_game() {
         $smg_status_message_offsetpage = 1;
         if ($gameserver) {
             my ($host, $port) = $gameserver =~ /(\S+):(\S+)/;
+            if (!$host) {
+                $host = $gameserver;
+                $port = 1511;
+            }
             fb_net::connect($host, $port);
             if (!fb_net::isconnected()) {
                 smg_add_status_msg(t("*** Cannot connect to specified gameserver, fallbacking to contacting master server"));
