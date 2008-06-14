@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+y#!/usr/bin/perl
 #*****************************************************************************
 #
 #                          Frozen-Bubble
@@ -3054,6 +3054,9 @@ sub new_game() {
     $TIME_APPEARS_NEW_ROOT = 11;
     $TIME_HURRY_WARN = 250;
     $TIME_HURRY_MAX = 375;
+
+    #- reset chat messages from last game, if any
+    $pdata{current_chat_messages}{$_} = undef foreach @ALL_PLAYERS;
 
     my $backgr;
     if (is_mp_game()) {
