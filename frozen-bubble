@@ -4035,12 +4035,12 @@ sub smg_choose_game() {
     my $relist;
     my $can_start = 0;
     my $joined_leader;
-    my $chain_reaction_state = t("disabled");
+    my $chain_reaction_state = t("enabled");
     my @victories_limits = ({ value => undef,
                               text => t("none (unlimited)") },
                             map { { value => $_,
                                     text => i18n_number($_) } } (1..10, 20, 50, 100));
-    my $victories_limit_index = 0;
+    my $victories_limit_index = 5;
     my @history;
     my $history_position;
     $list->('first time');
