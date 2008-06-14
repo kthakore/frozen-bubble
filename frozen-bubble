@@ -4030,32 +4030,8 @@ sub smg_choose_game() {
     my $chain_reaction_state = t("disabled");
     my @victories_limits = ({ value => undef,
                               text => t("none (unlimited)") },
-                            { value => 1,
-                              text => i18n_number(1) },
-                            { value => 2,
-                              text => i18n_number(2) },
-                            { value => 3,
-                              text => i18n_number(3) },
-                            { value => 4,
-                              text => i18n_number(4) },
-                            { value => 5,
-                              text => i18n_number(5) },
-                            { value => 6,
-                              text => i18n_number(6) },
-                            { value => 7,
-                              text => i18n_number(7) },
-                            { value => 8,
-                              text => i18n_number(8) },
-                            { value => 9,
-                              text => i18n_number(9) },
-                            { value => 10,
-                              text => i18n_number(10) },
-                            { value => 20,
-                              text => i18n_number(20) },
-                            { value => 50,
-                              text => i18n_number(50) },
-                            { value => 100,
-                              text => i18n_number(100) });
+                            map { { value => $_,
+                                    text => i18n_number($_) } } (1..10, 20, 50, 100));
     my $victories_limit_index = 0;
     my @history;
     my $history_position;
