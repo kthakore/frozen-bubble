@@ -3992,34 +3992,37 @@ sub smg_choose_game() {
 
     fb_net::send_and_receive('NICK', $mynick);
 
-    if ($pdata{gametype} eq 'net' && !$private) {
-        if (!defined($mylatitude)) {
-            $erase->();
-            smg_add_status_msg(t("*** Please wait, retrieving your geographical location from http://hostip.info/..."));
-            eval {
-                local $SIG{ALRM} = sub { die "alarm\n" };
-                alarm 5;
-                my $data = fb_net::http_download('http://api.hostip.info/get_html.php?position=true');
-                ($mylatitude) = $data =~ /Latitude: (-?\S{1,5})/;
-                ($mylongitude) = $data =~ /Longitude: (-?\S{1,5})/;
-                if (defined($mylatitude)) {
-                    smg_add_status_msg(t("*** Done - you can now create or join a game"));
-                } else {
-                    smg_add_status_msg(t("*** hostip.info doesn't know the geographical location of your IP address"));
-                    smg_add_status_msg(t("*** If you want that your location appears on the map, fix your entry at http://hostip.info/"));
-                    $mylatitude = '';
-                }
-                alarm 0;
-            };
-            if ($@) {
-                if ($@ =~ /^alarm/) {
-                    smg_add_status_msg(t("*** hostip.info didn't reply within 5 seconds, giving up"));
-                }
+    my $geolocate = sub {
+        smg_add_status_msg(t("*** Please wait, retrieving your geographical location from http://hostip.info/..."));
+        eval {
+            local $SIG{ALRM} = sub { die "alarm\n" };
+            alarm 5;
+            my $data = fb_net::http_download('http://api.hostip.info/get_html.php?position=true');
+            ($mylatitude) = $data =~ /Latitude: (-?\S{1,5})/;
+            ($mylongitude) = $data =~ /Longitude: (-?\S{1,5})/;
+            if (defined($mylatitude)) {
+                smg_add_status_msg(t("*** Done - you can now create or join a game"));
+            } else {
+                smg_add_status_msg(t("*** hostip.info doesn't know the geographical location of your IP address"));
+                smg_add_status_msg(t("*** If you want that your location appears on the map, fix your entry at http://hostip.info/"));
                 $mylatitude = '';
             }
+            alarm 0;
+        };
+        if ($@) {
+            if ($@ =~ /^alarm/) {
+                smg_add_status_msg(t("*** hostip.info didn't reply within 5 seconds, giving up"));
+            }
+            $mylatitude = '';
         }
         if ($mylatitude) {
             fb_net::send_and_receive('GEOLOC', "$mylatitude:$mylongitude");
+        }
+    };
+
+    if ($pdata{gametype} eq 'net' && !$private) {
+        if (!defined($mylatitude)) {
+            $geolocate->();
         }
     }
     
@@ -4212,6 +4215,9 @@ sub smg_choose_game() {
                             $fullscreen = !$fullscreen;
                             $app->fullscreen;
                             $text = undef;
+                        } elsif ($text =~ m|^/geolocate|) {
+                            $geolocate->();
+                            $text = undef;
                         } elsif ($text =~ m|^/kick (.*)| && $can_start) {
                             my $kicked = $1;
                             if ($kicked eq $mynick) {
@@ -4231,7 +4237,7 @@ sub smg_choose_game() {
                         } elsif ($text =~ m|^/help|) {
                             smg_add_status_msg(t("*** Available commands: %s",
                                                  join(', ', t("%s <action>", '/me'), if_($can_start, t("%s <nick>", '/kick')), if_(!$ingame, '/list'),
-                                                      if_(!$ingame, t("%s <new_nick>", '/nick')), '/server', '/fs')));
+                                                      if_(!$ingame, t("%s <new_nick>", '/nick')), '/server', '/fs', '/geolocate')));
                             $text = undef;
                         } elsif ($text =~ m|^/|) {
                             smg_add_status_msg(t("*** Unknown command. Try %s for help.", '/help'));

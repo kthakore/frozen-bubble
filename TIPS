@@ -19,6 +19,7 @@
   - /server: query the name of the server you're connected to
   - /fs: toggle fullscreen
   - /list: view list of listening players
+  - /geolocate: geolocate yourself again
 
 - in the in-game chat, the following commands are available:
 
