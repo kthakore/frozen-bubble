@@ -63,6 +63,7 @@ use SDL::Mixer;
 
 use fb_stuff;
 use fb_net;
+use fb_net_discover;
 use fbsyms;
 use FBLE;
 
@@ -116,6 +117,7 @@ print '  http://www.frozen-bubble.org/
     Soundtrack: Matthias Le Bidan
     Design & Programming: Guillaume Cottenceau
     Level Editor: Kim and David Joham
+    Additional network programming: Mark Glines
 
   Originally sponsored by Mandriva <http://www.mandriva.com/>
 
@@ -3508,6 +3510,7 @@ sub smg_choose_server(@) {
     }
 
     my @sorted_servers;
+    my $offset = 0;
     my $redraw = sub {
         my $drect = SDL::Rect->new(-width => 640, -height => $smg_statusy-$smg_lineheight*5, -x => 0, '-y' => 0);
         $imgbin{back_netgame}->blit($drect, $app, $drect);
@@ -3519,13 +3522,19 @@ sub smg_choose_server(@) {
             $parts{$_}{xpos} = 640 - $parts{$_}{xpos} - $parts{$_}{width} foreach keys %parts;
         }
         my $y = $smg_starty;
-        foreach my $server (@sorted_servers) {
+        my @show_servers = @sorted_servers;
+        my $ofs = @show_servers - $max_lines;
+        $ofs = 0 if $ofs < 0;
+        $offset = $ofs if $offset > $ofs;
+        splice(@show_servers, 0, $offset) if $offset;
+        splice(@show_servers, 18) if $ofs-$offset;
+        foreach my $server (@show_servers) {
             if ($server->{selected}) {
-                put_image($imgbin{highlight_server}, 6, $y-1);
+                put_image($imgbin{highlight_server}, 6, $y - 1);
             }
             exists $imgbin{flag}{$server->{language}} and put_image($imgbin{flag}{$server->{language}}, $parts{flag}{xpos}, $y);
             print_('netdialogs', $app, $parts{name}{xpos}, $y, $server->{name}, $parts{name}{width}, $is_rtl ? 'right' : 'left');  #- ASCII
-            my $details = t("Available players: %s (playing: %s) Ping: %sms", i18n_number($server->{players}), i18n_number($server->{playing}), i18n_number($server->{ping}));
+            my $details = t("Available players: %s (playing: %s) Ping: %sms", i18n_number($server->{free}), i18n_number($server->{playing}), i18n_number($server->{ping}));
             print_('netdialogs', $app, $parts{details}{xpos}, $y, $details, $parts{details}{width});
             my $pingimg = $server->{ping} < 80 ? "ping_low" : $server->{ping} < 200 ? "ping_mid" : "ping_high";
             put_image($imgbin{$pingimg}, $is_rtl ? $parts{details}{xpos} + $parts{details}{width} - width('netdialogs', $details) - 17
@@ -3536,40 +3545,86 @@ sub smg_choose_server(@) {
         $app->flip();
     };
 
-    my @scanned_servers;
+    my @potential_servers;
     foreach my $server (@servers) {
         if (!$server->{disabled}) {
-            my $ret = fb_net::connect($server->{host}, $server->{port});
-            if (!$ret->{ping}) {
-                $server->{disabled} = $ret->{failure};
-            } else {
-                ($server->{players}, undef, undef, $server->{playing}) = fb_net::list();
-            }
-            put_in_hash($server, $ret);
-            fb_net::disconnect();
-            push @scanned_servers, $server;
-            my ($down, $available) = partition { $_->{disabled} } @scanned_servers;
-            my $weightfunc = sub { my $base = $_[0]->{players} - $_[0]->{ping}/50; $_[0]->{playing} < 100 ? $base + $_[0]->{playing}/3 : $base - $_[0]->{playing}/3; };
-            @sorted_servers = sort { $weightfunc->($b) <=> $weightfunc->($a) } @$available;
-            if (@sorted_servers > $max_lines) {
-                $#sorted_servers = $max_lines - 1;
-                last;
-            } else {
+            push @potential_servers, $server;
+        }
+    }
+    my $discover = fb_net_discover->new(@potential_servers);
+    my $looped = 0;
+    my $init = 0;
+    while (1) {
+        if ($discover->pending) {
+            $discover->work(0.1); #- do networking stuff for 100ms
+            $looped++;
+            my @found_servers = $discover->found;
+            my $weightfunc = sub { my $base = $_[0]->{free} - $_[0]->{ping}/50; $_[0]->{playing} < 100 ? $base + $_[0]->{playing}/3 : $base - $_[0]->{playing}/3; };
+            @sorted_servers = sort { $weightfunc->($b) <=> $weightfunc->($a) } @found_servers;
+            $redraw->();
+            #- wait a bit or user confusion will be large (jumping cursor)
+            if ($looped >= 10 && @servers && !$init) {
+                $init = 1;
+                $sorted_servers[0]->{selected} = 1;
+                smg_add_status_msg(t("*** Please choose a server"));
                 $redraw->();
             }
+        } elsif (!$init) {
+            $init = 1;
+            $sorted_servers[0]->{selected} = 1;
+            smg_add_status_msg(t("*** Please choose a server"));
+            $redraw->();
         }
         $event->pump;
         while ($event->poll != 0) {
             if ($event->type == SDL_QUIT) {
-                exit 0;
-            }
-            if ($event->type == SDL_KEYDOWN && $event->key_sym == SDLK_ESCAPE) {
-                return 0;
+                cleanup_and_exit();
+            } elsif ($init) {
+                my $k = extended_keypress($event);
+                if ($k) {
+                    if ($k eq SDLK_ESCAPE()) {
+                        return 0;
+
+                    } elsif ($k eq SDLK_DOWN()) {
+                        if (@sorted_servers) {
+                            each_index {
+                                if ($sorted_servers[$::i]->{selected}
+                                    && $::i < @sorted_servers - 1
+                                    && !$sorted_servers[$::i+1]->{disabled}) {
+                                    $sorted_servers[$::i]->{selected} = 0;
+                                    $sorted_servers[$::i+1]->{selected} = 1;
+                                    $offset++ if $::i + 1 >= $offset + $max_lines;
+                                    play_sound('menu_change');
+                                    goto done;
+                                }
+                            } @sorted_servers;
+                          done:
+                        }
+
+                    } elsif ($k eq SDLK_UP()) {
+                        if (@sorted_servers && !$sorted_servers[0]->{selected}) {
+                            each_index {
+                                if ($sorted_servers[$::i]->{selected}) {
+                                    $sorted_servers[$::i]->{selected} = 0;
+                                    $sorted_servers[$::i-1]->{selected} = 1;
+                                    $offset = $::i - 1 if $::i - 1 < $offset;
+                                    play_sound('menu_change');
+                                }
+                            } @sorted_servers;
+                        }
+
+                    } elsif ($k eq SDLK_RETURN() || $k eq SDLK_KP_ENTER()) {
+                        play_sound('menu_selected');
+                        goto ok_smg_choose_server;
+
+                    } else {
+                        handle_whenever_events($k);
+                    }
+                }
+                $redraw->();
             }
         }
-    }
-    foreach (difference2(\@servers, \@sorted_servers)) {
-        $_->{disabled} = 1;  #- disable slow servers if there are a lot of them
+        fb_c_stuff::fbdelay($TARGET_ANIM_SPEED) if $init;
     }
 
     if (@servers == 0 || every { $_->{disabled} } @servers) {
@@ -3578,60 +3633,6 @@ sub smg_choose_server(@) {
         grab_key();
         return 0;
     }
-    $sorted_servers[0]->{selected} = 1;
-
-    smg_add_status_msg(t("*** Please choose a server"));
-    $redraw->();
-
-    while (1) {
-        $event->pump;
-        while ($event->poll != 0) {
-            if ($event->type == SDL_QUIT) {
-                exit 0;
-            }
-            my $k = extended_keypress($event);
-            if ($k) {
-                if ($k eq SDLK_ESCAPE()) {
-                    return 0;
-
-                } elsif ($k eq SDLK_DOWN()) {
-                    if (@sorted_servers) {
-                        each_index {
-                            if ($sorted_servers[$::i]->{selected}
-                                && $::i < @sorted_servers - 1
-                                && !$sorted_servers[$::i+1]->{disabled}) {
-                                $sorted_servers[$::i]->{selected} = 0;
-                                $sorted_servers[$::i+1]->{selected} = 1;
-                                play_sound('menu_change');
-                                goto done;
-                            }
-                        } @sorted_servers;
-                      done:
-                    }
-
-                } elsif ($k eq SDLK_UP()) {
-                    if (@sorted_servers && !$sorted_servers[0]->{selected}) {
-                        each_index {
-                            if ($sorted_servers[$::i]->{selected}) {
-                                $sorted_servers[$::i]->{selected} = 0;
-                                $sorted_servers[$::i-1]->{selected} = 1;
-                                play_sound('menu_change');
-                            }
-                        } @sorted_servers;
-                    }
-
-                } elsif ($k eq SDLK_RETURN() || $k eq SDLK_KP_ENTER()) {
-                    play_sound('menu_selected');
-                    goto ok_smg_choose_server;
-
-                } else {
-                    handle_whenever_events($k);
-                }
-            }
-            $redraw->();
-        }
-        fb_c_stuff::fbdelay($TARGET_ANIM_SPEED);
-    }
 
   ok_smg_choose_server:
     foreach my $server (@servers) {
@@ -3639,6 +3640,7 @@ sub smg_choose_server(@) {
             fb_net::connect($server);
             if (!fb_net::isconnected()) {
                 smg_add_status_msg(t("*** Impossible to connect to specified server, going back to server list"));
+                $server->{selected} = 0;
                 return smg_choose_server(@servers);
             }
             smg_add_status_msg(t("*** Connected to server '%s'", $server->{name}));
