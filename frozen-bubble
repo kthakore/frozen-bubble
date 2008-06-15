@@ -904,6 +904,31 @@ sub mp_train_print_time {
     print_('ingame', $background, $mp_train_xpos, $mp_train_ypos, t("%s'%s\"", i18n_number($m), i18n_number($s)), $imgbin{void_mp_training}->width, 'center');
 }
 
+sub handle_progress($) {
+    my ($p) = @_;
+    if (defined($pdata{$p}{newrootlast})) {
+        if ($pdata{$p}{newroot} != $pdata{$p}{newrootlast}) {
+            my $height = $imgbin{progress_red}->height + 1;
+            my $xpos = $POS{$p}{progress}{x};
+            my $ypos = $POS{$p}{progress}{y};
+            put_image_to_background($imgbin{progress_green}, $xpos, $ypos + $pdata{$p}{newrootlast}*$height);
+            put_image_to_background($imgbin{progress_red}, $xpos, $ypos + $pdata{$p}{newroot}*$height);
+            $pdata{$p}{newrootlast} = $pdata{$p}{newroot};
+        }
+
+    } else {
+        my $height = $imgbin{progress_red}->height + 1;
+        my $xpos = $POS{$p}{progress}{x};
+        my $ypos = $POS{$p}{progress}{y};
+        $pdata{$p}{newrootlast} = 0;
+        push @update_rects, SDL::Rect->new(-width => $imgbin{progress_red}->width, -height => $height*(1 + $TIME_APPEARS_NEW_ROOT),
+                                           -x => $xpos, '-y' => $ypos);
+        for (my $i = 0; $i <= $TIME_APPEARS_NEW_ROOT; $i++) {
+            put_image_to_background($imgbin{$i ? "progress_green" : "progress_red"}, $xpos, $ypos + $i*$height);
+        }
+    }
+}
+
 sub handle_graphics($) {
     my ($fun) = @_;
 
@@ -966,6 +991,8 @@ sub handle_graphics($) {
                        $POS{$player}{left_limit}+$POS{$player}{pinguin}{x}, $POS{$player}{pinguin}{'y'});
             }
         }
+
+        handle_progress($::p);
 
         #- chat message in mp
         if (is_mp_game() && $pdata{$::p}{chat_msg_delay}) {
@@ -2579,6 +2606,8 @@ sub init_game() {
     $imgbin{back_paused} = add_image('back_paused.png');
     push @{$imgbin{paused}}, add_image("pause_00$_.png") foreach '01'..'35';
     $imgbin{lose} = add_image('lose_panel.png');
+    $imgbin{progress_red} = add_image('dot_red.png');
+    $imgbin{progress_green} = add_image('dot_green.png');
     $imgbin{win_panel_1player} = add_image('win_panel_1player.png');
     $imgbin{win_panel_p1_net} = add_image('win_panel_p1_net.png');
     $imgbin{compressor_main} = add_image('compressor_main.png');
@@ -3128,6 +3157,11 @@ sub new_game() {
         $pdata{origticks} = $app->ticks + 999;
         mp_train_print_time();
     }
+
+    iter_players {
+        delete $pdata{$::p}{newrootlast};
+        handle_progress($::p);
+    };
 
     is_1p_game() and print_compressor();
 
