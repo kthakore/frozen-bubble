@@ -2,7 +2,7 @@
 #
 #                          Frozen-Bubble
 #
-# Copyright (c) 2000 - 2006 The Frozen-Bubble Team
+# Copyright (c) 2000 - 2008 The Frozen-Bubble Team
 #
 # Originally sponsored by Mandriva <http://www.mandriva.com/>
 #
