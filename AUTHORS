@@ -1,4 +1,4 @@
-Copyright (c) 2000-2006 The Frozen-Bubble Team.
+Copyright (c) 2000-2008 The Frozen-Bubble Team.
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -17,6 +17,12 @@ Soundtrack:
 
 Level Editor:
 	Kim and David Joham <[k|d]joham yahoo.com>
+
+Additional network programming:
+        Mark Glines <mark glines.org>
+
+Bugfixes and improvements:
+        Dirk Stoecker <fb dstoecker.de>
 
 Translations:
         afrikaans: Buchan Milne <bgmilne gmail.com>
