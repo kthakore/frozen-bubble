@@ -278,7 +278,11 @@ sub server_sm {
         # read some data.
         my $newdata = '';
         my $sock = $$conn{sock};
-        $sock->recv($newdata, 1024, 0);
+        if (!defined($sock->recv($newdata, 1024, 0))) {
+            # an error occurred, give up
+            $self->give_up_on($connid, $!);
+            return;
+        }
         $$conn{rxdata} .= $newdata;
     }
 
