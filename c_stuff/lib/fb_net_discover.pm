@@ -37,6 +37,7 @@ my $proto_hdr = "FB/" . $fb_net::proto_major . "." .$fb_net::proto_minor;
 # configuration parameters
 my $number_of_pings          = 2;   # ping each server this many times.
 my $time_between_connections = 0.1; # 100ms, 10 connections per second
+my $connection_timeout = 2;
 
 # note: the ping-averaging code below assumes $number_of_pings >= 2.
 
@@ -212,9 +213,16 @@ sub work {
         my @dead = $select->has_exception(0);
         foreach my $sock (@dead) {
             my $key = $$self{revmapping}{"$sock"};
-            $self->give_up_on($key);
+            $self->give_up_on($key, "Select exception");
         }
     } while(tv_interval($starttime) < $timeout);
+    # rip those which have connection timeout
+    foreach my $pending (keys %{$$self{pending}}) {
+        if (tv_interval($$self{pending}{$pending}{begin_time}) >= $connection_timeout
+            && !$$self{pending}{$pending}{name}) {
+            $self->give_up_on($pending, "Connection timeout (${connection_timeout}s)");
+        }
+    }
     return $self->pending();
 }
 
@@ -252,9 +260,9 @@ sub try_connect {
     if(defined($sock)) {
         $$ref{sock} = $sock;
         $$self{revmapping}{"$sock"} = $key;
-        $$self{begin_time} = [gettimeofday];
+        $$ref{begin_time} = $$self{begin_time} = [gettimeofday];
     } else {
-        $self->give_up_on($key);
+        $self->give_up_on($key, "Could not create socket");
     }
 }
 
@@ -296,7 +304,7 @@ sub server_sm {
             $str = substr($str, length($proto_hdr) + 1);
         } else {
             # protocol mismatch, give up.
-            $self->give_up_on($connid);
+            $self->give_up_on($connid, "Frozen-Bubble protocol mismatch");
         }
 
         if ($str =~ /^PUSH: SERVER_READY (.*) (.*)/) {
@@ -344,7 +352,7 @@ sub server_sm {
     }
 }
 
-=head2 give_up_on(connection_number)
+=head2 give_up_on(connection_number, reason)
 
 Called if B<select> reports a socket as B<has_exception>.  Also called if the
 server has a bogus version, times out, or we can't parse the IP address or
@@ -354,9 +362,9 @@ message on stderr.
 =cut
 
 sub give_up_on {
-    my ($self, $connid) = @_;
-    my $s = $$self{pending}{$connid}{host}.".".$$self{pending}{$connid}{port};
-    print(STDERR "server $s had a connection problem.\n");
+    my ($self, $connid, $reason) = @_;
+    print STDERR "Problem with server $$self{pending}{$connid}{host}:$$self{pending}{$connid}{port}: $reason.\n";
+    $$self{pending}{$connid}{sock}->shutdown(2);
     delete($$self{pending}{$connid});
 }
 
