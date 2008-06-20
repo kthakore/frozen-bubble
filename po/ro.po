@@ -376,7 +376,7 @@ msgstr "*** Aţi fost dat afară din joc ..."
 
 #: ../frozen-bubble:4133
 msgid "*** You were disconnected because of too long inactivity"
-msgstr "*** "Aţi fost deconectat din cauza inactivităţii prelungite"
+msgstr "*** Aţi fost deconectat din cauza inactivităţii prelungite"
 
 #: ../frozen-bubble:4178
 msgid "*** Lost connection to server, abandoning - press any key"
