@@ -53,6 +53,7 @@ use Locale::gettext;
 use POSIX;
 use Math::Trig;
 use IO::File;
+use Time::HiRes qw(gettimeofday tv_interval);
 
 use SDL;
 use SDL::App;
@@ -1047,21 +1048,21 @@ sub handle_graphics($) {
 #- extract it from "handle_graphics" to optimize a bit animations
 sub update_malus($$) {
     my ($fun, $p) = @_;
-    my $malus = $pdata{$p}{malus};
+    my $malus_nb = @{$pdata{$p}{malus}};
     my $y_shift = 0;
-    while ($malus > 0) {
+    while ($malus_nb > 0) {
         my $print = sub($) {
             my ($type) = @_;
             my $type_real = translate_mini_image($type);
             $fun->($type, $POS{$p}{malus}{x} - $type_real->width/2, $POS{$p}{malus}{'y'} - $y_shift - $type_real->height);
             $y_shift += $type_real->height - 1;
         };
-        if ($malus >= 7) {
+        if ($malus_nb >= 7) {
             $print->($malus_gfx{tomate});
-            $malus -= 7;
+            $malus_nb -= 7;
         } else {
             $print->($malus_gfx{banane});
-            $malus--;
+            $malus_nb--;
         }
     }
 }
@@ -1076,11 +1077,12 @@ sub malus_change($$) {
         return;
     }
     if ($numb > 0) {
+        #- malus are adding up
         if (!is_mp_game()) {
             iter_players_ {
                 if ($::p_ ne $player) {
                     update_malus(\&remove_image_from_background, $::p_);
-                    $pdata{$::p_}{malus} += $numb;
+                    push @{$pdata{$::p_}{malus}}, ([gettimeofday]) x $numb;
                     update_malus(\&put_image_to_background, $::p_);
                 }
             };
@@ -1095,7 +1097,7 @@ sub malus_change($$) {
                             if ($::p_ ne $player && member($::p_, @living)) {
                                 is_mp_game() and fb_net::gsend("g$pdata{$::p_}{nick}:$numb");
                                 update_malus(\&remove_image_from_background, $::p_);
-                                $pdata{$::p_}{malus} += $numb;
+                                push @{$pdata{$::p_}{malus}}, ([gettimeofday]) x $numb;
                                 update_malus(\&put_image_to_background, $::p_);
                             }
                         };
@@ -1106,7 +1108,7 @@ sub malus_change($$) {
                     iter_players_ {  #- get mini graphics
                         if ($::p_ eq $p) {
                             update_malus(\&remove_image_from_background, $::p_);
-                            $pdata{$::p_}{malus} += $numb;
+                            push @{$pdata{$::p_}{malus}}, ([gettimeofday]) x $numb;
                             update_malus(\&put_image_to_background, $::p_);
                         }
                     };
@@ -1114,8 +1116,9 @@ sub malus_change($$) {
             }
         }
     } else {
+        #- malus are decreasing
         update_malus(\&remove_image_from_background, $player);
-        $pdata{$player}{malus} += $numb;
+        shift @{$pdata{$player}{malus}} while $numb++;
         update_malus(\&put_image_to_background, $player);
     }
 }
@@ -1307,7 +1310,7 @@ sub handle_mp_messages {
             iter_players {
                 if ($pdata{$::p}{nick} eq $destplayer) {
                     update_malus(\&remove_image_from_background, $::p);
-                    $pdata{$::p}{malus} += $numb;
+                    push @{$pdata{$::p}{malus}}, ([gettimeofday]) x $numb;
                     update_malus(\&put_image_to_background, $::p);
                 }
             };
@@ -1431,9 +1434,9 @@ sub handle_whenever_events {
 
 sub handle_game_events() {
 
-    if ($levels{current} eq 'mp_train' && @{$malus_bubble{p1}} == 0 && $pdata{p1}{malus} == 0) {
+    if ($levels{current} eq 'mp_train' && @{$malus_bubble{p1}} == 0 && @{$pdata{p1}{malus}} == 0) {
         if (int(rand($mptrainingdiff*(1000/$TARGET_ANIM_SPEED))) == 0) {
-            $pdata{p1}{malus} = 1 + int(rand(6));
+            push @{$pdata{p1}{malus}}, ([gettimeofday]) x (1 + int(rand(6)));
         }
     }
 
@@ -2052,8 +2055,9 @@ sub update_game() {
                                     
                                     #- malus generation
                                     if (!any { $_->{chaindestx} } @{$falling_bubble{$::p}}) {
-                                        $pdata{$::p}{malus} > 0 and play_sound('malus');
-                                        while ($pdata{$::p}{malus} > 0 && @{$malus_bubble{$::p}} < 7) {
+                                        my $malusfreezetime = 0.4;
+                                        @{$pdata{$::p}{malus}} > 0 && tv_interval($pdata{$::p}{malus}[0]) > $malusfreezetime and play_sound('malus');
+                                        while (@{$pdata{$::p}{malus}} > 0 && tv_interval($pdata{$::p}{malus}[0]) > $malusfreezetime && @{$malus_bubble{$::p}} < 7) {
                                             my $num = int(rand(@bubbles_images));
                                             my $b = create_bubble_given_img_num($num);
                                             $b->{num} = $num;
@@ -3138,8 +3142,9 @@ sub new_game() {
 	%{$chains{$::p}{chained_bubbles}} = ();
 	$launched_bubble{$::p} = undef;
 	$sticking_bubble{$::p} = undef;
-	$pdata{$::p}{$_} = 0 foreach qw(newroot newroot_prelight oddswap malus hurry newrootlevel);
-	$pdata{$::p}{state} = 'ingame';
+	$pdata{$::p}{$_} = 0 foreach qw(newroot newroot_prelight oddswap hurry newrootlevel);
+	@{$pdata{$::p}{malus}} = ();
+        $pdata{$::p}{state} = 'ingame';
 	$pdata{$::p}{ping_right}{img} = 0;
 	$pdata{$::p}{ping_right}{state} = 'normal';
 	$apprects{$::p} = SDL::Rect->new('-x' => $POS{$::p}{left_limit}, '-y' => $POS{$::p}{top_limit},
