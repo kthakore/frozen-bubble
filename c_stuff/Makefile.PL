@@ -37,7 +37,7 @@ ccompile('#include <SDL.h>
 	 chomp_(`sdl-config --cflags`),
 	 chomp_(`sdl-config --libs`) . ' -lSDL_mixer')
   or
-  die_ 'SDL_mixer is needed (and, version >= 1.2.2)';
+  die_ 'SDL_mixer development environment seems to be missing (failed to compile and link a simple program against libSDL_mixer)';
 
 
 ccompile('#include <SDL.h>
