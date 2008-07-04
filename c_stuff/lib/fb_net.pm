@@ -203,7 +203,7 @@ sub send_and_receive($;$) {
             $to_buffer .= $msg;
         }
     }
-    $buffered_line = $to_buffer;
+    $buffered_line .= $to_buffer;
     return $answer;
 }
 
