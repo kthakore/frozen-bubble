@@ -22,7 +22,13 @@ The bzip2 and bzcat binaries are used to compress game records if
 present, but FB can live without them.
 
 
+===============================================================================
+
                 Installation instructions
+             to perform a system-wide install
+
+E.g. if you want to manually install on your system, or perform
+packagement of Frozen-Bubble.
 
 
 [*] First, build Frozen-Bubble with GNU make; no arguments are
@@ -87,3 +93,33 @@ this should not create problems.
 Example:
 
 $ make install DESTDIR=/tmp/fb-installroot PREFIX=/usr
+
+
+===============================================================================
+
+                    Installation instructions
+             to install into a non standard directory
+
+E.g. if you want to install in your homedir, /tmp, or if you want
+to perform a parallel install of a more recent/development
+version of Frozen-Bubble.
+
+
+You need to specify the non-standard directory in the PREFIX
+parameter; to make execution easier, you should also specify the
+library directory where Perl modules will be installed, with
+INSTALLSITELIB.
+
+Example:
+
+$ make PREFIX=/tmp/frozen-bubble INSTALLSITELIB=/tmp/frozen-bubble/lib
+
+In the installation step, use the same PREFIX again:
+
+$ make install PREFIX=/tmp/frozen-bubble
+
+That's it; but then, when executing Frozen-Bubble, you have to
+tell Perl where to find its modules, and where to find the *.mo
+translation files:
+
+$ PERL5LIB=/tmp/frozen-bubble/lib GETTEXT_DIRNAME=/tmp/frozen-bubble/share/locale /tmp/frozen-bubble/bin/frozen-bubble

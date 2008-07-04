@@ -105,6 +105,7 @@ eval(cat_($hiscorefiles{levels} = "$ENV{HOME}/.fbhighscores"));
 eval(cat_($hiscorefiles{mptrain} = "$ENV{HOME}/.fbhighscores-mptrain"));
 
 textdomain("frozen-bubble");
+$ENV{GETTEXT_DIRNAME} and bindtextdomain("frozen-bubble", $ENV{GETTEXT_DIRNAME});
 bind_textdomain_codeset("frozen-bubble", "UTF-8");  #- we're going to use SDL_Pango which uses UTF-8 input
 our $is_rtl = $ENV{LANGUAGE} =~ /^fa/;
 

@@ -1,13 +1,57 @@
 include ../settings.mk
 
-.PHONY: clean
+.PHONY: clean install
 
-fb_c_stuff: %: %.xs
-	test -e Makefile_c || perl Makefile.PL INSTALLDIRS=$(INSTALLDIRS)
+all: fb_c_stuff
+
+# there has GOT to be a better way
+ifdef PREFIX
+    PMO_PREFIX=PREFIX=$(PREFIX)
+else
+   PMO_PREFIX=
+endif
+ifdef INSTALLPRIVLIB
+    PMO_INSTALLPRIVLIB=INSTALLPRIVLIB=$(INSTALLPRIVLIB)
+else
+   PMO_INSTALLPRIVLIB=
+endif
+ifdef INSTALLSCRIPT
+    PMO_INSTALLSCRIPT=INSTALLSCRIPT=$(INSTALLSCRIPT)
+else
+   PMO_INSTALLSCRIPT=
+endif
+ifdef INSTALLSITELIB
+    PMO_INSTALLSITELIB=INSTALLSITELIB=$(INSTALLSITELIB)
+else
+   PMO_INSTALLSITELIB=
+endif
+ifdef INSTALLBIN
+    PMO_INSTALLBIN=INSTALLBIN=$(INSTALLBIN)
+else
+   PMO_INSTALLBIN=
+endif
+ifdef INSTALLMAN1DIR
+    PMO_INSTALLMAN1DIR=INSTALLMAN1DIR=$(INSTALLMAN1DIR)
+else
+   PMO_INSTALLMAN1DIR=
+endif
+ifdef INSTALLMAN3DIR
+    PMO_INSTALLMAN3DIR=INSTALLMAN3DIR=$(INSTALLMAN3DIR)
+else
+   PMO_INSTALLMAN3DIR=
+endif
+
+PERL_MAKE_OPTS = $(PMO_PREFIX) $(PMO_INSTALLPRIVLIB) $(PMO_INSTALLSCRIPT) \
+    $(PMO_INSTALLSITELIB) $(PMO_INSTALLBIN) $(PMO_INSTALLMAN1DIR) \
+    $(PMO_INSTALLMAN3DIR)
+
+Makefile_c: Makefile.PL
+	perl Makefile.PL $(PERL_MAKE_OPTS)
+
+fb_c_stuff: %: %.xs Makefile_c
 	$(MAKE) -f Makefile_c
 
 install:
-	test -e Makefile_c || perl Makefile.PL INSTALLDIRS=$(INSTALLDIRS)
 	$(MAKE) -f Makefile_c install
 
 clean:
