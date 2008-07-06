@@ -15,16 +15,18 @@
 
   - /me <action>: sends an action message instead of sending a
                   regular message 
-  - /nick <new_nicl>: change your nick
+  - /nick <new_nick>: change your nick
   - /server: query the name of the server you're connected to
   - /fs: toggle fullscreen
   - /list: view list of listening players
   - /geolocate: geolocate yourself again
+  - /autokick <nick> [<text>]: add/remove that nick to autokick
+    list
 
 - in the in-game chat, the following commands are available:
 
-  - /kick <nick>: kick a joiner from your game (if you're
-                  creator) 
+  - /kick <nick> [<text>]: kick a joiner from your game (if you're
+    creator), optionally with an explanatory text
 
 
   During a game, the following default key shortcuts are

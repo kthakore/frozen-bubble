@@ -45,7 +45,7 @@ use vars qw($TARGET_ANIM_SPEED $BUBBLE_SIZE $ROW_SIZE $LAUNCHER_SPEED $BUBBLE_SP
             $direct @PLAYERS @ALL_PLAYERS %levels $display_on_app_disabled $total_time $time_1pgame $time_netgame $fullscreen $rcfile %hiscorefiles
             $HISCORES $HISCORES_MPTRAIN $HISCORES_MPTRAIN_CHAINREACTION
             $lev_number $playermalus $mptrainingdiff $loaded_levelset $direct_levelset $chainreaction %chains %img_mini $frame $sock $gameserver $mynick
-            $mylatitude $mylongitude);
+            $mylatitude $mylongitude %autokick);
 
 use Getopt::Long;
 use Data::Dumper;
@@ -4138,6 +4138,16 @@ sub smg_choose_game() {
         }
     };
 
+    my $kick = sub {
+        my ($kicked) = @_;
+        my $answer = smg_verify_command('KICK', $kicked);
+        if ($answer eq 'NO_SUCH_PLAYER') {
+            smg_add_status_msg(t("*** Can't kick %s: no such player in game", $kicked));
+        } elsif ($answer) {
+            smg_add_status_msg(t("*** Can't kick %s: '%s'", $kicked, $answer));
+        }
+    };
+
     while (1) {
         $relist++;
         $relist % (5*(1000/$TARGET_ANIM_SPEED)) == 0 and $list->();
@@ -4272,18 +4282,44 @@ sub smg_choose_game() {
                                 $rand == 1 and smg_add_status_msg(t("*** You like when it hurts, don't you?"));
                                 $rand == 2 and smg_add_status_msg(t("*** Your butt already hurts enough! Stop that!"));
                             } else {
-                                my $answer = smg_verify_command('KICK', $kicked);
-                                if ($answer eq 'NO_SUCH_PLAYER') {
-                                    smg_add_status_msg(t("*** Can't kick %s: no such player in game", $kicked));
-                                } elsif ($answer) {
-                                    smg_add_status_msg(t("*** Can't kick %s: '%s'", $kicked, $answer));
+                                $kick->($kicked);
+                            }
+                            $text = undef;
+                        } elsif ($text =~ m|^/autokick (\S+)(?: (.+))?|) {
+                            my $kicked = $1;
+                            my $message = $2;
+                            if ($kicked eq $mynick) {
+                                my $rand = int(rand(3));
+                                $rand == 0 and smg_add_status_msg(t("*** Sado-masochist, hmm?"));
+                                $rand == 1 and smg_add_status_msg(t("*** You like when it hurts, don't you?"));
+                                $rand == 2 and smg_add_status_msg(t("*** Your butt already hurts enough! Stop that!"));
+                            } else {
+                                my $found = 0;
+                                if (!$message && exists $autokick{$kicked}) {
+                                    delete($autokick{$kicked});
+                                    smg_add_status_msg(t("*** Removing %s from autokick list.", $kicked));
+                                } else {
+                                    smg_add_status_msg(t("*** Adding %s to autokick list.", $kicked));
+                                    $autokick{$kicked} = $message;
+                                    if ($can_start && any { $_ eq $kicked } @wholist) {
+                                        $message and fb_net::send_("TALK " . t("Kicking %s: %s", $kicked, $message));
+                                        $kick->($kicked);
+                                    }
                                 }
+                            }
+                            $text = undef;
+                        } elsif ($text =~ m|^/autokick$|) {
+                            if (!%autokick) {
+                                smg_add_status_msg(t("*** Nobody in autokick list."));
+                            } else {
+                                smg_add_status_msg(t("*** Autokick list members: %s", join(", ", sort keys %autokick)));
                             }
                             $text = undef;
                         } elsif ($text =~ m|^/help|) {
                             smg_add_status_msg(t("*** Available commands: %s",
-                                                 join(', ', t("%s <action>", '/me'), if_($can_start, t("%s <nick> [<text>]", '/kick')), if_(!$ingame, '/list'),
-                                                      if_(!$ingame, t("%s <new_nick>", '/nick')), '/server', '/fs', '/geolocate')));
+                                                 join(', ', t("%s <action>", '/me'), t("%s <new_nick>", '/nick'), t("%s <nick> [<text>]", '/autokick'))),
+                                               '*** ' . join(', ', '/server', '/fs', '/geolocate', if_(!$ingame, '/list'),
+                                                                   if_($can_start, t("%s <nick> [<text>]", '/kick'))));
                             $text = undef;
                         } elsif ($text =~ m|^/|) {
                             smg_add_status_msg(t("*** Unknown command. Try %s for help.", '/help'));
@@ -4476,22 +4512,28 @@ sub smg_choose_game() {
                     play_sound('typewriter');
                 } elsif ($message =~ /^JOINED: (.+)/) {
                     smg_add_status_msg(t("*** %s joined the game!", $1));
-                    push @wholist, $1;
-                    play_sound('newroot_solo');
-                    if ($chain_reaction_state eq t("enabled") || $victories_limit_index > 0) {
-                        my $level = fb_net::send_and_receive('PROTOCOL_LEVEL');
-                        if ($level < 1) {  #- available from minor level 1 onwards
-                            if ($chain_reaction_state eq t("enabled")) {
-                                smg_add_status_msg(t("*** Chain-reaction disabled, %s is using a too old version of Frozen-Bubble", $1));
-                                $chain_reaction_state = t("disabled");
-                            }
-                            if ($victories_limit_index > 0) {
-                                smg_add_status_msg(t("*** Victories limit reset, %s is using a too old version of Frozen-Bubble", $1));
-                                $victories_limit_index = 0;
+                    if ($can_start && exists $autokick{$1}) {
+                        my $kicked = $1;
+                        $autokick{$kicked} and fb_net::send_("TALK " . t("Kicking %s: %s", $kicked, $autokick{$kicked}));
+                        $kick->($kicked);
+                    } else {
+                        push @wholist, $1;
+                        play_sound('newroot_solo');
+                        if ($chain_reaction_state eq t("enabled") || $victories_limit_index > 0) {
+                            my $level = fb_net::send_and_receive('PROTOCOL_LEVEL');
+                            if ($level < 1) {  #- available from minor level 1 onwards
+                                if ($chain_reaction_state eq t("enabled")) {
+                                    smg_add_status_msg(t("*** Chain-reaction disabled, %s is using a too old version of Frozen-Bubble", $1));
+                                    $chain_reaction_state = t("disabled");
+                                }
+                                if ($victories_limit_index > 0) {
+                                    smg_add_status_msg(t("*** Victories limit reset, %s is using a too old version of Frozen-Bubble", $1));
+                                    $victories_limit_index = 0;
+                                }
                             }
                         }
+                        $can_start and $setoptions->();  #- new joiner needs to get parameters
                     }
-                    $can_start and $setoptions->();  #- new joiner needs to get parameters
                 } elsif ($message =~ /^PARTED: (.+)/) {
                     if ($1 eq $joined_leader) {
                         smg_add_status_msg(t("*** Game creator left the game..."));
