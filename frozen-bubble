@@ -168,7 +168,7 @@ GetOptions("fullscreen|fs!" => \$fullscreen,
  --level <#n>           directly start the n-th level (implies -so)
  --levelset<name>       directly start with the specified levelset name
  --no-time-limit        disable time limit for shooting (e.g. kids mode)
- --chain-reaction       enable chain-reaction (if you use NET/LAN game, pay crucial attention that all players do so!)
+ --chain-reaction       enable chain-reaction (when applicable)
  --player-malus <#n>    add a malus of n to the left player (can be negative)
  --mp-training-difficulty <#n> set the average duration between receiving malus bubbles in 1 player multiplayer training (default 30 (= every 30 seconds on average), the lower the harder)
  --colour-blind         use bubbles for colourblind people
