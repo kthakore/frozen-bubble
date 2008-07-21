@@ -2457,6 +2457,9 @@ sub print_step($) {
         }
     }
     put_image($imgbin{loading_step}, 100 + $init_step*12, 10);
+    if ($init_step == 0) {
+        put_image($imgbin{loading_step_initial}, 100 + $_*12, 10) foreach 1..11;
+    }
     $app->flip;
     $init_step++;
 }
@@ -2532,6 +2535,7 @@ sub init_game() {
     put_image($imgbin{loading}, 10, 10);
     $app->flip;
     $imgbin{loading_step} = add_image('loading_step.png');
+    $imgbin{loading_step_initial} = add_image('loading_step_initial.png');
  
     print_step('[Graphics');
     $imgbin{back_2p} = SDL::Surface->new(-name => "$FPATH/gfx/backgrnd.png");
@@ -2540,7 +2544,6 @@ sub init_game() {
     $background = SDL::Surface->new(-width => $app->width, -height => $app->height, -depth => 32, -Amask => '0 but true');
     $background_orig = SDL::Surface->new(-width => $app->width, -height => $app->height, -depth => 32, -Amask => '0 but true');
 
-    print_step('.'); 
     fb_c_stuff::sdlpango_init();
     $pangocontext{netdialogs} =           { params => { desc => 'sans 10', fg => 'white', bg => 'black' } };
     $pangocontext{netdialogs_servermsg} = { params => { desc => 'sans italic 10', fg => 'white', bg => 'black' } };
@@ -2568,7 +2571,6 @@ sub init_game() {
         $img_mini{$img} = add_image("balls/stick_effect_${step}-mini.png")
     }
 
-    print_step('.'); 
     $shooter_lowgfx = add_image("shooter-lowgfx.png");
     my $shooter = add_image("shooter.png");
     my $shooter_mini = add_image("shooter-mini.png");
@@ -2762,7 +2764,6 @@ sub init_game() {
     add_default_rect($replace);
 
     $lev_number = 0;
-    print_step("[Levels] "); 
     load_levelset("$FPATH/data/levels");
 
     fb_c_stuff::init_effects($FPATH);
