@@ -3906,7 +3906,7 @@ sub smg_choose_game() {
             if ($action->{selected}) {
                 put_image($imgbin{highlight_server}, 6, $y-1);
             }
-            print_('netdialogs', $app, $smg_startx, $y, $action->{name}, 520);
+            print_($action->{readonly} ? 'netdialogs_servermsg' : 'netdialogs', $app, $smg_startx, $y, $action->{name}, 520);
             $y += $smg_lineheight;
         }
 
