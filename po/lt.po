@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2008-07-28 09:08+0200\n"
+"POT-Creation-Date: 2008-07-28 19:51+0200\n"
 "PO-Revision-Date: 2006-10-23 23:05+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -75,7 +75,7 @@ msgstr "%sm %ss"
 msgid "%ss"
 msgstr "%ss"
 
-#: ../frozen-bubble:916 ../frozen-bubble:2935
+#: ../frozen-bubble:916 ../frozen-bubble:2941
 #, perl-format
 msgid "%s'%s\""
 msgstr "%s'%s\""
@@ -100,7 +100,7 @@ msgstr "Šeimininkas atšaukė žaidimą."
 msgid "Your lag is probably too high."
 msgstr "Jūsų lagas tikriausiai per didelis."
 
-#: ../frozen-bubble:1736 ../frozen-bubble:3424
+#: ../frozen-bubble:1736 ../frozen-bubble:3430
 msgid "Random level"
 msgstr "Atsitiktinis lygis"
 
@@ -123,132 +123,132 @@ msgstr "Lygiosios!"
 msgid "Lost synchronization %s!"
 msgstr "Prarasta sinchronizacija!"
 
-#: ../frozen-bubble:2932
+#: ../frozen-bubble:2938
 msgid "won!"
 msgstr "laimėjote!"
 
-#: ../frozen-bubble:2932
+#: ../frozen-bubble:2938
 #, perl-format
 msgid "level %s"
 msgstr "lygis %s "
 
-#: ../frozen-bubble:2952
+#: ../frozen-bubble:2958
 msgid "Regular"
 msgstr "Įprastinis"
 
-#: ../frozen-bubble:2970
+#: ../frozen-bubble:2976
 msgid "Chain-reaction enabled"
 msgstr "Su grandinine reakcija"
 
-#: ../frozen-bubble:3056
+#: ../frozen-bubble:3062
 msgid "left"
 msgstr "kairėn"
 
-#: ../frozen-bubble:3056
+#: ../frozen-bubble:3062
 msgid "right"
 msgstr "dešinėn"
 
-#: ../frozen-bubble:3056
+#: ../frozen-bubble:3062
 msgid "up"
 msgstr "aukštyn"
 
-#: ../frozen-bubble:3056
+#: ../frozen-bubble:3062
 msgid "down"
 msgstr "žemyn"
 
-#: ../frozen-bubble:3060
+#: ../frozen-bubble:3066
 msgid "button"
 msgstr "mygtukas"
 
-#: ../frozen-bubble:3396
+#: ../frozen-bubble:3402
 msgid "Start 1-player game menu"
 msgstr "Paleisti 1-žaidėjo žaidimo meniu"
 
-#: ../frozen-bubble:3424 ../frozen-bubble:3431 ../frozen-bubble:4860
+#: ../frozen-bubble:3430 ../frozen-bubble:3437 ../frozen-bubble:4866
 msgid "Enable chain-reaction?"
 msgstr "Įgalinti grandininę reakciją?"
 
-#: ../frozen-bubble:3425 ../frozen-bubble:3432 ../frozen-bubble:4861
+#: ../frozen-bubble:3431 ../frozen-bubble:3438 ../frozen-bubble:4867
 #, perl-format
 msgid "%s or %s?"
 msgstr "%s ar %s?"
 
-#: ../frozen-bubble:3426 ../frozen-bubble:3433 ../frozen-bubble:4862
+#: ../frozen-bubble:3432 ../frozen-bubble:3439 ../frozen-bubble:4868
 msgid "Enjoy the game!"
 msgstr "Mėgaukitės žaidimu!"
 
-#: ../frozen-bubble:3431
+#: ../frozen-bubble:3437
 msgid "Multiplayer training"
 msgstr "Daugiažaidėjų treniruotės"
 
-#: ../frozen-bubble:3528
+#: ../frozen-bubble:3534
 msgid "*** Please wait, probing for available servers on local network..."
 msgstr "*** Prašome palaukti, ieškoma lokalių serverių..."
 
-#: ../frozen-bubble:3531
+#: ../frozen-bubble:3537
 msgid "*** Unable to probe for available servers on local network!"
 msgstr "*** Neįmanoma lokalių serverių paieška tinkle!"
 
-#: ../frozen-bubble:3533
+#: ../frozen-bubble:3539
 msgid "*** Verify your network setup"
 msgstr "*** Patikrinkite tinklo nustatymus"
 
-#: ../frozen-bubble:3542
+#: ../frozen-bubble:3548
 msgid "*** No server found, and could not start server"
 msgstr "*** Serveris nerastas ir neįmanoma pradėti serverio"
 
-#: ../frozen-bubble:3543
+#: ../frozen-bubble:3549
 msgid "*** Verify your installation or contact your vendor"
 msgstr "*** Patikrinkite instaliaciją arba susisiekite su tiekėju"
 
-#: ../frozen-bubble:3550
+#: ../frozen-bubble:3556
 msgid "*** No server found, created server for local network game"
 msgstr "*** Serveris nerastas, sukurtas serveris lokalaus tinklo žaidimui"
 
-#: ../frozen-bubble:3566
+#: ../frozen-bubble:3572
 msgid "*** Contacting master server..."
 msgstr "*** Susisiekiama su pagrindiniu serveriu..."
 
-#: ../frozen-bubble:3577
+#: ../frozen-bubble:3583
 msgid "*** Server list received properly"
 msgstr "*** Serverių sąrašas priimtas sėkmingai"
 
-#: ../frozen-bubble:3579
+#: ../frozen-bubble:3585
 msgid "*** Unable to download server list from master server!"
 msgstr "*** Neįmanoma atsisiųsti serverių sąrašo iš pagrindinio serverio!"
 
-#: ../frozen-bubble:3580
+#: ../frozen-bubble:3586
 msgid "*** Verify your network setup or retry later"
 msgstr "*** Patikrinkite tinklo ryšį arba pabandykite vėliau"
 
-#: ../frozen-bubble:3626
+#: ../frozen-bubble:3632
 #, perl-format
 msgid "Available players: %s (playing: %s) Ping: %sms"
 msgstr "Esami žaidėjai:%s (žaidžia: %s) Atsakas: %sms"
 
-#: ../frozen-bubble:3658 ../frozen-bubble:3664
+#: ../frozen-bubble:3664 ../frozen-bubble:3670
 msgid "*** Please choose a server"
 msgstr "*** Prašome pasirinkti serverį"
 
-#: ../frozen-bubble:3720
+#: ../frozen-bubble:3726
 msgid "*** No available game server"
 msgstr "*** Nėra prieinamų žaidimų serverių"
 
-#: ../frozen-bubble:3721
+#: ../frozen-bubble:3727
 msgid "*** Please retry later or try a local network game (lan game)"
 msgstr "*** Prašome pabandyti vėliau, arba pabandyti lokalaus tinklo žaidimą"
 
-#: ../frozen-bubble:3731
+#: ../frozen-bubble:3737
 msgid ""
 "*** Impossible to connect to specified server, going back to server list"
 msgstr "Neįmanoma prisijungti prie nurodyto serverio, grįžtama į sąrašą"
 
-#: ../frozen-bubble:3735
+#: ../frozen-bubble:3741
 #, perl-format
 msgid "*** Connected to server '%s'"
 msgstr "*** Prisijungta prie serverio '%s'"
 
-#: ../frozen-bubble:3759
+#: ../frozen-bubble:3765
 msgid ""
 "*** Sorry, your computer or the network is too slow, giving up - press any "
 "key"
@@ -256,75 +256,75 @@ msgstr ""
 "*** Atsiprašome, jūsų kompiuteris per lėtas tinkle, pasiduodama - "
 "paspauskite bet kokį klavišą"
 
-#: ../frozen-bubble:3908 ../frozen-bubble:4763
+#: ../frozen-bubble:3914 ../frozen-bubble:4769
 msgid "Chat"
 msgstr "Pokalbis"
 
-#: ../frozen-bubble:3909
+#: ../frozen-bubble:3915
 msgid "Create new game"
 msgstr "Sukurti naują žaidimą"
 
-#: ../frozen-bubble:3961
+#: ../frozen-bubble:3967
 msgid "Say: "
 msgstr "Sakyti: "
 
-#: ../frozen-bubble:3967
+#: ../frozen-bubble:3973
 #, perl-format
 msgid "Players in game: %s"
 msgstr "Žaidėjai žaidime: %s"
 
-#: ../frozen-bubble:3969
+#: ../frozen-bubble:3975
 #, perl-format
 msgid "Available Players: %s"
 msgstr "Galimi žaidėjai: %s"
 
-#: ../frozen-bubble:4015
+#: ../frozen-bubble:4021
 #, perl-format
 msgid "*** %s has left the chat room"
 msgstr "*** %s paliko pokalbius"
 
-#: ../frozen-bubble:4017
+#: ../frozen-bubble:4023
 msgid "*** Several players left this chat room: "
 msgstr "*** Keletas žaidėjų paliko pokalbį: "
 
-#: ../frozen-bubble:4029
+#: ../frozen-bubble:4035
 #, perl-format
 msgid "*** %s has joined the chat room"
 msgstr "*** %s prisijungė prie pokalbio"
 
-#: ../frozen-bubble:4031
+#: ../frozen-bubble:4037
 msgid "*** Several players joined this chat room: "
 msgstr "*** Keletas žaidėjų prisijungė prie pokalbio: "
 
-#: ../frozen-bubble:4049
+#: ../frozen-bubble:4055
 #, perl-format
 msgid "Join game: %s"
 msgstr "Prisijungti prie žaidimo: %s"
 
-#: ../frozen-bubble:4069
+#: ../frozen-bubble:4075
 msgid "*** Players listening: "
 msgstr "*** Klausančių žaidėjų: "
 
-#: ../frozen-bubble:4080 ../frozen-bubble:4411
+#: ../frozen-bubble:4086 ../frozen-bubble:4417
 msgid "*** No one's listening here"
 msgstr "*** Čia nieko nėra"
 
-#: ../frozen-bubble:4087
+#: ../frozen-bubble:4093
 msgid ""
 "*** Please wait, retrieving your geographical location from http://hostip."
 "info/..."
 msgstr "Palaukite, gaunama jūsų geografinė padėtis iš http://hostip.info/..."
 
-#: ../frozen-bubble:4095
+#: ../frozen-bubble:4101
 msgid "*** Done - you can now create or join a game"
 msgstr "Atlikta - dabar galite sukurti arba prisijungti prie žaidimo"
 
-#: ../frozen-bubble:4097
+#: ../frozen-bubble:4103
 msgid ""
 "*** hostip.info doesn't know the geographical location of your IP address"
 msgstr "*** hostip.info nežino jūsų IP adreso geografinės padėties"
 
-#: ../frozen-bubble:4098
+#: ../frozen-bubble:4104
 msgid ""
 "*** If you want that your location appears on the map, fix your entry at "
 "http://hostip.info/"
@@ -332,30 +332,30 @@ msgstr ""
 "Jeigu norite, kad jūsų buvimo vieta pasirodytų žemėlapyje, pataisykiteįrašą "
 "http://hostip.info/ puslapyje"
 
-#: ../frozen-bubble:4105
+#: ../frozen-bubble:4111
 msgid "*** hostip.info didn't reply within 5 seconds, giving up"
 msgstr "*** hostip.info neatsakė per 5 sekundes, pasiduodama"
 
-#: ../frozen-bubble:4124 ../frozen-bubble:4139 ../frozen-bubble:4142
-#: ../frozen-bubble:4143 ../frozen-bubble:4155 ../frozen-bubble:4169
-#: ../frozen-bubble:4181 ../frozen-bubble:4483 ../frozen-bubble:4489
-#: ../frozen-bubble:4502 ../frozen-bubble:4614 ../frozen-bubble:4619
-#: ../frozen-bubble:4631 ../frozen-bubble:4772 ../frozen-bubble:4773
+#: ../frozen-bubble:4130 ../frozen-bubble:4145 ../frozen-bubble:4148
+#: ../frozen-bubble:4149 ../frozen-bubble:4161 ../frozen-bubble:4175
+#: ../frozen-bubble:4187 ../frozen-bubble:4489 ../frozen-bubble:4495
+#: ../frozen-bubble:4508 ../frozen-bubble:4620 ../frozen-bubble:4625
+#: ../frozen-bubble:4637 ../frozen-bubble:4778 ../frozen-bubble:4779
 msgid "enabled"
 msgstr "įgalinta"
 
-#: ../frozen-bubble:4125 ../frozen-bubble:4149 ../frozen-bubble:4161
-#: ../frozen-bubble:4175 ../frozen-bubble:4485 ../frozen-bubble:4491
-#: ../frozen-bubble:4616 ../frozen-bubble:4621 ../frozen-bubble:4629
-#: ../frozen-bubble:4772 ../frozen-bubble:4773
+#: ../frozen-bubble:4131 ../frozen-bubble:4155 ../frozen-bubble:4167
+#: ../frozen-bubble:4181 ../frozen-bubble:4491 ../frozen-bubble:4497
+#: ../frozen-bubble:4622 ../frozen-bubble:4627 ../frozen-bubble:4635
+#: ../frozen-bubble:4778 ../frozen-bubble:4779
 msgid "disabled"
 msgstr "išjungta"
 
-#: ../frozen-bubble:4127 ../frozen-bubble:4774
+#: ../frozen-bubble:4133 ../frozen-bubble:4780
 msgid "none (unlimited)"
 msgstr "joks (neribota)"
 
-#: ../frozen-bubble:4152 ../frozen-bubble:4172 ../frozen-bubble:4192
+#: ../frozen-bubble:4158 ../frozen-bubble:4178 ../frozen-bubble:4198
 #, fuzzy
 msgid ""
 "*** Cannot modify this option, as a player is using a too old version of "
@@ -364,113 +364,113 @@ msgstr ""
 "*** Negalima įjungti grandininės reakcijos, nes žaidėjas naudoja per seną "
 "Frozen-Bubble versiją"
 
-#: ../frozen-bubble:4156 ../frozen-bubble:4162 ../frozen-bubble:4766
-#: ../frozen-bubble:4772
+#: ../frozen-bubble:4162 ../frozen-bubble:4168 ../frozen-bubble:4772
+#: ../frozen-bubble:4778
 #, perl-format
 msgid "Chain-reaction: %s"
 msgstr "Grandininė reakcija: %s"
 
-#: ../frozen-bubble:4176 ../frozen-bubble:4182 ../frozen-bubble:4767
-#: ../frozen-bubble:4773
+#: ../frozen-bubble:4182 ../frozen-bubble:4188 ../frozen-bubble:4773
+#: ../frozen-bubble:4779
 #, perl-format
 msgid "End game on lefters: %s"
 msgstr ""
 
-#: ../frozen-bubble:4209 ../frozen-bubble:4768 ../frozen-bubble:4774
+#: ../frozen-bubble:4215 ../frozen-bubble:4774 ../frozen-bubble:4780
 #, perl-format
 msgid "Victories limit: %s"
 msgstr "Pergalių limitas: %s"
 
-#: ../frozen-bubble:4219
+#: ../frozen-bubble:4225
 #, perl-format
 msgid "*** Can't kick %s: no such player in game"
 msgstr "*** Negaliu išspirti %s: nėra tokio žaidėjo"
 
-#: ../frozen-bubble:4221
+#: ../frozen-bubble:4227
 #, perl-format
 msgid "*** Can't kick %s: '%s'"
 msgstr "*** Negaliu išspirti %s: '%s'"
 
-#: ../frozen-bubble:4253
+#: ../frozen-bubble:4259
 msgid "*** Leaving game..."
 msgstr "*** Paliekamas žaidimas..."
 
-#: ../frozen-bubble:4327
+#: ../frozen-bubble:4333
 #, perl-format
 msgid "*** You are now known as %s"
 msgstr "*** Dabar jūs žinomas kaip %s"
 
-#: ../frozen-bubble:4331
+#: ../frozen-bubble:4337
 msgid "*** Erroneous nickname"
 msgstr "*** Klaidingas slapyvardis"
 
-#: ../frozen-bubble:4341
+#: ../frozen-bubble:4347
 #, perl-format
 msgid "*** You're connected to server '%s'"
 msgstr "*** Jūs prisijungę prie '%s' serverio"
 
-#: ../frozen-bubble:4352 ../frozen-bubble:4379 ../frozen-bubble:4609
+#: ../frozen-bubble:4358 ../frozen-bubble:4385 ../frozen-bubble:4615
 #, perl-format
 msgid "Kicking %s: %s"
 msgstr ""
 
-#: ../frozen-bubble:4355 ../frozen-bubble:4367
+#: ../frozen-bubble:4361 ../frozen-bubble:4373
 msgid "*** Sado-masochist, hmm?"
 msgstr "*** Sado mazorchistas, hmm?"
 
-#: ../frozen-bubble:4356 ../frozen-bubble:4368
+#: ../frozen-bubble:4362 ../frozen-bubble:4374
 msgid "*** You like when it hurts, don't you?"
 msgstr "*** Jums patinka kai skauda, ar ne?"
 
-#: ../frozen-bubble:4357 ../frozen-bubble:4369
+#: ../frozen-bubble:4363 ../frozen-bubble:4375
 msgid "*** Your butt already hurts enough! Stop that!"
 msgstr "*** Jums jau užtektinai skauda užpakalį! Baikite!"
 
-#: ../frozen-bubble:4374
+#: ../frozen-bubble:4380
 #, perl-format
 msgid "*** Removing %s from autokick list."
 msgstr ""
 
-#: ../frozen-bubble:4376
+#: ../frozen-bubble:4382
 #, perl-format
 msgid "*** Adding %s to autokick list."
 msgstr ""
 
-#: ../frozen-bubble:4387
+#: ../frozen-bubble:4393
 msgid "*** Nobody in autokick list."
 msgstr ""
 
-#: ../frozen-bubble:4389
+#: ../frozen-bubble:4395
 #, perl-format
 msgid "*** Autokick list members: %s"
 msgstr ""
 
-#: ../frozen-bubble:4393
+#: ../frozen-bubble:4399
 #, perl-format
 msgid "*** Available commands: %s"
 msgstr "Galimos komandos: %s"
 
-#: ../frozen-bubble:4394
+#: ../frozen-bubble:4400
 #, perl-format
 msgid "%s <action>"
 msgstr "%s <veiksmas>"
 
-#: ../frozen-bubble:4394
+#: ../frozen-bubble:4400
 #, perl-format
 msgid "%s <new_nick>"
 msgstr "%s <naujas_slapyvardis>"
 
-#: ../frozen-bubble:4394 ../frozen-bubble:4396
+#: ../frozen-bubble:4400 ../frozen-bubble:4402
 #, fuzzy, perl-format
 msgid "%s <nick> [<text>]"
 msgstr "%s <slapyvardis>"
 
-#: ../frozen-bubble:4399
+#: ../frozen-bubble:4405
 #, perl-format
 msgid "*** Unknown command. Try %s for help."
 msgstr "*** Nežinoma komanda. Pabandykite %s pagalbai."
 
-#: ../frozen-bubble:4436
+#: ../frozen-bubble:4442
 msgid ""
 "*** Open games already full. Join an existing game, or select a different "
 "server."
@@ -478,30 +478,30 @@ msgstr ""
 "*** Atviri žaidimai pilni. Prisijunkite prie esamo žaidimo, arba pasirinkite "
 "kitą serverį."
 
-#: ../frozen-bubble:4439
+#: ../frozen-bubble:4445
 msgid "*** Cannot join game, game was just started or aborted"
 msgstr "*** Negalima prisijungti, žaidimas ką tik pradėtas arba atšauktas"
 
-#: ../frozen-bubble:4443 ../frozen-bubble:4722
+#: ../frozen-bubble:4449 ../frozen-bubble:4728
 #, perl-format
 msgid "*** Failure: '%s'"
 msgstr "*** Nesekmė: '%s'"
 
-#: ../frozen-bubble:4449
+#: ../frozen-bubble:4455
 msgid "*** Game created - now you need to wait for players to join"
 msgstr ""
 "*** Žaidimas sukurtas - dabar jums reikia palaukti, kol žaidėjai prisijungs"
 
-#: ../frozen-bubble:4452
+#: ../frozen-bubble:4458
 msgid "*** Joined game"
 msgstr "*** Prisijungta prie žaidimo"
 
-#: ../frozen-bubble:4478 ../frozen-bubble:4508 ../frozen-bubble:4514
+#: ../frozen-bubble:4484 ../frozen-bubble:4514 ../frozen-bubble:4520
 #, perl-format
 msgid "*** Can't start game: '%s'"
 msgstr "*** Neįmanoma pradėti žaidimo: '%s'"
 
-#: ../frozen-bubble:4490
+#: ../frozen-bubble:4496
 msgid ""
 "*** Must disable chain-reaction, as a player is using a too old version of "
 "Frozen-Bubble"
@@ -509,7 +509,7 @@ msgstr ""
 "*** Privalau išjungti grandininę reakciją, nes žaidėjas naudoja per seną "
 "Frozen-Bubble versiją"
 
-#: ../frozen-bubble:4495
+#: ../frozen-bubble:4501
 msgid ""
 "*** Must reset victories limit as a player is using a too old version of "
 "Frozen-Bubble"
@@ -517,7 +517,7 @@ msgstr ""
 "*** Privalau atstatyti pergalių limitą, nes žaidėjas naudoja per seną Frozen-"
 "Bubble versiją"
 
-#: ../frozen-bubble:4501
+#: ../frozen-bubble:4507
 #, fuzzy
 msgid ""
 "*** Cannot disable end game on lefters, as a player is using a too old "
@@ -526,26 +526,26 @@ msgstr ""
 "*** Negalima įjungti grandininės reakcijos, nes žaidėjas naudoja per seną "
 "Frozen-Bubble versiją"
 
-#: ../frozen-bubble:4606
+#: ../frozen-bubble:4612
 #, perl-format
 msgid "*** %s joined the game!"
 msgstr "*** %s prisijungė prie žaidimo!"
 
-#: ../frozen-bubble:4620
+#: ../frozen-bubble:4626
 #, perl-format
 msgid ""
 "*** Chain-reaction disabled, %s is using a too old version of Frozen-Bubble"
 msgstr ""
 "*** Grandininė reakcija išjungta, %s naudoja per seną Frozen-Bubble versiją"
 
-#: ../frozen-bubble:4624
+#: ../frozen-bubble:4630
 #, perl-format
 msgid ""
 "*** Victories limit reset, %s is using a too old version of Frozen-Bubble"
 msgstr ""
 "*** Pergalių limitas atstatytas, %s naudoja per seną Frozen-Bubble versiją"
 
-#: ../frozen-bubble:4630
+#: ../frozen-bubble:4636
 #, fuzzy, perl-format
 msgid ""
 "*** End game on lefters enabled back, %s is using a too old version of "
@@ -553,66 +553,66 @@ msgid ""
 msgstr ""
 "*** Grandininė reakcija išjungta, %s naudoja per seną Frozen-Bubble versiją"
 
-#: ../frozen-bubble:4639
+#: ../frozen-bubble:4645
 msgid "*** Game creator left the game..."
 msgstr "*** Žaidimo kūrėjas paliko žaidimą..."
 
-#: ../frozen-bubble:4644
+#: ../frozen-bubble:4650
 #, perl-format
 msgid "*** %s left the game..."
 msgstr "*** %s paliko žaidimą..."
 
-#: ../frozen-bubble:4649
+#: ../frozen-bubble:4655
 #, perl-format
 msgid "*** %s was kicked out of the game..."
 msgstr "*** %s buvo išmestas iš žaidimo..."
 
-#: ../frozen-bubble:4654
+#: ../frozen-bubble:4660
 msgid "*** You were kicked out of the game..."
 msgstr "*** Jūs buvote išmestas iš žaidimo..."
 
-#: ../frozen-bubble:4659
+#: ../frozen-bubble:4665
 msgid "*** You were disconnected because of too long inactivity"
 msgstr "*** Jūs buvote atjungtas dėl per ilgo neaktyvumo"
 
-#: ../frozen-bubble:4740
+#: ../frozen-bubble:4746
 msgid "*** Lost connection to server, abandoning - press any key"
 msgstr "*** Prarastas ryšys su serveriu, nutraukiama - paspauskite klavišą"
 
-#: ../frozen-bubble:4769
+#: ../frozen-bubble:4775
 msgid "Start game!"
 msgstr "Pradėti žaidimą!"
 
-#: ../frozen-bubble:4789
+#: ../frozen-bubble:4795
 #, perl-format
 msgid "*** Game finished, because victories limit of %s was reached."
 msgstr "*** Žaidimas baigtas, nes %s pergalių limitas buvo pasiektas."
 
-#: ../frozen-bubble:4792
+#: ../frozen-bubble:4798
 #, perl-format
 msgid "*** Game finished, because the following player(s) left: %s"
 msgstr "*** Žaidimas baigtas, nes šis žaidėjas(-ai) išėjo: %s"
 
-#: ../frozen-bubble:4795
+#: ../frozen-bubble:4801
 #, perl-format
 msgid "*** Addicted for: %s"
 msgstr "*** Priklausomas nuo: %s"
 
-#: ../frozen-bubble:4798
+#: ../frozen-bubble:4804
 #, perl-format
 msgid "*** Winner: %s"
 msgstr "*** Laimėtojas: %s"
 
-#: ../frozen-bubble:4800
+#: ../frozen-bubble:4806
 msgid "*** Draw game!"
 msgstr "*** Lygiosios!"
 
-#: ../frozen-bubble:4802
+#: ../frozen-bubble:4808
 #, perl-format
 msgid "*** Scores: %s"
 msgstr "*** Taškai: %s"
 
-#: ../frozen-bubble:4820
+#: ../frozen-bubble:4826
 msgid ""
 "*** Cannot connect to specified gameserver, fallbacking to contacting master "
 "server"
@@ -620,71 +620,71 @@ msgstr ""
 "*** Negalima prisijungti prie nurodyto serverio, jungiamasi prie pagrindinio "
 "serverio"
 
-#: ../frozen-bubble:4860
+#: ../frozen-bubble:4866
 msgid "2-player game"
 msgstr "2-žaidėjų žaidimas"
 
-#: ../frozen-bubble:4909 ../frozen-bubble:4942
+#: ../frozen-bubble:4915 ../frozen-bubble:4948
 msgid "Congratulations!"
 msgstr "Sveikinimai!"
 
-#: ../frozen-bubble:4909 ../frozen-bubble:4942
+#: ../frozen-bubble:4915 ../frozen-bubble:4948
 msgid "You have a highscore!"
 msgstr "Jūs pasiekėte rekordą!"
 
-#: ../frozen-bubble:4910 ../frozen-bubble:4943
+#: ../frozen-bubble:4916 ../frozen-bubble:4949
 msgid "Your name?"
 msgstr "Jūsų vardas?"
 
-#: ../frozen-bubble:4911 ../frozen-bubble:4944
+#: ../frozen-bubble:4917 ../frozen-bubble:4950
 msgid "Great game!"
 msgstr "Puikus žaidimas!"
 
-#: ../frozen-bubble:5098
+#: ../frozen-bubble:5104
 msgid "Please enter new keys:"
 msgstr "Prašome įvesti naują valdymą:"
 
-#: ../frozen-bubble:5100
+#: ../frozen-bubble:5106
 msgid "Player 1; turn left?"
 msgstr "Žaidėjas 1; kairėn?"
 
-#: ../frozen-bubble:5101
+#: ../frozen-bubble:5107
 msgid "Player 1; turn right?"
 msgstr "Žaidėjas 1; dešinėn?"
 
-#: ../frozen-bubble:5102
+#: ../frozen-bubble:5108
 msgid "Player 1; fire?"
 msgstr "Žadėjas 1; ugnis?"
 
-#: ../frozen-bubble:5103
+#: ../frozen-bubble:5109
 msgid "Player 1; center?"
 msgstr "Žaidėjas 1; centras?"
 
-#: ../frozen-bubble:5105
+#: ../frozen-bubble:5111
 msgid "Player 2; turn left?"
 msgstr "Žaidėjas 2; kairėn?"
 
-#: ../frozen-bubble:5106
+#: ../frozen-bubble:5112
 msgid "Player 2; turn right?"
 msgstr "Žaidėjas 2; dešinėn?"
 
-#: ../frozen-bubble:5107
+#: ../frozen-bubble:5113
 msgid "Player 2; fire?"
 msgstr "Žaidėjas 2; ugnis?"
 
-#: ../frozen-bubble:5108
+#: ../frozen-bubble:5114
 msgid "Player 2; center?"
 msgstr "Žaidėjas 2; centras?"
 
-#: ../frozen-bubble:5110
+#: ../frozen-bubble:5116
 msgid "Toggle fullscreen?"
 msgstr "Į/iš pilno ekrano?"
 
-#: ../frozen-bubble:5111
+#: ../frozen-bubble:5117
 msgid "Chat (net/lan game)?"
 msgstr "Pokalbis (interneto/tinklo)?"
 
-#: ../frozen-bubble:5113
+#: ../frozen-bubble:5119
 msgid "Thanks!"
 msgstr "Ačiū!"
 
