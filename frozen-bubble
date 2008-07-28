@@ -2333,7 +2333,13 @@ sub update_game() {
             }
         }
         if (!$events_pumped) {
-            $event->pump while $event->poll != 0;
+            $event->pump;
+            while ($event->poll != 0) {
+                if ($event->type == SDL_QUIT
+                    || $event->type == SDL_KEYDOWN && $event->key_sym == SDLK_ESCAPE) {
+                    cleanup_and_exit();
+                }
+            }
         }
 
     } else {
