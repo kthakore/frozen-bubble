@@ -4678,6 +4678,9 @@ sub smg_choose_game() {
                             $pdata{scorelimit} = $1;
                         } elsif ($option =~ /^PROTOCOLLEVEL:(\d+)/) {
                             $pdata{protocollevel} = $1;
+                            if ($pdata{protocollevel} < 2) {
+                                $endgameonlefters = 1;
+                            }
                         } else {
                             print "Unrecognized option: $option\n";
                         }
