@@ -1363,10 +1363,6 @@ sub display_levelset_list_browser {
 	    }
         }
         $list_browser_highlight_offset = $file_highlight_offset;
-        if (is_ok_select_start_value($start_level) == 0) {
-            $start_level = $file_browser_levelsets_num_levels[$list_browser_highlight_offset];	
-            show_selected_level();
-        }
         display_levelset_screenshot();
     } else {
         $list_browser_highlight_offset = $file_highlight_offset;
