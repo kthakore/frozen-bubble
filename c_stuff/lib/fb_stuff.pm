@@ -31,9 +31,9 @@ use vars qw(@ISA @EXPORT $FPATH $FLPATH $FBLEVELS $colourblind %POS_1P %POS_2P %
 @EXPORT = qw($version $FPATH $FLPATH $colourblind $FBLEVELS %POS_1P %POS_2P %POS_MP $BUBBLE_SIZE $ROW_SIZE
              $PI cat_ member difference2 any every even odd sqr to_bool to_int if_ chomp_
              fold_left output append_to_file min max backtrace basename cp_af all partition ssort
-             sum put_in_hash mapn mapn_ fastuniq deep_copy stringchars t);
+             sum put_in_hash mapn mapn_ fastuniq deep_copy stringchars t dbgnet);
 
-$version = '2.1.0';
+$version = '2.2.0';
 
 $FPATH = '@DATADIR@/frozen-bubble';
 $FLPATH = '@LIBDIR@/frozen-bubble';
@@ -314,4 +314,10 @@ sub stringchars {
 sub t {
     my ($fmt, @args) = @_;
     return sprintf(gettext($fmt), @args);
+}
+
+sub dbgnet {
+    if (1) {
+        print "DBGNET: @_\n";
+    }
 }

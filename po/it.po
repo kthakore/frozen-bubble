@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: frozen-bubble 2\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2006-11-05 22:40+0100\n"
+"POT-Creation-Date: 2008-07-28 09:08+0200\n"
 "PO-Revision-Date: 2006-11-10 17:07+0100\n"
 "Last-Translator: Dario Pilori <dapilori@yahoo.it>\n"
 "Language-Team: Italian <tp@lists.linux.it>\n"
@@ -15,242 +15,239 @@ msgstr ""
 "Content-Type: text/plain; charset=iso-8859-1\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: ../frozen-bubble:194
+#: ../frozen-bubble:192
 msgid "0"
 msgstr "0"
 
-#: ../frozen-bubble:195
+#: ../frozen-bubble:193
 msgid "1"
 msgstr "1"
 
-#: ../frozen-bubble:196
+#: ../frozen-bubble:194
 msgid "2"
 msgstr "2"
 
-#: ../frozen-bubble:197
+#: ../frozen-bubble:195
 msgid "3"
 msgstr "3"
 
-#: ../frozen-bubble:198
+#: ../frozen-bubble:196
 msgid "4"
 msgstr "4"
 
-#: ../frozen-bubble:199
+#: ../frozen-bubble:197
 msgid "5"
 msgstr "5"
 
-#: ../frozen-bubble:200
+#: ../frozen-bubble:198
 msgid "6"
 msgstr "6"
 
-#: ../frozen-bubble:201
+#: ../frozen-bubble:199
 msgid "7"
 msgstr "7"
 
-#: ../frozen-bubble:202
+#: ../frozen-bubble:200
 msgid "8"
 msgstr "8"
 
-#: ../frozen-bubble:203
+#: ../frozen-bubble:201
 msgid "9"
 msgstr "9"
 
-#: ../frozen-bubble:204
+#: ../frozen-bubble:202
 msgid "."
 msgstr ","
 
-#: ../frozen-bubble:228
+#: ../frozen-bubble:226
 #, perl-format
 msgid "%sh %sm %ss"
 msgstr "%sh %sm %ss"
 
-#: ../frozen-bubble:230
+#: ../frozen-bubble:228
 #, perl-format
 msgid "%sm %ss"
 msgstr "%sm %ss"
 
-#: ../frozen-bubble:232
+#: ../frozen-bubble:230
 #, perl-format
 msgid "%ss"
 msgstr "%ss"
 
-#: ../frozen-bubble:896 ../frozen-bubble:2748
+#: ../frozen-bubble:916 ../frozen-bubble:2935
 #, perl-format
 msgid "%s'%s\""
 msgstr "%s'%s\""
 
-#: ../frozen-bubble:991
+#: ../frozen-bubble:1043
 msgid "Your score after two minutes:"
 msgstr "Punteggio dopo due minuti:"
 
-#: ../frozen-bubble:991
+#: ../frozen-bubble:1043
 msgid "Press any key."
 msgstr "Premi un tasto."
 
-#: ../frozen-bubble:1149 ../frozen-bubble:1151
+#: ../frozen-bubble:1205 ../frozen-bubble:1207
 msgid "Lost connection to server!"
 msgstr "Connessione al server persa."
 
-#: ../frozen-bubble:1149
+#: ../frozen-bubble:1205
 msgid "Hoster aborted the game."
 msgstr "L'ospitante ha chiuso la partita."
 
-#: ../frozen-bubble:1151
+#: ../frozen-bubble:1207
 msgid "Your lag is probably too high."
 msgstr "Il tuo ritardo è probabilmente troppo alto."
 
-#: ../frozen-bubble:1593
+#: ../frozen-bubble:1736 ../frozen-bubble:3424
 msgid "Random level"
 msgstr "Livello casuale"
 
-#: ../frozen-bubble:1594
+#: ../frozen-bubble:1737
 #, perl-format
 msgid "Score: %s"
 msgstr "Punti: %s"
 
-#: ../frozen-bubble:1595
+#: ../frozen-bubble:1738
 #, perl-format
 msgid "Level %s"
 msgstr "Livello %s"
 
-#: ../frozen-bubble:1761
+#: ../frozen-bubble:1918
 msgid "Draw game!"
 msgstr "Pari!"
 
-#: ../frozen-bubble:2069 ../frozen-bubble:2134
-msgid "Lost synchronization!"
+#: ../frozen-bubble:2235 ../frozen-bubble:2302
+#, fuzzy, perl-format
+msgid "Lost synchronization %s!"
 msgstr "Sincronizzazione persa!"
 
-#: ../frozen-bubble:2745
+#: ../frozen-bubble:2932
 msgid "won!"
 msgstr "vittoria!"
 
-#: ../frozen-bubble:2745
+#: ../frozen-bubble:2932
 #, perl-format
 msgid "level %s"
 msgstr "livello %s"
 
-#: ../frozen-bubble:2765
+#: ../frozen-bubble:2952
 msgid "Regular"
 msgstr "Regolari"
 
-#: ../frozen-bubble:2780
+#: ../frozen-bubble:2970
 msgid "Chain-reaction enabled"
 msgstr "Con reazione a catena abilitata"
 
-#: ../frozen-bubble:2863
+#: ../frozen-bubble:3056
 msgid "left"
 msgstr "sinistra"
 
-#: ../frozen-bubble:2863
+#: ../frozen-bubble:3056
 msgid "right"
 msgstr "destra"
 
-#: ../frozen-bubble:2863
+#: ../frozen-bubble:3056
 msgid "up"
 msgstr "su"
 
-#: ../frozen-bubble:2863
+#: ../frozen-bubble:3056
 msgid "down"
 msgstr "giù"
 
-#: ../frozen-bubble:2867
+#: ../frozen-bubble:3060
 msgid "button"
 msgstr "bottone"
 
-#: ../frozen-bubble:3179
+#: ../frozen-bubble:3396
 msgid "Start 1-player game menu"
 msgstr "Menu per giocare da soli"
 
-#: ../frozen-bubble:3209
-msgid "Multiplayer training"
-msgstr "Allenamento multigiocatore"
-
-#: ../frozen-bubble:3209 ../frozen-bubble:4446
+#: ../frozen-bubble:3424 ../frozen-bubble:3431 ../frozen-bubble:4860
 msgid "Enable chain-reaction?"
 msgstr "Abilito la reazione a catena?"
 
-#: ../frozen-bubble:3210 ../frozen-bubble:4447
+#: ../frozen-bubble:3425 ../frozen-bubble:3432 ../frozen-bubble:4861
 #, perl-format
 msgid "%s or %s?"
 msgstr "%s o %s?"
 
-#: ../frozen-bubble:3211 ../frozen-bubble:4448
+#: ../frozen-bubble:3426 ../frozen-bubble:3433 ../frozen-bubble:4862
 msgid "Enjoy the game!"
 msgstr "Divertiti!"
 
-#: ../frozen-bubble:3302
+#: ../frozen-bubble:3431
+msgid "Multiplayer training"
+msgstr "Allenamento multigiocatore"
+
+#: ../frozen-bubble:3528
 msgid "*** Please wait, probing for available servers on local network..."
 msgstr "*** Attendere, ricerca in corso di server nella rete locale..."
 
-#: ../frozen-bubble:3305
+#: ../frozen-bubble:3531
 msgid "*** Unable to probe for available servers on local network!"
 msgstr "*** Impossibile trovare server disponibili nella rete locale!"
 
-#: ../frozen-bubble:3307
+#: ../frozen-bubble:3533
 msgid "*** Verify your network setup"
 msgstr "*** Verifica le impostazioni di rete"
 
-#: ../frozen-bubble:3316
+#: ../frozen-bubble:3542
 msgid "*** No server found, and could not start server"
 msgstr "*** Nessun server trovato e impossibile avviarne uno"
 
-#: ../frozen-bubble:3317
+#: ../frozen-bubble:3543
 msgid "*** Verify your installation or contact your vendor"
 msgstr "*** Verifica l'installazione o contatta il produttore"
 
-#: ../frozen-bubble:3324
+#: ../frozen-bubble:3550
 msgid "*** No server found, created server for local network game"
 msgstr "*** Nessun server trovato, creato un server nella rete locale"
 
-#: ../frozen-bubble:3340
+#: ../frozen-bubble:3566
 msgid "*** Contacting master server..."
 msgstr "*** Chiamata in corso al server principale..."
 
-#: ../frozen-bubble:3351
+#: ../frozen-bubble:3577
 msgid "*** Server list received properly"
 msgstr "*** Lista dei server ricevuta correttamente"
 
-#: ../frozen-bubble:3353
+#: ../frozen-bubble:3579
 msgid "*** Unable to download server list from master server!"
 msgstr "*** Impossibile scaricare la lista dei server dal server principale!"
 
-#: ../frozen-bubble:3354
+#: ../frozen-bubble:3580
 msgid "*** Verify your network setup or retry later"
 msgstr "*** Verifica le impostazioni di rete o riprova più tardi"
 
-#: ../frozen-bubble:3393
+#: ../frozen-bubble:3626
 #, perl-format
 msgid "Available players: %s (playing: %s) Ping: %sms"
 msgstr "Giocatori disponibili: %s (che stanno giocando: %s) Ping: %sms"
 
-#: ../frozen-bubble:3441
-msgid "*** No available game server"
-msgstr "*** Nessun server disponibile"
-
-#: ../frozen-bubble:3442
-msgid "*** Please retry later or try a local network game (lan game)"
-msgstr "*** Riprova più tardi o avvia un gioco nella rete locale"
-
-#: ../frozen-bubble:3448
+#: ../frozen-bubble:3658 ../frozen-bubble:3664
 msgid "*** Please choose a server"
 msgstr "*** Scegli un server"
 
-#: ../frozen-bubble:3507
-msgid "*** Impossible to connect to specified server, going back to server list"
+#: ../frozen-bubble:3720
+msgid "*** No available game server"
+msgstr "*** Nessun server disponibile"
+
+#: ../frozen-bubble:3721
+msgid "*** Please retry later or try a local network game (lan game)"
+msgstr "*** Riprova più tardi o avvia un gioco nella rete locale"
+
+#: ../frozen-bubble:3731
+msgid ""
+"*** Impossible to connect to specified server, going back to server list"
 msgstr "*** Impossibile connettersi al server scelto, ritorno alla lista"
 
-#: ../frozen-bubble:3510
+#: ../frozen-bubble:3735
 #, perl-format
 msgid "*** Connected to server '%s'"
 msgstr "*** Connesso al server '%s'"
 
-#: ../frozen-bubble:3511
-#, perl-format
-msgid "*** Server's MOTD: %s"
-msgstr "*** MDG del server: %s"
-
-#: ../frozen-bubble:3535
+#: ../frozen-bubble:3759
 msgid ""
 "*** Sorry, your computer or the network is too slow, giving up - press any "
 "key"
@@ -258,60 +255,60 @@ msgstr ""
 "*** Il tuo computer o la rete sono troppo lenti per poter giocare - premi un "
 "tasto"
 
-#: ../frozen-bubble:3683 ../frozen-bubble:4361
+#: ../frozen-bubble:3908 ../frozen-bubble:4763
 msgid "Chat"
 msgstr "Chat"
 
-#: ../frozen-bubble:3684
+#: ../frozen-bubble:3909
 msgid "Create new game"
 msgstr "Avvia nuova partita"
 
-#: ../frozen-bubble:3736
+#: ../frozen-bubble:3961
 msgid "Say: "
 msgstr "Scrivi: "
 
-#: ../frozen-bubble:3742
+#: ../frozen-bubble:3967
 #, perl-format
 msgid "Players in game: %s"
 msgstr "Giocatori: %s"
 
-#: ../frozen-bubble:3744
+#: ../frozen-bubble:3969
 #, perl-format
 msgid "Available Players: %s"
 msgstr "Giocatori disponibili: %s"
 
-#: ../frozen-bubble:3789
+#: ../frozen-bubble:4015
 #, perl-format
 msgid "*** %s has left the chat room"
 msgstr "*** %s ha lasciato la chat"
 
-#: ../frozen-bubble:3791
+#: ../frozen-bubble:4017
 msgid "*** Several players left this chat room: "
 msgstr "*** Diversi giocatori hanno lasciato questa chat: "
 
-#: ../frozen-bubble:3803
+#: ../frozen-bubble:4029
 #, perl-format
 msgid "*** %s has joined the chat room"
 msgstr "*** %s si è appena unito alla chat"
 
-#: ../frozen-bubble:3805
+#: ../frozen-bubble:4031
 msgid "*** Several players joined this chat room: "
 msgstr "*** Diversi giocatori si sono uniti a questa chat: "
 
-#: ../frozen-bubble:3823
+#: ../frozen-bubble:4049
 #, perl-format
 msgid "Join game: %s"
 msgstr "Partecipa alla partita: %s"
 
-#: ../frozen-bubble:3843
+#: ../frozen-bubble:4069
 msgid "*** Players listening: "
 msgstr "*** Giocatori in ascolto: "
 
-#: ../frozen-bubble:3854 ../frozen-bubble:4072
+#: ../frozen-bubble:4080 ../frozen-bubble:4411
 msgid "*** No one's listening here"
 msgstr "*** Nessun giocatore in ascolto"
 
-#: ../frozen-bubble:3863
+#: ../frozen-bubble:4087
 msgid ""
 "*** Please wait, retrieving your geographical location from http://hostip."
 "info/..."
@@ -319,15 +316,17 @@ msgstr ""
 "*** Attendere prego, sto ricevendo la tua posizione geografica da http://"
 "hostip.info/..."
 
-#: ../frozen-bubble:3871
+#: ../frozen-bubble:4095
 msgid "*** Done - you can now create or join a game"
 msgstr "*** OK - puoi creare una partita o partecipare ad una esistente"
 
-#: ../frozen-bubble:3873
-msgid "*** hostip.info doesn't know the geographical location of your IP address"
-msgstr "*** hostip.info non sa la posizione geografica associata al tuo indirizzo IP"
+#: ../frozen-bubble:4097
+msgid ""
+"*** hostip.info doesn't know the geographical location of your IP address"
+msgstr ""
+"*** hostip.info non sa la posizione geografica associata al tuo indirizzo IP"
 
-#: ../frozen-bubble:3874
+#: ../frozen-bubble:4098
 msgid ""
 "*** If you want that your location appears on the map, fix your entry at "
 "http://hostip.info/"
@@ -335,91 +334,145 @@ msgstr ""
 "*** Se vuoi che la tua posizione appaia nella mappa, verifica la tua "
 "iscrizione a http://hostip.info/"
 
-#: ../frozen-bubble:3881
+#: ../frozen-bubble:4105
 msgid "*** hostip.info didn't reply within 5 seconds, giving up"
 msgstr "*** hostip.info non ha risposto in 5 secondi, annullo"
 
-#: ../frozen-bubble:3895 ../frozen-bubble:4125 ../frozen-bubble:4137
-#: ../frozen-bubble:4171 ../frozen-bubble:4249 ../frozen-bubble:4369
-msgid "disabled"
-msgstr "disabilitata"
-
-#: ../frozen-bubble:3897 ../frozen-bubble:4370
-msgid "none (unlimited)"
-msgstr "nessuno (illimitate)"
-
-#: ../frozen-bubble:3917 ../frozen-bubble:4131 ../frozen-bubble:4166
-#: ../frozen-bubble:4169 ../frozen-bubble:4244 ../frozen-bubble:4247
-#: ../frozen-bubble:4369
+#: ../frozen-bubble:4124 ../frozen-bubble:4139 ../frozen-bubble:4142
+#: ../frozen-bubble:4143 ../frozen-bubble:4155 ../frozen-bubble:4169
+#: ../frozen-bubble:4181 ../frozen-bubble:4483 ../frozen-bubble:4489
+#: ../frozen-bubble:4502 ../frozen-bubble:4614 ../frozen-bubble:4619
+#: ../frozen-bubble:4631 ../frozen-bubble:4772 ../frozen-bubble:4773
 msgid "enabled"
 msgstr "abilitata"
 
-#: ../frozen-bubble:3949
-msgid "*** Leaving game..."
-msgstr "*** Disconnessione dalla partita..."
+#: ../frozen-bubble:4125 ../frozen-bubble:4149 ../frozen-bubble:4161
+#: ../frozen-bubble:4175 ../frozen-bubble:4485 ../frozen-bubble:4491
+#: ../frozen-bubble:4616 ../frozen-bubble:4621 ../frozen-bubble:4629
+#: ../frozen-bubble:4772 ../frozen-bubble:4773
+msgid "disabled"
+msgstr "disabilitata"
 
-#: ../frozen-bubble:4023
+#: ../frozen-bubble:4127 ../frozen-bubble:4774
+msgid "none (unlimited)"
+msgstr "nessuno (illimitate)"
+
+#: ../frozen-bubble:4152 ../frozen-bubble:4172 ../frozen-bubble:4192
+#, fuzzy
+msgid ""
+"*** Cannot modify this option, as a player is using a too old version of "
+"Frozen-Bubble"
+msgstr ""
+"*** Impossibile abilitare la reazione a catena perché un giocatore sta "
+"usando una versione troppo vecchia di Frozen-Bubble"
+
+#: ../frozen-bubble:4156 ../frozen-bubble:4162 ../frozen-bubble:4766
+#: ../frozen-bubble:4772
 #, perl-format
-msgid "*** You are now known as %s"
-msgstr "*** Sei conosciuto come %s"
+msgid "Chain-reaction: %s"
+msgstr "Reazione a catena: %s"
 
-#: ../frozen-bubble:4026
-msgid "*** Erroneous nickname"
-msgstr "*** Nickname errato"
-
-#: ../frozen-bubble:4036
+#: ../frozen-bubble:4176 ../frozen-bubble:4182 ../frozen-bubble:4767
+#: ../frozen-bubble:4773
 #, perl-format
-msgid "*** You're connected to server '%s'"
-msgstr "*** Sei connesso al server '%s'"
+msgid "End game on lefters: %s"
+msgstr ""
 
-#: ../frozen-bubble:4042
-msgid "*** Sado-masochist, hmm?"
-msgstr "*** Masochista, eh?"
+#: ../frozen-bubble:4209 ../frozen-bubble:4768 ../frozen-bubble:4774
+#, perl-format
+msgid "Victories limit: %s"
+msgstr "Limite di vittorie: %s"
 
-#: ../frozen-bubble:4043
-msgid "*** You like when it hurts, don't you?"
-msgstr "*** Ti piace farti male, vero?"
-
-#: ../frozen-bubble:4044
-msgid "*** Your butt already hurts enough! Stop that!"
-msgstr "*** Ti brucia già abbastanza il sedere! Fermati!"
-
-#: ../frozen-bubble:4048
+#: ../frozen-bubble:4219
 #, perl-format
 msgid "*** Can't kick %s: no such player in game"
 msgstr "*** Impossibile espellere %s: è inesistente"
 
-#: ../frozen-bubble:4050
+#: ../frozen-bubble:4221
 #, perl-format
 msgid "*** Can't kick %s: '%s'"
 msgstr "*** Impossibile espellere %s: '%s'"
 
-#: ../frozen-bubble:4055
+#: ../frozen-bubble:4253
+msgid "*** Leaving game..."
+msgstr "*** Disconnessione dalla partita..."
+
+#: ../frozen-bubble:4327
+#, perl-format
+msgid "*** You are now known as %s"
+msgstr "*** Sei conosciuto come %s"
+
+#: ../frozen-bubble:4331
+msgid "*** Erroneous nickname"
+msgstr "*** Nickname errato"
+
+#: ../frozen-bubble:4341
+#, perl-format
+msgid "*** You're connected to server '%s'"
+msgstr "*** Sei connesso al server '%s'"
+
+#: ../frozen-bubble:4352 ../frozen-bubble:4379 ../frozen-bubble:4609
+#, perl-format
+msgid "Kicking %s: %s"
+msgstr ""
+
+#: ../frozen-bubble:4355 ../frozen-bubble:4367
+msgid "*** Sado-masochist, hmm?"
+msgstr "*** Masochista, eh?"
+
+#: ../frozen-bubble:4356 ../frozen-bubble:4368
+msgid "*** You like when it hurts, don't you?"
+msgstr "*** Ti piace farti male, vero?"
+
+#: ../frozen-bubble:4357 ../frozen-bubble:4369
+msgid "*** Your butt already hurts enough! Stop that!"
+msgstr "*** Ti brucia già abbastanza il sedere! Fermati!"
+
+#: ../frozen-bubble:4374
+#, perl-format
+msgid "*** Removing %s from autokick list."
+msgstr ""
+
+#: ../frozen-bubble:4376
+#, perl-format
+msgid "*** Adding %s to autokick list."
+msgstr ""
+
+#: ../frozen-bubble:4387
+msgid "*** Nobody in autokick list."
+msgstr ""
+
+#: ../frozen-bubble:4389
+#, perl-format
+msgid "*** Autokick list members: %s"
+msgstr ""
+
+#: ../frozen-bubble:4393
 #, perl-format
 msgid "*** Available commands: %s"
 msgstr "*** Comandi disponibili: %s"
 
-#: ../frozen-bubble:4056
+#: ../frozen-bubble:4394
 #, perl-format
 msgid "%s <action>"
 msgstr "%s <azione>"
 
-#: ../frozen-bubble:4056
-#, perl-format
-msgid "%s <nick>"
-msgstr "%s <nickname>"
-
-#: ../frozen-bubble:4057
+#: ../frozen-bubble:4394
 #, perl-format
 msgid "%s <new_nick>"
 msgstr "%s <nuovo_nickname>"
 
-#: ../frozen-bubble:4060
+#: ../frozen-bubble:4394 ../frozen-bubble:4396
+#, fuzzy, perl-format
+msgid "%s <nick> [<text>]"
+msgstr "%s <nickname>"
+
+#: ../frozen-bubble:4399
 #, perl-format
 msgid "*** Unknown command. Try %s for help."
 msgstr "*** Comando sconosciuto. Scrivi %s per avere aiuto."
 
-#: ../frozen-bubble:4097
+#: ../frozen-bubble:4436
 msgid ""
 "*** Open games already full. Join an existing game, or select a different "
 "server."
@@ -427,56 +480,30 @@ msgstr ""
 "*** Partite aperte piene. Partecipa ad una partita esistente, o seleziona un "
 "server differente."
 
-#: ../frozen-bubble:4100
+#: ../frozen-bubble:4439
 msgid "*** Cannot join game, game was just started or aborted"
-msgstr "*** Impossibile partecipare alla partita, è stata appena iniziata o annullata"
+msgstr ""
+"*** Impossibile partecipare alla partita, è stata appena iniziata o annullata"
 
-#: ../frozen-bubble:4104
+#: ../frozen-bubble:4443 ../frozen-bubble:4722
 #, perl-format
 msgid "*** Failure: '%s'"
 msgstr "*** Errore: '%s'"
 
-#: ../frozen-bubble:4110
+#: ../frozen-bubble:4449
 msgid "*** Game created - now you need to wait for players to join"
 msgstr "*** Partita avviata - in attesa di altri giocatori"
 
-#: ../frozen-bubble:4113
+#: ../frozen-bubble:4452
 msgid "*** Joined game"
 msgstr "*** Connesso alla partita"
 
-#: ../frozen-bubble:4128
-msgid ""
-"*** Can't enable chain-reaction, as a player is using a too old version of "
-"Frozen-Bubble"
-msgstr ""
-"*** Impossibile abilitare la reazione a catena perché un giocatore sta usando "
-"una versione troppo vecchia di Frozen-Bubble"
-
-#: ../frozen-bubble:4132 ../frozen-bubble:4138 ../frozen-bubble:4364
-#: ../frozen-bubble:4369
-#, perl-format
-msgid "Chain-reaction: %s"
-msgstr "Reazione a catena: %s"
-
-#: ../frozen-bubble:4147
-msgid ""
-"*** Can't set a victories limit, as a player is using a too old version of "
-"Frozen-Bubble"
-msgstr ""
-"*** Impossibile impostare il limite di vittorie, perché un giocatore sta usando "
-"una versione troppo vecchia di Frozen-Bubble"
-
-#: ../frozen-bubble:4152 ../frozen-bubble:4365 ../frozen-bubble:4370
-#, perl-format
-msgid "Victories limit: %s"
-msgstr "Limite di vittorie: %s"
-
-#: ../frozen-bubble:4161 ../frozen-bubble:4181 ../frozen-bubble:4187
+#: ../frozen-bubble:4478 ../frozen-bubble:4508 ../frozen-bubble:4514
 #, perl-format
 msgid "*** Can't start game: '%s'"
 msgstr "*** Impossibile avviare la partita: '%s'"
 
-#: ../frozen-bubble:4170
+#: ../frozen-bubble:4490
 msgid ""
 "*** Must disable chain-reaction, as a player is using a too old version of "
 "Frozen-Bubble"
@@ -484,7 +511,7 @@ msgstr ""
 "*** Devi abilitare la reazione a catena, perché un giocatore sta usando una "
 "versione troppo vecchia di Frozen-Bubble"
 
-#: ../frozen-bubble:4174
+#: ../frozen-bubble:4495
 msgid ""
 "*** Must reset victories limit as a player is using a too old version of "
 "Frozen-Bubble"
@@ -492,155 +519,198 @@ msgstr ""
 "*** Devi togliere il limite di vittorie perché un giocatore sta usando una "
 "versione troppo vecchia di Frozen-Bubble"
 
-#: ../frozen-bubble:4241
+#: ../frozen-bubble:4501
+#, fuzzy
+msgid ""
+"*** Cannot disable end game on lefters, as a player is using a too old "
+"version of Frozen-Bubble"
+msgstr ""
+"*** Impossibile abilitare la reazione a catena perché un giocatore sta "
+"usando una versione troppo vecchia di Frozen-Bubble"
+
+#: ../frozen-bubble:4606
 #, perl-format
 msgid "*** %s joined the game!"
 msgstr "*** %s partecipa alla partita!"
 
-#: ../frozen-bubble:4248
+#: ../frozen-bubble:4620
 #, perl-format
-msgid "*** Chain-reaction disabled, %s is using a too old version of Frozen-Bubble"
+msgid ""
+"*** Chain-reaction disabled, %s is using a too old version of Frozen-Bubble"
 msgstr ""
-"*** Reazione a catena disabilitata, %s sta usando una versione troppo vecchia di "
-"Frozen-Bubble"
+"*** Reazione a catena disabilitata, %s sta usando una versione troppo "
+"vecchia di Frozen-Bubble"
 
-#: ../frozen-bubble:4252
+#: ../frozen-bubble:4624
 #, perl-format
-msgid "*** Victories limit reset, %s is using a too old version of Frozen-Bubble"
+msgid ""
+"*** Victories limit reset, %s is using a too old version of Frozen-Bubble"
 msgstr ""
-"*** Tolto il limite di vittorie, %s sta usando una versione troppo vecchia di "
-"Frozen-Bubble"
+"*** Tolto il limite di vittorie, %s sta usando una versione troppo vecchia "
+"di Frozen-Bubble"
 
-#: ../frozen-bubble:4260
+#: ../frozen-bubble:4630
+#, fuzzy, perl-format
+msgid ""
+"*** End game on lefters enabled back, %s is using a too old version of "
+"Frozen-Bubble"
+msgstr ""
+"*** Reazione a catena disabilitata, %s sta usando una versione troppo "
+"vecchia di Frozen-Bubble"
+
+#: ../frozen-bubble:4639
 msgid "*** Game creator left the game..."
 msgstr "*** Il creatore della partita ha lasciato la partita..."
 
-#: ../frozen-bubble:4265
+#: ../frozen-bubble:4644
 #, perl-format
 msgid "*** %s left the game..."
 msgstr "*** %s ha lasciato la partita..."
 
-#: ../frozen-bubble:4270
+#: ../frozen-bubble:4649
 #, perl-format
 msgid "*** %s was kicked out of the game..."
 msgstr "*** %s è stato espulso dalla partita..."
 
-#: ../frozen-bubble:4275
+#: ../frozen-bubble:4654
 msgid "*** You were kicked out of the game..."
 msgstr "*** Sei stato espulso dalla partita..."
 
-#: ../frozen-bubble:4280
+#: ../frozen-bubble:4659
 msgid "*** You were disconnected because of too long inactivity"
 msgstr "*** Disconnesso a causa di lunga inattività"
 
-#: ../frozen-bubble:4338
+#: ../frozen-bubble:4740
 msgid "*** Lost connection to server, abandoning - press any key"
 msgstr "*** Connessione al server persa - premi un tasto"
 
-#: ../frozen-bubble:4366
+#: ../frozen-bubble:4769
 msgid "Start game!"
 msgstr "Comincia il gioco!"
 
-#: ../frozen-bubble:4385
+#: ../frozen-bubble:4789
 #, perl-format
 msgid "*** Game finished, because victories limit of %s was reached."
-msgstr "*** Partita terminata perché il limite di vittorie di %s è stato raggiunto."
+msgstr ""
+"*** Partita terminata perché il limite di vittorie di %s è stato raggiunto."
 
-#: ../frozen-bubble:4388
+#: ../frozen-bubble:4792
 #, perl-format
 msgid "*** Game finished, because the following player(s) left: %s"
 msgstr "*** Partita terminata perché i seguenti giocatori l'hanno lasciata: %s"
 
-#: ../frozen-bubble:4391
+#: ../frozen-bubble:4795
 #, perl-format
 msgid "*** Addicted for: %s"
 msgstr "*** Indotto per: %s"
 
-#: ../frozen-bubble:4394
+#: ../frozen-bubble:4798
 #, perl-format
 msgid "*** Winner: %s"
 msgstr "*** Vincitore: %s"
 
-#: ../frozen-bubble:4396
+#: ../frozen-bubble:4800
 msgid "*** Draw game!"
 msgstr "*** Pari!"
 
-#: ../frozen-bubble:4398
+#: ../frozen-bubble:4802
 #, perl-format
 msgid "*** Scores: %s"
 msgstr "*** Punti: %s"
 
-#: ../frozen-bubble:4412
+#: ../frozen-bubble:4820
 msgid ""
 "*** Cannot connect to specified gameserver, fallbacking to contacting master "
 "server"
-msgstr "*** Impossibile connettersi al server scelto, ritorno al server principale"
+msgstr ""
+"*** Impossibile connettersi al server scelto, ritorno al server principale"
 
-#: ../frozen-bubble:4446
+#: ../frozen-bubble:4860
 msgid "2-player game"
 msgstr "2 giocatori"
 
-#: ../frozen-bubble:4495 ../frozen-bubble:4529
+#: ../frozen-bubble:4909 ../frozen-bubble:4942
 msgid "Congratulations!"
 msgstr "Congratulazioni!"
 
-#: ../frozen-bubble:4495 ../frozen-bubble:4529
+#: ../frozen-bubble:4909 ../frozen-bubble:4942
 msgid "You have a highscore!"
 msgstr "Hai fatto un record!"
 
-#: ../frozen-bubble:4496 ../frozen-bubble:4530
+#: ../frozen-bubble:4910 ../frozen-bubble:4943
 msgid "Your name?"
 msgstr "Nome?"
 
-#: ../frozen-bubble:4497 ../frozen-bubble:4531
+#: ../frozen-bubble:4911 ../frozen-bubble:4944
 msgid "Great game!"
 msgstr "Bel gioco!"
 
-#: ../frozen-bubble:4652
+#: ../frozen-bubble:5098
 msgid "Please enter new keys:"
 msgstr "Imposta i nuovi tasti:"
 
-#: ../frozen-bubble:4654
+#: ../frozen-bubble:5100
 msgid "Player 1; turn left?"
 msgstr "Giocatore 1; sinistra?"
 
-#: ../frozen-bubble:4655
+#: ../frozen-bubble:5101
 msgid "Player 1; turn right?"
 msgstr "Giocatore 1; destra?"
 
-#: ../frozen-bubble:4656
+#: ../frozen-bubble:5102
 msgid "Player 1; fire?"
 msgstr "Giocatore 1; fuoco?"
 
-#: ../frozen-bubble:4657
+#: ../frozen-bubble:5103
 msgid "Player 1; center?"
 msgstr "Giocatore 1; centro?"
 
-#: ../frozen-bubble:4659
+#: ../frozen-bubble:5105
 msgid "Player 2; turn left?"
 msgstr "Giocatore 2; sinistra?"
 
-#: ../frozen-bubble:4660
+#: ../frozen-bubble:5106
 msgid "Player 2; turn right?"
 msgstr "Giocatore 2; destra?"
 
-#: ../frozen-bubble:4661
+#: ../frozen-bubble:5107
 msgid "Player 2; fire?"
 msgstr "Giocatore 2; fuoco?"
 
-#: ../frozen-bubble:4662
+#: ../frozen-bubble:5108
 msgid "Player 2; center?"
 msgstr "Giocatore 2; centro?"
 
-#: ../frozen-bubble:4664
+#: ../frozen-bubble:5110
 msgid "Toggle fullscreen?"
 msgstr "Schermo intero?"
 
-#: ../frozen-bubble:4665
+#: ../frozen-bubble:5111
 msgid "Chat (net/lan game)?"
 msgstr "Chat (gioco in rete)?"
 
-#: ../frozen-bubble:4667
+#: ../frozen-bubble:5113
 msgid "Thanks!"
 msgstr "Grazie!"
 
+#, fuzzy
+#~ msgid ""
+#~ "*** Can't disable end game on lefters, as a player is using a too old "
+#~ "version of Frozen-Bubble"
+#~ msgstr ""
+#~ "*** Impossibile abilitare la reazione a catena perché un giocatore sta "
+#~ "usando una versione troppo vecchia di Frozen-Bubble"
+
+#~ msgid ""
+#~ "*** Can't set a victories limit, as a player is using a too old version "
+#~ "of Frozen-Bubble"
+#~ msgstr ""
+#~ "*** Impossibile impostare il limite di vittorie, perché un giocatore sta "
+#~ "usando una versione troppo vecchia di Frozen-Bubble"
+
+#, fuzzy
+#~ msgid "Lost synchronization2!"
+#~ msgstr "Sincronizzazione persa!"
+
+#~ msgid "*** Server's MOTD: %s"
+#~ msgstr "*** MDG del server: %s"

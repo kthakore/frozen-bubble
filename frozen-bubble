@@ -44,7 +44,7 @@ use vars qw($TARGET_ANIM_SPEED $BUBBLE_SIZE $ROW_SIZE $LAUNCHER_SPEED $BUBBLE_SP
             %sticking_bubble $time %imgbin $TIME_HURRY_WARN $TIME_HURRY_MAX $TIMEOUT_PINGUIN_SLEEP $FREE_FALL_CONSTANT @joysticks $joysticksinfo
             $direct @PLAYERS @ALL_PLAYERS %levels $display_on_app_disabled $total_time $time_1pgame $time_netgame $fullscreen $rcfile %hiscorefiles
             $HISCORES $HISCORES_MPTRAIN $HISCORES_MPTRAIN_CHAINREACTION
-            $lev_number $playermalus $mptrainingdiff $loaded_levelset $direct_levelset $chainreaction %chains %img_mini $frame $sock $gameserver $mynick
+            $lev_number $playermalus $mptrainingdiff $loaded_levelset $direct_levelset $chainreaction %chains %img_mini $frame $sock $gameserver $mynick $endgameonlefters
             $mylatitude $mylongitude %autokick);
 
 use Getopt::Long;
@@ -490,7 +490,7 @@ sub is_leader() {
     my $me = unpack('C', $pdata{p1}{id});
     my $is_leader = 1;
     iter_players_but_first {
-        $is_leader &&= unpack('C', $pdata{$::p}{id}) > $me;
+        $pdata{$::p}{left} or $is_leader &&= unpack('C', $pdata{$::p}{id}) > $me;
     };
     return $is_leader;
 }
@@ -514,6 +514,7 @@ sub mp_ping_if_needed {
 sub mp_propagate {
     my ($key, $value, $ticks) = @_;
     if (is_leader()) {
+        dbgnet("as leader, sending $key$value");
         fb_net::gsend("$key$value");
         return $value;
     } else {
@@ -523,10 +524,11 @@ sub mp_propagate {
             if ($m->{msg} eq 'l') {
                 print "Server said that one of the players left - probably because of too high lag.\n";
             } else {
-                print "Network protocol error: waiting for $key, received $m->{msg}.\n";
+                print "Network protocol error: waiting for $key, received $m->{msg} - from $pdata{id2p}{$m->{id}}.\n";
             }
             die 'quit';
         } else {
+            dbgnet("duly received awaited message $m->{msg} - from $pdata{id2p}{$m->{id}}");
             return $1;
         }
     }
@@ -535,11 +537,19 @@ sub mp_propagate {
 sub living_players() {
     my @living;
     iter_players_ {
-        if ($pdata{$::p_}{state} eq 'ingame') {
+        if (!$pdata{$::p_}{left} && $pdata{$::p_}{state} eq 'ingame') {
             push @living, $::p_;
         }
     };
     return @living;
+}
+
+sub notleft_players() {
+    my $amount = 0;
+    iter_players_ {
+        $pdata{$::p_}{left} or $amount++;
+    };
+    return $amount;
 }
 
 #- ----------- bubble game stuff ------------------------------------------
@@ -935,6 +945,7 @@ sub handle_graphics($) {
     my ($fun) = @_;
 
     iter_players {
+        $pdata{$::p}{state} eq 'left' and next;  #- remote players already left in a previous subgame in mp game
 	#- bubbles
 	foreach ($launched_bubble{$::p}, if_($fun ne \&erase_image, $tobe_launched{$::p})) {
 	    $_ and $fun->($_->{img}, $_->{'x'}, $_->{'y'});
@@ -1271,14 +1282,16 @@ sub handle_mp_messages {
             die 'quit';
         }
         if ($pdata{$player}{left}) {
-            print STDERR "$pdata{$player}{nick}: you don't exist, go away!\n";
+            print STDERR "$pdata{$player}{nick}: you don't exist (anymore), go away!\n";
             next;
         }
         my ($command, $params) = $m->{msg} =~ /^(.)(.*)/;
+        dbgnet("message received: from=$player message=$m->{msg}");
         if ($command eq 'l') {
             iter_players { #- need iter_players to get the small graphics change for free
                 if ($::p eq $player) {
                     $pdata{$::p}{left} = 1;
+                    $pdata{$::p}{still_game_messages} = 0;
                     lose($::p);
                 }
             };
@@ -1753,7 +1766,11 @@ sub cleanup_player_bubbles {
 
 sub win {
     my ($player) = @_;
-    every { !$pdata{$_}{left} } @PLAYERS and $pdata{$player}{score}++;
+    if ($endgameonlefters) {
+        every { !$pdata{$_}{left} } @PLAYERS and $pdata{$player}{score}++;
+    } else {
+        $pdata{$player}{score}++;
+    }
     $pdata{$player}{ping_right}{state} = 'win';
     $pdata{$player}{ping_right}{img} = 0;
     print_scores($background);
@@ -1780,16 +1797,22 @@ sub lose {
         $pdata{$player}{state} = 'lost';
         my @living = living_players();
         if (@living == 1) {
-            if (any { $pdata{$_}{left} } @PLAYERS) {
-                #- if some players have left, directly go to won state
+            if (($endgameonlefters && any { $pdata{$_}{left} } @PLAYERS)
+                || (every { $pdata{$_}{still_game_messages} == 0 } @PLAYERS)) {
+                #- if some players have left and we want to end the game,
+                #- or if we've already nothing to wait from others, directly go to won state
                 win($living[0]);
                 $pdata{state} = "won $living[0]";
             } else {
                 #- tentatively suppose we've found the winner, but we need to confirm it by network
                 #- first, in rare case of two last players dying at the same time
                 my $winnernick = $pdata{$living[0]}{nick};
-                fb_net::gsend("F$winnernick");
                 $pdata{state} = "finished $living[0]:$winnernick 0";
+                #- if I am about to leave, destinations need to receive leave not finished message, else they'll
+                #- be waiting forever for it (and there's no point anyway)
+                if (!$pdata{p1}{left}) {
+                    fb_net::gsend("F$winnernick");
+                }
             }
         } else {
             if ($pdata{sendmalustoone} eq $player || $player eq 'p1') {
@@ -1797,8 +1820,10 @@ sub lose {
             }
         }
         if ($pdata{$player}{left}) {
-            exists $POS{$player}{left} and put_image_to_background(mini_graphics($player) ? $imgbin{"left_${player}_mini"} : $imgbin{left_rp1},
-                                                                   $POS{$player}{left}{x}, $POS{$player}{left}{y}); #}}
+            if (is_distant_player($player)) {
+                put_image_to_background(mini_graphics($player) ? $imgbin{"left_${player}_mini"} : $imgbin{left_rp1},
+                                        $POS{$player}{left}{x}, $POS{$player}{left}{y}); #}}
+            }
             @{$sticked_bubbles{$player}} = ();
             play_sound('cancel');
         } else {
@@ -1924,14 +1949,18 @@ sub decode_postgame_message($) {
     $player ||= 'UNKNOWN';
     if ($msg->{msg} =~ /^F(.*)/) {
         $pdata{$player}{still_game_messages} = 0;
+        dbgnet("decoded postgame message: from=$player msg=finished $1");
         return "$player finished $1";
     } elsif ($pdata{$player}{still_game_messages}) {
+        dbgnet("decoded postgame message: from=$player msg=gamemsg");
         return "$player gamemsg";
     } else {
         if ($msg->{msg} eq 'n') {
             $pdata{$player}{ready4newgame} = 1;
+            dbgnet("decoded postgame message: from=$player msg=newgame");
             return "$player newgame";
         } else {
+            dbgnet("decoded postgame message: from=$player msg=other");
             return "$player other";
         }
     }
@@ -2173,9 +2202,10 @@ sub update_game() {
         } else {
             $event->pump while $event->poll != 0;
             #- mp game only state when we're trying to figure out if this is not a draw game
-            
+
             if (my $msg = fb_net::grecv_get1msg_ifdata()) {
                 my $result = decode_postgame_message($msg);
+                iter_players { dbgnet("\tstill game message of=$pdata{$::p}{nick} value=$pdata{$::p}{still_game_messages}"); };
                 if ($result =~ /^(\S+) finished (\S+)/) {
                     my $remote_winner_nick = $2;
                     if ($remote_winner_nick ne $supposed_winner_nick) {
@@ -2193,6 +2223,7 @@ sub update_game() {
                     win($supposed_winner_player);
                     $pdata{state} = "won $supposed_winner_player";
                 } elsif ($result !~ /^(\S+) gamemsg/) {
+                    #- delay other players already asking for a new game (we're waiting for agreement on winner from others)
                     fb_net::gdelay_messages($msg);
                 }
                 
@@ -2201,7 +2232,7 @@ sub update_game() {
                 #- timeout for receiving the winners. it could happen when a client is badly killed.
                 $timeout_counter++;
                 if ($timeout_counter > 10 * (1000/$TARGET_ANIM_SPEED) ) {  #- 10 seconds
-                    mp_disconnect_with_reason('', '', '', '', '', t("Lost synchronization!"));
+                    mp_disconnect_with_reason('', '', '', '', '', t("Lost synchronization %s!", 1));
                 } else {
                     $pdata{state} = "finished $supposed_winner_player:$supposed_winner_nick $timeout_counter";
                 }
@@ -2234,9 +2265,12 @@ sub update_game() {
                 $events_pumped = 1;
 
                 my $mp_newgame = sub {
-                    if (any { $pdata{$_}{left} || $pdata{scorelimit} && $pdata{$_}{score} == $pdata{scorelimit} } @PLAYERS) {
+                    if (($endgameonlefters && any { $pdata{$_}{left} } @PLAYERS)
+                        || (!$endgameonlefters && notleft_players() <= 1)
+                        || ($pdata{scorelimit} && any { $pdata{$_}{score} == $pdata{scorelimit} } @PLAYERS)) {
                         die 'quit';
                     };
+                    dbgnet("send newgame 'n'");
                     fb_net::gsend('n');
                     my $timeout_counter;
 
@@ -2245,11 +2279,11 @@ sub update_game() {
                             my $result = decode_postgame_message($msg);
                             if ($result =~ /^(\S+) other/) {
                                 $pdata{$pdata{id2p}{$msg->{id}}}{left} = 1;
-                                die 'quit';
+                                $endgameonlefters || notleft_players() <= 1 and die 'quit';
                             }
                         }
                         iter_distant_players {
-                            $pdata{$::p}{ready4newgame} == 0 and goto still_waiting;
+                            !$pdata{$::p}{left} && $pdata{$::p}{ready4newgame} == 0 and goto still_waiting;
                         };
                         die 'new_game';
                       still_waiting:
@@ -2265,7 +2299,7 @@ sub update_game() {
                         $frame % (1000/$TARGET_ANIM_SPEED) == 0 and fb_net::gsend('p');
                         $timeout_counter++;
                         if ($timeout_counter > 10 * (1000/$TARGET_ANIM_SPEED) ) {  #- 10 seconds
-                            mp_disconnect_with_reason('', '', '', '', '', t("Lost synchronization!"));
+                            mp_disconnect_with_reason('', '', '', '', '', t("Lost synchronization %s!", 2));
                         }
                     }
                 };
@@ -2291,7 +2325,7 @@ sub update_game() {
                             $mp_newgame->();
                         } elsif ($result =~ /^(\S+) other/) {
                             $pdata{$pdata{id2p}{$msg->{id}}}{left} = 1;
-                            die 'quit';
+                            $endgameonlefters || notleft_players() <= 1 and die 'quit';
                         }
                     }
                     check_mp_connection();
@@ -3151,11 +3185,11 @@ sub new_game() {
 	$pdata{$::p}{ping_right}{state} = 'normal';
 	$apprects{$::p} = SDL::Rect->new('-x' => $POS{$::p}{left_limit}, '-y' => $POS{$::p}{top_limit},
 					 -width => $POS{$::p}{right_limit}-$POS{$::p}{left_limit}, -height => $POS{$::p}{'initial_bubble_y'}-$POS{$::p}{top_limit});
-
-        $pdata{$::p}{left} = 0;
         if (is_distant_player($::p)) {
-            $pdata{$::p}{still_game_messages} = 1;
-            $pdata{$::p}{ready4newgame} = 0;
+            if (!$pdata{$::p}{left}) {
+                $pdata{$::p}{still_game_messages} = 1;
+                $pdata{$::p}{ready4newgame} = 0;
+            }
         }
     };
 
@@ -3167,7 +3201,14 @@ sub new_game() {
 
     iter_players {
         delete $pdata{$::p}{newrootlast};
-        handle_progress($::p);
+        if ($pdata{$::p}{left}) {
+            #- already left remote players in mp game
+            put_image_to_background(mini_graphics($::p) ? $imgbin{"left_".$::p."_mini"} : $imgbin{left_rp1},
+                                    $POS{$::p}{left}{x}, $POS{$::p}{left}{y}); #}}
+            $pdata{$::p}{state} = 'left';
+        } else {
+            handle_progress($::p);
+        }
     };
 
     is_1p_game() and print_compressor();
@@ -3201,13 +3242,12 @@ sub new_game() {
                 real_stick_bubble($b, $cx, $cy, $PLAYERS[0], 0);
                 if (!is_1p_game()) {
                     iter_players_but_first {
-                        real_stick_bubble(create_bubble_given_img($b->{img}), $cx, $cy, $::p, 0);
+                        $pdata{$::p}{left} or real_stick_bubble(create_bubble_given_img($b->{img}), $cx, $cy, $::p, 0);
                     };
                 }
 	    }
 	}
     }
-    $pdata{gamenum}++;
 
     my ($next_num, $tobe_num);
     do { $next_num = int(rand(@bubbles_images)) } while (!validate_nextcolor($next_num, $PLAYERS[0]));
@@ -3233,8 +3273,10 @@ sub new_game() {
     generate_new_bubble($PLAYERS[0], $tobe_num);
     if (!is_1p_game()) {
         iter_players_but_first {
-            $next_bubble{$::p} = create_bubble_given_img_num($next_num);
-            generate_new_bubble($::p, $tobe_num);
+            if (!$pdata{$::p}{left}) {
+                $next_bubble{$::p} = create_bubble_given_img_num($next_num);
+                generate_new_bubble($::p, $tobe_num);
+            }
         };
     }
 
@@ -3256,6 +3298,7 @@ sub new_game() {
         mp_ping_if_needed(\$ticks);
 
         #- 1. first wait on a common barrier with others, so that everyone has finished previous things
+        dbgnet("send barrier 'n'");
         fb_net::gsend('n');
         check_mp_connection();
         iter_distant_players {
@@ -3273,10 +3316,12 @@ sub new_game() {
             }
             mp_ping_if_needed(\$ticks);
             if ($m->{msg} eq 'n') {
+                dbgnet("received barrier 'n' from $pdata{id2p}{$m->{id}}");
                 $pdata{$pdata{id2p}{$m->{id}}}{barrier4newgame} = 1;
                 iter_distant_players {
-                    $pdata{$::p}{barrier4newgame} == 0 and goto still_waiting;
+                    !$pdata{$::p}{left} && $pdata{$::p}{barrier4newgame} == 0 and goto still_waiting;
                 };
+                dbgnet("all barriers received, carrying on");
                 last;
               still_waiting:
             } else {
@@ -4077,6 +4122,7 @@ sub smg_choose_game() {
     my $can_start = 0;
     my $joined_leader;
     my $chain_reaction_state = t("enabled");
+    my $end_game_on_lefters_state = t("disabled");
     my @victories_limits = ({ value => undef,
                               text => t("none (unlimited)") },
                             map { { value => $_,
@@ -4088,15 +4134,62 @@ sub smg_choose_game() {
     $list_players->();
 
     my $setoptions = sub {
-        smg_verify_command('SETOPTIONS', 'CHAINREACTION:' . to_bool($chain_reaction_state eq t("enabled")) . ','
-                                       . "VICTORIESLIMIT:$victories_limits[$victories_limit_index]{value}");
+        my $level = fb_net::send_and_receive('PROTOCOL_LEVEL');
+        if ($level < 2) {  #- end game on lefters available from minor level 2 onwards
+            smg_verify_command('SETOPTIONS', 'CHAINREACTION:' . to_bool($chain_reaction_state eq t("enabled")) . ','
+                                           . "VICTORIESLIMIT:$victories_limits[$victories_limit_index]{value}");
+        } else {
+            smg_verify_command('SETOPTIONS', 'CHAINREACTION:' . to_bool($chain_reaction_state eq t("enabled")) . ','
+                                           . 'ENDGAMEONLEFTERS:' . to_bool($end_game_on_lefters_state eq t("enabled")) . ','
+                                           . "VICTORIESLIMIT:$victories_limits[$victories_limit_index]{value}");
+        }
+    };
+
+    my $toggle_chain_reaction = sub {
+        if ($chain_reaction_state eq t("disabled")) {
+            my $level = fb_net::send_and_receive('PROTOCOL_LEVEL');
+            if ($level < 1) {  #- available from minor level 1 onwards
+                smg_add_status_msg(t("*** Cannot modify this option, as a player is using a too old version of Frozen-Bubble"));
+                play_sound('cancel');
+            } else {
+                $chain_reaction_state = t("enabled");
+                $actions[1]{name} = t("Chain-reaction: %s", $chain_reaction_state);
+                $redraw->();
+                $setoptions->();
+            }
+        } else {
+            $chain_reaction_state = t("disabled");
+            $actions[1]{name} = t("Chain-reaction: %s", $chain_reaction_state);
+            $redraw->();
+            $setoptions->();
+        }
+    };
+
+    my $toggle_end_game_on_lefters = sub {
+        if ($end_game_on_lefters_state eq t("enabled")) {
+            my $level = fb_net::send_and_receive('PROTOCOL_LEVEL');
+            if ($level < 2) {  #- available from minor level 2 onwards
+                smg_add_status_msg(t("*** Cannot modify this option, as a player is using a too old version of Frozen-Bubble"));
+                play_sound('cancel');
+            } else {
+                $end_game_on_lefters_state = t("disabled");
+                $actions[2]{name} = t("End game on lefters: %s", $end_game_on_lefters_state);
+                $redraw->();
+                $setoptions->();
+            }
+        } else {
+            $end_game_on_lefters_state = t("enabled");
+            $actions[2]{name} = t("End game on lefters: %s", $end_game_on_lefters_state);
+            $redraw->();
+            $setoptions->();
+        }
     };
 
     my $change_victories_limit = sub {
         my ($action) = @_;
         my $level = fb_net::send_and_receive('PROTOCOL_LEVEL');
         if ($level < 1) {  #- available from minor level 1 onwards
-            smg_add_status_msg(t("*** Can't set a victories limit, as a player is using a too old version of Frozen-Bubble"));
+            smg_add_status_msg(t("*** Cannot modify this option, as a player is using a too old version of Frozen-Bubble"));
             play_sound('cancel');
         } else {
             if ($action eq 'inc') {
@@ -4113,27 +4206,7 @@ sub smg_choose_game() {
                     }
                 }
             }
-            $actions[2]{name} = t("Victories limit: %s", $victories_limits[$victories_limit_index]{text});
-            $redraw->();
-            $setoptions->();
-        }
-    };
-
-    my $toggle_chain_reaction = sub {
-        if ($chain_reaction_state eq t("disabled")) {
-            my $level = fb_net::send_and_receive('PROTOCOL_LEVEL');
-            if ($level < 1) {  #- available from minor level 1 onwards
-                smg_add_status_msg(t("*** Can't enable chain-reaction, as a player is using a too old version of Frozen-Bubble"));
-                play_sound('cancel');
-            } else {
-                $chain_reaction_state = t("enabled");
-                $actions[1]{name} = t("Chain-reaction: %s", $chain_reaction_state);
-                $redraw->();
-                $setoptions->();
-            }
-        } else {
-            $chain_reaction_state = t("disabled");
-            $actions[1]{name} = t("Chain-reaction: %s", $chain_reaction_state);
+            $actions[3]{name} = t("Victories limit: %s", $victories_limits[$victories_limit_index]{text});
             $redraw->();
             $setoptions->();
         }
@@ -4391,6 +4464,10 @@ sub smg_choose_game() {
                         $toggle_chain_reaction->();
                     }
 
+                    if ($curaction->()->{action} eq 'TOGGLE_END_GAME_ON_LEFTERS') {
+                        $toggle_end_game_on_lefters->();
+                    }
+
                     if ($curaction->()->{action} eq 'SWITCH_VICTORIES_LIMIT') {
                         $change_victories_limit->('inc');
                     }
@@ -4403,19 +4480,29 @@ sub smg_choose_game() {
                             return;
                         }
                         #- game is closed, need to check one last time if options are really possible
-                        if ($chain_reaction_state eq t("enabled") || $victories_limit_index > 0) {
+                        if ($chain_reaction_state eq t("enabled")
+                            || $victories_limit_index > 0
+                            || $end_game_on_lefters_state eq t("disabled")) {
                             my $level = fb_net::send_and_receive('PROTOCOL_LEVEL');
-                            if ($level < 1) {  #- CR available from minor level 1 onwards
+                            my $isdelay = 0;
+                            if ($level < 1) {  #- chain reaction available from minor level 1 onwards
                                 if ($chain_reaction_state eq t("enabled")) {
                                     smg_add_status_msg(t("*** Must disable chain-reaction, as a player is using a too old version of Frozen-Bubble"));
                                     $chain_reaction_state = t("disabled");
+                                    $isdelay = 1;
                                 }
                                 if ($victories_limit_index > 0) {
                                     smg_add_status_msg(t("*** Must reset victories limit as a player is using a too old version of Frozen-Bubble"));
                                     $victories_limit_index = 0;
+                                    $isdelay = 1;
                                 }
-                                fb_c_stuff::fbdelay(2000);
                             }
+                            if ($level < 2) {  #- end game on lefters available from minor level 1 onwards
+                                smg_add_status_msg(t("*** Cannot disable end game on lefters, as a player is using a too old version of Frozen-Bubble"));
+                                $end_game_on_lefters_state = t("enabled");
+                                $isdelay = 1;
+                            }
+                            $isdelay and fb_c_stuff::fbdelay(2000);
                         }
                         if ($setoptions->()) {
                             smg_add_status_msg(t("*** Can't start game: '%s'", $setoptions));
@@ -4435,7 +4522,9 @@ sub smg_choose_game() {
                     if ($curaction->()->{action} eq 'TOGGLE_CHAIN_REACTION') {
                         $toggle_chain_reaction->();
                     }
-
+                    if ($curaction->()->{action} eq 'TOGGLE_END_GAME_ON_LEFTERS') {
+                        $toggle_end_game_on_lefters->();
+                    }
                     if ($curaction->()->{action} eq 'SWITCH_VICTORIES_LIMIT') {
                         $change_victories_limit->('inc');
                     }
@@ -4444,7 +4533,9 @@ sub smg_choose_game() {
                     if ($curaction->()->{action} eq 'TOGGLE_CHAIN_REACTION') {
                         $toggle_chain_reaction->();
                     }
-
+                    if ($curaction->()->{action} eq 'TOGGLE_END_GAME_ON_LEFTERS') {
+                        $toggle_end_game_on_lefters->();
+                    }
                     if ($curaction->()->{action} eq 'SWITCH_VICTORIES_LIMIT') {
                         $change_victories_limit->('dec');
                     }
@@ -4520,7 +4611,9 @@ sub smg_choose_game() {
                     } else {
                         push @wholist, $1;
                         play_sound('newroot_solo');
-                        if ($chain_reaction_state eq t("enabled") || $victories_limit_index > 0) {
+                        if ($chain_reaction_state eq t("enabled")
+                            || $victories_limit_index > 0
+                            || $end_game_on_lefters_state eq t("disabled")) {
                             my $level = fb_net::send_and_receive('PROTOCOL_LEVEL');
                             if ($level < 1) {  #- available from minor level 1 onwards
                                 if ($chain_reaction_state eq t("enabled")) {
@@ -4530,6 +4623,12 @@ sub smg_choose_game() {
                                 if ($victories_limit_index > 0) {
                                     smg_add_status_msg(t("*** Victories limit reset, %s is using a too old version of Frozen-Bubble", $1));
                                     $victories_limit_index = 0;
+                                }
+                            }
+                            if ($level < 2) {  #- available from minor level 1 onwards
+                                if ($end_game_on_lefters_state eq t("disabled")) {
+                                    smg_add_status_msg(t("*** End game on lefters enabled back, %s is using a too old version of Frozen-Bubble", $1));
+                                    $end_game_on_lefters_state = t("enabled");
                                 }
                             }
                         }
@@ -4567,6 +4666,8 @@ sub smg_choose_game() {
                         my $option = $1;
                         if ($option =~ /^CHAINREACTION:(.)/) {
                             $chainreaction = $1;
+                        } elsif ($option =~ /^ENDGAMEONLEFTERS:(.)/) {
+                            $endgameonlefters = $1;
                         } elsif ($option =~ /^VICTORIESLIMIT:(\d*)/) {
                             $pdata{scorelimit} = $1;
                         } elsif ($option =~ /^PROTOCOLLEVEL:(\d+)/) {
@@ -4663,11 +4764,13 @@ sub smg_choose_game() {
                 if ($can_start) {
                     #- creator
                     push @actions, { name => t("Chain-reaction: %s", $chain_reaction_state), action => 'TOGGLE_CHAIN_REACTION' };
+                    push @actions, { name => t("End game on lefters: %s", $end_game_on_lefters_state), action => 'TOGGLE_END_GAME_ON_LEFTERS' };
                     push @actions, { name => t("Victories limit: %s", $victories_limits[$victories_limit_index]{text}), action => 'SWITCH_VICTORIES_LIMIT' };
                     @wholist > 1 and push @actions, { name => t("Start game!"), action => 'START' };
                 } else {
                     #- joiner
                     push @actions, { name => t("Chain-reaction: %s", $chainreaction ? t("enabled") : t("disabled")), readonly => 1};
+                    push @actions, { name => t("End game on lefters: %s", $endgameonlefters ? t("enabled") : t("disabled")), readonly => 1 };
                     push @actions, { name => t("Victories limit: %s", $pdata{scorelimit} ? i18n_number($pdata{scorelimit}) : t("none (unlimited)")), readonly => 1 };
                 }
                 $selected-- while $selected > $#actions || $actions[$selected]{readonly};
@@ -4685,7 +4788,7 @@ sub show_mp_scores() {
     if ($pdata{scorelimit} && any { $pdata{$_}{score} == $pdata{scorelimit} } @PLAYERS) {
         smg_add_status_msg(t("*** Game finished, because victories limit of %s was reached.", i18n_number($pdata{scorelimit})));
     } else {
-        if (any { $pdata{$_}{left} } @PLAYERS) {
+        if ($endgameonlefters && any { $pdata{$_}{left} } @PLAYERS) {
             smg_add_status_msg(t("*** Game finished, because the following player(s) left: %s", join(', ', map { if_($pdata{$_}{left}, $pdata{$_}{nick}) } @PLAYERS)));
         }
     }
@@ -4761,6 +4864,7 @@ sub new_game_once {
         }
     }
     if (is_mp_game() && !$playdata) {
+        $pdata{$_}{left} = 0 foreach @ALL_PLAYERS;
         $event->set_key_repeat(200, 50);
         my $ok_game;
         eval {
@@ -4772,7 +4876,6 @@ sub new_game_once {
             die $failure;
         }
         $failure || !$ok_game and return;
-        $pdata{gamenum} = 0;
     }
     play_music(is_1p_game() ? 'main1p' : 'main2p');
     return 1;
