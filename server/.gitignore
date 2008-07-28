@@ -1,2 +1,7 @@
 fb-server
 .depend
+fb-server.o
+game.o
+log.o
+net.o
+tools.o
