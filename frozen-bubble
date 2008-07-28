@@ -4872,8 +4872,8 @@ sub new_game_once {
             $chainreaction = $answ == SDLK_y; #;;
         }
     }
+    $pdata{$_}{left} = 0 foreach @ALL_PLAYERS;
     if (is_mp_game() && !$playdata) {
-        $pdata{$_}{left} = 0 foreach @ALL_PLAYERS;
         $event->set_key_repeat(200, 50);
         my $ok_game;
         eval {
