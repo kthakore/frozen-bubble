@@ -35,6 +35,7 @@ extern char* current_command;
 extern char* pidfile;
 extern char* user_to_switch;
 extern GList* alert_words;
+extern int interval_reregister;
 
 extern int amount_talk_flood[256];
 
@@ -46,7 +47,7 @@ ssize_t send_ok(int fd, char* inco_msg);
 void connections_manager();
 void conn_terminated(int fd, char* reason);
 void create_server(int argc, char **argv);
-void register_server();
+void register_server(int silent);
 void unregister_server();
 void close_server();
 void reread();

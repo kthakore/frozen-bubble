@@ -25,6 +25,7 @@
 #include <ctype.h>
 #include <errno.h>
 #include <sys/types.h>
+#include <sys/wait.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <glib.h>
@@ -171,6 +172,35 @@ static void close_fds(gpointer data, gpointer user_data)
         close(GPOINTER_TO_INT(data));
 }
 
+static time_t last_server_register = -1;
+
+void reregister_server_if_needed() {
+        time_t current_time;
+
+        if (last_server_register == -1 || interval_reregister == 0)
+                // feature disabled
+                return;
+
+        // don't stack zombies, do minimal housework
+        waitpid(-1, NULL, WNOHANG);
+
+        current_time = get_current_time();
+        if ((current_time - last_server_register)/60 >= interval_reregister) {
+                l0(OUTPUT_TYPE_INFO, "Reregistering to master server");
+                last_server_register = current_time;
+                int pid = fork();
+                if (pid < 0) {
+                        l1(OUTPUT_TYPE_ERROR, "Cannot fork: %s", strerror(errno));
+                        return;
+                }
+                if (pid == 0) {
+                        // Need to register from a separate process because master server will test us
+                        register_server(1);
+                        _exit(EXIT_SUCCESS);
+                }
+        }
+}
+
 void daemonize() {
         pid_t pid, sid;
         GList * retained_fds = NULL;
@@ -202,6 +232,8 @@ void daemonize() {
         if (debug_mode)
                 return;
 
+        last_server_register = get_current_time();
+
         pid = fork();
         if (pid < 0) {
                 l1(OUTPUT_TYPE_ERROR, "Cannot fork: %s", strerror(errno));
@@ -222,7 +254,8 @@ void daemonize() {
                         }
                 }
                 // Need to register from a separate process because master server will test us
-                register_server();
+                l0(OUTPUT_TYPE_INFO, "registering server");
+                register_server(0);
                 exit(EXIT_SUCCESS);
         }
 

@@ -73,11 +73,13 @@ static double date_amount_transmitted_reset;
 
 #define DEFAULT_PORT 1511  // a.k.a 0xF 0xB thx misc
 #define DEFAULT_MAX_USERS 255
+#define DEFAULT_INTERVAL_REREGISTER 60
 #define DEFAULT_MAX_TRANSMISSION_RATE 100000
 #define DEFAULT_OUTPUT "INFO"
 #define DEFAULT_GRACETIME 900
 static int port = DEFAULT_PORT;
 static int max_users = DEFAULT_MAX_USERS;
+int interval_reregister = DEFAULT_INTERVAL_REREGISTER;
 static int max_transmission_rate = DEFAULT_MAX_TRANSMISSION_RATE;
 static int gracetime = DEFAULT_GRACETIME;
 
@@ -405,6 +407,8 @@ void connections_manager(void)
                 int retval;
                 fd_set conns_set;
 
+                reregister_server_if_needed();
+
                 if (recalculate_list_games)
                         calculate_list_games();
                 recalculate_list_games = 0;
@@ -557,6 +561,7 @@ static void help(void)
         printf("     -g gracetime              set the gracetime after which a client with no network activity is terminated (in seconds, defaults to %d)\n", DEFAULT_GRACETIME);
         printf("     -h                        display this help then exits\n");
         printf("     -H host                   set the hostname (or IP) as seen from outside (by default, when registering the server to www.frozen-bubble.org, the distant end at IP level will be used)\n");
+        printf("     -i minutes                set the minutes interval for reregistering on the master server (except if -q is provided); use 0 to disable the feature; defaults to %d minutes)\n", DEFAULT_INTERVAL_REREGISTER);
         printf("     -l                        LAN mode: create an UDP server (on port %d) to answer broadcasts of clients discovering where are the servers\n", DEFAULT_PORT);
         printf("     -L                        LAN/game mode: create an UDP server as above, but limit number of games to 1 (this is for an FB client hosting a LAN server)\n");
         printf("     -m max_users              set the maximum of connected users (defaults to %d, physical maximum 255 in non debug mode)\n", DEFAULT_MAX_USERS);
@@ -707,6 +712,14 @@ static void handle_parameter(char command, char * param) {
                 printf("-H: setting hostname as seen from outside to '%s'\n", param);
                 external_hostname = strdup(param);
                 break;
+        case 'i':
+                interval_reregister = charstar_to_int(param);
+                if (interval_reregister > 0) {
+                        printf("-i: setting interval for re-registering to master server to %s minutes\n", param);
+                } else {
+                        printf("-i: interval for re-registering to master server set to 0, e.g. disabled\n");
+                }
+                break;
         case 'l':
                 create_udp_server();
                 break;
@@ -820,7 +833,7 @@ void create_server(int argc, char **argv)
         int valone = 1;
 
         while (1) {
-                int c = getopt(argc, argv, "a:A:c:df:g:hH:lLm:n:o:p:P:qt:u:z");
+                int c = getopt(argc, argv, "a:A:c:df:g:hH:i:lLm:n:o:p:P:qt:u:z");
                 if (c == -1)
                         break;
                 
@@ -1105,12 +1118,16 @@ static char * http_get(char * host, int port, char * path)
         }
 }
 
-void register_server() {
+void register_server(int silent) {
         if (!quiet && !lan_game_mode) {
                 char* path = asprintf_("/servers/servers.php?server-add=%s&server-add-port=%d", external_hostname, external_port);
                 char* doc = http_get("www.frozen-bubble.org", 80, path);
                 free(path);
                 if (doc != NULL) {
+                        if (silent) {
+                                free(doc);
+                                return;
+                        }
                         if (strstr(doc, "FB_TAG_SERVER_ADDED")) {
                                 if (streq(external_hostname, "DISTANT_END")) {
                                         // don't confuse admin printing a cryptic DISTANT_END hostname

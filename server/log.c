@@ -38,8 +38,8 @@ int debug_mode = FALSE;
 
 time_t get_current_time(void) 
 {
-    struct timezone tz;
     struct timeval now;
+    struct timezone tz;
     gettimeofday(&now, &tz);
     return now.tv_sec;
 }
