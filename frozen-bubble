@@ -4643,13 +4643,13 @@ sub smg_choose_game() {
                     smg_add_status_msg(sprintf("%02d:%02d ", $hour, $min) . $message);
                     play_sound('typewriter');
                 } elsif ($message =~ /^JOINED: (.+)/) {
-                    smg_add_status_msg(t("*** %s joined the game!", $1));
-                    if ($can_start && exists $autokick{$1}) {
-                        my $kicked = $1;
-                        $autokick{$kicked} and fb_net::send_("TALK " . t("Kicking %s: %s", $kicked, $autokick{$kicked}));
-                        $kick->($kicked);
+                    my $joined = $1;
+                    smg_add_status_msg(t("*** %s joined the game!", $joined));
+                    if ($can_start && exists $autokick{$joined}) {
+                        $autokick{$joined} and fb_net::send_("TALK " . t("Kicking %s: %s", $joined, $autokick{$joined}));
+                        $kick->($joined);
                     } else {
-                        push @wholist, $1;
+                        push @wholist, $joined;
                         play_sound('newroot_solo');
                         if ($chain_reaction_state eq t("enabled")
                             || $victories_limit_index > 0
@@ -4658,21 +4658,21 @@ sub smg_choose_game() {
                             my $level = fb_net::send_and_receive('PROTOCOL_LEVEL');
                             if ($level < 1) {  #- available from minor level 1 onwards
                                 if ($chain_reaction_state eq t("enabled")) {
-                                    smg_add_status_msg(t("*** Chain-reaction disabled, %s is using a too old version of Frozen-Bubble", $1));
+                                    smg_add_status_msg(t("*** Chain-reaction disabled, %s is using a too old version of Frozen-Bubble", $joined));
                                     $chain_reaction_state = t("disabled");
                                 }
                                 if ($victories_limit_index > 0) {
-                                    smg_add_status_msg(t("*** Victories limit reset, %s is using a too old version of Frozen-Bubble", $1));
+                                    smg_add_status_msg(t("*** Victories limit reset, %s is using a too old version of Frozen-Bubble", $joined));
                                     $victories_limit_index = 0;
                                 }
                             }
                             if ($level < 2) {  #- available from minor level 2 onwards
                                 if ($continue_game_when_players_leave_state eq t("enabled")) {
-                                    smg_add_status_msg(t("*** Continue game when players leave disabled, %s has a too old version", $1));
+                                    smg_add_status_msg(t("*** Continue game when players leave disabled, %s has a too old version", $joined));
                                     $continue_game_when_players_leave_state = t("disabled");
                                 }
                                 if ($single_player_targetting_state eq t("disabled")) {
-                                    smg_add_status_msg(t("*** Single player targetting enabled, %s has a too old version", $1));
+                                    smg_add_status_msg(t("*** Single player targetting enabled, %s has a too old version", $joined));
                                     $single_player_targetting_state = t("disabled");
                                 }
                             }
