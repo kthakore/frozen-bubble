@@ -4565,6 +4565,9 @@ sub smg_choose_game() {
                     if ($curaction->()->{action} eq 'TOGGLE_CONTINUE_GAME_WHEN_PLAYERS_LEAVE') {
                         $toggle_continue_game_when_players_leave->();
                     }
+                    if ($curaction->()->{action} eq 'TOGGLE_SINGLE_PLAYER_TARGETTING') {
+                        $toggle_single_player_targetting->();
+                    }
                     if ($curaction->()->{action} eq 'SWITCH_VICTORIES_LIMIT') {
                         $change_victories_limit->('inc');
                     }
@@ -4575,6 +4578,9 @@ sub smg_choose_game() {
                     }
                     if ($curaction->()->{action} eq 'TOGGLE_CONTINUE_GAME_WHEN_PLAYERS_LEAVE') {
                         $toggle_continue_game_when_players_leave->();
+                    }
+                    if ($curaction->()->{action} eq 'TOGGLE_SINGLE_PLAYER_TARGETTING') {
+                        $toggle_single_player_targetting->();
                     }
                     if ($curaction->()->{action} eq 'SWITCH_VICTORIES_LIMIT') {
                         $change_victories_limit->('dec');
