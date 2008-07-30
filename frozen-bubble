@@ -45,7 +45,7 @@ use vars qw($TARGET_ANIM_SPEED $BUBBLE_SIZE $ROW_SIZE $LAUNCHER_SPEED $BUBBLE_SP
             $direct @PLAYERS @ALL_PLAYERS %levels $display_on_app_disabled $total_time $time_1pgame $time_netgame $fullscreen $rcfile %hiscorefiles
             $HISCORES $HISCORES_MPTRAIN $HISCORES_MPTRAIN_CHAINREACTION
             $lev_number $playermalus $mptrainingdiff $loaded_levelset $direct_levelset $chainreaction %chains %img_mini $frame $sock $gameserver $mynick
-            $continuegamewhenplayersleave $mylatitude $mylongitude %autokick);
+            $continuegamewhenplayersleave $singleplayertargetting $mylatitude $mylongitude %autokick);
 
 use Getopt::Long;
 use Data::Dumper;
@@ -1573,7 +1573,7 @@ sub handle_game_events() {
                     return;
                 }
 
-                if (is_mp_game() && @PLAYERS >= 3) {
+                if (is_mp_game() && @PLAYERS >= 3 && $singleplayertargetting) {
                     foreach my $rp (qw(rp1 rp2 rp3 rp4)) {
                         if ($keypressed eq $KEYS->{misc}{"send_malus_to_$rp"}) {
                             set_sendmalustoone($rp);
@@ -4129,6 +4129,7 @@ sub smg_choose_game() {
     my $joined_leader;
     my $chain_reaction_state = t("enabled");
     my $continue_game_when_players_leave_state = t("enabled");
+    my $single_player_targetting_state = t("enabled");
     my @victories_limits = ({ value => undef,
                               text => t("none (unlimited)") },
                             map { { value => $_,
@@ -4147,6 +4148,7 @@ sub smg_choose_game() {
         } else {
             smg_verify_command('SETOPTIONS', 'CHAINREACTION:' . to_bool($chain_reaction_state eq t("enabled")) . ','
                                            . 'CONTINUEGAMEWHENPLAYERSLEAVE:' . to_bool($continue_game_when_players_leave_state eq t("enabled")) . ','
+                                           . 'SINGLEPLAYERTARGETTING:' . to_bool($single_player_targetting_state eq t("enabled")) . ','
                                            . "VICTORIESLIMIT:$victories_limits[$victories_limit_index]{value}");
         }
     };
@@ -4191,6 +4193,26 @@ sub smg_choose_game() {
         }
     };
 
+    my $toggle_single_player_targetting = sub {
+        if ($single_player_targetting_state eq t("enabled")) {
+            my $level = fb_net::send_and_receive('PROTOCOL_LEVEL');
+            if ($level < 2) {  #- available from minor level 2 onwards
+                smg_add_status_msg(t("*** Cannot modify this option, as a player is using a too old version of Frozen-Bubble"));
+                play_sound('cancel');
+            } else {
+                $single_player_targetting_state = t("disabled");
+                $actions[3]{name} = t("Single player targetting: %s", $single_player_targetting_state);
+                $redraw->();
+                $setoptions->();
+            }
+        } else {
+            $single_player_targetting_state = t("enabled");
+            $actions[3]{name} = t("Single player targetting: %s", $single_player_targetting_state);
+            $redraw->();
+            $setoptions->();
+        }
+    };
+
     my $change_victories_limit = sub {
         my ($action) = @_;
         my $level = fb_net::send_and_receive('PROTOCOL_LEVEL');
@@ -4212,7 +4234,7 @@ sub smg_choose_game() {
                     }
                 }
             }
-            $actions[3]{name} = t("Victories limit: %s", $victories_limits[$victories_limit_index]{text});
+            $actions[4]{name} = t("Victories limit: %s", $victories_limits[$victories_limit_index]{text});
             $redraw->();
             $setoptions->();
         }
@@ -4474,6 +4496,10 @@ sub smg_choose_game() {
                         $toggle_continue_game_when_players_leave->();
                     }
 
+                    if ($curaction->()->{action} eq 'TOGGLE_SINGLE_PLAYER_TARGETTING') {
+                        $toggle_single_player_targetting->();
+                    }
+
                     if ($curaction->()->{action} eq 'SWITCH_VICTORIES_LIMIT') {
                         $change_victories_limit->('inc');
                     }
@@ -4488,7 +4514,8 @@ sub smg_choose_game() {
                         #- game is closed, need to check one last time if options are really possible
                         if ($chain_reaction_state eq t("enabled")
                             || $victories_limit_index > 0
-                            || $continue_game_when_players_leave_state eq t("disabled")) {
+                            || $continue_game_when_players_leave_state eq t("enabled")
+                            || $single_player_targetting_state eq t("disabled")) {
                             my $level = fb_net::send_and_receive('PROTOCOL_LEVEL');
                             my $isdelay = 0;
                             if ($level < 1) {  #- chain reaction available from minor level 1 onwards
@@ -4504,9 +4531,16 @@ sub smg_choose_game() {
                                 }
                             }
                             if ($level < 2) {  #- continue game when players leave available from minor level 1 onwards
-                                smg_add_status_msg(t("*** Cannot enable continue game when players leave, as a player is using a too old version of Frozen-Bubble"));
-                                $continue_game_when_players_leave_state = t("disabled");
-                                $isdelay = 1;
+                                if ($continue_game_when_players_leave_state eq t("enabled")) {
+                                    smg_add_status_msg(t("*** Cannot enable continue game when players leave, as a player is using an old version"));
+                                    $continue_game_when_players_leave_state = t("disabled");
+                                    $isdelay = 1;
+                                }
+                                if ($single_player_targetting_state eq t("disabled")) {
+                                    smg_add_status_msg(t("*** Cannot disable single player targetting, as a player is using an old version"));
+                                    $single_player_targetting_state = t("enabled");
+                                    $isdelay = 1;
+                                }
                             }
                             $isdelay and fb_c_stuff::fbdelay(2000);
                         }
@@ -4619,7 +4653,8 @@ sub smg_choose_game() {
                         play_sound('newroot_solo');
                         if ($chain_reaction_state eq t("enabled")
                             || $victories_limit_index > 0
-                            || $continue_game_when_players_leave_state eq t("disabled")) {
+                            || $continue_game_when_players_leave_state eq t("enabled")
+                            || $single_player_targetting_state eq t("disabled")) {
                             my $level = fb_net::send_and_receive('PROTOCOL_LEVEL');
                             if ($level < 1) {  #- available from minor level 1 onwards
                                 if ($chain_reaction_state eq t("enabled")) {
@@ -4633,8 +4668,12 @@ sub smg_choose_game() {
                             }
                             if ($level < 2) {  #- available from minor level 2 onwards
                                 if ($continue_game_when_players_leave_state eq t("enabled")) {
-                                    smg_add_status_msg(t("*** continue game when players leave disabled, %s has a too old version", $1));
+                                    smg_add_status_msg(t("*** Continue game when players leave disabled, %s has a too old version", $1));
                                     $continue_game_when_players_leave_state = t("disabled");
+                                }
+                                if ($single_player_targetting_state eq t("disabled")) {
+                                    smg_add_status_msg(t("*** Single player targetting enabled, %s has a too old version", $1));
+                                    $single_player_targetting_state = t("disabled");
                                 }
                             }
                         }
@@ -4674,12 +4713,15 @@ sub smg_choose_game() {
                             $chainreaction = $1;
                         } elsif ($option =~ /^CONTINUEGAMEWHENPLAYERSLEAVE:(.)/) {
                             $continuegamewhenplayersleave = $1;
+                        } elsif ($option =~ /^SINGLEPLAYERTARGETTING:(.)/) {
+                            $singleplayertargetting = $1;
                         } elsif ($option =~ /^VICTORIESLIMIT:(\d*)/) {
                             $pdata{scorelimit} = $1;
                         } elsif ($option =~ /^PROTOCOLLEVEL:(\d+)/) {
                             $pdata{protocollevel} = $1;
                             if ($pdata{protocollevel} < 2) {
                                 $continuegamewhenplayersleave = 0;
+                                $singleplayertargetting = 1;
                             }
                         } else {
                             print "Unrecognized option: $option\n";
@@ -4774,12 +4816,14 @@ sub smg_choose_game() {
                     #- creator
                     push @actions, { name => t("Chain-reaction: %s", $chain_reaction_state), action => 'TOGGLE_CHAIN_REACTION' };
                     push @actions, { name => t("Continue game when players leave: %s", $continue_game_when_players_leave_state), action => 'TOGGLE_CONTINUE_GAME_WHEN_PLAYERS_LEAVE' };
+                    push @actions, { name => t("Single player targetting: %s", $single_player_targetting_state), action => 'TOGGLE_SINGLE_PLAYER_TARGETTING' };
                     push @actions, { name => t("Victories limit: %s", $victories_limits[$victories_limit_index]{text}), action => 'SWITCH_VICTORIES_LIMIT' };
                     @wholist > 1 and push @actions, { name => t("Start game!"), action => 'START' };
                 } else {
                     #- joiner
                     push @actions, { name => t("Chain-reaction: %s", $chainreaction ? t("enabled") : t("disabled")), readonly => 1};
                     push @actions, { name => t("Continue game when players leave: %s", $continuegamewhenplayersleave ? t("enabled") : t("disabled")), readonly => 1 };
+                    push @actions, { name => t("Single player targetting: %s", $singleplayertargetting ? t("enabled") : t("disabled")), readonly => 1 };
                     push @actions, { name => t("Victories limit: %s", $pdata{scorelimit} ? i18n_number($pdata{scorelimit}) : t("none (unlimited)")), readonly => 1 };
                 }
                 $selected-- while $selected > $#actions || $actions[$selected]{readonly};
