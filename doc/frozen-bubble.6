@@ -158,6 +158,22 @@ server to set your nick
 after connecting to a server for a NET game, don't use
 http://hostip.info/ to retrieve your geographical position to
 send it to other players
+.TP
+\fB--record \fIdirectory\fR
+specify the recording directory (normally, records are saved in
+the directory '.fb_records' down your home directory)
+.TP
+\fB--auto-record\fR
+automatically record all applicable games (normally, a record is
+triggered by hitting the Print Screen key during a game)
+.TP
+\fB--comment \fI'...'\fR
+add the comment enclosed between simple quotes to records (must
+not contain anything else than ASCII), it will be shown on
+console when playing back the record later
+.TP
+\fB--replay -\fIrecord_file|URL\fR
+playback the specified record file
 
 .SH AUTHOR
 Written by Guillaume Cottenceau.
@@ -169,7 +185,7 @@ Visit official homepage: http://www.frozen-bubble.org/
 .BR frozen-bubble-editor(6)
 
 .SH COPYRIGHT
-Copyright \(co 2000-2006 The Frozen-Bubble Team.
+Copyright \(co 2000-2008 The Frozen-Bubble Team.
 .br
 This is Free Software; this software is licensed under the GPL version 2, as published by the Free Software Foundation.
 There is NO warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.

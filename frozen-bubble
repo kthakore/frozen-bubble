@@ -45,7 +45,7 @@ use vars qw($TARGET_ANIM_SPEED $BUBBLE_SIZE $ROW_SIZE $LAUNCHER_SPEED $BUBBLE_SP
             $direct @PLAYERS @ALL_PLAYERS %levels $display_on_app_disabled $total_time $time_1pgame $time_netgame $fullscreen $rcfile %hiscorefiles
             $HISCORES $HISCORES_MPTRAIN $HISCORES_MPTRAIN_CHAINREACTION
             $lev_number $playermalus $mptrainingdiff $loaded_levelset $direct_levelset $chainreaction %chains %img_mini $frame $sock $gameserver $mynick
-            $continuegamewhenplayersleave $singleplayertargetting $mylatitude $mylongitude %autokick);
+            $continuegamewhenplayersleave $singleplayertargetting $mylatitude $mylongitude %autokick $replayparam $autorecord $comment);
 
 use Getopt::Long;
 use Data::Dumper;
@@ -152,6 +152,10 @@ GetOptions("fullscreen|fs!" => \$fullscreen,
            "my-nick=s" => \$mynick,
            "private" => \$private,
            "joysticks-info" => \$joysticksinfo,
+           "record=s" => sub { if (!-d $_[1]) { die("$_[1] does not exist.\n") } else { $recorddir = $_[1] } },
+           "auto-record" => \$autorecord,
+           "replay=s" => \$replayparam,
+           "comment=s" => \$comment,
            "help" => sub { print "Usage: ", basename($0), " [OPTION]...
  --fullscreen           start in fullscreen mode
  --no-fullscreen        don't start in fullscreen mode
@@ -176,6 +180,10 @@ GetOptions("fullscreen|fs!" => \$fullscreen,
  --no-echo              when sound is enabled, disable echoing each typed character with a typewriter sound
  --my-nick <nick>       for net/lan games, use this nick instead of username (max 10 chars, ASCII alphanumeric plus dash and underscore only)
  --private              when starting a net game, don't use http://hostip.info/ to retrieve your geographical position to send it to other players
+ --record <dir>         specify the recording directory (normally, records are saved in the directory '$ENV{HOME}/.fb_records')
+ --auto-record          automatically record all applicable games (normally, a record is triggered by hitting the Print Screen key during a game)
+ --comment '...'        add the comment enclosed between simple quotes to records (must not contain anything else than ASCII), it will be shown on console when playing back the record later
+ --replay <file|URL>    replay the specified savegame
 ";
                            exit(0);
            });
@@ -1682,7 +1690,7 @@ sub record {
 
 our $recordnumber = 0;
 sub save_record_if_needed {
-    if ($recorddata{save} && $levels{current} !~ /^\d+$/ && @{$recorddata{data}} > 1 && !$pdata{p1}{left}) {
+    if (($recorddata{save} || $autorecord) && $levels{current} !~ /^\d+$/ && @{$recorddata{data}} > 1 && !$pdata{p1}{left}) {
         if (!$recorddir) {
             print "Notice: no recorddir was specified on commandline; recording in '$ENV{HOME}/.fb_records'\n";
             $recorddir = "$ENV{HOME}/.fb_records";
@@ -1690,24 +1698,41 @@ sub save_record_if_needed {
         }
         my $filename = sprintf("$recorddir/fb_record_%08d", $recordnumber++);
         -f $filename || -f "$filename.bz2" and return save_record_if_needed();
-        @{$recorddata{data}[0]{players}} = @PLAYERS;  #- first record is pdatas, the rest are actions
-        $recorddata{data}[0]{gametype} = $pdata{gametype};
-        $recorddata{data}[0]{current_level} = $levels{current};
-        $recorddata{data}[0]{chainreaction} = $chainreaction;
-        $recorddata{data}[0]{time} = time();
-        if (is_mp_game()) {
-            $recorddata{data}[0]{mp_result} = $pdata{state};
-            iter_players {
-                $recorddata{data}[0]{$::p}{id} = $pdata{$::p}{id};
-                $recorddata{data}[0]{$::p}{nick} = $pdata{$::p}{nick};
-            };
-            $recorddata{data}[0]{id2p} = $pdata{id2p};
+        my $record = shift @{$recorddata{data}};
+        my $data = "players:" . join(',', @PLAYERS) . "\n"
+                 . "gametype:$pdata{gametype}\n"
+                 . "current_level:$levels{current}\n"
+                 . "chainreaction:$chainreaction\n"
+                 . "time:" . time() . "\n"
+                 . "srand:$record->{srand}\n";
+        if (exists $record->{bubbles}) {
+            $data .= "bubbles:" . join(',', @{$record->{bubbles}}) . "\n";
         }
-        output($filename, Data::Dumper->Dump([$recorddata{data}], [qw(playdata)]));
+        $comment and $data .= "comment:$comment\n";
+        if (is_mp_game()) {
+            $data .= "mp_result:$pdata{state}\n";
+            iter_players {
+                $data .= "player_id:$::p|$pdata{$::p}{id}\n"
+                       . "player_nick:$::p|$pdata{$::p}{nick}\n";
+            };
+        }
+        foreach my $item (@{$recorddata{data}}) {
+            foreach my $playeractions (keys %{$item->[1]{actions}}) {
+                foreach my $action (keys %{$item->[1]{actions}{$playeractions}}) {
+                    $data .= "frame_action:$item->[0]|$playeractions|$action|$item->[1]{actions}{$playeractions}{$action}\n";
+                }
+            }
+            if (exists $item->[1]{mp_messages}) {
+                foreach my $mpmessage (@{$item->[1]{mp_messages}}) {
+                    $data .= "frame_mpmessage:$item->[0]|$mpmessage->{id}|$mpmessage->{msg}\n";
+                }
+            }
+        }
+        output($filename, $data);
         if (system("bzip2 '$filename' >/dev/null 2>/dev/null") == 0) {
             $filename .= ".bz2";
         }
-        print "Record saved in '$filename'.\n";
+        print "Record saved in '$filename'. Start Frozen-Bubble with '--replay $filename' to replay the game.\n";
     }
 }
 
@@ -5615,54 +5640,100 @@ sub choose_levelset() {
 }
 
 sub replay {
-    ($playdata) = @_;
-    if ($playdata =~ /^http/) {
-        my $filename = $playdata;
-        $playdata = fb_net::http_download($playdata);
-        $playdata or return;
+    my ($replayfile) = @_;
+    if ($replayfile =~ /^http/) {
+        my $filename = $replayfile;
+        $replayfile = fb_net::http_download($replayfile);
+        $replayfile or return;
         if ($filename =~ /\.bz2$/) {
             my $fh;
             do { $filename = tmpnam() }
               until $fh = IO::File->new($filename, O_WRONLY|O_CREAT|O_EXCL);
-            print $fh $playdata;
+            print $fh $replayfile;
             $fh->close;
             local *F;
             local $/ = undef;
             open(F, "bzcat '$filename'|" ) or print("Can't open '$filename': $!\n"), return;
-            $playdata = <F>;
+            $replayfile = <F>;
             close F;
             unlink($filename);
-            $playdata or print("Could not bzcat '$filename', not displaying playback.\n"), return;
+            $replayfile or print("Could not bzcat '$filename', not displaying playback.\n"), return;
         }
     } else {
-        if ($playdata =~ /\.bz2$/) {
+        if ($replayfile =~ /\.bz2$/) {
             local *F;
             local $/ = undef;
-            my $filename = $playdata;
+            my $filename = $replayfile;
             open(F, "bzcat '$filename'|" ) or print("Can't open '$filename': $!\n"), return;
-            $playdata = <F>;
-            $playdata or print("Could not bzcat '$filename', not displaying playback.\n"), return;
+            $replayfile = <F>;
+            close F;
+            $replayfile or print("Could not bzcat '$filename', not displaying playback.\n"), return;
         } else {
-            $playdata = cat_($playdata);
+            $replayfile = cat_($replayfile);
         }
     }
-    eval($playdata);  #- fills up $playdata
     %recorddata = ();
-    $recorddata{pdatas} = shift @$playdata;  #- first record is used for pdatas, the rest will contain frame-indexed actions
-    @PLAYERS = @{$recorddata{pdatas}{players}};
+    $playdata = [];
+    my $linenumber = 0;
+    my $current_frame_num;
+    my $current_frame_action_data = {};
+    my $current_frame_mp_messages_data = [];
+    foreach my $line (split /\n/, $replayfile) {
+        $linenumber++;
+        my ($key, $value) = $line =~ /(.*?):(.*)?/ or print("Incorrect line number $linenumber in savegame.\n"), return;
+        if ($key eq 'players') {
+            @PLAYERS = split /,/, $value;
+        } elsif ($key eq 'gametype') {
+            $pdata{gametype} = $value;
+        } elsif ($key eq 'current_level') {
+            $levels{current} = $value;
+        } elsif ($key eq 'chainreaction') {
+            $chainreaction = $value;
+        } elsif ($key eq 'time') {
+            print 'Game recorded on ' . localtime($value) . ".\n";
+        } elsif ($key eq 'comment') {
+            print "Comment specified with record: $value.\n";
+        } elsif ($key eq 'srand') {
+            srand $value;
+        } elsif ($key eq 'bubbles') {
+            @{$recorddata{pdatas}{bubbles}} = split /,/, $value;
+        } elsif ($key eq 'mp_result') {
+            $recorddata{pdatas}{mp_result} = $value;
+        } elsif ($key eq 'player_id') {
+            my ($p, $id) = $value =~ /(.*?)\|(.*)/ or print("Incorrect line number $linenumber in savegame.\n"), return;
+            $pdata{$p}{id} = $id;
+        } elsif ($key eq 'player_nick') {
+            my ($p, $nick) = $value =~ /(.*?)\|(.*)/ or print("Incorrect line number $linenumber in savegame.\n"), return;
+            $pdata{$p}{nick} = $nick;
+        } elsif ($key eq 'frame_action') {
+            my ($framenum, $player, $action, $actionvalue) = $value =~ /(\d+)\|(\w+)\|(\w+)\|(\w+)/;
+            if ($framenum != $current_frame_num && defined($current_frame_num)) {
+                push @$playdata, [ $current_frame_num, { actions => $current_frame_action_data,
+                                                         mp_messages => $current_frame_mp_messages_data } ];
+                $current_frame_action_data = {};
+                $current_frame_mp_messages_data = [];
+            }
+            $current_frame_num = $framenum;
+            $current_frame_action_data->{$player}{$action} = $actionvalue;
+        } elsif ($key eq 'frame_mpmessage') {
+            my ($framenum, $id, $message) = $value =~ /(\d+)\|(.)\|(\S+)/;
+            if ($framenum != $current_frame_num && defined($current_frame_num)) {
+                push @$playdata, [ $current_frame_num, { actions => $current_frame_action_data,
+                                                         mp_messages => $current_frame_mp_messages_data } ];
+                $current_frame_action_data = {};
+                $current_frame_mp_messages_data = [];
+            }
+            $current_frame_num = $framenum;
+            push @$current_frame_mp_messages_data, { id => $id, msg =>  $message };
+        }
+    }
+    push @$playdata, [ $current_frame_num, { actions => $current_frame_action_data,
+                                             mp_messages => $current_frame_mp_messages_data } ];
     $pdata{$_}{score} = 0 foreach @PLAYERS;
-    $pdata{gametype} = $recorddata{pdatas}{gametype};
-    $levels{current} = $recorddata{pdatas}{current_level};
-    $chainreaction = $recorddata{pdatas}{chainreaction};
-    srand $recorddata{pdatas}{srand};
-    $recorddata{pdatas}{time} and print 'Game recorded on ' . localtime($recorddata{pdatas}{time}) . ".\n";
-    $recorddata{pdatas}{comment} and print "Comment specified with record: $recorddata{pdatas}{comment}\n";
     if (is_mp_game()) {
-        iter_players {
-            $pdata{$::p}{id} = $recorddata{pdatas}{$::p}{id};
-            $pdata{$::p}{nick} = $recorddata{pdatas}{$::p}{nick};
-        };
-        $pdata{id2p} = $recorddata{pdatas}{id2p};
+        foreach my $p (@PLAYERS) {
+            $pdata{id2p}{$pdata{$p}{id}} = $p;
+        }
     }
     local $direct = 1;
     #- I'm wondering if the following is really more dirty than adding a $playdata test in the beginning of the three functions..
@@ -5689,7 +5760,13 @@ sub replay {
 
 init_game();
 
-$direct or menu('first time');
+if ($replayparam) {
+    replay($replayparam);
+}
+
+if (!$direct) {
+    menu('first time');
+}
 
 while (!new_game_once()) { menu() }
 new_game() or goto go_to_menu;
