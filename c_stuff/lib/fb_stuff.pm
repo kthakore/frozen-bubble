@@ -31,7 +31,7 @@ use vars qw(@ISA @EXPORT $FPATH $FLPATH $FBLEVELS $colourblind %POS_1P %POS_2P %
 @EXPORT = qw($version $FPATH $FLPATH $colourblind $FBLEVELS %POS_1P %POS_2P %POS_MP $BUBBLE_SIZE $ROW_SIZE
              $PI cat_ member difference2 any every even odd sqr to_bool to_int if_ chomp_
              fold_left output append_to_file min max backtrace basename cp_af all partition ssort
-             sum put_in_hash mapn mapn_ fastuniq deep_copy stringchars t dbgnet);
+             sum put_in_hash mapn mapn_ before_leaving fastuniq deep_copy stringchars t dbgnet);
 
 $version = '2.2.0';
 
@@ -288,6 +288,31 @@ sub mapn(&@) {
 sub mapn_(&@) {
     my $f = shift;
     smapn($f, max(map { scalar @$_ } @_), @_);
+}
+sub add_f4before_leaving {
+    my ($f, $b, $name) = @_;
+
+    unless ($fb_stuff::before_leaving::{$name}) {
+        no strict 'refs';
+        ${"fb_stuff::before_leaving::$name"} = 1;
+        ${"fb_stuff::before_leaving::list"} = 1;
+    }
+    local *N = *{$fb_stuff::before_leaving::{$name}};
+    my $list = *fb_stuff::before_leaving::list;
+    $list->{$b}{$name} = $f;
+    *N = sub {
+        my $f = $list->{$_[0]}{$name} or die '';
+        $name eq 'DESTROY' and delete $list->{$_[0]};
+        &$f;
+    } if !defined &{*N};
+
+}
+#- ! the functions are not called in the order wanted, in case of multiple before_leaving :(
+sub before_leaving(&) {
+    my ($f) = @_;
+    my $b = bless {}, 'fb_stuff::before_leaving';
+    add_f4before_leaving($f, $b, 'DESTROY');
+    $b;
 }
 # -=-=---=-=---=-=---=-=---=-=---=-=---=-=---=-=---=-=---=-=---=-=---=-=---=-=---=-=---=-=--
 

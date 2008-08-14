@@ -96,6 +96,8 @@ $HISCORES = [];
 $HISCORES_MPTRAIN = [];
 $HISCORES_MPTRAIN_CHAINREACTION = [];
 
+my $RECORD_PROTOCOL_LEVEL = 0;
+
 $rcfile = "$ENV{HOME}/.fbrc";
 my $keys_orig = $KEYS;
 eval(cat_($rcfile));
@@ -1702,7 +1704,8 @@ sub save_record_if_needed {
         my $filename = sprintf("$recorddir/fb_record_%08d", $recordnumber++);
         -f $filename || -f "$filename.bz2" and return save_record_if_needed();
         my $record = shift @{$recorddata{data}};
-        my $data = "players:" . join(',', @PLAYERS) . "\n"
+        my $data = "record_protocol:$RECORD_PROTOCOL_LEVEL\n"
+                 . "players:" . join(',', @PLAYERS) . "\n"
                  . "gametype:$pdata{gametype}\n"
                  . "current_level:$levels{current}\n"
                  . "chainreaction:$chainreaction\n"
@@ -5670,6 +5673,10 @@ sub replay {
             $replayfile = cat_($replayfile);
         }
     }
+    my $b = before_leaving {
+        $playdata = undef;
+        srand $app->ticks;
+    };
     %recorddata = ();
     $playdata = [];
     my $linenumber = 0;
@@ -5679,7 +5686,13 @@ sub replay {
     foreach my $line (split /\n/, $replayfile) {
         $linenumber++;
         my ($key, $value) = $line =~ /(.*?):(.*)?/ or print("Incorrect line number $linenumber in savegame.\n"), return;
-        if ($key eq 'players') {
+        if ($key eq 'record_protocol') {
+            if ($value > $RECORD_PROTOCOL_LEVEL) {
+                print("Sorry, a more recent version of Frozen-Bubble is needed to play this record.\n"), return;
+            } elsif ($value < $RECORD_PROTOCOL_LEVEL) {
+                print("Sorry, an older version of Frozen-Bubble is needed to play this record.\n"), return;
+            }
+        } elsif ($key eq 'players') {
             @PLAYERS = split /,/, $value;
         } elsif ($key eq 'gametype') {
             $pdata{gametype} = $value;
@@ -5750,8 +5763,6 @@ sub replay {
             }
         }
     }
-    $playdata = undef;
-    srand $app->ticks;
 }
 
 #- ----------- main -------------------------------------------------------
