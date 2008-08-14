@@ -914,11 +914,16 @@ sub generate_new_bubble($$) {
 
 our $smg_lineheight = 16;
 
+sub mp_train_time_left {
+    my $seconds = 120.99 - (($recorddata{frame} * $TARGET_ANIM_SPEED) / 1000);
+    $seconds < 0 and $seconds = 0;
+    return $seconds;
+}
+
 our ($mp_train_xpos, $mp_train_ypos) = (32, 177);
 sub mp_train_print_time {
     my $drect = SDL::Rect->new(-width => $imgbin{void_mp_training}->width, -height => 30, -x => $mp_train_xpos, '-y' => $mp_train_ypos);
-    my $seconds = 120 - ($app->ticks - $pdata{origticks})/1000;
-    $seconds < 0 and $seconds = 0;
+    my $seconds = mp_train_time_left();
     my $m = int($seconds/60);
     my $s = int($seconds-$m*60); length($s) == 1 and $s = "0$s";
     print_('ingame', $background, $mp_train_xpos, $mp_train_ypos, t("%s'%s\"", i18n_number($m), i18n_number($s)), $imgbin{void_mp_training}->width, 'center');
@@ -1044,8 +1049,8 @@ sub handle_graphics($) {
             mp_train_print_time();
             $background->blit($drect, $app, $drect);
             push @update_rects, $drect;
-            my $seconds = 120 - ($app->ticks - $pdata{origticks})/1000;
-            if ($seconds < 0) {
+            my $seconds = mp_train_time_left();
+            if ($seconds == 0) {
                 put_image($imgbin{void_panel}, $MENUPOS{xpos_panel}, $MENUPOS{ypos_panel});
                 my $y = $MENUPOS{ypos_panel} + 30;
                 my @messages = ('', '', '', '', t("Your score after two minutes:"), '', $pdata{p1}{score}, '', t("Press any key."));
@@ -1486,7 +1491,6 @@ sub handle_game_events() {
                         my $keypressed = extended_keypress($event);
                         if ($keypressed) {
                             $total_time += $app->ticks - $time_pause;
-                            $levels{current} eq 'mp_train' and $pdata{origticks} += $app->ticks - $time_pause;
                             return;
                         }
                     }
@@ -1577,7 +1581,6 @@ sub handle_game_events() {
                     $app->flip;
                     $total_time += $app->ticks - $time_pause;
                     is_1p_game() and $time_1pgame += $app->ticks - $time_pause;
-                    $levels{current} eq 'mp_train' and $pdata{origticks} += $app->ticks - $time_pause;
                     return;
                 }
 
@@ -3226,7 +3229,6 @@ sub new_game() {
 
     print_scores($background);
     if ($levels{current} eq 'mp_train') {
-        $pdata{origticks} = $app->ticks + 999;
         mp_train_print_time();
     }
 
@@ -3382,10 +3384,6 @@ sub new_game() {
         fb_net::gdelay_messages(@keep_messages);
 
         @{$pdata{attackingme}} = ();
-    }
-
-    if ($levels{current} eq 'mp_train') {
-        $pdata{origticks} = $app->ticks + 999;
     }
 
     return 1;
