@@ -2711,12 +2711,8 @@ sub init_game() {
     $imgbin{txt_editor_over} = add_image('menu/txt_editor_over.png');
     $imgbin{txt_keys_off}  = add_image('menu/txt_keys_off.png');
     $imgbin{txt_keys_over} = add_image('menu/txt_keys_over.png');
-    $imgbin{txt_graphics_1_off}  = add_image('menu/txt_graphics_1_off.png');
-    $imgbin{txt_graphics_1_over} = add_image('menu/txt_graphics_1_over.png');
-    $imgbin{txt_graphics_2_off}  = add_image('menu/txt_graphics_2_off.png');
-    $imgbin{txt_graphics_2_over} = add_image('menu/txt_graphics_2_over.png');
-    $imgbin{txt_graphics_3_off}  = add_image('menu/txt_graphics_3_off.png');
-    $imgbin{txt_graphics_3_over} = add_image('menu/txt_graphics_3_over.png');
+    $imgbin{txt_graphics_off}  = add_image('menu/txt_graphics_off.png');
+    $imgbin{txt_graphics_over} = add_image('menu/txt_graphics_over.png');
     $imgbin{txt_highscores_off}  = add_image('menu/txt_highscores_off.png');
     $imgbin{txt_highscores_over} = add_image('menu/txt_highscores_over.png');
     $imgbin{void_panel} = add_image('menu/void_panel.png');
@@ -5336,7 +5332,6 @@ sub menu {
 	foreach my $m (keys %menu_entries) {
 	    member($menu_entries{$m}->{pos}, @menu_invalids) or next;
 	    my $txt = "txt_$m";
-	    $menu_entries{$m}->{type} eq 'range' and $txt .= "_$menu_entries{$m}->{value}";
 	    $txt .= $menu_entries{$m}->{pos} == $current_pos ? '_over' : '_off';
 	    erase_image_from($imgbin{$txt}, $MENU_XPOS, $menu_ypos{$m}, $back_start);
 	    put_image($imgbin{$txt}, $MENU_XPOS, $menu_ypos{$m});
