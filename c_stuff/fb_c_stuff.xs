@@ -720,8 +720,7 @@ void flipflop_(SDL_Surface * dest, SDL_Surface * orig, int offset)
                 int x_ = floor(x__);
                 ptr = dest->pixels + x*Bpp;
                 for (y = 0; y < dest->h; y++) {
-                        Uint32 *A, *B, *C, *D;
-                        x_ = floor(x__);
+                        Uint32 *A, *B;
                         if (x_ < 0 || x_ > orig->w - 2) {
                                 // out of band
                                 * ( (Uint32*) ptr ) = 0;
@@ -730,8 +729,6 @@ void flipflop_(SDL_Surface * dest, SDL_Surface * orig, int offset)
                                 dx = x__ - x_;  // (mono)linear filtering
                                 A = orig->pixels + x_*Bpp     + y*orig->pitch;
                                 B = orig->pixels + (x_+1)*Bpp + y*orig->pitch;
-                                C = orig->pixels + x_*Bpp     + (y+1)*orig->pitch;
-                                D = orig->pixels + (x_+1)*Bpp + (y+1)*orig->pitch;
                                 a = geta(A) * ( 1 - dx ) + geta(B) * dx;
                                 if (a == 0) {
                                         // fully transparent, no use working
@@ -1232,6 +1229,78 @@ void blacken_(SDL_Surface * surf, int step)
 	myUnlockSurface(surf);
 }
 
+void overlook_init_(SDL_Surface * surf)
+{
+	int Bpp = surf->format->BytesPerPixel;
+	if (surf->format->BytesPerPixel != 4) {
+                fprintf(stderr, "overlook_init: dest surface must be 32bpp\n");
+                abort();
+        }
+	myLockSurface(surf);
+        for (x = 0; x < surf->w; x++) {
+                Uint8 *ptr = surf->pixels + x*Bpp;
+                for (y = 0; y < surf->h; y++) {
+                        * ( ptr + Rdec ) = 255;
+                        * ( ptr + Gdec ) = 255;
+                        * ( ptr + Bdec ) = 255;
+                        * ( ptr + Adec ) = 0;
+                        ptr += surf->pitch;
+                }
+        }
+	myUnlockSurface(surf);
+}
+
+void overlook_(SDL_Surface * dest, SDL_Surface * orig, int step, int pivot)
+{
+	int Bpp = dest->format->BytesPerPixel;
+        Uint8 *ptr;
+        int x_, y_;
+        int a;
+        double shading = 1 - CLAMP((double)step / 70, 0, 1);
+        double x_factor = 1 - (double)step / 700;
+        static double fade = 0.9;
+        double dx, dy;
+	if (orig->format->BytesPerPixel != 4) {
+                fprintf(stderr, "overlook: orig surface must be 32bpp\n");
+                abort();
+        }
+	if (dest->format->BytesPerPixel != 4) {
+                fprintf(stderr, "overlook: dest surface must be 32bpp\n");
+                abort();
+        }
+	myLockSurface(orig);
+	myLockSurface(dest);
+        for (x = 0; x < dest->w; x++) {
+                double y_factor = 1 - ((double)step) / 150 * MIN(pivot, abs(x - pivot) + pivot/3) / pivot;
+                double x__ = pivot + (x - pivot) * x_factor;
+                x_ = floor(x__);
+                ptr = dest->pixels + x*Bpp;
+                for (y = 0; y < dest->h; y++) {
+                        double y__ = dest->h/2 + (y - dest->h/2) * y_factor;
+                        Uint32 *A, *B, *C, *D;
+                        y_ = floor(y__);
+                        
+                        if (x_ < 0 || x_ > orig->w - 2 || y_ < 0 || y_ > orig->h - 2) {
+                                // out of band
+                                * ( ptr + Adec ) = * (ptr + Adec ) * fade;
+
+                        } else {
+                                dx = x__ - x_;
+                                dy = y__ - y_;
+                                A = orig->pixels + x_*Bpp     + y_*orig->pitch;
+                                B = orig->pixels + (x_+1)*Bpp + y_*orig->pitch;
+                                C = orig->pixels + x_*Bpp     + (y_+1)*orig->pitch;
+                                D = orig->pixels + (x_+1)*Bpp + (y_+1)*orig->pitch;
+                                a = (geta(A) * ( 1 - dx ) + geta(B) * dx) * ( 1 - dy ) + (geta(C) * ( 1 - dx ) + geta(D) * dx) * dy;
+                                * ( ptr + Adec ) = MAX(a * shading, * (ptr + Adec ) * fade);
+                        }
+                        ptr += dest->pitch;
+		}
+	}
+	myUnlockSurface(orig);
+	myUnlockSurface(dest);
+}
+
 void sdlpango_init_()
 {
         SDLPango_Init();
@@ -1444,6 +1513,21 @@ blacken(surf, step)
         int step
 	CODE:
 		blacken_(surf, step);
+
+void
+overlook(dest, orig, step, pivot)
+        SDL_Surface * dest
+        SDL_Surface * orig
+        int step
+        int pivot
+	CODE:
+                overlook_(dest, orig, step, pivot);
+
+void
+overlook_init(surf)
+        SDL_Surface * surf
+	CODE:
+		overlook_init_(surf);
 
 void
 _exit(status)

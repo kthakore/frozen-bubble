@@ -2767,14 +2767,16 @@ sub init_game() {
     $MENUPOS{ypos_panel} = (480 - $imgbin{void_panel}->height) / 2;
 
     #- 1p and 2p menu images
-    $imgbin{txt_1pmenu_play_all_levels_over} = add_image('menu/txt_play_all_levels_over.png');
-    $imgbin{txt_1pmenu_play_all_levels_off} = add_image('menu/txt_play_all_levels_off.png');
-    $imgbin{txt_1pmenu_pick_start_level_over} = add_image('menu/txt_pick_start_level_over.png');
-    $imgbin{txt_1pmenu_pick_start_level_off} = add_image('menu/txt_pick_start_level_off.png');
-    $imgbin{txt_1pmenu_play_random_levels_off} = add_image('menu/txt_play_random_levels_off.png');
-    $imgbin{txt_1pmenu_play_random_levels_over} = add_image('menu/txt_play_random_levels_over.png');
-    $imgbin{txt_1pmenu_mp_train_off} = add_image('menu/txt_multiplayer_training_off.png');
-    $imgbin{txt_1pmenu_mp_train_over} = add_image('menu/txt_multiplayer_training_over.png');
+    $imgbin{txt_1pmenu_off} = add_image('menu/txt_menu_1p_off.png');
+    $imgbin{txt_1pmenu_over} = add_image('menu/txt_menu_1p_over.png');
+    $imgbin{txt_1pmenu_play_all_levels_text} = add_image('menu/txt_play_all_levels_text.png');
+    $imgbin{txt_1pmenu_play_all_levels_outlined_text} = add_image('menu/txt_play_all_levels_outlined_text.png');
+    $imgbin{txt_1pmenu_pick_start_level_text} = add_image('menu/txt_pick_start_level_text.png');
+    $imgbin{txt_1pmenu_pick_start_level_outlined_text} = add_image('menu/txt_pick_start_level_outlined_text.png');
+    $imgbin{txt_1pmenu_play_random_levels_text} = add_image('menu/txt_play_random_levels_text.png');
+    $imgbin{txt_1pmenu_play_random_levels_outlined_text} = add_image('menu/txt_play_random_levels_outlined_text.png');
+    $imgbin{txt_1pmenu_mp_train_text} = add_image('menu/txt_multiplayer_training_text.png');
+    $imgbin{txt_1pmenu_mp_train_outlined_text} = add_image('menu/txt_multiplayer_training_outlined_text.png');
 
     #- net game setup images
     $imgbin{back_netgame} = add_image('back_netgame.png');
@@ -3393,19 +3395,24 @@ sub choose_1p_game_mode() {
     my @ordered_names = qw(play_all_levels pick_start_level play_random_levels mp_train);
     my $active_menu = 0;
 
-    my $redraw = sub {
-        my $menu_ypos_spacer = $imgbin{txt_1pmenu_play_all_levels_over}->height + 4;
-        my $menu_xpos = $MENUPOS{xpos_panel} + ($imgbin{'1p_panel'}->width - $imgbin{txt_1pmenu_play_all_levels_over}->width)/2; 
-        my $menu_ypos = $MENUPOS{ypos_panel} + 90;
+    my $menu_xpos = $MENUPOS{xpos_panel} + ($imgbin{'1p_panel'}->width - $imgbin{txt_1pmenu_over}->width)/2; 
+    my $menu_ypos = $MENUPOS{ypos_panel} + 90;
+    my $menu_ypos_spacer = $imgbin{txt_1pmenu_over}->height + 4;
+    my %name2ypos = (play_all_levels    => $menu_ypos,
+                     pick_start_level   => $menu_ypos +     $menu_ypos_spacer,
+                     play_random_levels => $menu_ypos + 2 * $menu_ypos_spacer,
+                     mp_train           => $menu_ypos + 3 * $menu_ypos_spacer);
 
+    my $overlook_index = 0;
+    my $overlook = SDL::Surface->new(-width => $imgbin{txt_1pmenu_pick_start_level_text}->width,
+                                     -height => $imgbin{txt_1pmenu_pick_start_level_text}->height,
+                                     -depth => 32);
+
+    my $redraw = sub {
         my $draw_element = sub {
             my ($name, $mode) = @_;
-            my %name2ypos = (play_all_levels    => $menu_ypos,
-                             pick_start_level   => $menu_ypos +     $menu_ypos_spacer,
-                             play_random_levels => $menu_ypos + 2 * $menu_ypos_spacer,
-                             mp_train           => $menu_ypos + 3 * $menu_ypos_spacer);
-            my $img_name = 'txt_1pmenu_' . $name . '_' . $mode;
-            put_image($imgbin{$img_name}, $menu_xpos, $name2ypos{$name});
+            put_image($imgbin{"txt_1pmenu_$mode"}, $menu_xpos, $name2ypos{$name});
+            $imgbin{"txt_1pmenu_${name}_outlined_text"}->blit(undef, $app, my $rect = SDL::Rect->new(-x => $menu_xpos, '-y' => $name2ypos{$name}));
         };
 
         my $img = $imgbin{'1p_panel'};
@@ -3431,11 +3438,34 @@ sub choose_1p_game_mode() {
 
         $draw_element->($ordered_names[$active_menu], 'over');
 
+        fb_c_stuff::overlook_init(surf($overlook));
+        $overlook_index = 0;
+
         $app->flip();
     };
 
+    my $draw_overlook = sub {
+        my %name2pivot = (play_all_levels => 90, pick_start_level => 135, play_random_levels => 82, mp_train => 105);
+        my $name =  $ordered_names[$active_menu];
+        put_image($imgbin{txt_1pmenu_over}, $menu_xpos, $name2ypos{$name});
+        fb_c_stuff::overlook(surf($overlook), surf($imgbin{"txt_1pmenu_${name}_text"}), $overlook_index, $name2pivot{$name});
+        $overlook->blit(undef, $app, my $rect = SDL::Rect->new(-x => $menu_xpos, '-y' => $name2ypos{$name}));
+        $overlook_index++;
+        if ($overlook_index == 70) {
+            $overlook_index = 0;
+        }
+        $imgbin{"txt_1pmenu_${name}_outlined_text"}->blit(undef, $app, my $rect = SDL::Rect->new(-x => $menu_xpos, '-y' => $name2ypos{$name}));
+    };
+
     $redraw->();
+
     while (1) {
+	my $synchro_ticks = $app->ticks;
+        if ($graphics_level > 1) {
+            $draw_overlook->();
+            $app->update(@update_rects);
+            @update_rects = ();
+        }
         $event->pump;
         while ($event->poll != 0) {
             if ($event->type == SDL_KEYDOWN) {
@@ -3483,7 +3513,8 @@ sub choose_1p_game_mode() {
                 $redraw->();
             }
         }
-        fb_c_stuff::fbdelay($TARGET_ANIM_SPEED);
+        my $to_wait = $TARGET_ANIM_SPEED - ($app->ticks - $synchro_ticks);
+        $to_wait > 0 and fb_c_stuff::fbdelay($to_wait);
     }
 }
 
