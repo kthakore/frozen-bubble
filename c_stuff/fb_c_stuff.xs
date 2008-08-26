@@ -686,7 +686,7 @@ void rotate_bicubic_(SDL_Surface * dest, SDL_Surface * orig, double angle)
                                                                                CUBIC_SCALED_ROW (dx, origptr + i + dest->pitch,     origptr + 3 + dest->pitch),
                                                                                CUBIC_SCALED_ROW (dx, origptr + i + dest->pitch * 2, origptr + 3 + dest->pitch * 2),
                                                                                CUBIC_SCALED_ROW (dx, origptr + i + dest->pitch * 3, origptr + 3 + dest->pitch * 3));
-                                        *(ptr+i) = CLAMP (newval, 0, 255);
+                                        *(ptr+i) = CLAMP(newval, 0, 255);
                                 }
                         }
                         x__ += cosval;
@@ -745,12 +745,9 @@ void flipflop_(SDL_Surface * dest, SDL_Surface * orig, int offset)
                                         g = (getg(A) * geta(A) * ( 1 - dx ) + getg(B) * geta(B) * dx) / a;
                                         b = (getb(A) * geta(A) * ( 1 - dx ) + getb(B) * geta(B) * dx) / a;
                                 }
-                                r = CLAMP(r*shading, 0, 255);
-                                g = CLAMP(g*shading, 0, 255);
-                                b = CLAMP(b*shading, 0, 255);
-                                * ( ptr + Rdec ) = r;  // it is slightly faster to not recompose the 32-bit pixel - at least on my p4
-                                * ( ptr + Gdec ) = g;
-                                * ( ptr + Bdec ) = b;
+                                * ( ptr + Rdec ) = CLAMP(r*shading, 0, 255);  // it is slightly faster to not recompose the 32-bit pixel - at least on my p4
+                                * ( ptr + Gdec ) = CLAMP(g*shading, 0, 255);
+                                * ( ptr + Bdec ) = CLAMP(b*shading, 0, 255);
                                 * ( ptr + Adec ) = a;
                         }
                         ptr += dest->pitch;
@@ -926,12 +923,9 @@ void tilt_(SDL_Surface * dest, SDL_Surface * orig, int offset)
                                         g = ( (getg(A) * geta(A) * ( 1 - dx ) + getg(B) * geta(B) * dx) * ( 1 - dy ) + (getg(C) * geta(C) * ( 1 - dx ) + getg(D) * geta(D) * dx) * dy ) / a;
                                         b = ( (getb(A) * geta(A) * ( 1 - dx ) + getb(B) * geta(B) * dx) * ( 1 - dy ) + (getb(C) * geta(C) * ( 1 - dx ) + getb(D) * geta(D) * dx) * dy ) / a;
                                 }
-                                r = CLAMP(r*shading, 0, 255);
-                                g = CLAMP(g*shading, 0, 255);
-                                b = CLAMP(b*shading, 0, 255);
-                                * ( (Uint8*) ptr + Rdec ) = r;  // it is slightly faster to not recompose the 32-bit pixel - at least on my p4
-                                * ( (Uint8*) ptr + Gdec ) = g;
-                                * ( (Uint8*) ptr + Bdec ) = b;
+                                * ( (Uint8*) ptr + Rdec ) = CLAMP(r*shading, 0, 255);  // it is slightly faster to not recompose the 32-bit pixel - at least on my p4
+                                * ( (Uint8*) ptr + Gdec ) = CLAMP(g*shading, 0, 255);
+                                * ( (Uint8*) ptr + Bdec ) = CLAMP(b*shading, 0, 255);
                                 * ( (Uint8*) ptr + Adec ) = a;
                         }
                         ptr += dest->pitch;
@@ -941,7 +935,7 @@ void tilt_(SDL_Surface * dest, SDL_Surface * orig, int offset)
 	myUnlockSurface(dest);
 }
 
-struct point { float x; float y; float angle; };
+struct point { double x; double y; double angle; };
 
 #define min(a,b) ( (a) < (b) ? (a) : (b) )
 
