@@ -480,10 +480,11 @@ void rotate_bilinear_(SDL_Surface * dest, SDL_Surface * orig, double angle)
 	int Bpp = dest->format->BytesPerPixel;
         Uint32 *ptr;
         int x_, y_;
-        int r, g, b, a;
-        float dx, dy;
-        float cosval = cos(angle);
-        float sinval = sin(angle);
+        int r, g, b;
+        double a;
+        double dx, dy;
+        double cosval = cos(angle);
+        double sinval = sin(angle);
 	if (orig->format->BytesPerPixel != 4) {
                 fprintf(stderr, "rotate_bilinear: orig surface must be 32bpp\n");
                 abort();
@@ -495,8 +496,8 @@ void rotate_bilinear_(SDL_Surface * dest, SDL_Surface * orig, double angle)
 	myLockSurface(orig);
 	myLockSurface(dest);
         for (y = 0; y < dest->h; y++) {
-                float x__ = - dest->w/2*cosval - (y - dest->h/2)*sinval + dest->w/2;
-                float y__ = (y - dest->h/2)*cosval - dest->w/2*sinval + dest->h/2;
+                double x__ = - dest->w/2*cosval - (y - dest->h/2)*sinval + dest->w/2;
+                double y__ = (y - dest->h/2)*cosval - dest->w/2*sinval + dest->h/2;
                 ptr = dest->pixels + y*dest->pitch;
                 for (x = 0; x < dest->w; x++) {
                         Uint32 *A, *B, *C, *D;
@@ -528,9 +529,9 @@ void rotate_bilinear_(SDL_Surface * dest, SDL_Surface * orig, double angle)
                                         g = ( (getg(A) * geta(A) * ( 1 - dx ) + getg(B) * geta(B) * dx) * ( 1 - dy ) + (getg(C) * geta(C) * ( 1 - dx ) + getg(D) * geta(D) * dx) * dy ) / a;
                                         b = ( (getb(A) * geta(A) * ( 1 - dx ) + getb(B) * geta(B) * dx) * ( 1 - dy ) + (getb(C) * geta(C) * ( 1 - dx ) + getb(D) * geta(D) * dx) * dy ) / a;
                                 }
-                                * ( ( (Uint8*) ptr ) + Rdec ) = CLAMP(r, 0, 255);  // it is slightly faster to not recompose the 32-bit pixel - at least on my p4
-                                * ( ( (Uint8*) ptr ) + Gdec ) = CLAMP(g, 0, 255);
-                                * ( ( (Uint8*) ptr ) + Bdec ) = CLAMP(b, 0, 255);
+                                * ( ( (Uint8*) ptr ) + Rdec ) = r;  // it is slightly faster to not recompose the 32-bit pixel - at least on my p4
+                                * ( ( (Uint8*) ptr ) + Gdec ) = g;
+                                * ( ( (Uint8*) ptr ) + Bdec ) = b;
                                 * ( ( (Uint8*) ptr ) + Adec ) = a;
                         }
                         x__ += cosval;
@@ -615,8 +616,8 @@ AV* autopseudocrop_(SDL_Surface * orig)
 
 #define CUBIC_SCALED_ROW(dx, row, arow) transform_cubic(dx, (arow)[0] * (row)[0], (arow)[4] * (row)[4], (arow)[8] * (row)[8], (arow)[12] * (row)[12])
 
-static inline float
-transform_cubic (float dx, int jm1, int j, int jp1, int jp2)
+static inline double
+transform_cubic(double dx, int jm1, int j, int jp1, int jp2)
 {
         // http://news.povray.org/povray.binaries.tutorials/attachment/%3CXns91B880592482seed7@povray.org%3E/Splines.bas.txt
         // Catmull-Rom yields the best results
@@ -631,11 +632,11 @@ void rotate_bicubic_(SDL_Surface * dest, SDL_Surface * orig, double angle)
 	int Bpp = dest->format->BytesPerPixel;
         Uint8 *ptr;
         int x_, y_;
-        float cosval = cos(angle);
-        float sinval = sin(angle);
-        float a_val, a_recip;
+        double cosval = cos(angle);
+        double sinval = sin(angle);
+        double a_val, a_recip;
         int   i;
-        float dx, dy;
+        double dx, dy;
 	if (orig->format->BytesPerPixel != 4) {
                 fprintf(stderr, "rotate_bicubic: orig surface must be 32bpp (bytes per pixel = %d)\n", orig->format->BytesPerPixel);
                 abort();
@@ -647,8 +648,8 @@ void rotate_bicubic_(SDL_Surface * dest, SDL_Surface * orig, double angle)
 	myLockSurface(orig);
 	myLockSurface(dest);
         for (y = 0; y < dest->h; y++) {
-                float x__ = - dest->w/2*cosval - (y - dest->h/2)*sinval + dest->w/2 - 1;
-                float y__ = (y - dest->h/2)*cosval - dest->w/2*sinval + dest->h/2 - 1;
+                double x__ = - dest->w/2*cosval - (y - dest->h/2)*sinval + dest->w/2 - 1;
+                double y__ = (y - dest->h/2)*cosval - dest->w/2*sinval + dest->h/2 - 1;
                 ptr = dest->pixels + y*dest->pitch;
                 for (x = 0; x < dest->w; x++) {
                         x_ = floor(x__);
@@ -701,8 +702,8 @@ void flipflop_(SDL_Surface * dest, SDL_Surface * orig, int offset)
 {
 	int Bpp = dest->format->BytesPerPixel;
         Uint8 *ptr;
-        int r, g, b, a;
-        float dx;
+        int r, g, b;
+        double a, dx;
 	if (orig->format->BytesPerPixel != 4) {
                 fprintf(stderr, "flipflop: orig surface must be 32bpp\n");
                 abort();
@@ -714,9 +715,9 @@ void flipflop_(SDL_Surface * dest, SDL_Surface * orig, int offset)
 	myLockSurface(orig);
 	myLockSurface(dest);
         for (x = 0; x < dest->w; x++) {
-                float sinval = sin((2*x+offset)/50.0)*5;
-                float shading = 1.1 + cos((2*x+offset)/50.0) / 10;  // based on sinval derivative
-                float x__ = x + sinval;
+                double sinval = sin((2*x+offset)/50.0)*5;
+                double shading = 1.1 + cos((2*x+offset)/50.0) / 10;  // based on sinval derivative
+                double x__ = x + sinval;
                 int x_ = floor(x__);
                 ptr = dest->pixels + x*Bpp;
                 for (y = 0; y < dest->h; y++) {
@@ -766,7 +767,7 @@ void enlighten_(SDL_Surface * dest, SDL_Surface * orig, int offset)
 	int Bpp = dest->format->BytesPerPixel;
         Uint8 *ptrdest, *ptrorig;
         int lightx, lighty;
-        float sqdistbase, sqdist, shading;
+        double sqdistbase, sqdist, shading;
 	if (orig->format->BytesPerPixel != 4) {
                 fprintf(stderr, "enlighten: orig surface must be 32bpp\n");
                 abort();
@@ -777,8 +778,8 @@ void enlighten_(SDL_Surface * dest, SDL_Surface * orig, int offset)
         }
 	myLockSurface(orig);
 	myLockSurface(dest);
-        lightx = dest->w/(2.5+0.3*sin((float)offset/500)) * sin((float)offset/100) + dest->w/2;
-        lighty = dest->h/(2.5+0.3*cos((float)offset/500)) * cos((float)offset/100) + dest->h/2 + 10;
+        lightx = dest->w/(2.5+0.3*sin((double)offset/500)) * sin((double)offset/100) + dest->w/2;
+        lighty = dest->h/(2.5+0.3*cos((double)offset/500)) * cos((double)offset/100) + dest->h/2 + 10;
         for (y = 0; y < dest->h; y++) {
                 ptrdest = dest->pixels + y*dest->pitch;
                 ptrorig = orig->pixels + y*orig->pitch;
@@ -811,9 +812,9 @@ void stretch_(SDL_Surface * dest, SDL_Surface * orig, int offset)
 	int Bpp = dest->format->BytesPerPixel;
         Uint8 *ptr;
         int x_, y_;
-        int r, g, b, a;
-        float dx, dy;
-        float sinval = sin(offset/50.0)/10 + 1;
+        int r, g, b;
+        double a, dx, dy;
+        double sinval = sin(offset/50.0)/10 + 1;
 	if (orig->format->BytesPerPixel != 4) {
                 fprintf(stderr, "stretch: orig surface must be 32bpp\n");
                 abort();
@@ -825,12 +826,12 @@ void stretch_(SDL_Surface * dest, SDL_Surface * orig, int offset)
 	myLockSurface(orig);
 	myLockSurface(dest);
         for (x = 0; x < dest->w; x++) {
-                float x__ = (x - dest->w/2) * sinval + dest->w/2;
-                float cosfory = - sin(offset/50.0) * cos(M_PI*(x - dest->w/2)/dest->w) / sinval / 8 + 1;
+                double x__ = (x - dest->w/2) * sinval + dest->w/2;
+                double cosfory = - sin(offset/50.0) * cos(M_PI*(x - dest->w/2)/dest->w) / sinval / 8 + 1;
                 ptr = dest->pixels + x*Bpp;
                 for (y = 0; y < dest->h; y++) {
                         Uint32 *A, *B, *C, *D;
-                        float y__ = (y - dest->h/2) * cosfory + dest->h/2;
+                        double y__ = (y - dest->h/2) * cosfory + dest->h/2;
                         x_ = floor(x__);
                         y_ = floor(y__);
                         if (x_ < 0 || x_ > orig->w - 2 || y_ < 0 || y_ > orig->h - 2) {
@@ -876,9 +877,9 @@ void tilt_(SDL_Surface * dest, SDL_Surface * orig, int offset)
 	int Bpp = dest->format->BytesPerPixel;
         Uint8 *ptr;
         int x_, y_;
-        int r, g, b, a;
-        float dx, dy;
-        float shading;
+        int r, g, b;
+        double a, dx, dy;
+        double shading;
 	if (orig->format->BytesPerPixel != 4) {
                 fprintf(stderr, "tilt: orig surface must be 32bpp\n");
                 abort();
@@ -891,12 +892,12 @@ void tilt_(SDL_Surface * dest, SDL_Surface * orig, int offset)
 	myLockSurface(dest);
         shading = 1 - sin(offset/40.0)/10;  // shade as if a lightsource was on the left
         for (x = 0; x < dest->w; x++) {
-                float zoomfact = 1 + (x - dest->w/2) * sin(offset/40.0) / dest->w / 5;
-                float x__ = (x - dest->w/2) * zoomfact + dest->w/2;
+                double zoomfact = 1 + (x - dest->w/2) * sin(offset/40.0) / dest->w / 5;
+                double x__ = (x - dest->w/2) * zoomfact + dest->w/2;
                 ptr = dest->pixels + x*Bpp;
                 for (y = 0; y < dest->h; y++) {
                         Uint32 *A, *B, *C, *D;
-                        float y__ = (y - dest->h/2) * zoomfact + dest->h/2;
+                        double y__ = (y - dest->h/2) * zoomfact + dest->h/2;
                         x_ = floor(x__);
                         y_ = floor(y__);
                         if (x_ < 0 || x_ > orig->w - 2 || y_ < 0 || y_ > orig->h - 2) {
@@ -981,7 +982,7 @@ void points_(SDL_Surface * dest, SDL_Surface * orig, SDL_Surface * mask)
                 memcpy(dest->pixels + y*dest->pitch, orig->pixels + y*orig->pitch, orig->pitch);
         }
         for (i = 0; i < amount; i++) {
-                float angle_distance = 0;
+                double angle_distance = 0;
                 
                 *( (Uint32*) ( dest->pixels + ((int)points[i].y)*dest->pitch + ((int)points[i].x)*Bpp ) ) = 0xFFCCCCCC;
 
@@ -1024,9 +1025,9 @@ void waterize_(SDL_Surface * dest, SDL_Surface * orig, int offset)
 	int Bpp = dest->format->BytesPerPixel;
         Uint8 *ptr;
         int x_, y_;
-        int r, g, b, a;
-        float dx, dy;
-        static float * precalc_cos = NULL, * precalc_sin = NULL;
+        int r, g, b;
+        double a, dx, dy;
+        static double * precalc_cos = NULL, * precalc_sin = NULL;
 	if (orig->format->BytesPerPixel != 4) {
                 fprintf(stderr, "waterize: orig surface must be 32bpp\n");
                 abort();
@@ -1037,8 +1038,8 @@ void waterize_(SDL_Surface * dest, SDL_Surface * orig, int offset)
         }
         if (precalc_cos == NULL) {  // this precalc nearly suppresses the x__ and y__ processing overhead in innerloop
                 int i;
-                precalc_cos = malloc(200*sizeof(float));
-                precalc_sin = malloc(200*sizeof(float));
+                precalc_cos = malloc(200*sizeof(double));
+                precalc_sin = malloc(200*sizeof(double));
                 for (i = 0; i < 200; i++) {
                         precalc_cos[i] = cos(i*2*M_PI/200.0) * 2;
                         precalc_sin[i] = sin(i*2*M_PI/150.0) * 2;
@@ -1050,8 +1051,8 @@ void waterize_(SDL_Surface * dest, SDL_Surface * orig, int offset)
                 ptr = dest->pixels + x*Bpp;
                 for (y = 0; y < dest->h; y++) {
                         Uint32 *A, *B, *C, *D;
-                        float x__ = x + precalc_cos[(x + y + offset ) % 200];
-                        float y__ = y + precalc_sin[(x + y + offset ) % 150];
+                        double x__ = x + precalc_cos[(x + y + offset ) % 200];
+                        double y__ = y + precalc_sin[(x + y + offset ) % 150];
                         x_ = floor(x__);
                         y_ = floor(y__);
                         if (x_ < 0 || x_ > orig->w - 2 || y_ < 0 || y_ > orig->h - 2) {
@@ -1096,7 +1097,7 @@ void brokentv_(SDL_Surface * dest, SDL_Surface * orig, int offset)
 {
 	int Bpp = dest->format->BytesPerPixel;
         Uint8 *ptrdest, *ptrorig;
-        float throughness, throughness_base = 0.9 + cos(offset/50.0)*0.1;
+        double throughness, throughness_base = 0.9 + cos(offset/50.0)*0.1;
         static int pixelize = 0;
         if (pixelize == 0) {
                 if (rand_(100) == 1) {
@@ -1220,9 +1221,9 @@ void blacken_(SDL_Surface * surf, int step)
                         Uint32 pixelvalue = 0; /* this should also be okay for 16-bit and 24-bit formats */
                         int r = 0; int g = 0; int b = 0;
                         memcpy(&pixelvalue, surf->pixels + y*surf->pitch + x*surf->format->BytesPerPixel, surf->format->BytesPerPixel);
-                        r = ((float) ((pixelvalue & surf->format->Rmask) >> surf->format->Rshift))/2;
-                        g = ((float) ((pixelvalue & surf->format->Gmask) >> surf->format->Gshift))/2;
-                        b = ((float) ((pixelvalue & surf->format->Bmask) >> surf->format->Bshift))/2;
+                        r = ((double) ((pixelvalue & surf->format->Rmask) >> surf->format->Rshift))/2;
+                        g = ((double) ((pixelvalue & surf->format->Gmask) >> surf->format->Gshift))/2;
+                        b = ((double) ((pixelvalue & surf->format->Bmask) >> surf->format->Bshift))/2;
                         pixelvalue = (r << surf->format->Rshift) + (g << surf->format->Gshift) + (b << surf->format->Bshift);
                         memcpy(surf->pixels + y*surf->pitch + x*surf->format->BytesPerPixel, &pixelvalue, surf->format->BytesPerPixel);
                 }
