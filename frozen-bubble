@@ -5403,6 +5403,22 @@ sub menu {
 	while ($event->poll != 0) {
             my $keypressed = extended_keypress($event);
             if ($keypressed) {
+                if ($keypressed eq SDLK_PAUSE) {
+                    my $time_pause = $app->ticks;
+                    $event->pump while $event->poll != 0;
+                  pause_menu:
+                    while (1) {
+                        $event->wait;
+                        if ($event->type == SDL_QUIT) {
+                            cleanup_and_exit();
+                        }
+                        my $keypressed = extended_keypress($event);
+                        if ($keypressed) {
+                            $total_time += $app->ticks - $time_pause;
+                            last pause_menu;
+                        }
+                    }
+                }
 		if (member($keypressed, (SDLK_DOWN, SDLK_RIGHT))) {
                     push @menu_invalids, $current_pos;
                     if ($current_pos < max(map { $menu_entries{$_}->{pos} } keys %menu_entries)) {
