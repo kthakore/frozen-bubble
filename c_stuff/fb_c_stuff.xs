@@ -1,6 +1,6 @@
 /*******************************************************************************
  *
- * Copyright (c) 2001, 2002 Guillaume Cottenceau (guillaume.cottenceau at free.fr)
+ * Copyright (c) 2001 - 2008 Guillaume Cottenceau
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2, as
