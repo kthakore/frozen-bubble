@@ -5166,7 +5166,7 @@ if ("@ARGV" =~ /winter.season/) {
         }
     }
 }
-our ($logox, $logoy) = (400, 15);
+our ($logox, $logoy);
 our $candy;
 our ($blink_green, $blink_purple);
 our %cursor_save_bg;
@@ -5263,51 +5263,57 @@ sub menu {
     };
 
     my $speed_ok = 4;
-    if ($logo_candy_method == 3) {
-        #- stretch needs a bit more room
-        my $newlogosurface = SDL::Surface->new(-width => $imgbin{menu_logo}->width * 1.1, -height => $imgbin{menu_logo}->height * 1.1, -depth => 32);
-        $imgbin{menu_logo}->set_alpha(0, 0);  #- for RGBA->RGBA blits, SDL_SRCALPHA must be removed or destination alpha is preserved
-        $imgbin{menu_logo}->blit(undef, $newlogosurface, SDL::Rect->new(-x => $imgbin{menu_logo}->width * 0.05, '-y' => $imgbin{menu_logo}->height * 0.05));
-        $logox -= $imgbin{menu_logo}->width * 0.05;
-        $logoy -= $imgbin{menu_logo}->height * 0.05;
-        $imgbin{menu_logo} = $newlogosurface;
-        add_default_rect($imgbin{menu_logo});
-        $logo_candy_method = 3.1;  #- avoid doing it again at next menu run
-    }
-    if ($logo_candy_method == 4) {
-        #- tilt needs a bit more horizontal room
-        my $newlogosurface = SDL::Surface->new(-width => $imgbin{menu_logo}->width * 1.1, -height => $imgbin{menu_logo}->height * 1.05, -depth => 32);
-        $imgbin{menu_logo}->set_alpha(0, 0);  #- for RGBA->RGBA blits, SDL_SRCALPHA must be removed or destination alpha is preserved
-        $imgbin{menu_logo}->blit(undef, $newlogosurface, SDL::Rect->new(-x => $imgbin{menu_logo}->width * 0.05, '-y' => $imgbin{menu_logo}->height * 0.025));
-        $logox -= $imgbin{menu_logo}->width * 0.05;
-        $logoy -= $imgbin{menu_logo}->height * 0.025;
-        $imgbin{menu_logo} = $newlogosurface;
-        add_default_rect($imgbin{menu_logo});
-        $logo_candy_method = 4.1;  #- avoid doing it again at next menu run
-    }
-    if ($logo_candy_method == 8) {
-        #- snow needs to extend top, and a little more wideness
-        my $newlogosurface = SDL::Surface->new(-width => $imgbin{menu_logo}->width * 1.1, -height => $imgbin{menu_logo}->height + $logoy, -depth => 32);
-        $imgbin{menu_logo}->set_alpha(0, 0);  #- for RGBA->RGBA blits, SDL_SRCALPHA must be removed or destination alpha is preserved
-        $imgbin{menu_logo}->blit(undef, $newlogosurface, SDL::Rect->new(-x => $imgbin{menu_logo}->width * 0.05, '-y' => $logoy));
-        $logox -= $imgbin{menu_logo}->width * 0.05;
-        $logoy = 0;
-        $imgbin{menu_logo} = $newlogosurface;
-        add_default_rect($imgbin{menu_logo});
-        $logo_candy_method = 8.1;  #- avoid doing it again at next menu run
-    }
+
+    my $candy_init = sub {
+        if (defined($candy)) {
+            erase_image_from($imgbin{menu_logo}, $logox, $logoy, $back_start);
+            $candy = undef;
+            $imgbin{menu_logo} = add_image('menu/fblogo.png');
+        }
+        ($logox, $logoy) = (400, 15);
+        if ($logo_candy_method == 3) {
+            #- stretch needs a bit more room
+            my $newlogosurface = SDL::Surface->new(-width => $imgbin{menu_logo}->width * 1.1, -height => $imgbin{menu_logo}->height * 1.1, -depth => 32);
+            $imgbin{menu_logo}->set_alpha(0, 0); #- for RGBA->RGBA blits, SDL_SRCALPHA must be removed or destination alpha is preserved
+            $imgbin{menu_logo}->blit(undef, $newlogosurface, SDL::Rect->new(-x => $imgbin{menu_logo}->width * 0.05, '-y' => $imgbin{menu_logo}->height * 0.05));
+            $logox -= $imgbin{menu_logo}->width * 0.05;
+            $logoy -= $imgbin{menu_logo}->height * 0.05;
+            $imgbin{menu_logo} = $newlogosurface;
+            add_default_rect($imgbin{menu_logo});
+            $logo_candy_method = 3.1; #- avoid doing it again at next menu run
+        }
+        if ($logo_candy_method == 4) {
+            #- tilt needs a bit more horizontal room
+            my $newlogosurface = SDL::Surface->new(-width => $imgbin{menu_logo}->width * 1.1, -height => $imgbin{menu_logo}->height * 1.05, -depth => 32);
+            $imgbin{menu_logo}->set_alpha(0, 0); #- for RGBA->RGBA blits, SDL_SRCALPHA must be removed or destination alpha is preserved
+            $imgbin{menu_logo}->blit(undef, $newlogosurface, SDL::Rect->new(-x => $imgbin{menu_logo}->width * 0.05, '-y' => $imgbin{menu_logo}->height * 0.025));
+            $logox -= $imgbin{menu_logo}->width * 0.05;
+            $logoy -= $imgbin{menu_logo}->height * 0.025;
+            $imgbin{menu_logo} = $newlogosurface;
+            add_default_rect($imgbin{menu_logo});
+            $logo_candy_method = 4.1; #- avoid doing it again at next menu run
+        }
+        if ($logo_candy_method == 8) {
+            #- snow needs to extend top, and a little more wideness
+            my $newlogosurface = SDL::Surface->new(-width => $imgbin{menu_logo}->width * 1.1, -height => $imgbin{menu_logo}->height + $logoy, -depth => 32);
+            $imgbin{menu_logo}->set_alpha(0, 0); #- for RGBA->RGBA blits, SDL_SRCALPHA must be removed or destination alpha is preserved
+            $imgbin{menu_logo}->blit(undef, $newlogosurface, SDL::Rect->new(-x => $imgbin{menu_logo}->width * 0.05, '-y' => $logoy));
+            $logox -= $imgbin{menu_logo}->width * 0.05;
+            $logoy = 0;
+            $imgbin{menu_logo} = $newlogosurface;
+            add_default_rect($imgbin{menu_logo});
+            $logo_candy_method = 8.1; #- avoid doing it again at next menu run
+        }
+        $candy = SDL::Surface->new(-width => $imgbin{menu_logo}->width, -height => $imgbin{menu_logo}->height, -depth => 32);
+    };
+    defined($candy) or $candy_init->();
+
     my $draw_logo = sub {
         my ($no_update) = @_;
+        erase_image_from($imgbin{menu_logo}, $logox, $logoy, $back_start);
         if ($graphics_level < 3 || !$speed_ok) {
-            erase_image_from($imgbin{menu_logo}, $logox, $logoy, $back_start);
             put_image($imgbin{menu_logo}, $logox, $logoy);
         } else {
-            erase_image_from($imgbin{menu_logo}, $logox, $logoy, $back_start);
-
-            if (!defined($candy)) {
-                $candy = SDL::Surface->new(-width => $imgbin{menu_logo}->width, -height => $imgbin{menu_logo}->height, -depth => 32);
-            }
-            
             $logo_candy_method == 0 and fb_c_stuff::rotate_bilinear(surf($candy), surf($imgbin{menu_logo}), sin($logo_candy_index/40)/20);
             $logo_candy_method == 1 and fb_c_stuff::flipflop(surf($candy), surf($imgbin{menu_logo}), $logo_candy_index);
             $logo_candy_method == 2 and fb_c_stuff::enlighten(surf($candy), surf($imgbin{menu_logo}), $logo_candy_index);
@@ -5452,6 +5458,11 @@ sub menu {
                             last pause_menu;
                         }
                     }
+                }
+                if (SDL::GetKeyState(SDLK_LCTRL()) == SDL_PRESSED()
+                    && $keypressed == SDLK_n) {
+                    $logo_candy_method = (int($logo_candy_method) + 1) % 9;
+                    $candy_init->();
                 }
 		if (member($keypressed, (SDLK_DOWN, SDLK_RIGHT))) {
                     push @menu_invalids, $current_pos;
