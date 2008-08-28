@@ -1208,10 +1208,10 @@ void blacken_(SDL_Surface * surf, int step)
                 return;
         }
 	myLockSurface(surf);
-        for (y=(step-1)*480/100; y<step*480/100; y++)
-                bzero(surf->pixels + y*surf->pitch, surf->format->BytesPerPixel * 640);
-        for (y=step*480/100; y<(step+3)*480/100 && y<480; y++)
-                for (x=0; x<640; x++) {
+        for (y=(step-1)*YRES/100; y<step*YRES/100; y++)
+                bzero(surf->pixels + y*surf->pitch, surf->format->BytesPerPixel * XRES);
+        for (y=step*YRES/100; y<(step+3)*YRES/100 && y<YRES; y++)
+                for (x=0; x<XRES; x++) {
                         Uint32 pixelvalue = 0; /* this should also be okay for 16-bit and 24-bit formats */
                         int r = 0; int g = 0; int b = 0;
                         memcpy(&pixelvalue, surf->pixels + y*surf->pitch + x*surf->format->BytesPerPixel, surf->format->BytesPerPixel);
