@@ -262,7 +262,8 @@ sub play_music($) {
     $mixer_enabled && $mixer && !$music_disabled or return;
     @playlist && $mixer->playing_music and return;
     $app->delay(10) while $mixer->fading_music;   #- mikmod will deadlock if we try to fade_out while still fading in
-    $mixer->playing_music and $mixer->fade_out_music(500); $app->delay(400);
+    $mixer->playing_music and $mixer->fade_out_music(500);
+    $app->delay(400);
     $app->delay(10) while $mixer->playing_music;  #- mikmod will segfault if we try to load a music while old one is still fading out
     my %musics = (intro => '/snd/introzik.ogg', main1p => '/snd/frozen-mainzik-1p.ogg', main2p => '/snd/frozen-mainzik-2p.xm');
     my $mus if 0;                                 #- I need to keep a reference on the music or it will be collected at the end of this function, thus I manually collect previous music
@@ -5633,7 +5634,7 @@ sub menu {
 	my $to_wait = $TARGET_ANIM_SPEED - ($app->ticks - $synchro_ticks);
 #        print "$to_wait\n";
 	if ($to_wait > 0) {
-            $app->delay($to_wait);
+            fb_c_stuff::fbdelay($to_wait);
             $speed_ok and $speed_ok = 4;
         } else {
             #- disable nice graphics artwork if computer is too slow
@@ -5653,14 +5654,12 @@ sub menu {
             replay($files[int(rand(@files))]);
             $pdata{demo} = 0;
           blacken:
-            foreach my $step (1..100) {
+            foreach my $step (1..35) {
                 my $ticks = $app->ticks;
                 fb_c_stuff::blacken(surf($app), $step);
-                my $to_wait = $TARGET_ANIM_SPEED/4 - ($app->ticks - $ticks);
-                if ($to_wait > 0) {
-                    $app->delay($to_wait);
-                }
                 $app->flip;
+                my $to_wait = $TARGET_ANIM_SPEED - ($app->ticks - $ticks);
+                $to_wait > 0 and fb_c_stuff::fbdelay($to_wait);
 
                 $event->pump;
                 while ($event->poll != 0) {

@@ -1202,24 +1202,33 @@ void pixelize_(SDL_Surface * dest, SDL_Surface * orig)
 
 void blacken_(SDL_Surface * surf, int step)
 {
+        Uint32 pixelvalue; /* this should also be okay for 16-bit and 24-bit formats */
+        int r, g, b;
         if (surf->format->palette) {
                 /* there is a palette... I don't care of the bloody oldskoolers who still use
                    8-bit displays & al, they can suffer and die ;p */
                 return;
         }
 	myLockSurface(surf);
-        for (y=(step-1)*YRES/100; y<step*YRES/100; y++)
+        for (y=(step-1)*YRES/70; y<step*YRES/70; y++) {
                 bzero(surf->pixels + y*surf->pitch, surf->format->BytesPerPixel * XRES);
-        for (y=step*YRES/100; y<(step+3)*YRES/100 && y<YRES; y++)
+                bzero(surf->pixels + (YRES-1-y)*surf->pitch, surf->format->BytesPerPixel * XRES);
+        }
+        for (y=step*YRES/70; y<(step+8)*YRES/70 && y<YRES; y++)
                 for (x=0; x<XRES; x++) {
-                        Uint32 pixelvalue = 0; /* this should also be okay for 16-bit and 24-bit formats */
-                        int r = 0; int g = 0; int b = 0;
                         memcpy(&pixelvalue, surf->pixels + y*surf->pitch + x*surf->format->BytesPerPixel, surf->format->BytesPerPixel);
-                        r = ((double) ((pixelvalue & surf->format->Rmask) >> surf->format->Rshift))/2;
-                        g = ((double) ((pixelvalue & surf->format->Gmask) >> surf->format->Gshift))/2;
-                        b = ((double) ((pixelvalue & surf->format->Bmask) >> surf->format->Bshift))/2;
+                        r = ( ((pixelvalue & surf->format->Rmask) >> surf->format->Rshift))*3/4;
+                        g = ( ((pixelvalue & surf->format->Gmask) >> surf->format->Gshift))*3/4;
+                        b = ( ((pixelvalue & surf->format->Bmask) >> surf->format->Bshift))*3/4;
                         pixelvalue = (r << surf->format->Rshift) + (g << surf->format->Gshift) + (b << surf->format->Bshift);
                         memcpy(surf->pixels + y*surf->pitch + x*surf->format->BytesPerPixel, &pixelvalue, surf->format->BytesPerPixel);
+
+                        memcpy(&pixelvalue, surf->pixels + (YRES-1-y)*surf->pitch + x*surf->format->BytesPerPixel, surf->format->BytesPerPixel);
+                        r = ( ((pixelvalue & surf->format->Rmask) >> surf->format->Rshift))*3/4;
+                        g = ( ((pixelvalue & surf->format->Gmask) >> surf->format->Gshift))*3/4;
+                        b = ( ((pixelvalue & surf->format->Bmask) >> surf->format->Bshift))*3/4;
+                        pixelvalue = (r << surf->format->Rshift) + (g << surf->format->Gshift) + (b << surf->format->Bshift);
+                        memcpy(surf->pixels + (YRES-1-y)*surf->pitch + x*surf->format->BytesPerPixel, &pixelvalue, surf->format->BytesPerPixel);
                 }
 	myUnlockSurface(surf);
 }
