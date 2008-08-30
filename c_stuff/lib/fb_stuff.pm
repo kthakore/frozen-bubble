@@ -292,20 +292,16 @@ sub mapn_(&@) {
 sub add_f4before_leaving {
     my ($f, $b, $name) = @_;
 
-    unless ($fb_stuff::before_leaving::{$name}) {
-        no strict 'refs';
-        ${"fb_stuff::before_leaving::$name"} = 1;
-        ${"fb_stuff::before_leaving::list"} = 1;
+    $fb_stuff::before_leaving::_list->{$b}{$name} = $f;
+    if (!$fb_stuff::before_leaving::_added{$name}) {
+	$fb_stuff::before_leaving::_added{$name} = 1;
+	no strict 'refs';
+	*{"fb_stuff::before_leaving::$name"} = sub {
+	    my $f = $fb_stuff::before_leaving::_list->{$_[0]}{$name} or die '';
+	    $name eq 'DESTROY' and delete $fb_stuff::before_leaving::_list->{$_[0]};
+	    &$f;
+	};
     }
-    local *N = *{$fb_stuff::before_leaving::{$name}};
-    my $list = *fb_stuff::before_leaving::list;
-    $list->{$b}{$name} = $f;
-    *N = sub {
-        my $f = $list->{$_[0]}{$name} or die '';
-        $name eq 'DESTROY' and delete $list->{$_[0]};
-        &$f;
-    } if !defined &{*N};
-
 }
 #- ! the functions are not called in the order wanted, in case of multiple before_leaving :(
 sub before_leaving(&) {
