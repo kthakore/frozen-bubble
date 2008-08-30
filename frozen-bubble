@@ -5144,6 +5144,28 @@ sub cleanup_and_exit {
 
 our $logo_candy_index = 0;
 our $logo_candy_method = int(rand(8));
+if ("@ARGV" =~ /winter.season/) {
+    $logo_candy_method = 8;
+} else {
+    my (undef, undef, undef, $day, $month) = localtime(time());
+    if ($day == 25 && $month == 11) {
+        $logo_candy_method = 8;
+    } else {
+        if (!defined($mylatitude) || $mylatitude > 0) {
+            if ($day >= 21 && $month == 11
+                || $month == 0
+                || $day <= 21 && $month == 1) {
+                rand() < 0.3 and $logo_candy_method = 8;
+            }
+        } else {
+            if ($day >= 21 && $month == 4
+                || $month == 5
+                || $day <= 24 && $month == 6) {
+                rand() < 0.3 and $logo_candy_method = 8;
+            }
+        }
+    }
+}
 our ($logox, $logoy) = (400, 15);
 our $candy;
 our ($blink_green, $blink_purple);
@@ -5263,6 +5285,17 @@ sub menu {
         add_default_rect($imgbin{menu_logo});
         $logo_candy_method = 4.1;  #- avoid doing it again at next menu run
     }
+    if ($logo_candy_method == 8) {
+        #- snow needs to extend top, and a little more wideness
+        my $newlogosurface = SDL::Surface->new(-width => $imgbin{menu_logo}->width * 1.1, -height => $imgbin{menu_logo}->height + $logoy, -depth => 32);
+        $imgbin{menu_logo}->set_alpha(0, 0);  #- for RGBA->RGBA blits, SDL_SRCALPHA must be removed or destination alpha is preserved
+        $imgbin{menu_logo}->blit(undef, $newlogosurface, SDL::Rect->new(-x => $imgbin{menu_logo}->width * 0.05, '-y' => $logoy));
+        $logox -= $imgbin{menu_logo}->width * 0.05;
+        $logoy = 0;
+        $imgbin{menu_logo} = $newlogosurface;
+        add_default_rect($imgbin{menu_logo});
+        $logo_candy_method = 8.1;  #- avoid doing it again at next menu run
+    }
     my $draw_logo = sub {
         my ($no_update) = @_;
         if ($graphics_level < 3 || !$speed_ok) {
@@ -5283,6 +5316,7 @@ sub menu {
             $logo_candy_method == 5 and fb_c_stuff::points(surf($candy), surf($imgbin{menu_logo}), surf($imgbin{menu_logo_mask}));
             $logo_candy_method == 6 and fb_c_stuff::waterize(surf($candy), surf($imgbin{menu_logo}), $logo_candy_index);
             $logo_candy_method == 7 and fb_c_stuff::brokentv(surf($candy), surf($imgbin{menu_logo}), $logo_candy_index);
+            $logo_candy_method == 8.1 and fb_c_stuff::snow(surf($candy), surf($imgbin{menu_logo}));
             
             $candy->blit(undef, $app, my $rect = SDL::Rect->new(-x => $logox, '-y' => $logoy));
             $logo_candy_index++;
