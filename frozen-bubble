@@ -5813,7 +5813,7 @@ sub replay {
             $current_frame_num = $framenum;
             $current_frame_action_data->{$player}{$action} = $actionvalue;
         } elsif ($key eq 'frame_mpmessage') {
-            my ($framenum, $id, $message) = $value =~ /(\d+)\|(.)\|(\S+)/;
+            my ($framenum, $id, $message) = $value =~ /(\d+)\|(.)\|(.+)/;
             if ($framenum != $current_frame_num && defined($current_frame_num)) {
                 push @$playdata, [ $current_frame_num, { actions => $current_frame_action_data,
                                                          mp_messages => $current_frame_mp_messages_data } ];
