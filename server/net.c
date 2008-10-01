@@ -862,7 +862,6 @@ void create_server(int argc, char **argv)
                                 }
                                 fclose(f);
                         }
-                        break;
 
                 } else {
                         handle_parameter(c, optarg);
