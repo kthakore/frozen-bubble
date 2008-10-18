@@ -35,9 +35,9 @@ use fb_net;
 my $proto_hdr = "FB/" . $fb_net::proto_major . "." .$fb_net::proto_minor;
 
 # configuration parameters
-my $number_of_pings          = 2;   # ping each server this many times.
+my $number_of_pings = 2;   # ping each server this many times
 my $time_between_connections = 0.1; # 100ms, 10 connections per second
-my $connection_timeout = 2;
+my $connection_timeout = 5;
 
 # note: the ping-averaging code below assumes $number_of_pings >= 2.
 

@@ -274,7 +274,7 @@ sub connect {
 
     $current_host = $current_port = undef;
 
-    $sock = IO::Socket::INET->new(PeerAddr => $host, PeerPort => $port, Proto => 'tcp', Timeout => 2);
+    $sock = IO::Socket::INET->new(PeerAddr => $host, PeerPort => $port, Proto => 'tcp', Timeout => 5);
     if (!$sock) {
         #print STDERR "Couldn't connect to $host:$port: $@\n";
         return { failure => 'Server is down' };
