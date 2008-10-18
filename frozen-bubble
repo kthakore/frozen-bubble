@@ -2337,9 +2337,13 @@ sub update_game() {
                 };
 
                 while ($event->poll != 0) {
+                    if ($event->type == SDL_QUIT) {
+                        cleanup_and_exit();
+                    }
                     if ($event->type == SDL_KEYDOWN && $event->key_sym == SDLK_ESCAPE()) {
                         die 'quit';
-                    } elsif ($event->type == SDL_KEYDOWN || $event->type == fb_c_stuff::JOYBUTTONUP()) {
+                    }
+                    if ($event->type == SDL_KEYDOWN || $event->type == fb_c_stuff::JOYBUTTONUP()) {
                         if ($playdata) {
                             die 'quit';
                         } elsif (is_mp_game()) {
@@ -2367,9 +2371,11 @@ sub update_game() {
         if (!$events_pumped) {
             $event->pump;
             while ($event->poll != 0) {
-                if ($event->type == SDL_QUIT
-                    || $event->type == SDL_KEYDOWN && $event->key_sym == SDLK_ESCAPE) {
+                if ($event->type == SDL_QUIT) {
                     cleanup_and_exit();
+                }
+                if ($event->type == SDL_KEYDOWN && $event->key_sym == SDLK_ESCAPE) {
+                    die 'quit';
                 }
             }
         }
