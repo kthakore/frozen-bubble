@@ -3726,9 +3726,15 @@ sub smg_choose_server(@) {
             }
         } elsif (!$init) {
             $init = 1;
-            $sorted_servers[0]->{selected} = 1;
-            smg_add_status_msg(t("*** Please choose a server"));
-            $redraw->();
+            if (@sorted_servers) {
+                $sorted_servers[0]->{selected} = 1;
+                smg_add_status_msg(t("*** Please choose a server"));
+                $redraw->();
+            } else {
+                #- no server discovered. empty servers list so that below code will properly report no servers found.
+                @servers = ();
+                last;
+            }
         }
         $event->pump;
         while ($event->poll != 0) {
