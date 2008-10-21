@@ -3718,7 +3718,7 @@ sub smg_choose_server(@) {
             @sorted_servers = sort { $weightfunc->($b) <=> $weightfunc->($a) } @found_servers;
             $redraw->();
             #- wait a bit or user confusion will be large (jumping cursor)
-            if ($looped >= 10 && @servers && !$init) {
+            if ($looped >= 10 && @sorted_servers && !$init) {
                 $init = 1;
                 $sorted_servers[0]->{selected} = 1;
                 smg_add_status_msg(t("*** Please choose a server"));
