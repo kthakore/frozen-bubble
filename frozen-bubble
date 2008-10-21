@@ -3949,6 +3949,15 @@ sub get_spot_location {
             $y0 + asinh(tan($latitude*1.4*$PI/360))*$latitude_factor);  #- map seems not to really be mercator but.. approximation is kinda ok
 }
 
+sub save_back_spot {
+    my ($latitude, $longitude, $surface, $back) = @_;
+    my ($x, $y) = get_spot_location($latitude, $longitude);
+    $x -= $surface->width/2;
+    $y -= $surface->height/2;
+    $$back = SDL::Surface->new(-width => 20, -height => 20, -depth => 32, -Amask => '0 but true');
+    $app->blit(SDL::Rect->new('-x' => $x, '-y' => $y, -width => 20, -height => 20), $$back, undef);
+    add_default_rect($$back);
+}
 sub print_spot {
     my ($latitude, $longitude, $kind, $surface, $back) = @_;
     $surface ||= $kind eq 'free' ? $imgbin{netspot_free} : $imgbin{netspot_playing};
@@ -3956,14 +3965,8 @@ sub print_spot {
     $x -= $surface->width/2;
     $y -= $surface->height/2;
     if ($back) {
-        if ($$back) {
-            put_image($$back, $x, $y);
-            pop @update_rects;
-        } else {
-            $$back = SDL::Surface->new(-width => 20, -height => 20, -depth => 32, -Amask => '0 but true');
-            $app->blit(SDL::Rect->new('-x' => $x, '-y' => $y, -width => 20, -height => 20), $$back, undef);
-            add_default_rect($$back);
-        }
+        put_image($$back, $x, $y);
+        pop @update_rects;
     }
     put_image($surface, $x, $y);
 }
@@ -4012,11 +4015,7 @@ sub smg_choose_game() {
         #- geoloc spots
         print_spot($_->[0], $_->[1], 'free') foreach @free_geolocs;
         print_spot($_->[0], $_->[1], 'playing') foreach @playing_geolocs;
-        $back_selfspot = undef;
-        if ($mylatitude && !$private && $index_selfspot >= 0) {
-            print_spot($mylatitude, $mylongitude, 'free', $imgbin{netspot_self}[$index_selfspot], \$back_selfspot);
-        }
-        
+
         #- actions (chat, joins, create)
         my $y = $smg_starty;
         foreach my $action (@actions) {
@@ -4025,6 +4024,14 @@ sub smg_choose_game() {
             }
             print_($action->{readonly} ? 'netdialogs_servermsg' : 'netdialogs', $app, $smg_startx, $y, $action->{name}, 520);
             $y += $smg_lineheight;
+        }
+
+        #- selfspot will need to properly erase selection overlay
+        if ($mylatitude && !$private) {
+            save_back_spot($mylatitude, $mylongitude, $imgbin{netspot_self}[0], \$back_selfspot);
+            if ($index_selfspot >= 0) {
+                print_spot($mylatitude, $mylongitude, 'free', $imgbin{netspot_self}[$index_selfspot], \$back_selfspot);
+            }
         }
 
         #- chat entry
