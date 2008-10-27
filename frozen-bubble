@@ -2789,6 +2789,7 @@ sub init_game() {
     $imgbin{back_netgame} = add_image('back_netgame.png');
     $imgbin{netspot_free} = add_image('netspot.png');
     $imgbin{netspot_playing} = add_image('netspot-playing.png');
+    $imgbin{netspot_insamegame} = add_image('netspot-insamegame.png');
     $imgbin{netspot_self} = [ map { add_image("netspot-self-$_.png") } qw(1 2 3 4 5 6 7 8 9 A B C D) ];
 
     #- hiscore
@@ -3960,7 +3961,7 @@ sub save_back_spot {
 }
 sub print_spot {
     my ($latitude, $longitude, $kind, $surface, $back) = @_;
-    $surface ||= $kind eq 'free' ? $imgbin{netspot_free} : $imgbin{netspot_playing};
+    $surface ||= $imgbin{"netspot_$kind"};
     my ($x, $y) = get_spot_location($latitude, $longitude);
     $x -= $surface->width/2;
     $y -= $surface->height/2;
@@ -4013,7 +4014,7 @@ sub smg_choose_game() {
         $erase->();
 
         #- geoloc spots
-        print_spot($_->[0], $_->[1], 'free') foreach @free_geolocs;
+        print_spot($_->[0], $_->[1], $ingame ? 'insamegame' : 'free') foreach @free_geolocs;
         print_spot($_->[0], $_->[1], 'playing') foreach @playing_geolocs;
 
         #- actions (chat, joins, create)
