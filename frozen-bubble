@@ -4492,8 +4492,9 @@ sub smg_choose_game() {
                             $text = undef;
                         } elsif ($text =~ m|^/help|) {
                             smg_add_status_msg(t("*** Available commands: %s",
-                                                 join(', ', t("%s <action>", '/me'), t("%s <new_nick>", '/nick'), t("%s <nick> [<text>]", '/autokick'))),
-                                               '*** ' . join(', ', '/server', '/fs', '/geolocate', if_(!$ingame, '/list'),
+                                                 join(', ', t("%s <action>", '/me'), t("%s <nick> [<text>]", '/autokick'), '/server')),
+                                               '*** ' . join(', ', '/fs', '/geolocate',
+                                                                   if_(!$ingame, t("%s <new_nick>", '/nick'), '/list'),
                                                                    if_($can_start, t("%s <nick> [<text>]", '/kick'))));
                             $text = undef;
                         } elsif ($text =~ m|^/|) {
