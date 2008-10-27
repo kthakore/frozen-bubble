@@ -4193,6 +4193,8 @@ sub smg_choose_game() {
     if ($pdata{gametype} eq 'net' && !$private) {
         if (!defined($mylatitude)) {
             $geolocate->();
+        } else {
+            fb_net::send_and_receive('GEOLOC', "$mylatitude:$mylongitude");
         }
     }
     smg_add_status_msg(t("*** You may now create or join a game"));
