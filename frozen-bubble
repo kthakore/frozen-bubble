@@ -4156,7 +4156,7 @@ sub smg_choose_game() {
                 }
             }
         } else {
-            smg_add_status_msg(t("*** No one's listening here"));
+            smg_add_status_msg(t("*** Notice: no one's listening here"));
         }
     };
 
@@ -4511,7 +4511,7 @@ sub smg_choose_game() {
                         }
                         if ($text) {
                             fb_net::send_("TALK $text");
-                            @wholist == 1 and smg_add_status_msg(t("*** No one's listening here"));
+                            @wholist == 1 and smg_add_status_msg(t("*** Notice: no one's listening here"));
                         }
                         callback_entry('reset');
                     }
