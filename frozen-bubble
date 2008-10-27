@@ -4171,7 +4171,7 @@ sub smg_choose_game() {
             ($mylatitude) = $data =~ /Latitude: (-?\S{1,5})/;
             ($mylongitude) = $data =~ /Longitude: (-?\S{1,5})/;
             if (defined($mylatitude)) {
-                smg_add_status_msg(t("*** Done - you can now create or join a game"));
+                smg_add_status_msg(t("*** Done, you are positioned as the flashing red dot!"));
             } else {
                 smg_add_status_msg(t("*** hostip.info doesn't know the geographical location of your IP address"));
                 smg_add_status_msg(t("*** If you want that your location appears on the map, fix your entry at http://hostip.info/"));
@@ -4195,6 +4195,7 @@ sub smg_choose_game() {
             $geolocate->();
         }
     }
+    smg_add_status_msg(t("*** You may now create or join a game"));
     
     my $need4update;
     my $relist;
