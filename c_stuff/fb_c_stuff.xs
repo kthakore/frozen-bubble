@@ -548,6 +548,7 @@ AV* autopseudocrop_(SDL_Surface * orig)
 {
         int x_ = -1, y_ = -1, w = -1, h = -1;
         Uint8 *ptr;
+        int Adec = orig->format->Ashift / 8;  // Adec is non standard from sdlpango_draw* output
         AV* ret;
 	if (orig->format->BytesPerPixel != 4) {
                 fprintf(stderr, "autocrop: orig surface must be 32bpp\n");
@@ -558,7 +559,7 @@ AV* autopseudocrop_(SDL_Surface * orig)
         while (y_ == -1) {
                 ptr = orig->pixels + y*orig->pitch;
                 for (x = 0; x < orig->w; x++) {
-                        if (*(ptr+3) != 0) {
+                        if (*(ptr+Adec) != 0) {
                                 y_ = y;
                                 break;
                         }
@@ -570,7 +571,7 @@ AV* autopseudocrop_(SDL_Surface * orig)
         while (h == -1) {
                 ptr = orig->pixels + y*orig->pitch;
                 for (x = 0; x < orig->w; x++) {
-                        if (*(ptr+3) != 0) {
+                        if (*(ptr+Adec) != 0) {
                                 h = y - y_ + 1;
                                 break;
                         }
@@ -582,7 +583,7 @@ AV* autopseudocrop_(SDL_Surface * orig)
         while (x_ == -1) {
                 ptr = orig->pixels + x*4;
                 for (y = 0; y < orig->h; y++) {
-                        if (*(ptr+3) != 0) {
+                        if (*(ptr+Adec) != 0) {
                                 x_ = x;
                                 break;
                         }
@@ -594,7 +595,7 @@ AV* autopseudocrop_(SDL_Surface * orig)
         while (w == -1) {
                 ptr = orig->pixels + x*4;
                 for (y = 0; y < orig->h; y++) {
-                        if (*(ptr+3) != 0) {
+                        if (*(ptr+Adec) != 0) {
                                 w = x - x_ + 1;
                                 break;
                         }
