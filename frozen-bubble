@@ -3032,7 +3032,7 @@ sub display_highscores {
         $app->flip;
         
         $event->pump while $event->poll != 0;
-        grab_key();
+        grab_key() eq SDLK_ESCAPE() and die "quit";
     }
 
     $display_on_app_disabled = 0;
