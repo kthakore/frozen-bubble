@@ -4030,11 +4030,17 @@ sub smg_choose_game() {
         $erase->();
 
         #- geoloc spots - playing: spots only
-        my @nicks_pos = ();
-        print_spot($_->[0], $_->[1], 'playing') foreach @playing_geolocs;
+        my @rectangles = ();
+        foreach (@playing_geolocs) {
+            my ($x, $y) = get_spot_location($_->[0], $_->[1]);
+            print_spot($_->[0], $_->[1], 'playing');
+            push @rectangles, SDL::Rect->new('-x' => $x - $imgbin{"netspot_free"}->width/2,
+                                             '-y' => $y - $imgbin{"netspot_free"}->height/2,
+                                             '-width' => $imgbin{"netspot_free"}->width,
+                                             '-height' => $imgbin{"netspot_free"}->height);
+        }
 
         #- geoloc spots - free: spots and labels (nicks)
-        my @rectangles = ();
         #- first show spots, we don't want to move them (but we will want to move labels)
         foreach (@free_geolocs) {
             my ($x, $y) = get_spot_location($_->[0], $_->[1]);
