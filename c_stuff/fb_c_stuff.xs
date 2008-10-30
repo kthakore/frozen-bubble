@@ -1472,6 +1472,53 @@ void snow_(SDL_Surface * dest, SDL_Surface * orig)
 	myUnlockSurface(dest);
 }
 
+void draw_line_(SDL_Surface* surface, int x1, int y1, int x2, int y2, SDL_Color* color)
+{
+        // simple Bresenham line drawing. should be antialiased for better output, but is not.
+        int bpp = surface->format->BytesPerPixel;
+        Uint8* p;
+        int pix = SDL_MapRGB(surface->format, color->r, color->g, color->b);
+        double xacc, yacc, x, y;
+	myLockSurface(surface);
+        if (abs(x2 - x1) > abs(y2 - y1)) {
+                xacc = x2 > x1 ? 1 : -1;
+                yacc = xacc * (y2 - y1) / (x2 - x1);
+        } else {
+                yacc = y2 > y1 ? 1 : -1;
+                xacc = yacc * (x2 - x1) / (y2 - y1);
+        }
+        x = x1;
+        y = y1;
+        while (x != x2 && y != y2) {
+                x += xacc;
+                y += yacc;
+                p = (Uint8*)surface->pixels + bpp*(int)x + surface->pitch*(int)y;
+                switch(bpp) {
+                case 1:
+                        *(Uint8*)p = pix;
+                        break;
+                case 2:
+                        *(Uint16*)p = pix;
+                        break;
+                case 3:
+                        if (SDL_BYTEORDER == SDL_BIG_ENDIAN) {
+                                p[0] = (pix >> 16) & 0xff;
+                                p[1] = (pix >> 8) & 0xff;
+                                p[2] = pix & 0xff;
+                        } else {
+                                p[0] = pix & 0xff;
+                                p[1] = (pix >> 8) & 0xff;
+                                p[2] = (pix >> 16) & 0xff;
+                        }
+                        break;
+                case 4:
+                        *(Uint32*)p = pix;
+                        break;
+                }
+        }
+	myUnlockSurface(surface);
+}
+
 void sdlpango_init_()
 {
         SDLPango_Init();
@@ -1706,6 +1753,11 @@ snow(dest, orig)
         SDL_Surface * orig
 	CODE:
 		snow_(dest, orig);
+
+void
+draw_line(SDL_Surface* surface, int x1, int y1, int x2, int y2, SDL_Color* color)
+        CODE:
+                draw_line_(surface, x1, y1, x2, y2, color);
 
 void
 _exit(status)
