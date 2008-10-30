@@ -1,3 +1,4 @@
 - http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=400219
 - try to reduce cpu usage on end of network game, when waiting
 - add dbus notifications
+- count addiction as time really spent playing
