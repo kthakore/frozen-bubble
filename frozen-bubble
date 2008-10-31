@@ -4303,6 +4303,7 @@ sub smg_choose_game() {
             } else {
                 smg_add_status_msg(t("*** hostip.info doesn't know the geographical location of your IP address"));
                 smg_add_status_msg(t("*** If you want that your location appears on the map, fix your entry at http://hostip.info/"));
+                smg_add_status_msg(t("*** Then type /geolocate to see yourself on the map"));
                 $mylatitude = '';
             }
             alarm 0;
