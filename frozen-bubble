@@ -4315,6 +4315,8 @@ sub smg_choose_game() {
         }
         if ($mylatitude) {
             fb_net::send_and_receive('GEOLOC', "$mylatitude:$mylongitude");
+        } else {
+            fb_net::send_and_receive('GEOLOC', "");
         }
     };
 
