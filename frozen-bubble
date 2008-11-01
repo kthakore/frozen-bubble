@@ -4079,18 +4079,18 @@ sub smg_choose_game() {
                     }
                 };
                 #- find sizing of text
-                print_('netdialogs_servermsg', $app, $x + $labelxshift, $y + $labelyshift, $text,
-                       undef, undef, sub {
-                                         my ($action, $textsurface) = @_;
-                                         $sizing = fb_c_stuff::autopseudocrop($textsurface);
-                                         $wb = $sizing->[2] + 1 + 6;
-                                         $hb = $sizing->[3] + 6;
-                                         #- choose out of the 4 possible positionings
-                                         my $rnd = sum(map { ord($_) } split(//, $text)) % 4;  #- 0..3
-                                         $set_out_of_four_positions->($rnd);
-                                         push @positions_tried, $rnd;
-                                         return 0;
-                                     });
+                print_('netdialogs_servermsg', $app, 0, 0, $text, undef, undef, #- coordinates are unimportant, we'll cancel this printing
+                       sub {
+                           my ($action, $textsurface) = @_;
+                           $sizing = fb_c_stuff::autopseudocrop($textsurface);
+                           $wb = $sizing->[2] + 1 + 6;
+                           $hb = $sizing->[3] + 6;
+                           #- choose out of the 4 possible positionings
+                           my $rnd = sum(map { ord($_) } split(//, $text)) % 4;  #- 0..3
+                           $set_out_of_four_positions->($rnd);
+                           push @positions_tried, $rnd;
+                           return 0;
+                       });
                 my $xb;
                 my $yb;
                 my $r;
