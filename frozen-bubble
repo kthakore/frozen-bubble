@@ -4053,72 +4053,58 @@ sub smg_choose_game() {
         }
         #- second show labels, managing overlap
         my @labels = ();
-        my $labelxshift = 10;
-        my $labelyshift = 5;
         my $linecolor = SDL::Color->new(-r => 0x7b, -g => 0x2f, -b => 0x03);
         mapn {
             if (@{$_[1]}) {
-                my ($x, $y) = get_spot_location($_[1][0], $_[1][1]);
-                my $xspot = $x;
-                my $yspot = $y;
-                my $sizing;
-                my $wb;
-                my $hb;
+                my ($xspot, $yspot) = get_spot_location($_[1][0], $_[1][1]);
+                my ($xc, $yc, $sizing, $wb, $hb, $xoffset, $yoffset, $yoffset_retry);
                 my $text = $_[0];
-                my @positions_tried;
-                #- set $x/$y as one of the four possible positions around the spot
-                my $set_out_of_four_positions = sub {
-                    my ($posval) = @_;
-                    $x = $xspot;
-                    $y = $yspot;
-                    if ($posval < 2) {
-                        $x -= $labelxshift * 2 + $wb - 8;
-                    }
-                    if ($posval == 0 || $posval == 2) {
-                        $y -= $labelyshift * 2 + $hb;
-                    }
+                my $index_positions = 0;
+                #- set $x/$y as the next position to try; try positions around, then grow circle of 8 pixels
+                my $set_next_position = sub {
+                    my $positions = 16;
+                    my $grows = int($index_positions / $positions);
+                    my $angle = ($index_positions - $grows*$positions) * 2 * $PI / $positions;
+                    $xc = $xspot + cos($angle) * ($wb/2 + 4 + ($grows + 1) * 8);
+                    $yc = $yspot + sin($angle) * ($hb/2 + 4 + ($grows + 1) * 8);
+                    $index_positions++;
                 };
                 #- find sizing of text
                 print_('netdialogs_servermsg', $app, 0, 0, $text, undef, undef, #- coordinates are unimportant, we'll cancel this printing
                        sub {
                            my ($action, $textsurface) = @_;
                            $sizing = fb_c_stuff::autopseudocrop($textsurface);
-                           $wb = $sizing->[2] + 1 + 6;
+                           $wb = $sizing->[2] + 6;
                            $hb = $sizing->[3] + 6;
-                           #- choose out of the 4 possible positionings
-                           my $rnd = sum(map { ord($_) } split(//, $text)) % 4;  #- 0..3
-                           $set_out_of_four_positions->($rnd);
-                           push @positions_tried, $rnd;
                            return 0;
                        });
                 my $xb;
                 my $yb;
                 my $r;
+                $set_next_position->();
               find_ok_position:
                 while (1) {
-                    $xb = $x + $labelxshift + $sizing->[0] - 3;
-                    $yb = $y + $labelyshift + $sizing->[1] - 3;
+                    $xb = $xc - $wb/2;
+                    $yb = $yc - $hb/2;
                     #- check that background rectangle does not overlap any existing rectangle (spots or other labels)
                     $r = SDL::Rect->new('-x' => $xb, '-y' => $yb, '-width' => $wb, '-height' => $hb);
                     foreach my $rect (@rectangles) {
-                        if ($rect->x >= $r->x && $r->width > $rect->x - $r->x
-                            || $r->x >= $rect->x && $rect->width > $r->x - $rect->x) {
+                        if ($rect->x >= $xb && $wb > $rect->x - $xb
+                            || $xb >= $rect->x && $rect->width > $xb - $rect->x) {
                             #- x overlap
-                            if ($rect->y >= $r->y && $r->height > $rect->y - $r->y
-                                || $r->y >= $rect->y && $rect->height > $r->y - $rect->y) {
-                                #- y overlap => rectangles overlap; retry
-                                if (@positions_tried < 4) {
-                                    #- try another of the four possible positions around the spot first
-                                    my $posval = ($positions_tried[-1] + 1) % 4;
-                                    $set_out_of_four_positions->($posval);
-                                    push @positions_tried, $posval;
-                                } else {
-                                    #- sub optimal y incrementing based solution second
-                                    $y += 7;
-                                    if ($y > 320) {
-                                        #- abandon this one, map is crowded
+                            if ($rect->y >= $yb && $hb > $rect->y - $yb
+                                || $yb >= $rect->y && $rect->height > $yb - $rect->y) {
+                                $set_next_position->();
+                                while ($xb < 20 || $xb + $wb > 620 || $yb < 20 || $yb + $hb > 320) {
+                                    $set_next_position->();
+                                    if ($index_positions > 100) {
+                                        #- abandon, map is crowded
                                         return;
                                     }
+                                }
+                                if ($index_positions > 100) {
+                                    #- abandon, map is crowded
+                                    return;
                                 }
                                 next find_ok_position;
                             }
@@ -4127,9 +4113,9 @@ sub smg_choose_game() {
                     last;
                 }
                 #- draw a line between the spot and the center of the label
-                fb_c_stuff::draw_line(surf($app), $xspot, $yspot, int($xb + $wb/2), int($yb + $hb/2), col($label_line_color));
+                fb_c_stuff::draw_line(surf($app), $xspot, $yspot, $xc, $yc, col($label_line_color));
                 #- draw the label background and the label in another pass to handle overwriting of labels over lines
-                push @labels, { x => $x + $labelxshift, y => $y + $labelyshift, text => $text, backrect1 => $r,
+                push @labels, { x => $xc - $sizing->[2]/2 - $sizing->[0], y => $yc - $sizing->[3]/2 - $sizing->[1], text => $text, backrect1 => $r,
                                 backrect2 => SDL::Rect->new('-x' => $xb + 1, '-y' => $yb + 1, '-width' => $wb - 2, '-height' => $hb - 2) };
                 push @rectangles, $r;
             }
