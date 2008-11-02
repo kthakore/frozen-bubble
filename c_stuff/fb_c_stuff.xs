@@ -1489,9 +1489,16 @@ void draw_line_(SDL_Surface* surface, int x1, int y1, int x2, int y2, SDL_Color*
         }
         x = x1;
         y = y1;
-        while (x != x2 && y != y2) {
+        while (1) {
                 x += xacc;
                 y += yacc;
+                if ((xacc == 1 && x > x2)
+                    || (xacc == -1 && x < x2)
+                    || (yacc == 1 && y > y2)
+                    || (yacc == -1 && y < y2)) {
+                        myUnlockSurface(surface);
+                        return;
+                }
                 p = (Uint8*)surface->pixels + bpp*(int)x + surface->pitch*(int)y;
                 switch(bpp) {
                 case 1:
@@ -1516,7 +1523,6 @@ void draw_line_(SDL_Surface* surface, int x1, int y1, int x2, int y2, SDL_Color*
                         break;
                 }
         }
-	myUnlockSurface(surface);
 }
 
 void sdlpango_init_()
