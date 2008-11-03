@@ -34,4 +34,4 @@ install: $(MOFILES)
 	done
 
 clean:
-	@rm -rf $(PGOAL).pot *.mo
+	@rm -rf *.mo
