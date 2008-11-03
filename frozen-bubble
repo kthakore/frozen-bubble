@@ -4806,7 +4806,8 @@ sub smg_choose_game() {
                                                                } else {
                                                                    my @chars = stringchars($matches[0]);
                                                                    my $counter = 0;
-                                                                   while (every { (stringchars($_))[$counter] eq $chars[$counter] } @matches) {
+                                                                   while ($counter < @chars
+                                                                          && every { (stringchars($_))[$counter] eq $chars[$counter] } @matches) {
                                                                        $counter++;
                                                                    }
                                                                    play_sound('stick');
