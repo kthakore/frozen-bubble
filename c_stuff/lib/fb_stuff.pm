@@ -338,7 +338,7 @@ sub t {
 }
 
 sub dbgnet {
-    if (1) {
+    if (0) {
         print "DBGNET: @_\n";
     }
 }
