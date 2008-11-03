@@ -2,3 +2,5 @@
 - try to reduce cpu usage on end of network game, when waiting
 - add dbus notifications
 - count addiction as time really spent playing
+- geolocate servers
+- network game lounge: when user has been idle for a while (or on request) - make it possible to see whether switching server could be good?
