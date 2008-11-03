@@ -46,7 +46,7 @@ PERL_MAKE_OPTS = $(PMO_PREFIX) $(PMO_INSTALLPRIVLIB) $(PMO_INSTALLSCRIPT) \
     $(PMO_INSTALLMAN3DIR)
 
 Makefile_c: Makefile.PL
-	perl Makefile.PL $(PERL_MAKE_OPTS)
+	perl Makefile.PL $(PERL_MAKE_OPTS) INSTALLDIRS=$(INSTALLDIRS)
 
 fb_c_stuff: %: %.xs Makefile_c
 	$(MAKE) -f Makefile_c
