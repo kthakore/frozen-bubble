@@ -18,8 +18,150 @@
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
 #
-# This module was created by Mark Glines.
+# fb_net_discover - high performance server discovery plugin for frozen bubble
+# 
+# SYNOPSIS
+# 
+#     my $discover = fb_net_discover->new(
+#         { host => "1.2.3.4", port => 1511 },
+#         { host => "5.6.7.8", port => 1512 }, ...);
+#     while($discover->pending()) {
+#         my @servers = $discover->found();
+#         for(my $server = 0; $server < @servers; $server++) {
+#             printf("%02i: ip %s ping %i\n",
+#                 $server, $servers[$server]{ip}, $servers[$server]{ping});
+#         }
+#         $discover->work(0.1); # sit in a select loop for 100ms
+# 
+#         # update your screen, and all of that stuff, here.
+#     }
+# 
+# 
+# DESCRIPTION
+# 
+# fb_net_discover checks a list of servers, finding their versions, ping times,
+# and number of current clients.  It uses nonblocking IO and select, to
+# connect to multiple servers in parallel, thus reducing the total amount of
+# time elapsed.  This, in turn, allows the user to begin playing frozen bubble
+# more quickly. :)
+# 
+# This module is designed to be called from a GUI loop.  It has to spend sit in
+# a select loop for most of its life in order to get accurate ping times, but
+# it will return back to your loop at intervals you specify, so you can check
+# for keystrokes and refresh the screen and so forth.
+# 
+# In order to get consistent results on slow dialup links, this module will only
+# attempt to connect to one server per each 200ms.  This means for 18 servers
+# that there are 3.4 seconds of extra guaranteed lag, but it also means packets
+# from multiple servers are less likely to bump into eachother in the queue, so
+# ping reply times will be more reliable.
+# 
+# In the source script, there are two configuration parameters: $number_of_pings
+# and $time_between_connections.  These are set to 2 and 0.2, respectively.
+# These two parameters will determine the amount of bandwidth used, and the
+# amount of time taken before the user can select a server.  Assuming the user's
+# internet connection can handle the traffic without extra latency from queueing
+# or retransmissions, the worst case latency will be, in seconds:
+# 
+#     N*L + T*(S-1)
+# 
+# where
+# 
+#     N = $number_of_pings
+#     L = the roundtrip time of the slowest server in the list, in seconds
+#     T = $time_between_connections
+#     S = the number of servers in the list
+# 
+# 
+# CONSTRUCTOR
+# 
+#     ...->new ({host => "server1", port => port}, {host => "server2", port => port}, ...)
+# 
+# Takes a list of servers as arguments.  Each server argument should be a hash
+# reference, consisting of {host => host, port => port}.  Returns a
+# fb_net_discover object, which can be used within a GUI loop to discover all of
+# your servers.
+# 
+# The host string should ideally be an IP address.  A hostname string should work
+# too, but DNS lookups will introduce extra, unpredictable latency later on.
+# 
 #
+# METHODS
+# 
+# These methods define the public API for instances of this class.
+# 
+#   found
+# 
+# Returns a list of 0 or more servers found.  Each return value is a hash
+# reference, containing the following keys:
+# 
+#     host: the IP address of the server
+#     port: the TCP port of the server
+#     pingtimes: array reference, contains the actual result times of 4 pings
+#     ping: the average roundtrip latency of the server, in ms
+#     freenicks: the list of players connected
+#     freegames: the list of open games (not yet started)
+#     free: the number of idle clients connected to this server
+#     games: the number of clients connected to this server, who are playing games
+#     playing: the list of players in games
+#     geolocs: the geolocations of players in games
+#     name: the self-proclaimed "name" reported by the server
+#     language: the preferred language reported by the server
+# 
+#   pending
+# 
+# Returns non-zero if we are still waiting for a response from one or more
+# servers; returns 0 if processing is complete.
+# 
+#   work(seconds)
+# 
+# Enters the main loop of this module.  This method requires one argument, a
+# numeric count of seconds to work for.  This is expected to be a floating point
+# decimal, for sub-second precision.  Returns the number of servers pending, just
+# like the pending method does.
+#
+# 
+# INTERNAL METHODS
+# 
+# These methods are only meant to be called from within the module.  They are
+# subject to change without notice.
+# 
+#   try_connect
+# 
+# Attempts to connect to a server.  Moves the first "not_started" server to the
+# "pending" list, and creates a non-blocking IO::Socket::INET object for it.
+# Updates the begin_time timestamp, to determine when the next server should be
+# connected.
+# 
+#   give_up_on(connection_number, reason)
+# 
+# Called if select reports a socket as has_exception.  Also called if the
+# server has a bogus version, times out, or we can't parse the IP address or
+# something.  Removes the entry from further processing, and emits an error
+# message on stderr.
+# 
+#
+# EXPORT
+# 
+# None.
+#
+# 
+# BUGS
+# 
+# implement some sort of timeout, for servers which don't respond within 5 seconds.
+# 
+#
+# AUTHOR
+# 
+# Mark Glines, <mark@glines.org>.
+# 
+#
+# COPYRIGHT AND LICENSE
+# 
+# This code is donated to the frozen bubble project, www.frozen-bubble.org, so
+# they can do whatever they want with it.  Copyright is therefore assigned to
+# those guys.
+# 
 #******************************************************************************
 
 package fb_net_discover;
@@ -41,77 +183,6 @@ my $connection_timeout = 5;
 
 # note: the ping-averaging code below assumes $number_of_pings >= 2.
 
-
-=head1 NAME
-
-fb_net_discover - high performance server discovery plugin for frozen bubble
-
-=head1 SYNOPSIS
-
-    my $discover = fb_net_discover->new(
-        { host => "1.2.3.4", port => 1511 },
-        { host => "5.6.7.8", port => 1512 }, ...);
-    while($discover->pending()) {
-        my @servers = $discover->found();
-        for(my $server = 0; $server < @servers; $server++) {
-            printf("%02i: ip %s ping %i\n",
-                $server, $servers[$server]{ip}, $servers[$server]{ping});
-        }
-        $discover->work(0.1); # sit in a select loop for 100ms
-
-        # update your screen, and all of that stuff, here.
-    }
-
-
-=head1 DESCRIPTION
-
-B<fb_net_discover> checks a list of servers, finding their versions, ping times,
-and number of current clients.  It uses nonblocking IO and B<select>, to
-B<connect> to multiple servers in parallel, thus reducing the total amount of
-time elapsed.  This, in turn, allows the user to begin playing frozen bubble
-more quickly. :)
-
-This module is designed to be called from a GUI loop.  It has to spend sit in
-a B<select> loop for most of its life in order to get accurate ping times, but
-it will return back to your loop at intervals you specify, so you can check
-for keystrokes and refresh the screen and so forth.
-
-In order to get consistent results on slow dialup links, this module will only
-attempt to B<connect> to one server per each 200ms.  This means for 18 servers
-that there are 3.4 seconds of extra guaranteed lag, but it also means packets
-from multiple servers are less likely to bump into eachother in the queue, so
-ping reply times will be more reliable.
-
-In the source script, there are two configuration parameters: $number_of_pings
-and $time_between_connections.  These are set to 2 and 0.2, respectively.
-These two parameters will determine the amount of bandwidth used, and the
-amount of time taken before the user can select a server.  Assuming the user's
-internet connection can handle the traffic without extra latency from queueing
-or retransmissions, the worst case latency will be, in seconds:
-
-    N*L + T*(S-1)
-
-where
-
-    N = $number_of_pings
-    L = the roundtrip time of the slowest server in the list, in seconds
-    T = $time_between_connections
-    S = the number of servers in the list
-
-
-=head1 CONSTRUCTOR
-
-    ...->new ({host => "server1", port => port}, {host => "server2", port => port}, ...)
-
-Takes a list of servers as arguments.  Each server argument should be a hash
-reference, consisting of {host => host, port => port}.  Returns a
-fb_net_discover object, which can be used within a GUI loop to discover all of
-your servers.
-
-The host string should ideally be an IP address.  A hostname string should work
-too, but DNS lookups will introduce extra, unpredictable latency later on.
-
-=cut
 
 sub new {
     my ($package, @servers) = @_;
@@ -137,56 +208,16 @@ sub new {
 }
 
 
-=head1 METHODS
-
-These methods define the public API for instances of this class.
-
-=head2 found
-
-Returns a list of 0 or more servers found.  Each return value is a hash
-reference, containing the following keys:
-
-    host: the IP address of the server
-    port: the TCP port of the server
-    pingtimes: array reference, contains the actual result times of 4 pings
-    ping: the average roundtrip latency of the server, in ms
-    freenicks: the list of players connected
-    freegames: the list of open games (not yet started)
-    free: the number of idle clients connected to this server
-    games: the number of clients connected to this server, who are playing games
-    playing: the list of players in games
-    geolocs: the geolocations of players in games
-    name: the self-proclaimed "name" reported by the server
-    language: the preferred language reported by the server
-
-=cut
-
 sub found {
     my $self = shift;
     return values %{$$self{complete}};
 }
-
-=head2 pending
-
-Returns non-zero if we are still waiting for a response from one or more
-servers; returns 0 if processing is complete.
-
-=cut
 
 sub pending {
     my $self = shift;
     return scalar(keys %{$$self{pending}})
          + scalar(keys %{$$self{not_started}});
 }
-
-=head2 work(seconds)
-
-Enters the main loop of this module.  This method requires one argument, a
-numeric count of seconds to work for.  This is expected to be a floating point
-decimal, for sub-second precision.  Returns the number of servers pending, just
-like the B<pending> method does.
-
-=cut
 
 sub work {
     my ($self, $timeout) = @_;
@@ -225,20 +256,6 @@ sub work {
     }
     return $self->pending();
 }
-
-=head1 INTERNAL METHODS
-
-These methods are only meant to be called from within the module.  They are
-subject to change without notice.
-
-=head2 try_connect
-
-Attempts to connect to a server.  Moves the first "not_started" server to the
-"pending" list, and creates a non-blocking IO::Socket::INET object for it.
-Updates the begin_time timestamp, to determine when the next server should be
-connected.
-
-=cut
 
 sub try_connect {
     my $self = shift;
@@ -352,15 +369,6 @@ sub server_sm {
     }
 }
 
-=head2 give_up_on(connection_number, reason)
-
-Called if B<select> reports a socket as B<has_exception>.  Also called if the
-server has a bogus version, times out, or we can't parse the IP address or
-something.  Removes the entry from further processing, and emits an error
-message on stderr.
-
-=cut
-
 sub give_up_on {
     my ($self, $connid, $reason) = @_;
     print STDERR "Problem with server $$self{pending}{$connid}{host}:$$self{pending}{$connid}{port}: $reason.\n";
@@ -369,20 +377,3 @@ sub give_up_on {
 }
 
 1;
-=head1 EXPORT
-
-None.
-
-=head1 BUGS
-
-implement some sort of timeout, for servers which don't respond within 5 seconds.
-
-=head1 AUTHOR
-
-Mark Glines, <mark@glines.org>.
-
-=head1 COPYRIGHT AND LICENSE
-
-This code is donated to the frozen bubble project, www.frozen-bubble.org, so
-they can do whatever they want with it.  Copyright is therefore assigned to
-those guys.
