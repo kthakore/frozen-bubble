@@ -1351,18 +1351,22 @@ sub handle_mp_messages {
                 }
             };
         } elsif ($command eq 'm') {
-            my ($num, $cx, $cy, $sticky) = $params =~ /(.+):(.+):(.+):(.+)/;
-            my $b = create_bubble_given_img_num($num);
-            $b->{cx} = $cx;
-            $b->{cy} = $cy;
-            $b->{'stick_y'} = $sticky;
-            iter_players { #- need iter_players to get the small graphics change for free
-                if ($::p eq $player) {
-                    calc_real_pos($b, $::p);
-                    push @{$malus_bubble{$player}}, $b;
-                    malus_change(-1, $player);
-                }
-            };
+            #- we may receive new malus bubbles after a distant player is dead already
+            #- ignore them instead of wrongly overlaying frozen bubbles
+            if ($pdata{$player}{state} eq 'ingame') {
+                my ($num, $cx, $cy, $sticky) = $params =~ /(.+):(.+):(.+):(.+)/;
+                my $b = create_bubble_given_img_num($num);
+                $b->{cx} = $cx;
+                $b->{cy} = $cy;
+                $b->{'stick_y'} = $sticky;
+                iter_players { #- need iter_players to get the small graphics change for free
+                    if ($::p eq $player) {
+                        calc_real_pos($b, $::p);
+                        push @{$malus_bubble{$player}}, $b;
+                        malus_change(-1, $player);
+                    }
+                };
+            }
         } elsif ($command eq 'M') {
             my ($cx, $sticky) = $params =~ /(.+):(.+)/;
             #- if network cuts several malussticks in two parts, it's possible that
