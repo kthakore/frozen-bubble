@@ -4856,10 +4856,11 @@ sub smg_choose_game() {
                     } else {
                         push @wholist, $joined;
                         play_sound('newroot_solo');
-                        if ($chain_reaction_state eq t("enabled")
-                            || $victories_limit_index > 0
-                            || $continue_game_when_players_leave_state eq t("enabled")
-                            || $single_player_targetting_state eq t("disabled")) {
+                        if ($can_start
+                            && ($chain_reaction_state eq t("enabled")
+                                || $victories_limit_index > 0
+                                || $continue_game_when_players_leave_state eq t("enabled")
+                                || $single_player_targetting_state eq t("disabled"))) {
                             my $level = fb_net::send_and_receive('PROTOCOL_LEVEL');
                             if ($level < 1) {  #- available from minor level 1 onwards
                                 if ($chain_reaction_state eq t("enabled")) {
@@ -4882,7 +4883,7 @@ sub smg_choose_game() {
                                 }
                             }
                         }
-                        $can_start and $setoptions->();  #- new joiner needs to get parameters
+                        $can_start and $setoptions->();  #- new joiner needs to get parameters anyway
                     }
                 } elsif ($message =~ /^PARTED: (.+)/) {
                     if ($1 eq $joined_leader) {
