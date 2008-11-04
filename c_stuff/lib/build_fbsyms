@@ -1,3 +1,0 @@
-#!/bin/sh
-
-perl -ne 'BEGIN { print "package fbsyms;\n\@syms = qw(" } END { print ");\n" } /SDLK_(\S+)/ and print "$1 "' /usr/include/SDL/SDL_keysym.h > fbsyms.pm
