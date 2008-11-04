@@ -133,6 +133,11 @@
 # Updates the begin_time timestamp, to determine when the next server should be
 # connected.
 # 
+#   server_sm(connection_number)
+#
+# Implements a simple state machine.  Called with an index into the pending
+# array, to indicate that data is available for reading from this server.
+# 
 #   give_up_on(connection_number, reason)
 # 
 # Called if select reports a socket as has_exception.  Also called if the
@@ -282,13 +287,6 @@ sub try_connect {
         $self->give_up_on($key, "Could not create socket");
     }
 }
-
-=head2 server_sm(connection_number)
-
-Implements a simple state machine.  Called with an index into the pending
-array, to indicate that data is available for reading from this server.
-
-=cut
 
 sub server_sm {
     my ($self, $connid) = @_;
