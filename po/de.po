@@ -1,19 +1,22 @@
+# translation of de.po to
 # Deutsche Übersetzung für Frozen Bubble
 # Copyright (C) 2006 Frozen Bubble project
 # This file is distributed under the same license as the Frozen Bubble package.
-# Steffen Pankratz <kratz00 at gmx.de>, 2006.
 #
+# Steffen Pankratz <kratz00 at gmx.de>, 2006.
+# Dirk Stöcker <openstreetmap@dstoecker.de>, 2008.
 msgid ""
 msgstr ""
-"Project-Id-Version: Frozen Bubble\n"
+"Project-Id-Version: de\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2008-11-03 15:00+0100\n"
-"PO-Revision-Date: 2006-11-11 20:29+0200\n"
-"Last-Translator: Steffen Pankratz <kratz00 at gmx.de>\n"
-"Language-Team: German\n"
+"PO-Revision-Date: 2008-11-04 09:49+0100\n"
+"Last-Translator: Dirk Stöcker <openstreetmap@dstoecker.de>\n"
+"Language-Team:  <de@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"X-Generator: KBabel 1.11.4\n"
 
 #: ../frozen-bubble:202
 msgid "0"
@@ -118,9 +121,9 @@ msgid "Draw game!"
 msgstr "Unentschieden!"
 
 #: ../frozen-bubble:2273 ../frozen-bubble:2340
-#, fuzzy, perl-format
+#, perl-format
 msgid "Lost synchronization %s!"
-msgstr "Synchronisation abgerissen!"
+msgstr "Synchronisation abgerissen %s!"
 
 #: ../frozen-bubble:2987
 msgid "won!"
@@ -239,12 +242,10 @@ msgstr "*** Kein Spieleserver verfügbar"
 
 #: ../frozen-bubble:3806
 msgid "*** Please retry later or try a local network game (lan game)"
-msgstr ""
-"*** Bitte später nochmal probieren oder ein lokales Netzwerkspiel starten"
+msgstr "*** Bitte später nochmal probieren oder ein lokales Netzwerkspiel starten"
 
 #: ../frozen-bubble:3816
-msgid ""
-"*** Impossible to connect to specified server, going back to server list"
+msgid "*** Impossible to connect to specified server, going back to server list"
 msgstr "*** Keine Verbindung zum ausgewähltem Server, zurück zur Serverliste"
 
 #: ../frozen-bubble:3820
@@ -310,9 +311,8 @@ msgid "*** Players listening: "
 msgstr "*** Spieler anwesend: "
 
 #: ../frozen-bubble:4273 ../frozen-bubble:4633
-#, fuzzy
 msgid "*** Notice: no one's listening here"
-msgstr "*** Es ist keiner anwesend"
+msgstr "*** Notiz: Es ist keiner anwesend"
 
 #: ../frozen-bubble:4280
 msgid ""
@@ -324,11 +324,10 @@ msgstr ""
 
 #: ../frozen-bubble:4288
 msgid "*** Done, you are positioned as the flashing red dot!"
-msgstr ""
+msgstr "*** Fertig, Ihre Position ist der blinkende rote Punkt!"
 
 #: ../frozen-bubble:4290
-msgid ""
-"*** hostip.info doesn't know the geographical location of your IP address"
+msgid "*** hostip.info doesn't know the geographical location of your IP address"
 msgstr ""
 "*** hostip.info konnte keine geographische Position zu deiner IP Adresse "
 "ermitteln"
@@ -343,18 +342,15 @@ msgstr ""
 
 #: ../frozen-bubble:4292
 msgid "*** Then type /geolocate to see yourself on the map"
-msgstr ""
+msgstr "*** Geben Sie dann /geolocate ein, um sich selbst auf der Karte zu sehen."
 
 #: ../frozen-bubble:4299
 msgid "*** hostip.info didn't reply within 5 seconds, giving up"
-msgstr ""
-"*** hostip.info hat nicht innerhalb von 5 Sekunden geantwortet, Abbruch"
+msgstr "*** hostip.info hat nicht innerhalb von 5 Sekunden geantwortet, Abbruch"
 
 #: ../frozen-bubble:4317
-#, fuzzy
 msgid "*** You may now create or join a game"
-msgstr ""
-"*** Fertig - Es kann jetzt ein Spiel erstellt oder einem beigetretem werden"
+msgstr "*** Es kann jetzt ein Spiel erstellt oder einem beigetreten werden"
 
 #: ../frozen-bubble:4323 ../frozen-bubble:4324 ../frozen-bubble:4325
 #: ../frozen-bubble:4339 ../frozen-bubble:4342 ../frozen-bubble:4343
@@ -382,12 +378,11 @@ msgstr "deaktiviert"
 
 #: ../frozen-bubble:4353 ../frozen-bubble:4373 ../frozen-bubble:4393
 #: ../frozen-bubble:4413
-#, fuzzy
 msgid ""
 "*** Cannot modify this option, as a player is using a too old version of "
 "Frozen-Bubble"
 msgstr ""
-"Kettenreaktion kann nicht aktiviert werden, weil einer der Spieler eine zu "
+"*** Diese Option kann nicht geändert werden, weil einer der Spieler eine zu "
 "alte Frozen-Bubble Version benutzt"
 
 #: ../frozen-bubble:4357 ../frozen-bubble:4363 ../frozen-bubble:5021
@@ -400,18 +395,18 @@ msgstr "Kettenreaktion: %s"
 #: ../frozen-bubble:5029
 #, perl-format
 msgid "Continue game when players leave: %s"
-msgstr ""
+msgstr "Spiel beim Verlassen von Spielern fortsetzen: %s"
 
 #: ../frozen-bubble:4397 ../frozen-bubble:4403 ../frozen-bubble:5023
 #: ../frozen-bubble:5030
 #, perl-format
 msgid "Single player targetting: %s"
-msgstr ""
+msgstr "Gezielte Spielerbehinderung: %s"
 
 #: ../frozen-bubble:4430 ../frozen-bubble:5024 ../frozen-bubble:5031
 #, perl-format
 msgid "Victories limit: %s"
-msgstr "Gewinnpunkte Limit: %s"
+msgstr "Gewinnpunktelimit: %s"
 
 #: ../frozen-bubble:4440
 #, perl-format
@@ -446,7 +441,7 @@ msgstr "*** Verbunden mit Server '%s'"
 #: ../frozen-bubble:4573 ../frozen-bubble:4600 ../frozen-bubble:4849
 #, perl-format
 msgid "Kicking %s: %s"
-msgstr ""
+msgstr "Entferne Spieler %s: %s"
 
 #: ../frozen-bubble:4576 ../frozen-bubble:4588
 msgid "*** Sado-masochist, hmm?"
@@ -463,21 +458,21 @@ msgstr "*** Dein Arsch tut bestimmt schon genug weh! Hör auf!"
 #: ../frozen-bubble:4595
 #, perl-format
 msgid "*** Removing %s from autokick list."
-msgstr ""
+msgstr "*** Entferne %s aus AutoKick-Liste."
 
 #: ../frozen-bubble:4597
 #, perl-format
 msgid "*** Adding %s to autokick list."
-msgstr ""
+msgstr "*** Füge %s zu AutoKick-Liste hinzu."
 
 #: ../frozen-bubble:4608
 msgid "*** Nobody in autokick list."
-msgstr ""
+msgstr "*** Niemand ist in der AutoKick-Liste."
 
 #: ../frozen-bubble:4610
 #, perl-format
 msgid "*** Autokick list members: %s"
-msgstr ""
+msgstr "*** Mitglieder der AutoKick-Liste: %s"
 
 #: ../frozen-bubble:4614
 #, perl-format
@@ -490,9 +485,9 @@ msgid "%s <action>"
 msgstr "%s <Aktion>"
 
 #: ../frozen-bubble:4615 ../frozen-bubble:4618
-#, fuzzy, perl-format
+#, perl-format
 msgid "%s <nick> [<text>]"
-msgstr "%s <Spitzname>"
+msgstr "%s <Spitzname> [<Text>]"
 
 #: ../frozen-bubble:4617
 #, perl-format
@@ -553,21 +548,19 @@ msgstr ""
 "Bubble Version benutzt"
 
 #: ../frozen-bubble:4729
-#, fuzzy
 msgid ""
 "*** Cannot enable continue game when players leave, as a player is using an "
 "old version"
 msgstr ""
-"Kettenreaktion kann nicht aktiviert werden, weil einer der Spieler eine zu "
+"*** Kann Spielfortsetzung bei Verlassen von Spielern nicht aktivieren, weil einer der Spieler eine zu "
 "alte Frozen-Bubble Version benutzt"
 
 #: ../frozen-bubble:4734
-#, fuzzy
 msgid ""
 "*** Cannot disable single player targetting, as a player is using an old "
 "version"
 msgstr ""
-"Kettenreaktion kann nicht aktiviert werden, weil einer der Spieler eine zu "
+"*** Kann gezielte Spielerbehinderung nicht deaktivieren, weil einer der Spieler eine zu "
 "alte Frozen-Bubble Version benutzt"
 
 #: ../frozen-bubble:4847
@@ -577,30 +570,25 @@ msgstr "*** %s ist dem Spiel beigetreten!"
 
 #: ../frozen-bubble:4861
 #, perl-format
-msgid ""
-"*** Chain-reaction disabled, %s is using a too old version of Frozen-Bubble"
-msgstr ""
-"Kettenreaktion deaktiviert, %s benutzt eine zu alte Version von Frozen-Bubble"
+msgid "*** Chain-reaction disabled, %s is using a too old version of Frozen-Bubble"
+msgstr "Kettenreaktion deaktiviert, %s benutzt eine zu alte Version von Frozen-Bubble"
 
 #: ../frozen-bubble:4865
 #, perl-format
-msgid ""
-"*** Victories limit reset, %s is using a too old version of Frozen-Bubble"
+msgid "*** Victories limit reset, %s is using a too old version of Frozen-Bubble"
 msgstr ""
-"*** Gewinnpunkte Limit zurückgesetzt, %s benutzt eine zu alte Version von "
+"*** Gewinnpunktelimit zurückgesetzt, %s benutzt eine zu alte Version von "
 "Frozen-Bubble"
 
 #: ../frozen-bubble:4871
-#, fuzzy, perl-format
+#, perl-format
 msgid "*** Continue game when players leave disabled, %s has a too old version"
-msgstr ""
-"Kettenreaktion deaktiviert, %s benutzt eine zu alte Version von Frozen-Bubble"
+msgstr "** Spielfortsetzung beim Verlassen von Spielern deaktiviert, %s benutzt eine zu alte Version von Frozen-Bubble"
 
 #: ../frozen-bubble:4875
-#, fuzzy, perl-format
+#, perl-format
 msgid "*** Single player targetting enabled, %s has a too old version"
-msgstr ""
-"Kettenreaktion deaktiviert, %s benutzt eine zu alte Version von Frozen-Bubble"
+msgstr "*** Gezielte Spielerbehinderung aktiviert, %s benutzt eine zu alte Version von Frozen-Bubble"
 
 #: ../frozen-bubble:4884
 msgid "*** Game creator left the game..."
@@ -741,24 +729,3 @@ msgstr "Chat (Internet/Netzwerk Spiel)?"
 msgid "Thanks!"
 msgstr "Danke!"
 
-#, fuzzy
-#~ msgid ""
-#~ "*** Can't disable end game on lefters, as a player is using a too old "
-#~ "version of Frozen-Bubble"
-#~ msgstr ""
-#~ "Kettenreaktion kann nicht aktiviert werden, weil einer der Spieler eine "
-#~ "zu alte Frozen-Bubble Version benutzt"
-
-#~ msgid ""
-#~ "*** Can't set a victories limit, as a player is using a too old version "
-#~ "of Frozen-Bubble"
-#~ msgstr ""
-#~ "Gewinnpunkte Limit kann nicht gesetzt werden, weil einer der Spieler eine "
-#~ "zu alte Frozen-Bubble Version benutzt"
-
-#, fuzzy
-#~ msgid "Lost synchronization2!"
-#~ msgstr "Synchronisation abgerissen!"
-
-#~ msgid "*** Server's MOTD: %s"
-#~ msgstr "*** Meldung des Tages dieses Server's: %s"
