@@ -31,7 +31,7 @@
 
 package FBLE;
 
-use POSIX;
+use POSIX(qw(floor ceil));
 use SDL;
 use SDL::App;
 use SDL::Surface;

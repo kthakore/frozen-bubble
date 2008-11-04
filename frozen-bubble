@@ -50,7 +50,7 @@ use vars qw($TARGET_ANIM_SPEED $BUBBLE_SIZE $ROW_SIZE $LAUNCHER_SPEED $BUBBLE_SP
 use Getopt::Long;
 use Data::Dumper;
 use Locale::gettext;
-use POSIX;
+use POSIX();
 use Math::Trig;
 use IO::File;
 use Time::HiRes qw(gettimeofday tv_interval);
