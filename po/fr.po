@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2008-11-03 15:00+0100\n"
-"PO-Revision-Date: 2008-11-03 15:19+0100\n"
+"PO-Revision-Date: 2008-11-04 14:23+0100\n"
 "Last-Translator: Guillaume Cottenceau>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -376,9 +376,7 @@ msgstr "désactivée"
 msgid ""
 "*** Cannot modify this option, as a player is using a too old version of "
 "Frozen-Bubble"
-msgstr ""
-"*** Impossible de modifier cette option, un joueur utilise une trop vieille "
-"version de Frozen-Bubble"
+msgstr "*** Impossible de modifier cette option, un joueur utilise une ancienne version de Frozen-Bubble"
 
 #: ../frozen-bubble:4357 ../frozen-bubble:4363 ../frozen-bubble:5021
 #: ../frozen-bubble:5028
@@ -576,7 +574,7 @@ msgstr ""
 #: ../frozen-bubble:4871
 #, perl-format
 msgid "*** Continue game when players leave disabled, %s has a too old version"
-msgstr "*** Continuer la partie lorsque des joueurs quittent désactivé, %s utilise une ancienne version"
+msgstr "*** Continuer la partie lorsque des joueurs quittent désactivé, %s a une ancienne version"
 
 #: ../frozen-bubble:4875
 #, perl-format
