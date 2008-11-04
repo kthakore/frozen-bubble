@@ -1,20 +1,21 @@
-# translation of frozen-bubble.po to Turkish
+# translation of tr.po to Türkçe
 # Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
 # This file is distributed under the same license as the PACKAGE package.
 #
 # Uğur Çetin <ugur.jnmbk@gmail.com>, 2006.
 msgid ""
 msgstr ""
-"Project-Id-Version: frozen-bubble\n"
+"Project-Id-Version: tr\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2008-11-03 15:00+0100\n"
-"PO-Revision-Date: 2006-11-25 22:12+0200\n"
-"Last-Translator: Uğur Çetin <ugur.jnmbk@gmail.com>\n"
-"Language-Team:  <tr@li.org>\n"
+"PO-Revision-Date: 2008-11-04 14:18+0200\n"
+"Last-Translator: Uğur Çetin\n"
+"Language-Team: Türkçe <tr@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: KBabel 1.11.4\n"
+"Plural-Forms:  nplurals=1; plural=0;\n"
 
 #: ../frozen-bubble:202
 msgid "0"
@@ -119,9 +120,9 @@ msgid "Draw game!"
 msgstr "Berabere!"
 
 #: ../frozen-bubble:2273 ../frozen-bubble:2340
-#, fuzzy, perl-format
+#, perl-format
 msgid "Lost synchronization %s!"
-msgstr "Eş zamanlama kaybedildi!"
+msgstr "Eş zamanlama kaybedildi %s!"
 
 #: ../frozen-bubble:2987
 msgid "won!"
@@ -239,8 +240,7 @@ msgid "*** Please retry later or try a local network game (lan game)"
 msgstr "*** Lütfen daha sonra tekrar deneyin veya yerel ağ oyunu deneyin"
 
 #: ../frozen-bubble:3816
-msgid ""
-"*** Impossible to connect to specified server, going back to server list"
+msgid "*** Impossible to connect to specified server, going back to server list"
 msgstr "*** Belirtilen sunucuya bağlanamıyor, sunucu listesine bakılıyor"
 
 #: ../frozen-bubble:3820
@@ -252,8 +252,7 @@ msgstr "*** Sunucuya bağlanıldı '%s'"
 msgid ""
 "*** Sorry, your computer or the network is too slow, giving up - press any "
 "key"
-msgstr ""
-"*** Üzgünüm, ağ bağlantınız çok yavaş, vazgeçiyorum - herhangi bir tuşa basın"
+msgstr "*** Üzgünüm, ağ bağlantınız çok yavaş, vazgeçiyorum - herhangi bir tuşa basın"
 
 #: ../frozen-bubble:3996 ../frozen-bubble:5018
 msgid "Chat"
@@ -305,9 +304,8 @@ msgid "*** Players listening: "
 msgstr "*** Dinlenen oyuncular: "
 
 #: ../frozen-bubble:4273 ../frozen-bubble:4633
-#, fuzzy
 msgid "*** Notice: no one's listening here"
-msgstr "*** Burada hiç kimse dinlenmiyor"
+msgstr "*** Uyarı: Burada hiç kimse dinlemiyor"
 
 #: ../frozen-bubble:4280
 msgid ""
@@ -319,11 +317,10 @@ msgstr ""
 
 #: ../frozen-bubble:4288
 msgid "*** Done, you are positioned as the flashing red dot!"
-msgstr ""
+msgstr "*** Tamam, parlayan kırmızı nokta olarak yerleştirildiniz!"
 
 #: ../frozen-bubble:4290
-msgid ""
-"*** hostip.info doesn't know the geographical location of your IP address"
+msgid "*** hostip.info doesn't know the geographical location of your IP address"
 msgstr "*** hostip.info IP adresinizin coğrafi konumunu bulamadı"
 
 #: ../frozen-bubble:4291
@@ -336,16 +333,15 @@ msgstr ""
 
 #: ../frozen-bubble:4292
 msgid "*** Then type /geolocate to see yourself on the map"
-msgstr ""
+msgstr "*** Haritadaki yerinizi görmek için /geolocate yazın"
 
 #: ../frozen-bubble:4299
 msgid "*** hostip.info didn't reply within 5 seconds, giving up"
 msgstr "*** hostip.info 5 saniyedir cevap vermedi, vaz geçiliyor"
 
 #: ../frozen-bubble:4317
-#, fuzzy
 msgid "*** You may now create or join a game"
-msgstr "*** Tamamlandı - şimdi oyun başlatabilir veya oyuna katılabilirsiniz"
+msgstr "*** Şimdi oyun başlatabilir veya bir oyuna katılabilirsiniz"
 
 #: ../frozen-bubble:4323 ../frozen-bubble:4324 ../frozen-bubble:4325
 #: ../frozen-bubble:4339 ../frozen-bubble:4342 ../frozen-bubble:4343
@@ -373,12 +369,11 @@ msgstr "etkisiz"
 
 #: ../frozen-bubble:4353 ../frozen-bubble:4373 ../frozen-bubble:4393
 #: ../frozen-bubble:4413
-#, fuzzy
 msgid ""
 "*** Cannot modify this option, as a player is using a too old version of "
 "Frozen-Bubble"
 msgstr ""
-"*** Zincirleme etki açılamıyor, oyunculardan biri çok eski Frozen-Bubble "
+"*** Bu ayar kullanılamıyor, oyunculardan biri çok eski Frozen-Bubble "
 "kullanıyor"
 
 #: ../frozen-bubble:4357 ../frozen-bubble:4363 ../frozen-bubble:5021
@@ -391,13 +386,13 @@ msgstr "Zincirleme etki: %s"
 #: ../frozen-bubble:5029
 #, perl-format
 msgid "Continue game when players leave: %s"
-msgstr ""
+msgstr "Oyuncular çıkınca oyun devam etsin: %s"
 
 #: ../frozen-bubble:4397 ../frozen-bubble:4403 ../frozen-bubble:5023
 #: ../frozen-bubble:5030
 #, perl-format
 msgid "Single player targetting: %s"
-msgstr ""
+msgstr "Tek oyuncu hedefleme: %s"
 
 #: ../frozen-bubble:4430 ../frozen-bubble:5024 ../frozen-bubble:5031
 #, perl-format
@@ -435,7 +430,7 @@ msgstr "*** '%s' sunucusuna bağlısınız"
 #: ../frozen-bubble:4573 ../frozen-bubble:4600 ../frozen-bubble:4849
 #, perl-format
 msgid "Kicking %s: %s"
-msgstr ""
+msgstr "%s kovuluyor: %s"
 
 #: ../frozen-bubble:4576 ../frozen-bubble:4588
 msgid "*** Sado-masochist, hmm?"
@@ -452,21 +447,21 @@ msgstr "*** Vurduğun tos yeterince acı verdi! Kes şunu!"
 #: ../frozen-bubble:4595
 #, perl-format
 msgid "*** Removing %s from autokick list."
-msgstr ""
+msgstr "*** %s otomatik kovma listesinden kaldırıldı."
 
 #: ../frozen-bubble:4597
 #, perl-format
 msgid "*** Adding %s to autokick list."
-msgstr ""
+msgstr "*** %s otomatik kovma listesine ekleniyor."
 
 #: ../frozen-bubble:4608
 msgid "*** Nobody in autokick list."
-msgstr ""
+msgstr "*** Otomatik kovma listesi boş."
 
 #: ../frozen-bubble:4610
 #, perl-format
 msgid "*** Autokick list members: %s"
-msgstr ""
+msgstr "*** Otomatik kovma listesi üyeleri: %s"
 
 #: ../frozen-bubble:4614
 #, perl-format
@@ -479,9 +474,9 @@ msgid "%s <action>"
 msgstr "%s <yapılacak iş>"
 
 #: ../frozen-bubble:4615 ../frozen-bubble:4618
-#, fuzzy, perl-format
+#, perl-format
 msgid "%s <nick> [<text>]"
-msgstr "%s <takma ad>"
+msgstr "%s <takma ad> [<yazı>]"
 
 #: ../frozen-bubble:4617
 #, perl-format
@@ -540,21 +535,19 @@ msgstr ""
 "kullanıyor"
 
 #: ../frozen-bubble:4729
-#, fuzzy
 msgid ""
 "*** Cannot enable continue game when players leave, as a player is using an "
 "old version"
 msgstr ""
-"*** Zincirleme etki açılamıyor, oyunculardan biri çok eski Frozen-Bubble "
+"*** Oyuncu çıkınca devam ettirme açılamıyor, oyunculardan biri çok eski Frozen-Bubble "
 "kullanıyor"
 
 #: ../frozen-bubble:4734
-#, fuzzy
 msgid ""
 "*** Cannot disable single player targetting, as a player is using an old "
 "version"
 msgstr ""
-"*** Zincirleme etki açılamıyor, oyunculardan biri çok eski Frozen-Bubble "
+"*** Tek oyuncu hedefleme açılamıyor, oyunculardan biri çok eski Frozen-Bubble "
 "kullanıyor"
 
 #: ../frozen-bubble:4847
@@ -564,32 +557,30 @@ msgstr "*** %s oyuna katıldı!"
 
 #: ../frozen-bubble:4861
 #, perl-format
-msgid ""
-"*** Chain-reaction disabled, %s is using a too old version of Frozen-Bubble"
+msgid "*** Chain-reaction disabled, %s is using a too old version of Frozen-Bubble"
 msgstr ""
 "*** Zincirleme etki kapatıldı, %s çok eski bir Frozen-Bubble sürümü "
 "kullanıyor"
 
 #: ../frozen-bubble:4865
 #, perl-format
-msgid ""
-"*** Victories limit reset, %s is using a too old version of Frozen-Bubble"
+msgid "*** Victories limit reset, %s is using a too old version of Frozen-Bubble"
 msgstr ""
 "*** Kazanma sınırı sıfırlandı, %s çok eski bir Frozen-Bubble sürümü "
 "kullanıyor"
 
 #: ../frozen-bubble:4871
-#, fuzzy, perl-format
+#, perl-format
 msgid "*** Continue game when players leave disabled, %s has a too old version"
 msgstr ""
-"*** Zincirleme etki kapatıldı, %s çok eski bir Frozen-Bubble sürümü "
+"*** Oyuncu çıkınca oyunu devam ettirme açılamıyor, %s çok eski bir Frozen-Bubble sürümü "
 "kullanıyor"
 
 #: ../frozen-bubble:4875
-#, fuzzy, perl-format
+#, perl-format
 msgid "*** Single player targetting enabled, %s has a too old version"
 msgstr ""
-"*** Zincirleme etki kapatıldı, %s çok eski bir Frozen-Bubble sürümü "
+"*** Tek oyuncu hedefleme açıldı, %s çok eski bir Frozen-Bubble sürümü "
 "kullanıyor"
 
 #: ../frozen-bubble:4884
@@ -725,24 +716,3 @@ msgstr "Sohbet (ağ oyununda)?"
 msgid "Thanks!"
 msgstr "Teşekkürler!"
 
-#, fuzzy
-#~ msgid ""
-#~ "*** Can't disable end game on lefters, as a player is using a too old "
-#~ "version of Frozen-Bubble"
-#~ msgstr ""
-#~ "*** Zincirleme etki açılamıyor, oyunculardan biri çok eski Frozen-Bubble "
-#~ "kullanıyor"
-
-#~ msgid ""
-#~ "*** Can't set a victories limit, as a player is using a too old version "
-#~ "of Frozen-Bubble"
-#~ msgstr ""
-#~ "*** Kazanma sınırı koyulamıyor, oyunculardan biri çok eski Frozen-Bubble "
-#~ "kullanıyor"
-
-#, fuzzy
-#~ msgid "Lost synchronization2!"
-#~ msgstr "Eş zamanlama kaybedildi!"
-
-#~ msgid "*** Server's MOTD: %s"
-#~ msgstr "*** Sunucunun MOTD'si: %s"
