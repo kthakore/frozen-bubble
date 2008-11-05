@@ -5884,7 +5884,7 @@ sub replay {
         $replayfile or return;
         if ($filename =~ /\.bz2$/) {
             my $fh;
-            do { $filename = tmpnam() }
+            do { $filename = POSIX::tmpnam() }
               until $fh = IO::File->new($filename, O_WRONLY|O_CREAT|O_EXCL);
             print $fh $replayfile;
             $fh->close;
