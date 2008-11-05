@@ -56,4 +56,4 @@ install:
 
 clean:
 	test ! -e Makefile_c || $(MAKE) -f Makefile_c clean
-	rm -f *~ *.o
+	rm -f *~ *.o Makefile_c.old
