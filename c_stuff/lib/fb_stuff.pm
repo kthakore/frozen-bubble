@@ -24,6 +24,7 @@
 package fb_stuff;
 
 use fb_c_stuff;
+use fb_config;
 use Locale::gettext;
 use vars qw(@ISA @EXPORT $FPATH $FLPATH $FBLEVELS $colourblind %POS_1P %POS_2P %POS_MP $BUBBLE_SIZE $ROW_SIZE
             $PI $version);
@@ -34,9 +35,6 @@ use vars qw(@ISA @EXPORT $FPATH $FLPATH $FBLEVELS $colourblind %POS_1P %POS_2P %
              sum put_in_hash mapn mapn_ before_leaving fastuniq deep_copy stringchars t dbgnet);
 
 $version = '2.2.0rc1';
-
-$FPATH = '@DATADIR@/frozen-bubble';
-$FLPATH = '@LIBDIR@/frozen-bubble';
 
 %POS_1P = ( p1 => { left_limit => 190, right_limit => 446, top_limit => 44, 'initial_bubble_y' => 390,
                     canon => { x => 268, 'y' => 356 },

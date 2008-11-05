@@ -5,6 +5,12 @@ DIRS = c_stuff po server
 all: prepare dirs
 
 prepare:
+	echo 'package fb_config;' > c_stuff/lib/fb_config.pm
+	echo 'use vars qw(@ISA @EXPORT $$FPATH $$FLPATH);' >> c_stuff/lib/fb_config.pm
+	echo '@ISA = qw(Exporter);' >> c_stuff/lib/fb_config.pm
+	echo '@EXPORT = qw($$FPATH $$FLPATH);' >> c_stuff/lib/fb_config.pm
+	echo '$$FPATH = "$(DATADIR)/frozen-bubble";' >> c_stuff/lib/fb_config.pm
+	echo '$$FLPATH = "$(LIBDIR)/frozen-bubble";' >> c_stuff/lib/fb_config.pm
 	perl -ne "print \$$1 if m|\\\$$version = '(.*)';|" c_stuff/lib/fb_stuff.pm > VERSION
 
 dirs:
@@ -13,10 +19,6 @@ dirs:
 	@for n in . $(DIRS); do \
 		[ "$$n" = "." ] || $(MAKE) -C $$n || exit $$? ;\
 	done
-	@if [ ! -d save_virgin ]; then mkdir save_virgin; cp c_stuff/lib/fb_stuff.pm save_virgin; fi
-	cp -f save_virgin/fb_stuff.pm c_stuff/lib/fb_stuff.pm
-	perl -pi -e 's|\@DATADIR\@|$(DATADIR)|' c_stuff/lib/fb_stuff.pm
-	perl -pi -e 's|\@LIBDIR\@|$(LIBDIR)|' c_stuff/lib/fb_stuff.pm
 
 
 install: $(ALL)
@@ -34,5 +36,5 @@ clean:
 	@for n in $(DIRS); do \
 		(cd $$n; $(MAKE) clean) \
 	done
-	@if [ -d save_virgin ]; then cp -f save_virgin/fb_stuff.pm c_stuff/lib/fb_stuff.pm; rm -rf save_virgin; fi
+	@rm -f c_stuff/lib/fb_config.pm
 
