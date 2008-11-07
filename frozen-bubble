@@ -4575,7 +4575,7 @@ sub smg_choose_game() {
                             $text = undef;
                         } elsif ($text =~ m|^/kick (\S+)(?: (.+))?| && $can_start) {
                             my $kicked = $1;
-                            $2 and fb_net::send_("TALK " . t("Kicking %s: %s", $kicked, $2));
+                            $2 and fb_net::send_("TALK $kicked <-- $2");
                             if ($kicked eq $mynick) {
                                 my $rand = int(rand(3));
                                 $rand == 0 and smg_add_status_msg(t("*** Sado-masochist, hmm?"));
@@ -4602,7 +4602,7 @@ sub smg_choose_game() {
                                     smg_add_status_msg(t("*** Adding %s to autokick list.", $kicked));
                                     $autokick{$kicked} = $message;
                                     if ($can_start && any { $_ eq $kicked } @wholist) {
-                                        $message and fb_net::send_("TALK " . t("Kicking %s: %s", $kicked, $message));
+                                        $message and fb_net::send_("TALK $kicked <-- $message");
                                         $kick->($kicked);
                                     }
                                 }
@@ -4852,7 +4852,7 @@ sub smg_choose_game() {
                     my $joined = $1;
                     smg_add_status_msg(t("*** %s joined the game!", $joined));
                     if ($can_start && exists $autokick{$joined}) {
-                        $autokick{$joined} and fb_net::send_("TALK " . t("Kicking %s: %s", $joined, $autokick{$joined}));
+                        $autokick{$joined} and fb_net::send_("TALK $joined <-- $autokick{$joined}");
                         $kick->($joined);
                     } else {
                         push @wholist, $joined;
