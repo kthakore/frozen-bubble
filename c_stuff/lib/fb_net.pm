@@ -250,6 +250,9 @@ sub join($$) {
     }
 }
 
+my $buffered_buf;  #- the in game buffer. not to be read before game.
+my @messages;      #- the in game messages. same.
+
 my ($current_name, $current_host, $current_port);
 sub connect {
     my ($host, $port) = @_;
@@ -282,6 +285,8 @@ sub connect {
     $sock->autoflush;
 
     $buffered_line = undef;
+    $buffered_buf = undef;
+    @messages = ();
     my $msg;
     eval { $msg = readline_(); };
     $@ and return { failure => 'Server or computer too slow' };
@@ -368,11 +373,9 @@ sub current_server_hostport {
     return "$current_host:$current_port";
 }
 
-my @messages;
 sub reconnect() {
     if (defined($current_host) && defined($current_port)) {
         disconnect();
-        @messages = ();
         my $ret = fb_net::connect();
         return exists $ret->{ping};
     }
@@ -492,7 +495,6 @@ sub gsend($) {
     }
 }
 
-my $buffered_buf;
 sub grecv() {
     my @msg = @messages;
     @messages = ();
