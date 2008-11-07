@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: frozen-bubble 2\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2008-11-03 15:00+0100\n"
-"PO-Revision-Date: 2008-11-05 15:24+0100\n"
+"PO-Revision-Date: 2008-11-06 17:21+0100\n"
 "Last-Translator: Dario Pilori <dapilori@yahoo.it>\n"
 "Language-Team: Italian <tp@lists.linux.it>\n"
 "MIME-Version: 1.0\n"
@@ -223,7 +223,7 @@ msgstr "*** Verifica le impostazioni di rete o riprova più tardi"
 #: ../frozen-bubble:3705
 #, perl-format
 msgid "Available players: %s (playing: %s) Ping: %sms"
-msgstr "Giocatori disponibili: %s (che stanno giocando: %s) Ping: %sms"
+msgstr "Giocatori disponibili: %s (che giocano: %s) Ping: %sms"
 
 #: ../frozen-bubble:3737 ../frozen-bubble:3744
 msgid "*** Please choose a server"
@@ -240,7 +240,8 @@ msgstr "*** Riprova più tardi o avvia un gioco nella rete locale (lan game)"
 #: ../frozen-bubble:3816
 msgid ""
 "*** Impossible to connect to specified server, going back to server list"
-msgstr "*** Impossibile connettersi al server scelto, ritorno alla lista"
+msgstr ""
+"*** Impossibile connettersi al server scelto, ritorno alla lista"
 
 #: ../frozen-bubble:3820
 #, perl-format
@@ -313,7 +314,7 @@ msgid ""
 "*** Please wait, retrieving your geographical location from http://hostip."
 "info/..."
 msgstr ""
-"*** Attendere prego, sto ricevendo la tua posizione geografica da http://"
+"*** Attendere prego, ricezione in corso della posizione geografica da http://"
 "hostip.info/..."
 
 #: ../frozen-bubble:4288
@@ -324,7 +325,7 @@ msgstr "*** Fatto, sei posizionato come il punto rosso lampeggiante!"
 msgid ""
 "*** hostip.info doesn't know the geographical location of your IP address"
 msgstr ""
-"*** hostip.info non sa la posizione geografica associata al tuo indirizzo IP"
+"*** hostip.info non possiede la posizione geografica associata al tuo indirizzo IP"
 
 #: ../frozen-bubble:4291
 msgid ""
@@ -376,8 +377,8 @@ msgid ""
 "*** Cannot modify this option, as a player is using a too old version of "
 "Frozen-Bubble"
 msgstr ""
-"*** Impossibile modificare questa opzione, in quanto un giocatore sta "
-"usando una versione troppo vecchia di Frozen-Bubble"
+"*** Opzione non modificabile, un giocatore sta "
+"usando una versione vecchia"
 
 #: ../frozen-bubble:4357 ../frozen-bubble:4363 ../frozen-bubble:5021
 #: ../frozen-bubble:5028
@@ -389,7 +390,7 @@ msgstr "Reazione a catena: %s"
 #: ../frozen-bubble:5029
 #, perl-format
 msgid "Continue game when players leave: %s"
-msgstr "Continua la partita quando dei giocatori la lasciano: %s"
+msgstr "Continua la partita quando viene lasciata: %s"
 
 #: ../frozen-bubble:4397 ../frozen-bubble:4403 ../frozen-bubble:5023
 #: ../frozen-bubble:5030
@@ -501,8 +502,7 @@ msgstr ""
 
 #: ../frozen-bubble:4661
 msgid "*** Cannot join game, game was just started or aborted"
-msgstr ""
-"*** Impossibile partecipare alla partita, è stata appena iniziata o cancellata"
+msgstr "*** Impossibile partecipare alla partita, è stata appena iniziata o cancellata"
 
 #: ../frozen-bubble:4665 ../frozen-bubble:4973
 #, perl-format
@@ -527,32 +527,31 @@ msgid ""
 "*** Must disable chain-reaction, as a player is using a too old version of "
 "Frozen-Bubble"
 msgstr ""
-"*** La reazione a catena deve esere disabilitata, in quanto un giocatore sta usando una "
-"versione troppo vecchia di Frozen-Bubble"
+"*** La reazione a catena deve esere disabilitata, un giocatore usa una versione vecchia"
 
 #: ../frozen-bubble:4722
 msgid ""
 "*** Must reset victories limit as a player is using a too old version of "
 "Frozen-Bubble"
 msgstr ""
-"*** Il limite di vittorie deve essere tolto in quanto un giocatore sta usando una "
-"versione troppo vecchia di Frozen-Bubble"
+"*** Il limite di vittorie deve essere tolto, un giocatore usa una "
+"versione vecchia"
 
 #: ../frozen-bubble:4729
 msgid ""
 "*** Cannot enable continue game when players leave, as a player is using an "
 "old version"
 msgstr ""
-"*** Impossibile abilitare continua una partita quando giocatori la lasciano in quanto un giocatore sta "
-"usando una versione vecchia"
+"*** Impossibile abilitare continua la partita quando viene lasciata, un giocatore usa "
+"una versione vecchia"
 
 #: ../frozen-bubble:4734
 msgid ""
 "*** Cannot disable single player targetting, as a player is using an old "
 "version"
 msgstr ""
-"*** Impossibile disabilitare il bersagliamento di singoli giocatori, in quanto un giocatore sta "
-"usando una versione vecchia"
+"*** Impossibile disabilitare il bersagliamento di singoli giocatori, un giocatore "
+"usa una versione vecchia"
 
 #: ../frozen-bubble:4847
 #, perl-format
@@ -564,29 +563,26 @@ msgstr "*** %s partecipa alla partita!"
 msgid ""
 "*** Chain-reaction disabled, %s is using a too old version of Frozen-Bubble"
 msgstr ""
-"*** Reazione a catena disabilitata, %s sta usando una versione troppo "
-"vecchia di Frozen-Bubble"
+"*** Reazione a catena disabilitata, %s usa una versione vecchia"
 
 #: ../frozen-bubble:4865
 #, perl-format
 msgid ""
 "*** Victories limit reset, %s is using a too old version of Frozen-Bubble"
 msgstr ""
-"*** Tolto il limite di vittorie, %s sta usando una versione troppo vecchia "
-"di Frozen-Bubble"
+"*** Tolto il limite di vittorie, %s usa una versione vecchia"
 
 #: ../frozen-bubble:4871
 #, perl-format
 msgid "*** Continue game when players leave disabled, %s has a too old version"
 msgstr ""
-"*** Continua la partita quando dei giocatori la lasciano disabilitata, %s sta usando una versione troppo "
-"vecchia"
+"*** Continua la partita quando viene lasciata disabilitata, %s usa una versione vecchia"
 
 #: ../frozen-bubble:4875
 #, perl-format
 msgid "*** Single player targetting enabled, %s has a too old version"
 msgstr ""
-"*** Bersagliamento di singoli gicatori abilitato, %s sta usando una versione troppo "
+"*** Bersagliamento di singoli gicatori abilitato, %s usa una versione "
 "vecchia"
 
 #: ../frozen-bubble:4884
