@@ -493,7 +493,6 @@ sub gsend($) {
 }
 
 my $buffered_buf;
-my $ouch;
 sub grecv() {
     my @msg = @messages;
     @messages = ();
@@ -521,7 +520,7 @@ sub grecv() {
 #    print "received $bytes bytes, adding to buffered ", length($buffered_buf), "\n";
     $buf = $buffered_buf . $buf;
     $buffered_buf = undef;
-    my @ascii = unpack("C*", $buf);
+#    my @ascii = unpack("C*", $buf);
 #    print "bytes in buf: @ascii\n";
     
     while ($buf) {
