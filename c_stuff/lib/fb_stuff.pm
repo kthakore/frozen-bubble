@@ -26,10 +26,10 @@ package fb_stuff;
 use fb_c_stuff;
 use fb_config;
 use Locale::gettext;
-use vars qw(@ISA @EXPORT $FPATH $FLPATH $FBLEVELS $colourblind %POS_1P %POS_2P %POS_MP $BUBBLE_SIZE $ROW_SIZE
+use vars qw(@ISA @EXPORT $FPATH $FLPATH $FBHOME $FBLEVELS $colourblind %POS_1P %POS_2P %POS_MP $BUBBLE_SIZE $ROW_SIZE
             $PI $version);
 @ISA = qw(Exporter);
-@EXPORT = qw($version $FPATH $FLPATH $colourblind $FBLEVELS %POS_1P %POS_2P %POS_MP $BUBBLE_SIZE $ROW_SIZE
+@EXPORT = qw($version $FPATH $FLPATH $colourblind $FBHOME $FBLEVELS %POS_1P %POS_2P %POS_MP $BUBBLE_SIZE $ROW_SIZE
              $PI cat_ member difference2 any every even odd sqr to_bool to_int if_ chomp_
              fold_left output append_to_file min max backtrace basename cp_af all partition ssort
              sum put_in_hash mapn mapn_ before_leaving fastuniq deep_copy stringchars t dbgnet);
@@ -152,7 +152,9 @@ $POS_2P{rp1} = $POS_2P{p2};  #- in net/lan 2p mode, use bigger graphics and posi
 	    centerpanel => { x => 149, 'y' => 190 },
 	  );
 
-$FBLEVELS = "$ENV{HOME}/.fblevels";
+$FBHOME = "$ENV{HOME}/.frozen-bubble";
+$FBLEVELS = "$FBHOME/levels";
+migrate_resource_files();
 
 $BUBBLE_SIZE = 32;
 $ROW_SIZE = $BUBBLE_SIZE * 7/8;
@@ -338,5 +340,21 @@ sub t {
 sub dbgnet {
     if (0) {
         print "DBGNET: @_\n";
+    }
+}
+
+sub migrate_resource_files {
+    mkdir $FBHOME;
+    my %files = (
+	"$ENV{HOME}/.fbhighlevelshistory" => "highlevelshistory",
+	"$ENV{HOME}/.fb_records" => "records",
+	"$ENV{HOME}/.fblevels" => "levels",
+	"$ENV{HOME}/.fbhighscores" => "highscores",
+	"$ENV{HOME}/.fbhighscores-mptrain" => "highscores-mptrain",
+	"$ENV{HOME}/.fbrc" => "rc"
+    );
+    foreach my $file (keys %files) {
+        -r $file or next;
+        system "mv '$file' '$FBHOME/$files{$file}'";
     }
 }

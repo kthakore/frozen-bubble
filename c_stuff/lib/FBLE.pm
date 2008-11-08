@@ -2137,7 +2137,7 @@ sub init_app {
     # running as a stand alone app. If we're running embedded in the
     # game, we'll use whatever is already set up
     if ($application_caller eq 'stand-alone') {
-	@rcfile_data = cat_("$ENV{HOME}/.fbrc");
+        @rcfile_data = cat_("$FBHOME/rc");
 
         if ($command_line_fullscreen == 1) {
 	    $app->fullscreen;

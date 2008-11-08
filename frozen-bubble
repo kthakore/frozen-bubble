@@ -98,13 +98,13 @@ $HISCORES_MPTRAIN_CHAINREACTION = [];
 
 my $RECORD_PROTOCOL_LEVEL = 0;
 
-$rcfile = "$ENV{HOME}/.fbrc";
+$rcfile = "$FBHOME/rc";
 my $keys_orig = $KEYS;
 eval(cat_($rcfile));
 $KEYS->{misc}{chat} or ($KEYS->{p1}, $KEYS->{p2}) = ($KEYS->{p2}, $KEYS->{p1});  #- for upgrades
 $KEYS->{misc}{$_} ||= $keys_orig->{misc}{$_} foreach keys %{$keys_orig->{misc}}; #-
-eval(cat_($hiscorefiles{levels} = "$ENV{HOME}/.fbhighscores"));
-eval(cat_($hiscorefiles{mptrain} = "$ENV{HOME}/.fbhighscores-mptrain"));
+eval(cat_($hiscorefiles{levels} = "$FBHOME/highscores"));
+eval(cat_($hiscorefiles{mptrain} = "$FBHOME/highscores-mptrain"));
 
 textdomain("frozen-bubble");
 $ENV{GETTEXT_DIRNAME} and bindtextdomain("frozen-bubble", $ENV{GETTEXT_DIRNAME});
@@ -182,7 +182,7 @@ GetOptions("fullscreen|fs!" => \$fullscreen,
  --no-echo              when sound is enabled, disable echoing each typed character with a typewriter sound
  --my-nick <nick>       for net/lan games, use this nick instead of username (max 10 chars, ASCII alphanumeric plus dash and underscore only)
  --private              when starting a net game, don't use http://hostip.info/ to retrieve your geographical position to send it to other players
- --record <dir>         specify the recording directory (normally, records are saved in the directory '$ENV{HOME}/.fb_records')
+ --record <dir>         specify the recording directory (normally, records are saved in the directory '$FBHOME/records')
  --auto-record          automatically record all applicable games (normally, a record is triggered by hitting the Print Screen key during a game)
  --comment '...'        add the comment enclosed between simple quotes to records (must not contain anything else than ASCII), it will be shown on console when playing back the record later
  --replay <file|URL>    replay the specified savegame
@@ -1708,8 +1708,8 @@ our $recordnumber = 0;
 sub save_record_if_needed {
     if (($recorddata{save} || $autorecord) && $levels{current} !~ /^\d+$/ && @{$recorddata{data}} > 1 && !$pdata{p1}{left}) {
         if (!$recorddir) {
-            print "Notice: no recorddir was specified on commandline; recording in '$ENV{HOME}/.fb_records'\n";
-            $recorddir = "$ENV{HOME}/.fb_records";
+            $recorddir = "$FBHOME/records";
+            print "Notice: no recorddir was specified on commandline; recording in '$recorddir'\n";
             mkdir $recorddir;
         }
         my $filename = sprintf("$recorddir/fb_record_%08d", $recordnumber++);
@@ -2976,8 +2976,8 @@ sub display_highscores {
                 }
             } else {
                 # this is the normal case. just load the level that the file tells us
-                if ($loaded_levelset ne "$ENV{HOME}/.fbhighlevelshistory") {
-                    load_levelset("$ENV{HOME}/.fbhighlevelshistory");
+                if ($loaded_levelset ne "$FBHOME/highlevelshistory") {
+                    load_levelset("$FBHOME/highlevelshistory");
                 }
                 open_level($high->{piclevel});
             }
@@ -5226,7 +5226,7 @@ sub handle_new_hiscores() {
     }
 }
 
-# append the new highscore to the .fbhighlevelshistory
+# append the new highscore to the $FBHOME/highlevelshistory
 sub append_highscore_level() {
 
     my $row_numb = 0;
@@ -5247,13 +5247,13 @@ sub append_highscore_level() {
         }
     }
 
-    append_to_file("$ENV{HOME}/.fbhighlevelshistory", @contents, "\n\n");
+    append_to_file("$FBHOME/highlevelshistory", @contents, "\n\n");
 }
 
 sub count_highscorehistory_levels() {
     my $cnt = 0;
     my $row_numb = 0;
-    foreach my $line (cat_("$ENV{HOME}/.fbhighlevelshistory")) {
+    foreach my $line (cat_("$FBHOME/highlevelshistory")) {
 	if ($line !~ /\S/) {
 	    if ($row_numb) {
 		$cnt++;
@@ -5847,7 +5847,7 @@ sub choose_levelset() {
     my @levelsets = sort glob("$FBLEVELS/*");
 
     if (!@levelsets && !$choose_level) {
-        # no .fblevels directory or void directory, just return and let the
+        # no $FBHOME/levels directory or void directory, just return and let the
         # game continue (means that the level editor has never been opened)
 
     } else {
