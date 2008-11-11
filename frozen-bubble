@@ -42,7 +42,7 @@ use vars qw($TARGET_ANIM_SPEED $BUBBLE_SIZE $ROW_SIZE $LAUNCHER_SPEED $BUBBLE_SP
             $shooter_lowgfx $sdl_flags $mixer $mixer_enabled $music_disabled $sfx_disabled $no_echo @playlist %sound %music %pinguin %canon
             $graphics_level @update_rects $CANON_ROTATIONS_NB %malus_bubble %falling_bubble %exploding_bubble %malus_gfx %pangocontext $private $no_time_limit
             %sticking_bubble $time %imgbin $TIME_HURRY_WARN $TIME_HURRY_MAX $TIMEOUT_PINGUIN_SLEEP $FREE_FALL_CONSTANT @joysticks $joysticksinfo
-            $direct @PLAYERS @ALL_PLAYERS %levels $display_on_app_disabled $total_time $time_1pgame $time_netgame $fullscreen $rcfile %hiscorefiles
+            $direct @PLAYERS @ALL_PLAYERS %levels $display_on_app_disabled $addicted_time $start_time $time_1pgame $time_netgame $fullscreen $rcfile %hiscorefiles
             $HISCORES $HISCORES_MPTRAIN $HISCORES_MPTRAIN_CHAINREACTION
             $lev_number $playermalus $mptrainingdiff $loaded_levelset $direct_levelset $chainreaction %chains %img_mini $frame $sock $gameserver $mynick
             $continuegamewhenplayersleave $singleplayertargetting $mylatitude $mylongitude %autokick $replayparam $autorecord $comment);
@@ -243,8 +243,8 @@ sub format_addiction {
 }
 
 END {
-    if ($app) {
-	print "\nAddicted for ", format_addiction(($app->ticks - $total_time)/1000, 0), "\n";
+    if ($app && $addicted_time) {
+	print "\nAddicted for ", format_addiction($addicted_time/1000, 0), "\n";
     }
 }
 
@@ -1503,7 +1503,7 @@ sub handle_game_events() {
                         }
                         my $keypressed = extended_keypress($event);
                         if ($keypressed) {
-                            $total_time += $app->ticks - $time_pause;
+                            $start_time += $app->ticks - $time_pause;
                             return;
                         }
                     }
@@ -1592,7 +1592,7 @@ sub handle_game_events() {
                     $mixer_enabled && $mixer and $mixer->resume_music;
                     $event->pump while $event->poll != 0;
                     $app->flip;
-                    $total_time += $app->ticks - $time_pause;
+                    $start_time += $app->ticks - $time_pause;
                     is_1p_game() and $time_1pgame += $app->ticks - $time_pause;
                     return;
                 }
@@ -2860,7 +2860,7 @@ sub init_game() {
     load_levelset("$FPATH/data/levels");
 
     fb_c_stuff::init_effects($FPATH);
-    $total_time = $app->ticks;
+    $addicted_time = 0;
 
     print "Ready.\n";
 }
@@ -5142,6 +5142,7 @@ sub new_game_once {
         $failure || !$ok_game and return;
     }
     play_music(is_1p_game() ? 'main1p' : 'main2p');
+    $start_time = $app->ticks;
     return 1;
 }
 
@@ -5606,7 +5607,7 @@ sub menu {
                         }
                         my $keypressed = extended_keypress($event);
                         if ($keypressed) {
-                            $total_time += $app->ticks - $time_pause;
+                            $start_time += $app->ticks - $time_pause;
                             last pause_menu;
                         }
                     }
@@ -6040,6 +6041,7 @@ while (1) {
                 }
             } else {
               go_to_menu:
+                $addicted_time += $app->ticks - $start_time;
                 do { menu() } while (!new_game_once());
                 new_game();
             }
