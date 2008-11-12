@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: Frozen Bubble 2.2.0\n"
 "Report-Msgid-Bugs-To: contact2@frozen-bubble.org\\n"
 "POT-Creation-Date: 2008-11-03 15:00+0100\n"
-"PO-Revision-Date: 2008-11-09 14:49+0100\n"
+"PO-Revision-Date: 2008-11-11 22:10+0100\n"
 "Last-Translator: Steffen Pankratz <kratz00@gmx.de>\n"
 "Language-Team: German\n"
 "MIME-Version: 1.0\n"
@@ -190,9 +190,7 @@ msgstr "*** Bitte warten, es wird nach verfügbaren Servern im lokalen Netz gesu
 
 #: ../frozen-bubble:3610
 msgid "*** Unable to probe for available servers on local network!"
-msgstr ""
-"*** Es kann leider nicht nach verfügbaren Servern im lokalen Netz "
-"gesucht werden!"
+msgstr "*** Es kann leider nicht nach verfügbaren Servern im lokalen Netz gesucht werden!"
 
 #: ../frozen-bubble:3612
 msgid "*** Verify your network setup"
@@ -208,8 +206,7 @@ msgstr "*** Installation überprüfen oder den Anbieter kontaktieren"
 
 #: ../frozen-bubble:3629
 msgid "*** No server found, created server for local network game"
-msgstr "*** Es konnte kein Server gefunden werden, Server für Spiel im lokalen Netz "
-"wurde erstellt"
+msgstr "*** Es konnte kein Server gefunden werden, Server für Spiel im lokalen Netz wurde erstellt"
 
 #: ../frozen-bubble:3645
 msgid "*** Contacting master server..."
@@ -257,9 +254,7 @@ msgstr "*** Verbunden mit Server '%s'"
 msgid ""
 "*** Sorry, your computer or the network is too slow, giving up - press any "
 "key"
-msgstr ""
-"*** Der Computer oder das Netzwerk sind leider zu langsam, Abbruch "
-"- Beliebige Taste drücken."
+msgstr "*** Der Computer oder das Netzwerk sind leider zu langsam, Abbruch - Beliebige Taste drücken."
 
 #: ../frozen-bubble:3996 ../frozen-bubble:5018
 msgid "Chat"
@@ -318,9 +313,7 @@ msgstr "*** Notiz: Es ist niemand anwesend"
 msgid ""
 "*** Please wait, retrieving your geographical location from http://hostip."
 "info/..."
-msgstr ""
-"*** Bitte warten, Ermittlung Ihrer geographischen Position von http://hostip."
-"info/..."
+msgstr "*** Bitte warten, Ermittlung Ihrer geographischen Position von http://hostip.info/..."
 
 #: ../frozen-bubble:4288
 msgid "*** Done, you are positioned as the flashing red dot!"
@@ -328,17 +321,13 @@ msgstr "*** Fertig, Ihre Position ist der blinkende rote Punkt!"
 
 #: ../frozen-bubble:4290
 msgid "*** hostip.info doesn't know the geographical location of your IP address"
-msgstr ""
-"*** hostip.info konnte keine geographische Position zu Ihrer IP-Adresse "
-"ermitteln"
+msgstr "*** hostip.info konnte keine geographische Position zu Ihrer IP-Adresse ermitteln"
 
 #: ../frozen-bubble:4291
 msgid ""
 "*** If you want that your location appears on the map, fix your entry at "
 "http://hostip.info/"
-msgstr ""
-"*** Soll Ihre Position auf der Karte erscheinen, muss der Eintrag auf http://"
-"hostip.info/ berichtigt werden"
+msgstr "*** Soll Ihre Position auf der Karte erscheinen, muss d. Eintrag auf hostip.info berichtigt werden"
 
 #: ../frozen-bubble:4292
 msgid "*** Then type /geolocate to see yourself on the map"
@@ -381,9 +370,7 @@ msgstr "deaktiviert"
 msgid ""
 "*** Cannot modify this option, as a player is using a too old version of "
 "Frozen-Bubble"
-msgstr ""
-"*** Diese Option kann nicht geändert werden, weil einer der Spieler eine zu "
-"alte Frozen-Bubble Version benutzt"
+msgstr "*** Diese Option kann nicht geändert werden, einer der Spieler benutzt eine zu alte FB Version"
 
 #: ../frozen-bubble:4357 ../frozen-bubble:4363 ../frozen-bubble:5021
 #: ../frozen-bubble:5028
@@ -411,9 +398,7 @@ msgstr "Gewinnpunkte-Limit: %s"
 #: ../frozen-bubble:4440
 #, perl-format
 msgid "*** Can't kick %s: no such player in game"
-msgstr ""
-"*** %s kann nicht rausgeschmissen werden: Es gibt keinen Spieler mit diesem "
-"Namen im Spiel."
+msgstr "*** %s kann nicht rausgeschmissen werden: Es gibt keinen Spieler mit diesem Namen im Spiel."
 
 #: ../frozen-bubble:4442
 #, perl-format
@@ -453,7 +438,7 @@ msgstr "*** Sie stehen auf Schmerzen, oder?"
 
 #: ../frozen-bubble:4578 ../frozen-bubble:4590
 msgid "*** Your butt already hurts enough! Stop that!"
-msgstr "*** Ihr Hintern tut bestimmt schon genug weh! Hör auf!"
+msgstr "*** Ihr Hintern tut bestimmt schon ganz weh! Aufhören!"
 
 #: ../frozen-bubble:4595
 #, perl-format
@@ -503,15 +488,11 @@ msgstr "*** Unbekannter Befehl. Probieren Sie %s für Hilfe."
 msgid ""
 "*** Open games already full. Join an existing game, or select a different "
 "server."
-msgstr ""
-"*** Alle laufenden Spiele sind voll. Einem bestehenden Spiel betreten oder "
-"einen anderen Server wählen."
+msgstr "*** Alle lfd. Spiele sind voll. Einem bestehenden Spiel beitreten o. einen anderen Server wählen."
 
 #: ../frozen-bubble:4661
 msgid "*** Cannot join game, game was just started or aborted"
-msgstr ""
-"*** Dem Spiel kann nicht beigetreten werden, weil es gerade begonnen oder "
-"abgebrochen wurde"
+msgstr "*** Dem Spiel kann nicht beigetreten werden, weil es gerade begonnen o. abgebrochen wurde"
 
 #: ../frozen-bubble:4665 ../frozen-bubble:4973
 #, perl-format
@@ -535,33 +516,25 @@ msgstr "*** Spiel kann nicht gestartet werden: '%s'"
 msgid ""
 "*** Must disable chain-reaction, as a player is using a too old version of "
 "Frozen-Bubble"
-msgstr ""
-"Kettenreaktion deaktiviert, weil einer der Spieler eine zu alte Frozen-"
-"Bubble Version benutzt"
+msgstr "Kettenreaktion deaktiviert, einer der Spieler benutzt eine zu alte FB Version"
 
 #: ../frozen-bubble:4722
 msgid ""
 "*** Must reset victories limit as a player is using a too old version of "
 "Frozen-Bubble"
-msgstr ""
-"Gewinnpunkte Limit zurückgesetzt, weil einer der Spieler eine zu alte Frozen-"
-"Bubble Version benutzt"
+msgstr "Gewinnpunkte Limit zurückgesetzt, einer der Spieler benutzt eine zu alte FB Version"
 
 #: ../frozen-bubble:4729
 msgid ""
 "*** Cannot enable continue game when players leave, as a player is using an "
 "old version"
-msgstr ""
-"*** Kann Spielfortsetzung bei Verlassen von Spielern nicht aktivieren, weil einer der Spieler eine zu "
-"alte Frozen-Bubble Version benutzt"
+msgstr "*** Spielfortsetzung nicht aktivierbar, einer der Spieler benutzt eine zu alte FB Version"
 
 #: ../frozen-bubble:4734
 msgid ""
 "*** Cannot disable single player targetting, as a player is using an old "
 "version"
-msgstr ""
-"*** Kann gezielte Spielerbehinderung nicht deaktivieren, weil einer der Spieler eine zu "
-"alte Frozen-Bubble Version benutzt"
+msgstr "*** Gezielte Spielerbehinderung nicht deaktivierbar, einer d. Spieler benutzt eine zu alte FB Version"
 
 #: ../frozen-bubble:4847
 #, perl-format
@@ -571,24 +544,22 @@ msgstr "*** %s ist dem Spiel beigetreten!"
 #: ../frozen-bubble:4861
 #, perl-format
 msgid "*** Chain-reaction disabled, %s is using a too old version of Frozen-Bubble"
-msgstr "Kettenreaktion deaktiviert, %s benutzt eine zu alte Version von Frozen-Bubble"
+msgstr "Kettenreaktion deaktiviert, %s benutzt eine zu alte FB Version"
 
 #: ../frozen-bubble:4865
 #, perl-format
 msgid "*** Victories limit reset, %s is using a too old version of Frozen-Bubble"
-msgstr ""
-"*** Gewinnpunktelimit zurückgesetzt, %s benutzt eine zu alte Version von "
-"Frozen-Bubble"
+msgstr "*** Gewinnpunktelimit zurückgesetzt, %s benutzt eine zu alte FB Version"
 
 #: ../frozen-bubble:4871
 #, perl-format
 msgid "*** Continue game when players leave disabled, %s has a too old version"
-msgstr "** Spielfortsetzung beim Verlassen von Spielern deaktiviert, %s benutzt eine zu alte Version von Frozen-Bubble"
+msgstr "*** Spielforts. beim Verlassen von Spielern deaktiviert, %s benutzt eine zu alte Version von FB"
 
 #: ../frozen-bubble:4875
 #, perl-format
 msgid "*** Single player targetting enabled, %s has a too old version"
-msgstr "*** Gezielte Spielerbehinderung aktiviert, %s benutzt eine zu alte Version von Frozen-Bubble"
+msgstr "*** Gezielte Spielerbehinderung aktiviert, %s benutzt eine zu alte FB Version"
 
 #: ../frozen-bubble:4884
 msgid "*** Game creator left the game..."
@@ -655,9 +626,7 @@ msgstr "*** Spielstände: %s"
 msgid ""
 "*** Cannot connect to specified gameserver, fallbacking to contacting master "
 "server"
-msgstr ""
-"*** Kein Kontakt zum gewählten Spieleserver, es wird versucht den "
-"Masterserver zu kontaktieren"
+msgstr "*** Kein Kontakt zum gewählten Spieleserver, es wird versucht den Masterserver zu kontaktieren"
 
 #: ../frozen-bubble:5117
 msgid "2-player game"
