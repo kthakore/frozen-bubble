@@ -172,8 +172,17 @@ add the comment enclosed between simple quotes to records (must
 not contain anything else than ASCII), it will be shown on
 console when playing back the record later
 .TP
-\fB--replay -\fIrecord_file|URL\fR
+\fB--replay \fIrecord_file|URL\fR
 playback the specified record file
+.TP
+\fB--save-frames \fIdirectory\fR
+specify a directory where all (game) frames will be recorded; as the
+game is slowed down, can only be used with --replay; warning, output
+is huge as 50 frames of each 900 KB are saved per second (e.g. 43 MB
+per second); a typical use case is then to build a video out of the
+frames with e.g. this kind of command:
+
+mencoder mf:///tmp/fbframes/frame* -mf fps=50 -o /tmp/output.avi -ovc lavc -lavcopts vcodec=mpeg4
 
 .SH AUTHOR
 Written by Guillaume Cottenceau.

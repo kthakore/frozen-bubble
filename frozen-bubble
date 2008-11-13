@@ -45,7 +45,7 @@ use vars qw($TARGET_ANIM_SPEED $BUBBLE_SIZE $ROW_SIZE $LAUNCHER_SPEED $BUBBLE_SP
             $direct @PLAYERS @ALL_PLAYERS %levels $display_on_app_disabled $addicted_time $start_time $time_1pgame $time_netgame $fullscreen $rcfile %hiscorefiles
             $HISCORES $HISCORES_MPTRAIN $HISCORES_MPTRAIN_CHAINREACTION
             $lev_number $playermalus $mptrainingdiff $loaded_levelset $direct_levelset $chainreaction %chains %img_mini $frame $sock $gameserver $mynick
-            $continuegamewhenplayersleave $singleplayertargetting $mylatitude $mylongitude %autokick $replayparam $autorecord $comment);
+            $continuegamewhenplayersleave $singleplayertargetting $mylatitude $mylongitude %autokick $replayparam $autorecord $comment $saveframes $saveframesbase $saveframescounter);
 
 use Getopt::Long;
 use Data::Dumper;
@@ -157,6 +157,7 @@ GetOptions("fullscreen|fs!" => \$fullscreen,
            "record=s" => sub { if (!-d $_[1]) { die("$_[1] does not exist.\n") } else { $recorddir = $_[1] } },
            "auto-record" => \$autorecord,
            "replay=s" => \$replayparam,
+           "save-frames=s" => sub { if (!-d $_[1]) { die("$_[1] does not exist.\n") } else { $saveframes = $_[1] } },
            "comment=s" => \$comment,
            "help" => sub { print "Usage: ", basename($0), " [OPTION]...
  --fullscreen           start in fullscreen mode
@@ -186,11 +187,13 @@ GetOptions("fullscreen|fs!" => \$fullscreen,
  --auto-record          automatically record all applicable games (normally, a record is triggered by hitting the Print Screen key during a game)
  --comment '...'        add the comment enclosed between simple quotes to records (must not contain anything else than ASCII), it will be shown on console when playing back the record later
  --replay <file|URL>    replay the specified savegame
+ --save-frames <dir>    specify a directory where all (game) frames will be recorded; as the game is slowed down, can only be used with --replay; typical use case is then to build a video out of the frames (see manpage)
 ";
                            exit(0);
            });
 
 $mynick = sanitize_nick($mynick);
+$saveframes && !$replayparam and print STDERR "--save-frames can only be used with --replay\n";
 
 
 #- ------------------------------------------------------------------------
@@ -3441,6 +3444,11 @@ sub new_game() {
         @{$pdata{attackingme}} = ();
     }
 
+    if ($saveframes) {
+        $saveframescounter = 0;
+        $saveframesbase = gettimeofday();
+    }
+
     return 1;
 }
 
@@ -5296,6 +5304,9 @@ sub count_highscorehistory_levels() {
     return $cnt;
 } 
 
+sub save_frame() {
+    $replayparam and $app->save_bmp(sprintf("$saveframes/frame_\%d_%08d.bmp", $saveframesbase, $saveframescounter++));
+}
 
 #- ----------- mainloop ---------------------------------------------------
 
@@ -5315,6 +5326,7 @@ sub maingame() {
     my $to_wait = $TARGET_ANIM_SPEED - ($app->ticks - $synchro_ticks);
 #    print "$to_wait\n";
     $to_wait > 0 and fb_c_stuff::fbdelay($to_wait);
+    $saveframes and save_frame();
 }
 
 sub cleanup_and_exit {
@@ -6038,6 +6050,7 @@ init_game();
 
 if ($replayparam) {
     replay($replayparam);
+    $replayparam = undef;
 }
 
 if (!$direct) {
