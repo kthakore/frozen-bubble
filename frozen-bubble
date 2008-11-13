@@ -742,14 +742,14 @@ sub stick_bubble($$$$$) {
 	destroy_bubbles($player, @will_destroy, $bubble);
 
 	#- find falling bubbles
-	$_->{mark} = 0 foreach @{$sticked_bubbles{$player}};
+	$_->{distance_to_root} = 0 foreach @{$sticked_bubbles{$player}};
 	my @still_sticked;
 	my @neighbours = @{$root_bubbles{$player}};
 	my $distance_to_root;
 	while (1) {
-	    $_->{mark} = ++$distance_to_root foreach @neighbours;
+	    $_->{distance_to_root} = ++$distance_to_root foreach @neighbours;
 	    push @still_sticked, @neighbours;
-	    @neighbours = grep { $_->{mark} == 0 } map { @{$_->{neighbours}} } @neighbours;
+	    @neighbours = grep { $_->{distance_to_root} == 0 } map { @{$_->{neighbours}} } @neighbours;
 	    last if !@neighbours;
 	}
 	@falling = difference2($sticked_bubbles{$player}, \@still_sticked);
@@ -769,7 +769,7 @@ sub stick_bubble($$$$$) {
 		push @occupied_positions, map { $_->{chaindestcy}*8 + $_->{chaindestcx} } @{$chains{$player}{falling_chained}};
 		#- examine groups beginning at the root bubbles, for the case in which
 		#- there is a group that will fall from an upper chain-reaction
-		foreach my $pos (sort { $a->{mark} <=> $b->{mark} } @grouped_bubbles) {
+		foreach my $pos (sort { $a->{distance_to_root} <=> $b->{distance_to_root} } @grouped_bubbles) {
 		    #- now examine if there is a free position to chain-react in it
 		    foreach my $npos (next_positions($pos, $player)) {
 			#- we can't chain-react somewhere if it explodes a group already chained
