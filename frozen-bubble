@@ -806,7 +806,36 @@ sub stick_bubble($$$$$) {
 			}
 		    }
 		}
-	    }
+                #- now examine all chaining bubbles. for each one, check that consequences of all other chaining bubbles
+                #- do not cancel it. start by the lowest falling as they are likely to be the first to reach destination.
+                foreach my $falling (sort { $b->{cy} <=> $a->{cy} } @falling) {
+                    next if !exists $falling->{chaindestx};
+                    #- is this chain still possible, given all the other chains?
+                    #- first calculate all other chained
+                    my @other_chained_bubbles;
+                    foreach my $falling2 (@falling) {
+                        next if $falling eq $falling2 || !exists $falling2->{chaindestx};
+                        push @other_chained_bubbles, find_bubble_group($falling2);
+                    }
+                    #- second calculate the still sticked bubbles given all other chained bubbles removed,
+                    #- and check if this chain is still possible
+                    $_->{mark} = 0 foreach @{$sticked_bubbles{$player}};
+                    my @still_sticked;
+                    my @neighbours = difference2($root_bubbles{$player}, \@other_chained_bubbles);
+                    while (1) {
+                        $_->{mark} = 1 foreach @neighbours;
+                        push @still_sticked, @neighbours;
+                        @neighbours = difference2([ grep { $_->{mark} == 0 } map { @{$_->{neighbours}} } @neighbours ],
+                                                  \@other_chained_bubbles);
+                        last if !@neighbours;
+                    }
+                    my @chained_bubbles = grep { member($_, @still_sticked) } find_bubble_group($falling);
+                    if (@chained_bubbles < 2) {
+                        #- ok then, suppress this one
+                        delete $falling->{chaindestx};
+                    }
+                }
+            }
 	}
 
 	#- prepare falling bubbles
