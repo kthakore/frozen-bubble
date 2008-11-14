@@ -108,11 +108,12 @@ version of Frozen-Bubble.
 You need to specify the non-standard directory in the PREFIX
 parameter; to make execution easier, you should also specify the
 library directory where Perl modules will be installed, with
-INSTALLSITELIB.
+INSTALLSITELIB and INSTALLSITEARCH (INSTALLSITEARCH doesn't seem
+to be needed everywhere though I don't know why).
 
 Example:
 
-$ make PREFIX=/tmp/frozen-bubble INSTALLSITELIB=/tmp/frozen-bubble/lib
+$ make PREFIX=/tmp/frozen-bubble INSTALLSITELIB=/tmp/frozen-bubble/lib INSTALLSITEARCH=/tmp/frozen-bubble/lib
 
 In the installation step, use the same PREFIX again:
 
