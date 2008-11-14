@@ -2894,6 +2894,7 @@ sub init_game() {
     fb_c_stuff::init_effects($FPATH);
     $addicted_time = 0;
 
+    $start_time = 0;
     print "Ready.\n";
 }
 
@@ -3449,6 +3450,7 @@ sub new_game() {
         $saveframesbase = gettimeofday();
     }
 
+    $start_time = $app->ticks;
     return 1;
 }
 
@@ -5179,7 +5181,6 @@ sub new_game_once {
         $failure || !$ok_game and return;
     }
     play_music(is_1p_game() ? 'main1p' : 'main2p');
-    $start_time = $app->ticks;
     return 1;
 }
 
@@ -6065,6 +6066,10 @@ while (1) {
     if ($@) {
         my $died = $@;
         save_record_if_needed();
+        if ($start_time != 0) {
+            $addicted_time += $app->ticks - $start_time;
+            $start_time = 0;
+        }
 	if ($died =~ /^new_game/) {
             new_game() or goto go_to_menu;
 	} elsif ($died =~ /^quit/) {
@@ -6083,7 +6088,6 @@ while (1) {
                 }
             } else {
               go_to_menu:
-                $addicted_time += $app->ticks - $start_time;
                 do { menu() } while (!new_game_once());
                 new_game();
             }
