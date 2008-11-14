@@ -170,7 +170,7 @@ msgstr "Spela med glädje!"
 
 #: ../frozen-bubble:3509
 msgid "Multiplayer training"
-msgstr "Fleranvändraträning"
+msgstr "Fleranvändarträning"
 
 #: ../frozen-bubble:3607
 msgid "*** Please wait, probing for available servers on local network..."
@@ -182,7 +182,7 @@ msgstr "*** Kunde inte söka servrar på det lokala nätverket!"
 
 #: ../frozen-bubble:3612
 msgid "*** Verify your network setup"
-msgstr "*** Verifiera dina nätverksinställningar"
+msgstr "*** Kontrollera dina nätverksinställningar"
 
 #: ../frozen-bubble:3621
 msgid "*** No server found, and could not start server"
@@ -190,7 +190,7 @@ msgstr "*** Hittade ingen server och kunde inte starta server"
 
 #: ../frozen-bubble:3622
 msgid "*** Verify your installation or contact your vendor"
-msgstr "*** Verifiera din installation eller kontakta din leverantör"
+msgstr "*** Kontrollera din installation eller kontakta din leverantör"
 
 #: ../frozen-bubble:3629
 msgid "*** No server found, created server for local network game"
@@ -210,7 +210,7 @@ msgstr "*** Kunde inte hämta serverlista från huvudservern!"
 
 #: ../frozen-bubble:3659
 msgid "*** Verify your network setup or retry later"
-msgstr "*** Verifiera dina nätverksinställningar eller försök senare"
+msgstr "*** Kontrollera dina nätverksinställningar eller försök senare"
 
 #: ../frozen-bubble:3705
 #, perl-format
@@ -233,7 +233,7 @@ msgstr ""
 #: ../frozen-bubble:3816
 msgid ""
 "*** Impossible to connect to specified server, going back to server list"
-msgstr "*** Can inte ansluta till vald server, återgår till serverlistan"
+msgstr "*** Kan inte ansluta till vald server, återgår till serverlistan"
 
 #: ../frozen-bubble:3820
 #, perl-format
@@ -270,15 +270,15 @@ msgstr "Tillgängliga spelare: %s"
 
 #: ../frozen-bubble:4208
 msgid "*** %s has left the chat room"
-msgstr "*** %s lämnade spelet..."
+msgstr "*** %s lämnade samtalsrummet"
 
 #: ../frozen-bubble:4210
 msgid "*** Several players left this chat room: "
-msgstr "*** Fler spelare lämnade detta samtalsrum: "
+msgstr "*** Flera spelare lämnade detta samtalsrum: "
 
 #: ../frozen-bubble:4222
 msgid "*** %s has joined the chat room"
-msgstr "*** %s anslöt sig till spelet!"
+msgstr "*** %s anslöt sig till samtalsrummet"
 
 #: ../frozen-bubble:4224
 msgid "*** Several players joined this chat room: "
@@ -324,7 +324,7 @@ msgstr "*** Skriv sedan /geolocate för att visa dig på kartan"
 
 #: ../frozen-bubble:4299
 msgid "*** hostip.info didn't reply within 5 seconds, giving up"
-msgstr "*** hostip.info svarade into inom 5 sekunder, ger up"
+msgstr "*** hostip.info svarade inte inom 5 sekunder, ger up"
 
 #: ../frozen-bubble:4317
 msgid "*** You may now create or join a game"
@@ -489,7 +489,7 @@ msgstr "*** Spel skapat - vänta tills spelare ansluter sig."
 
 #: ../frozen-bubble:4674
 msgid "*** Joined game"
-msgstr "*** Gick med i till spelet!"
+msgstr "*** Gick med i spelet!"
 
 #: ../frozen-bubble:4704 ../frozen-bubble:4742 ../frozen-bubble:4748
 #, perl-format
