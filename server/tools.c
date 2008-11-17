@@ -111,12 +111,10 @@ void * memdup(void *src, size_t size)
 size_t strconcat(char *dst, const char *src, size_t size)
 {
         char *ptr = dst + strlen(dst);
-        while (ptr - dst < size - 1) {
+        while (ptr - dst < size - 1 && *src) {
                 *ptr = *src;
                 ptr++;
                 src++;
-                if (!*src)
-                        break;
         }
         *ptr = '\0';
         return ptr - dst;
