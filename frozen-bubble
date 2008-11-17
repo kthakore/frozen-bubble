@@ -1782,6 +1782,7 @@ sub save_record_if_needed {
             $filename .= ".bz2";
         }
         print "Record saved in '$filename'. Start Frozen-Bubble with '--replay $filename' to replay the game.\n";
+        return 1;
     }
 }
 
@@ -6065,13 +6066,15 @@ while (1) {
     eval { maingame() };
     if ($@) {
         my $died = $@;
-        save_record_if_needed();
+        my $recorded = save_record_if_needed();
         if ($start_time != 0) {
             $addicted_time += $app->ticks - $start_time;
             $start_time = 0;
         }
+
 	if ($died =~ /^new_game/) {
             new_game() or goto go_to_menu;
+
 	} elsif ($died =~ /^quit/) {
             if (is_mp_game()) {
                 if ($pdata{gametype} eq 'lan') {
@@ -6091,7 +6094,19 @@ while (1) {
                 do { menu() } while (!new_game_once());
                 new_game();
             }
+
 	} else {
+            if (!$recorded) {
+                print "\n******************************************************************************\n"
+                    . "* Unexpected abort in process! Forcing record: please send the record file to FB authors so that they fix the bug if possible!\n"
+                    . "******************************************************************************\n\n";
+                $autorecord = 1;
+                save_record_if_needed();
+            } else {
+                print "\n******************************************************************************\n"
+                    . "* Unexpected abort in process! Please send the record file to FB authors so that they fix the bug if possible!\n"
+                    . "******************************************************************************\n\n";
+            }
 	    die $died;
 	}
     }
