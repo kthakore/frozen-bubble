@@ -2440,7 +2440,8 @@ sub update_game() {
                 if (is_local_player($::p)) {
                     real_stick_bubble($b, $b->{'cx'}, $b->{'stick_y'}, $::p, 0);
                     push @$malus_end, $b;
-                    is_mp_game() and fb_net::gsend("M$b->{cx}:$b->{stick_y}");
+                    #- remote decode_postgame_message will not like receiving the M command after we sent the F command
+                    is_mp_game() && $pdata{state} eq 'game' and fb_net::gsend("M$b->{cx}:$b->{stick_y}");
                 } else {
                     $b->{freeze} = 1;
                 }
