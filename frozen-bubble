@@ -2029,15 +2029,16 @@ sub decode_postgame_message($) {
     } elsif ($pdata{$player}{still_game_messages}) {
         dbgnet("decoded postgame message: from=$player msg=gamemsg");
         return "$player gamemsg";
+    } elsif ($msg->{msg} eq 'n') {
+        $pdata{$player}{ready4newgame} = 1;
+        dbgnet("decoded postgame message: from=$player msg=newgame");
+        return "$player newgame";
     } else {
-        if ($msg->{msg} eq 'n') {
-            $pdata{$player}{ready4newgame} = 1;
-            dbgnet("decoded postgame message: from=$player msg=newgame");
-            return "$player newgame";
-        } else {
-            dbgnet("decoded postgame message: from=$player msg=other");
-            return "$player other";
+        if ($msg->{msg} ne 'l') {
+            print "Postgame 'other' message from $player not a leave - $msg->{msg} - should not!\n";
         }
+        dbgnet("decoded postgame message: from=$player msg=other");
+        return "$player other";
     }
 }
 
