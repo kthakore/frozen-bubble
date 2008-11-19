@@ -53,7 +53,7 @@ use Locale::gettext;
 use POSIX();
 use Math::Trig;
 use IO::File;
-use Time::HiRes qw(gettimeofday tv_interval);
+use Time::HiRes qw(gettimeofday);
 
 use SDL;
 use SDL::App;
@@ -1142,7 +1142,7 @@ sub malus_change($$) {
             iter_players_ {
                 if ($::p_ ne $player) {
                     update_malus(\&remove_image_from_background, $::p_);
-                    push @{$pdata{$::p_}{malus}}, ([gettimeofday]) x $numb;
+                    push @{$pdata{$::p_}{malus}}, ($frame) x $numb;
                     update_malus(\&put_image_to_background, $::p_);
                 }
             };
@@ -1157,7 +1157,7 @@ sub malus_change($$) {
                             if ($::p_ ne $player && member($::p_, @living)) {
                                 is_mp_game() and fb_net::gsend("g$pdata{$::p_}{nick}:$numb");
                                 update_malus(\&remove_image_from_background, $::p_);
-                                push @{$pdata{$::p_}{malus}}, ([gettimeofday]) x $numb;
+                                push @{$pdata{$::p_}{malus}}, ($frame) x $numb;
                                 update_malus(\&put_image_to_background, $::p_);
                             }
                         };
@@ -1168,7 +1168,7 @@ sub malus_change($$) {
                     iter_players_ {  #- get mini graphics
                         if ($::p_ eq $p) {
                             update_malus(\&remove_image_from_background, $::p_);
-                            push @{$pdata{$::p_}{malus}}, ([gettimeofday]) x $numb;
+                            push @{$pdata{$::p_}{malus}}, ($frame) x $numb;
                             update_malus(\&put_image_to_background, $::p_);
                         }
                     };
@@ -1378,7 +1378,7 @@ sub handle_mp_messages {
             iter_players {
                 if ($pdata{$::p}{nick} eq $destplayer) {
                     update_malus(\&remove_image_from_background, $::p);
-                    push @{$pdata{$::p}{malus}}, ([gettimeofday]) x $numb;
+                    push @{$pdata{$::p}{malus}}, ($frame) x $numb;
                     update_malus(\&put_image_to_background, $::p);
                 }
             };
@@ -1508,7 +1508,7 @@ sub handle_game_events() {
 
     if ($levels{current} eq 'mp_train' && @{$malus_bubble{p1}} == 0 && @{$pdata{p1}{malus}} == 0) {
         if (int(rand($mptrainingdiff*(1000/$TARGET_ANIM_SPEED))) == 0) {
-            push @{$pdata{p1}{malus}}, ([gettimeofday]) x (1 + int(rand(6)));
+            push @{$pdata{p1}{malus}}, ($frame) x (1 + int(rand(6)));
         }
     }
 
@@ -2161,9 +2161,9 @@ sub update_game() {
                                     
                                     #- malus generation
                                     if (!any { $_->{chaindestx} } @{$falling_bubble{$::p}}) {
-                                        my $malusfreezetime = 0.4;
-                                        @{$pdata{$::p}{malus}} > 0 && tv_interval($pdata{$::p}{malus}[0]) > $malusfreezetime and play_sound('malus');
-                                        while (@{$pdata{$::p}{malus}} > 0 && tv_interval($pdata{$::p}{malus}[0]) > $malusfreezetime && @{$malus_bubble{$::p}} < 7) {
+                                        my $malusfreezeframes = 20;
+                                        @{$pdata{$::p}{malus}} > 0 && $frame > $pdata{$::p}{malus}[0] + $malusfreezeframes and play_sound('malus');
+                                        while (@{$pdata{$::p}{malus}} > 0 && $frame > $pdata{$::p}{malus}[0] + $malusfreezeframes && @{$malus_bubble{$::p}} < 7) {
                                             my $num = int(rand(@bubbles_images));
                                             my $b = create_bubble_given_img_num($num);
                                             $b->{num} = $num;
