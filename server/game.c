@@ -216,6 +216,7 @@ static int add_player(struct game * g, int fd, char* nick)
                 calculate_list_games();
                 return 1;
         } else {
+                free(nick);
                 return 0;
         }
 }
