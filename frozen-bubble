@@ -655,7 +655,11 @@ sub img2numb { my ($i, $f) = @_; each_index { $i eq $_ and $f = $::i } @bubbles_
 
 sub bubble_next_to($$$$$) {
     my ($x1, $y1, $x2, $y2, $player) = @_;
-    $x1 == $x2 && $y1 == $y2 and die "bubble_next_to: assert failed -- same bubbles ($x1:$y1;$player)\n" . backtrace();
+    if ($x1 == $x2 && $y1 == $y2) {
+        print STDERR "bubble_next_to: assert failed -- same bubbles ($x1:$y1;$player)\n";
+        $pdata{inconsistency} = 1;
+        die 'quit';
+    }
     return to_bool((sqr($x1+odd($y1+$pdata{$player}{oddswap})*0.5 - ($x2+odd($y2+$pdata{$player}{oddswap})*0.5)) + sqr($y1 - $y2)) < 3);
 }
 
@@ -3232,6 +3236,7 @@ sub new_game() {
             $backgr = $imgbin{back_mp};
             %POS = %POS_MP;
         }
+        $pdata{inconsistency} = undef;
     } elsif (is_2p_game()) {
 	$backgr = $imgbin{back_2p};
 	%POS = %POS_2P;
@@ -5091,7 +5096,9 @@ sub smg_choose_game() {
 sub show_mp_scores() {
     $imgbin{back_netgame}->blit($apprects{main}, $app, $apprects{main});
 
-    if ($pdata{scorelimit} && any { $pdata{$_}{score} == $pdata{scorelimit} } @PLAYERS) {
+    if ($pdata{inconsistency}) {
+        smg_add_status_msg(t("*** Game finished, because an inconsistency in game state was detected - sorry!"));
+    } elsif ($pdata{scorelimit} && any { $pdata{$_}{score} == $pdata{scorelimit} } @PLAYERS) {
         smg_add_status_msg(t("*** Game finished, because victories limit of %s was reached.", i18n_number($pdata{scorelimit})));
     } else {
         if (!$continuegamewhenplayersleave && any { $pdata{$_}{left} } @PLAYERS) {
