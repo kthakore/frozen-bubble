@@ -4378,7 +4378,7 @@ sub smg_choose_game() {
     my @victories_limits = ({ value => undef,
                               text => t("none (unlimited)") },
                             map { { value => $_,
-                                    text => i18n_number($_) } } (1..10, 20, 50, 100));
+                                    text => i18n_number($_) } } (1..12, 15, 20, 30, 50, 100));
     my $victories_limit_index = 5;
     my @history;
     my $history_position;
