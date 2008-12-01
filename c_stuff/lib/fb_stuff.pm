@@ -34,7 +34,7 @@ use vars qw(@ISA @EXPORT $FPATH $FLPATH $FBHOME $FBLEVELS $colourblind %POS_1P %
              fold_left output append_to_file min max backtrace basename cp_af all partition ssort
              sum put_in_hash mapn mapn_ before_leaving fastuniq deep_copy stringchars t dbgnet);
 
-$version = '2.2.0rc1';
+$version = '2.2.0rc2';
 
 %POS_1P = ( p1 => { left_limit => 190, right_limit => 446, top_limit => 44, 'initial_bubble_y' => 390,
                     canon => { x => 268, 'y' => 356 },
