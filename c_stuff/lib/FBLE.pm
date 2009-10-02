@@ -416,7 +416,8 @@ sub choose_action {
 
 # subroutine to return the list of levelsets in $FBLEVELS
 sub get_levelset_list {
-    my @levelsets = sort(my @dummy = all($FBLEVELS));
+	#my @levelsets = sort(my @dummy = all($FBLEVELS));
+	 my @levelsets = map { $_ =~ s{^.*/(.*)$}{$1}; $_; } sort(glob("$FBLEVELS/*"));
     $displaying_dialog eq 'ls_delete' and @levelsets = difference2(\@levelsets, [ 'default-levelset' ]);
     return @levelsets;
 }
