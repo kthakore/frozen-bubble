@@ -299,7 +299,7 @@ sub play_music($) {
 }
 
 sub init_sound() {
-    $mixer = eval { SDL::Mixer->new(-frequency => 44100, -channels => 2, -size => 1024); };
+    $mixer = eval { SDL::Mixer->new(-frequency => 22050, -channels => 2, -size => 1024); };
     if ($@) {
 	$@ =~ s| at \S+ line.*\n||;
 	print STDERR "\nWarning: can't initialize sound (reason: $@).\n";
@@ -311,7 +311,7 @@ sub init_sound() {
 	my $sound_path = "$FPATH/snd/$_.ogg";
 	$sound{$_} = SDL::Sound->new($sound_path);
 	if (UNIVERSAL::isa($sound{$_}, 'HASH') ? $sound{$_}{-data} : ${$sound{$_}}) {
-	    $sound{$_}->volume(80);
+	    $sound{$_}->volume(100);
 	} else {
 	    print STDERR "Warning, could not create new sound from '$sound_path'.\n";
 	}
