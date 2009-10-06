@@ -41,4 +41,5 @@ po/sl.mo
 po/sv.mo
 po/tr.mo
 po/zh_CN.mo
-
+.svn
+inc/
