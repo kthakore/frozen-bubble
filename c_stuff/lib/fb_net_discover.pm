@@ -370,7 +370,8 @@ sub server_sm {
 sub give_up_on {
     my ($self, $connid, $reason) = @_;
     print STDERR "Problem with server $$self{pending}{$connid}{host}:$$self{pending}{$connid}{port}: $reason.\n";
-    $$self{pending}{$connid}{sock}->shutdown(2);
+    $$self{pending}{$connid}{sock}->shutdown(2)
+      if defined $$self{pending}{$connid}{sock};
     delete($$self{pending}{$connid});
 }
 
