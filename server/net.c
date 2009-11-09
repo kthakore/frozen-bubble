@@ -290,6 +290,10 @@ static void handle_incoming_data_generic(gpointer data, gpointer user_data, int 
                                                 return;
                                         }
                                         
+                                        // process_msg > talk (flooding) > conn_terminated
+                                        if (interrupt_loop_processing)
+                                            return;
+                                        
                                         if (eol + 1 - ptr < len) {
                                                 ssize_t remaining = len - (eol + 1 - ptr);
                                                 l2(OUTPUT_TYPE_DEBUG, "multiple non-prio messages for %d, buffering (%zd bytes)", fd, remaining);
