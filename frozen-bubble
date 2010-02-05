@@ -1102,7 +1102,7 @@ sub handle_graphics($) {
                     print_('menu', $app, $MENUPOS{xpos_panel}, $y, $_, $imgbin{void_panel}->width, 'center');
                     $y += $smg_lineheight;
                 }
-                $app->flip;
+                $app->sync;
                 play_sound('cancel');
                 fb_c_stuff::fbdelay(1000);
                 $event->pump while $event->poll != 0;
@@ -2581,8 +2581,8 @@ our $init_step = 0;
 sub print_step($) {
     my ($txt) = @_;
     print $txt;
-    $event->pump;
-    while ($event->poll != 0) {
+    SDL::Events::pump_events();
+    while (SDL::Events::poll_event($event) != 0) {
         if ($event->type == SDL_QUIT
             || $event->type == SDL_KEYDOWN && $event->key_sym == SDLK_ESCAPE) {
             cleanup_and_exit();
@@ -2592,7 +2592,7 @@ sub print_step($) {
     if ($init_step == 0) {
         put_image($imgbin{loading_step_initial}, 100 + $_*12, 10) foreach 1..11;
     }
-    $app->flip;
+    $app->sync;
     $init_step++;
 }
 
@@ -2671,16 +2671,16 @@ sub init_game() {
     SDL::Mouse::show_cursor(0);
     $imgbin{loading} = add_image('loading.png');
     put_image($imgbin{loading}, 10, 10);
-    $app->flip;
+    $app->sync;
     $imgbin{loading_step} = add_image('loading_step.png');
     $imgbin{loading_step_initial} = add_image('loading_step_initial.png');
  
     print_step('[Graphics');
-    $imgbin{back_2p} = SDL::Surface->new(-name => "$FPATH/gfx/backgrnd.png");
-    $imgbin{back_1p} = SDL::Surface->new(-name => "$FPATH/gfx/back_one_player.png");
-    $imgbin{back_mp} = SDL::Surface->new(-name => "$FPATH/gfx/back_multiplayer.png");
-    $background = SDL::Surface->new(-width => $app->width, -height => $app->height, -depth => 32, -Amask => '0 but true');
-    $background_orig = SDL::Surface->new(-width => $app->width, -height => $app->height, -depth => 32, -Amask => '0 but true');
+    $imgbin{back_2p} = SDL::Image::load("$FPATH/gfx/backgrnd.png");
+    $imgbin{back_1p} = SDL::Image::load("$FPATH/gfx/back_one_player.png");
+    $imgbin{back_mp} = SDL::Image::load("$FPATH/gfx/back_multiplayer.png");
+    $background = SDL::Surface->new( SDL_ANYFORMAT, $app->w, $app->h, 32, 0, 0, 0, 0);
+    $background_orig =  SDL::Surface->new( SDL_ANYFORMAT, $app->w, $app->h, 32, 0, 0, 0, 0);
 
     fb_c_stuff::sdlpango_init();
     $pangocontext{netdialogs} =           { params => { desc => 'sans 10', fg => 'white', bg => 'black' } };
