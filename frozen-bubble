@@ -373,14 +373,14 @@ sub put_image_to_background($$$) {
     $image = translate_mini_image($image);
     ($x == 0 && $y == 0) and print "put_image_to_background: warning, X and Y are 0\n".backtrace();
     if ($y > 0) {
-	$drect = SDL::Rect->new(-width => $image->width, -height => $image->height, -x => $x, '-y' => $y);
-	$display_on_app_disabled or $image->blit($rects{$image}, $app, $drect);
-	$image->blit($rects{$image}, $background, $drect);
+	$drect = SDL::Rect->new($x, $y, $image->w, $image->h);
+	$display_on_app_disabled or SDL::Video::blit_surface ($image, $rects{$image}, $app, $drect);
+	SDL::Video::blit_surface($image , $rects{$image}, $background, $drect);
     } else {  #- clipping seems to not work when from one Surface to another Surface, so I need to do clipping by hand
-	$drect = SDL::Rect->new(-width => $image->width, -height => $image->height + $y, -x => $x, '-y' => 0);
-	my $irect = SDL::Rect->new(-width => $image->width, -height => $image->height + $y, '-y' => -$y);
-	$display_on_app_disabled or $image->blit($irect, $app, $drect);
-	$image->blit($irect, $background, $drect);
+	$drect = SDL::Rect->new( $x, 0, $image->w, $image->h + $y,  $x,  0);
+	my $irect = SDL::Rect->new( 0 , $y , $image->w,  $image->h + $y,  -$y);
+	$display_on_app_disabled or SDL::Video::blit_surface($image, $irect, $app, $drect);
+	SDL::Video::blit_surface($image, $irect, $background, $drect);
     }
     push @update_rects, $drect;
 }
@@ -389,9 +389,9 @@ sub remove_image_from_background($$$) {
     my ($image, $x, $y) = @_;
     $image = translate_mini_image($image);
     ($x == 0 && $y == 0) and print "remove_image_from_background: warning, X and Y are 0\n";
-    my $drect = SDL::Rect->new(-width => $image->width, -height => $image->height, -x => $x, '-y' => $y);
-    $background_orig->blit($drect, $background, $drect);
-    $background_orig->blit($drect, $app, $drect);
+    my $drect = SDL::Rect->new( $x, $y,  $image->w,  $image->h);
+    SDL::Video::blit_surface( $background_orig, $drect, $background, $drect);
+    SDL::Video::blit_surface( $background_orig, $drect, $app, $drect);
     push @update_rects, $drect;
 }
 
@@ -400,9 +400,9 @@ sub remove_images_from_background {
     foreach my $image (@images) {
 	($image->{'x'} == 0 && $image->{'y'} == 0) and print "remove_images_from_background: warning, X and Y are 0\n";
         my $img = translate_mini_image($image->{img});
-	my $drect = SDL::Rect->new(-width => $img->width, -height => $img->height, -x => $image->{'x'}, '-y' => $image->{'y'});
-	$background_orig->blit($drect, $background, $drect);
-	$background_orig->blit($drect, $app, $drect);
+	my $drect = SDL::Rect->new( $image->{'x'}, $image->{'y'}, $img->w, $img->h );
+	SDL::Video::blit_video ($background_orig, $drect, $background, $drect);
+	SDL::Video::blit_video ($background_orig, $drect, $app, $drect);
 	push @update_rects, $drect;
     }
 }
@@ -414,9 +414,9 @@ sub put_allimages_to_background($) {
 
 sub switch_image_on_background($$$;$) {
     my ($image, $x, $y, $save) = @_;
-    my $drect = SDL::Rect->new(-width => $image->width, -height => $image->height, -x => $x, '-y' => $y);
+    my $drect = SDL::Rect->new( $x, $y,  $image->w,  $image->h);
     if ($save) {
-	$save = SDL::Surface->new(-width => $image->width, -height => $image->height, -depth => 32, -Amask => "0 but true");  #- grrr... this piece of shit of Amask made the surfaces slightly modify along the print/erase of "Hurry" and "Pause".... took me so much time to debug and find that the problem came from a bug when Amask is set to 0xFF000000 (while it's -supposed- to be set to 0xFF000000 with 32-bit graphics!!)
+	$save = SDL::Surface->new( SDL_ANYFORMAT, $image->w, $image->h, 32, 0 , 0, 0, 0);  #- grrr... this piece of shit of Amask made the surfaces slightly modify along the print/erase of "Hurry" and "Pause".... took me so much time to debug and find that the problem came from a bug when Amask is set to 0xFF000000 (while it's -supposed- to be set to 0xFF000000 with 32-bit graphics!!)
 	$background->blit($drect, $save, $rects{$image});
     }
     $image->blit($rects{$image} || SDL::Rect->new(-width => $image->width, -height => $image->height), $background, $drect);
@@ -2715,25 +2715,25 @@ sub init_game() {
     foreach my $number (-$CANON_ROTATIONS_NB..$CANON_ROTATIONS_NB) {
         my $angle = $number*($PI/2)/$CANON_ROTATIONS_NB;
 
-        $canon{img}{$number} = SDL::Surface->new(-width => $shooter->width, -height => $shooter->height, -depth => 32);
-        fb_c_stuff::rotate_bicubic(surf($canon{img}{$number}), surf($shooter), $angle);
-        $canon{data}{$number} = fb_c_stuff::autopseudocrop(surf($canon{img}{$number}));
+        $canon{img}{$number} = SDL::Surface->new( SDL_ANYFORMAT, $shooter->w, $shooter->h,  32, 0,0,0,0);
+        fb_c_stuff::rotate_bicubic($canon{img}{$number}, $shooter, $angle);
+        $canon{data}{$number} = fb_c_stuff::autopseudocrop($canon{img}{$number});
         #- now crop (and use native RGBA ordering)
-        my $replace = SDL::Surface->new(-width => $canon{data}{$number}[2], -height => $canon{data}{$number}[3], -depth => 32);
+        my $replace = SDL::Surface->new( SDL_ANYFORMAT, $canon{data}{$number}[2],  $canon{data}{$number}[3], 32, 0,0,0,0);
         $canon{img}{$number}->set_alpha(0, 0);
-        $canon{img}{$number}->blit(SDL::Rect->new('-x' => $canon{data}{$number}[0], '-y' => $canon{data}{$number}[1],
-                                                  -width => $canon{data}{$number}[2], -height => $canon{data}{$number}[3]), $replace, undef);
+        $canon{img}{$number}->blit(SDL::Rect->new( $canon{data}{$number}[0],  $canon{data}{$number}[1],
+                                                  $canon{data}{$number}[2],  $canon{data}{$number}[3]), $replace, undef);
         $canon{img}{$number} = $replace;
         add_default_rect($canon{img}{$number});
 
-        $canon{img_mini}{$number} = SDL::Surface->new(-width => $shooter_mini->width, -height => $shooter_mini->height, -depth => 32);
-        fb_c_stuff::rotate_bicubic(surf($canon{img_mini}{$number}), surf($shooter_mini), $angle);
+        $canon{img_mini}{$number} = SDL::Surface->new( SDL_ANYFORMAT,  $shooter_mini->w,  $shooter_mini->h,  32, 0,0,0,0);
+        fb_c_stuff::rotate_bicubic($canon{img_mini}{$number}, $shooter_mini, $angle);
         $canon{data_mini}{$number} = fb_c_stuff::autopseudocrop(surf($canon{img_mini}{$number}));
         #- now crop (and use native RGBA ordering)
-        my $replace = SDL::Surface->new(-width => $canon{data_mini}{$number}[2], -height => $canon{data_mini}{$number}[3], -depth => 32);
+        my $replace = SDL::Surface->new( SDL_ANYFORMAT,  $canon{data_mini}{$number}[2],  $canon{data_mini}{$number}[3],  32, 0,0,0,0);
         $canon{img_mini}{$number}->set_alpha(0, 0);
-        $canon{img_mini}{$number}->blit(SDL::Rect->new('-x' => $canon{data_mini}{$number}[0], '-y' => $canon{data_mini}{$number}[1],
-                                                       -width => $canon{data_mini}{$number}[2], -height => $canon{data_mini}{$number}[3]), $replace, undef);
+        $canon{img_mini}{$number}->blit(SDL::Rect->new( $canon{data_mini}{$number}[0], $canon{data_mini}{$number}[1],
+                                                        $canon{data_mini}{$number}[2], $canon{data_mini}{$number}[3]), $replace, undef);
         $canon{img_mini}{$number} = $replace;
         add_default_rect($canon{img_mini}{$number});
 
@@ -2758,7 +2758,7 @@ sub init_game() {
     $imgbin{compressor_main} = add_image('compressor_main.png');
     $imgbin{compressor_ext} = add_image('compressor_ext.png');
 
-    $imgbin{back_menu} = SDL::Surface->new(-name => "$FPATH/gfx/menu/back_start.png");
+    $imgbin{back_menu} = SDL::Image::load( "$FPATH/gfx/menu/back_start.png");
     $imgbin{stamp} = add_image('menu/stamp.png');
     $imgbin{menu_closedeye_green_left} = add_image('menu/backgrnd-closedeye-left-green.png');
     $imgbin{menu_closedeye_green_right} = add_image('menu/backgrnd-closedeye-right-green.png');
@@ -2804,7 +2804,7 @@ sub init_game() {
     $imgbin{menu_cursor}{highscores} = [ map { add_image("menu/anims/highscore_00$_.png") } ('01'..'89') ];
     foreach my $cursortype (keys %{$imgbin{menu_cursor}}) {
         foreach my $img (@{$imgbin{menu_cursor}{$cursortype}}) {
-            my $alpha = SDL::Surface->new(-width => $img->width, -height => $img->height, -depth => 32);
+            my $alpha = SDL::Surface->new( SDL_ANYFORMAT,  $img->w,  $img->h,  32, 0,0,0,0);
             $img->set_alpha(0, 0);  #- for RGBA->RGBA blits, SDL_SRCALPHA must be removed or destination alpha is preserved
             $img->blit(undef, $alpha, undef);
             fb_c_stuff::alphaize(surf($alpha));
