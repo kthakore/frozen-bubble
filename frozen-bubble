@@ -2930,8 +2930,10 @@ sub translate_joystick_tokey($) {
     if ($event->type == fb_c_stuff::JOYAXISMOTION()) {
         my $axis = SDL::JoyAxisEventAxis(evt($event));
         my $value = fb_c_stuff::JoyAxisEventValue(evt($event));
-        if ($value <= -32767 || $value >= 32767) {  #- theoretically, it should work properly with analog joysticks this way
-            return "joystick|axisvalue|$which|$axis|$value";
+        if ($value <= -10000) {  #- should work properly with analog joysticks
+            return "joystick|axisvalue|$which|$axis|-10000";
+        } elsif ($value >= 10000) {  
+            return "joystick|axisvalue|$which|$axis|10000";
         } else {
             return "joystick|axisvalue|$which|$axis|0";
         }
