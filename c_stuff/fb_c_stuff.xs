@@ -1828,6 +1828,8 @@ sdlpango_init()
 
 SDLPango_Context*
 sdlpango_createcontext(char* color, char* font_desc)
+	PREINIT:
+		char* CLASS = "SDL::Pango::Context";
         CODE:
                 RETVAL = sdlpango_createcontext_(color, font_desc);
         OUTPUT:
@@ -1842,6 +1844,8 @@ sdlpango_getsize(SDLPango_Context* context, char* text, int width)
 
 SDL_Surface*
 sdlpango_draw(SDLPango_Context* context, char* text, int width)
+	PREINIT:
+		char* CLASS = "SDL::Surface";
         CODE:
                 RETVAL = sdlpango_draw_(context, text, width, "left");
         OUTPUT:
@@ -1849,6 +1853,8 @@ sdlpango_draw(SDLPango_Context* context, char* text, int width)
 
 SDL_Surface*
 sdlpango_draw_givenalignment(SDLPango_Context* context, char* text, int width, char* alignment)
+	PREINIT:
+		char* CLASS = "SDL::Surface";
         CODE:
                 RETVAL = sdlpango_draw_(context, text, width, alignment);
         OUTPUT:
