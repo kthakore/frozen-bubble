@@ -5465,10 +5465,10 @@ sub menu {
     };
 
     my $launch_editor = sub {
-        SDL::ShowCursor(1);
+        SDL::Mouse::show_cursor(1);
         FBLE::init_setup('embedded', $app);
         FBLE::handle_events();
-        SDL::ShowCursor(0);
+        SDL::Mouse::show_cursor(0);
 	$display_menu->();
         $app->flip;
         $invalidate_all->();
@@ -5925,12 +5925,12 @@ sub choose_levelset() {
             
 	    FBLE::init_app('embedded', $app);
             FBLE::create_play_levelset_dialog($choose_level, $levels{current});
-	    SDL::ShowCursor(1);
+	    SDL::Mouse::show_cursor(1);
             my @game_info = FBLE::handle_events();
             @game_info or return;
             load_levelset("$FBLEVELS/$game_info[0]");
             $levels{current} = $game_info[1];
-	    SDL::ShowCursor(0);
+	    SDL::Mouse::show_cursor(0);
 	}
     }
 
