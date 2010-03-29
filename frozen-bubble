@@ -5597,7 +5597,7 @@ sub menu {
         if ($alpha) {
             if ($pixelize) {
                 if (!defined($cursor_tmp)) {
-                    $cursor_tmp = SDL::Surface->new( SDL_ANYFORMAT, $imgbin{menu_cursor}{$m}[0]->w,  $imgbin{menu_cursor}{$m}[0]->h, 32);
+                    $cursor_tmp = SDL::Surface->new( SDL_ANYFORMAT, $imgbin{menu_cursor}{$m}[0]->w,  $imgbin{menu_cursor}{$m}[0]->h, 32, 0,0,0,0);
                 }
                 fb_c_stuff::pixelize(surf($cursor_tmp), surf($imgbin{menu_cursor}{"${m}alpha"}[$pdata{cursor_img}{$m}]));
 		SDL::Video::blit_surface( $cursor_tmp, undef, $app, $cursor_rect);
@@ -5738,30 +5738,30 @@ sub menu {
 
 		$xpos > $banners_max/2 and $xpos = $banners{$b} - ($banner_pos + $banners_max);
 
-		if ($xpos < $BANNER_MAXX && $xpos + $image->width >= 0) {
-		    my $irect = SDL::Rect->new(-width => min($image->width+$xpos, $BANNER_MAXX-$BANNER_MINX),
-                                               -height => $image->height, -x => -$xpos);
-		    $image->blit($irect, $app, SDL::Rect->new(-x => $BANNER_MINX, '-y' => $BANNER_Y));
+		if ($xpos < $BANNER_MAXX && $xpos + $image->w >= 0) {
+		    my $irect = SDL::Rect->new(-$xpos, 0,  min($image->w+$xpos, $BANNER_MAXX-$BANNER_MINX),
+                                                $image->h);
+					SDL::Video::blit_surface( $image, $irect, $app, SDL::Rect->new( $BANNER_MINX,  $BANNER_Y, 0, 0) );
 		}
 	    }
 	    $banner_pos++;
 	    $banner_pos >= $banners_max and $banner_pos = 1;
-            $app->update($banner_rect);
+	    SDL::Video::update_rects($app, $banner_rect);
 
             #- animate and break cursor
             foreach my $m (keys %menu_entries) {
                 if ($menu_entries{$m}->{pos} == $current_pos) {
                     $pdata{cursor_img}{$m}++;
                     $pdata{cursor_img}{$m} >= @{$imgbin{menu_cursor}{$m}} and $pdata{cursor_img}{$m} = 0;
-                    $app->update($display_cursor->($m, 0));
+		    SDL::Video::update_rects($app, $display_cursor->($m, 0));
                     
                 } else {
                     if ($broken_cursors{$m}) {
                         $broken_cursors{$m}--;
                         if ($broken_cursors{$m}) {
-                            $app->update($display_cursor->($m, 1, 1));
+				SDL::Video::update_rects($app, $display_cursor->($m, 1, 1));
                         } else {
-                            $app->update($display_cursor->($m, 1));
+                           SDL::Video::update_rects($app, $display_cursor->($m, 1));
                         }
                     } else {
                         rand() < 0.001 and $broken_cursors{$m} = int(20 + 10 * cos(rand(2*$PI)));
@@ -5772,22 +5772,22 @@ sub menu {
             #- blinking handling follows
             my $blink_green_left = [ 411, 385 ];
             my $blink_green_right = [ 434, 378 ];
-            my $green_left = SDL::Rect->new(-x => $blink_green_left->[0], '-y' => $blink_green_left->[1],
-                                            -width => $imgbin{menu_closedeye_green_left}->width, -height => $imgbin{menu_closedeye_green_left}->height);
-            my $green_right = SDL::Rect->new(-x => $blink_green_right->[0], '-y' => $blink_green_right->[1],
-                                             -width => $imgbin{menu_closedeye_green_right}->width, -height => $imgbin{menu_closedeye_green_right}->height);
+            my $green_left = SDL::Rect->new( $blink_green_left->[0], $blink_green_left->[1],
+                                             $imgbin{menu_closedeye_green_left}->w,  $imgbin{menu_closedeye_green_left}->h);
+            my $green_right = SDL::Rect->new( $blink_green_right->[0], $blink_green_right->[1],
+                                              $imgbin{menu_closedeye_green_right}->w, $imgbin{menu_closedeye_green_right}->h);
             my $blink_purple_left = [ 522, 356 ];
             my $blink_purple_right = [ 535, 356 ];
-            my $purple_left = SDL::Rect->new(-x => $blink_purple_left->[0], '-y' => $blink_purple_left->[1],
-                                            -width => $imgbin{menu_closedeye_purple_left}->width, -height => $imgbin{menu_closedeye_purple_left}->height);
-            my $purple_right = SDL::Rect->new(-x => $blink_purple_right->[0], '-y' => $blink_purple_right->[1],
-                                             -width => $imgbin{menu_closedeye_purple_right}->width, -height => $imgbin{menu_closedeye_purple_right}->height);
+            my $purple_left = SDL::Rect->new($blink_purple_left->[0], $blink_purple_left->[1],
+                                             $imgbin{menu_closedeye_purple_left}->w, $imgbin{menu_closedeye_purple_left}->h);
+            my $purple_right = SDL::Rect->new($blink_purple_right->[0], $blink_purple_right->[1],
+                                             $imgbin{menu_closedeye_purple_right}->w,  $imgbin{menu_closedeye_purple_right}->h);
             if ($blink_green > 0) {
                 $blink_green--;
                 if (!$blink_green) {
-                    $back_start->blit($green_left, $app, $green_left);
-                    $back_start->blit($green_right, $app, $green_right);
-                    $app->update($green_left, $green_right);
+			SDL::Video::blit_surface ( $back_start, $green_left, $app, $green_left);
+          		SDL::Video::blit_surface ( $back_start, $green_right, $app, $green_right);
+			SDL::Video::update_rects ($app, $green_left, $green_right);
                     if (rand(3) <= 1) {  #- reblink
                         $blink_green = -5;
                     }
@@ -5796,24 +5796,24 @@ sub menu {
                 $blink_green++;
                 if (!$blink_green) {
                     $blink_green = 3;
-                    $imgbin{menu_closedeye_green_left}->blit(undef, $app, $green_left);
-                    $imgbin{menu_closedeye_green_right}->blit(undef, $app, $green_right);
-                    $app->update($green_left, $green_right);
+                    	SDL::Video::blit_surface ( $imgbin{menu_closedeye_green_left}, undef, $app, $green_left);
+                    	SDL::Video::blit_surface ( $imgbin{menu_closedeye_green_right}, undef, $app, $green_right);
+		    SDL::Video::update_rects( $app, $green_left, $green_right);
                 }
             } else {
                 if (rand(200) <= 1) {
                     $blink_green = 3;
-                    $imgbin{menu_closedeye_green_left}->blit(undef, $app, $green_left);
-                    $imgbin{menu_closedeye_green_right}->blit(undef, $app, $green_right);
-                    $app->update($green_left, $green_right);
+                    SDL::Video::blit_surface ( $imgbin{menu_closedeye_green_left},undef, $app, $green_left);
+                    SDL::Video::blit_surface ( $imgbin{menu_closedeye_green_right},undef, $app, $green_right);
+                    SDL::Video::update_rects( $app,$green_left, $green_right);
                 }
             }
             if ($blink_purple > 0) {
                 $blink_purple--;
                 if (!$blink_purple) {
-                    $back_start->blit($purple_left, $app, $purple_left);
-                    $back_start->blit($purple_right, $app, $purple_right);
-                    $app->update($purple_left, $purple_right);
+                    SDL::Video::blit_surface ( $back_start,$purple_left, $app, $purple_left);
+                   SDL::Video::blit_surface (  $back_start,$purple_right, $app, $purple_right);
+                    SDL::Video::update_rects( $app,$purple_left, $purple_right);
                     if (rand(3) <= 1) {  #- reblink
                         $blink_purple = -5;
                     }
@@ -5822,16 +5822,16 @@ sub menu {
                 $blink_purple++;
                 if (!$blink_purple) {
                     $blink_purple = 3;
-                    $imgbin{menu_closedeye_purple_left}->blit(undef, $app, $purple_left);
-                    $imgbin{menu_closedeye_purple_right}->blit(undef, $app, $purple_right);
-                    $app->update($purple_left, $purple_right);
+                    SDL::Video::blit_surface ( $imgbin{menu_closedeye_purple_left},undef, $app, $purple_left);
+                    SDL::Video::blit_surface ( $imgbin{menu_closedeye_purple_right},undef, $app, $purple_right);
+                    SDL::Video::update_rects( $app,$purple_left, $purple_right);
                 }
             } else {
                 if (rand(200) <= 1) {
                     $blink_purple = 3;
-                    $imgbin{menu_closedeye_purple_left}->blit(undef, $app, $purple_left);
-                    $imgbin{menu_closedeye_purple_right}->blit(undef, $app, $purple_right);
-                    $app->update($purple_left, $purple_right);
+                    SDL::Video::blit_surface ( $imgbin{menu_closedeye_purple_left},undef, $app, $purple_left);
+                   SDL::Video::blit_surface (  $imgbin{menu_closedeye_purple_right},undef, $app, $purple_right);
+                    SDL::Video::update_rects( $app,$purple_left, $purple_right);
                 }
             }
             
