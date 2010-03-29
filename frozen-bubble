@@ -2720,8 +2720,8 @@ sub init_game() {
         $canon{data}{$number} = fb_c_stuff::autopseudocrop($canon{img}{$number});
         #- now crop (and use native RGBA ordering)
         my $replace = SDL::Surface->new( SDL_ANYFORMAT, $canon{data}{$number}[2],  $canon{data}{$number}[3], 32, 0,0,0,0);
-        $canon{img}{$number}->set_alpha(0, 0);
-        $canon{img}{$number}->blit(SDL::Rect->new( $canon{data}{$number}[0],  $canon{data}{$number}[1],
+	SDL::Video::set_alpha($canon{img}{$number}, 0, 0);
+	SDL::Video::blit_surface( $canon{img}{$number}, SDL::Rect->new( $canon{data}{$number}[0],  $canon{data}{$number}[1],
                                                   $canon{data}{$number}[2],  $canon{data}{$number}[3]), $replace, undef);
         $canon{img}{$number} = $replace;
         add_default_rect($canon{img}{$number});
@@ -2731,8 +2731,8 @@ sub init_game() {
         $canon{data_mini}{$number} = fb_c_stuff::autopseudocrop(surf($canon{img_mini}{$number}));
         #- now crop (and use native RGBA ordering)
         my $replace = SDL::Surface->new( SDL_ANYFORMAT,  $canon{data_mini}{$number}[2],  $canon{data_mini}{$number}[3],  32, 0,0,0,0);
-        $canon{img_mini}{$number}->set_alpha(0, 0);
-        $canon{img_mini}{$number}->blit(SDL::Rect->new( $canon{data_mini}{$number}[0], $canon{data_mini}{$number}[1],
+	SDL::Video::set_alpha($canon{img_mini}{$number}, 0, 0);
+	SDL::Video::blit_surface( $canon{img_mini}{$number}, SDL::Rect->new( $canon{data_mini}{$number}[0], $canon{data_mini}{$number}[1],
                                                         $canon{data_mini}{$number}[2], $canon{data_mini}{$number}[3]), $replace, undef);
         $canon{img_mini}{$number} = $replace;
         add_default_rect($canon{img_mini}{$number});
@@ -2805,11 +2805,11 @@ sub init_game() {
     foreach my $cursortype (keys %{$imgbin{menu_cursor}}) {
         foreach my $img (@{$imgbin{menu_cursor}{$cursortype}}) {
             my $alpha = SDL::Surface->new( SDL_ANYFORMAT,  $img->w,  $img->h,  32, 0,0,0,0);
-            $img->set_alpha(0, 0);  #- for RGBA->RGBA blits, SDL_SRCALPHA must be removed or destination alpha is preserved
-            $img->blit(undef, $alpha, undef);
+	    SDL::Video::set_alpha($img, 0, 0);  #- for RGBA->RGBA blits, SDL_SRCALPHA must be removed or destination alpha is preserved
+            SDL::Video::blit_surface($img, NULL, $alpha, NULL);
             fb_c_stuff::alphaize(surf($alpha));
             push @{$imgbin{menu_cursor}{"${cursortype}alpha"}}, $alpha;
-            $img->set_alpha(SDL_SRCALPHA(), 0);
+	    SDL::Video::set_alpha($img, SDL_SRCALPHA, 0);  
         }
     }
     $imgbin{left_rp1} = add_image('left-rp1.png');
@@ -2830,8 +2830,8 @@ sub init_game() {
     $imgbin{banner_cpucontrol} = add_image('menu/banner_cpucontrol.png');
     $imgbin{banner_leveleditor} = add_image('menu/banner_leveleditor.png');
 
-    $MENUPOS{xpos_panel} = (640 - $imgbin{void_panel}->width) / 2;
-    $MENUPOS{ypos_panel} = (480 - $imgbin{void_panel}->height) / 2;
+    $MENUPOS{xpos_panel} = (640 - $imgbin{void_panel}->w) / 2;
+    $MENUPOS{ypos_panel} = (480 - $imgbin{void_panel}->h) / 2;
 
     #- 1p and 2p menu images
     $imgbin{txt_1pmenu_off} = add_image('menu/txt_menu_1p_off.png');
@@ -2894,9 +2894,9 @@ sub init_game() {
     }
 
     #- the RGBA effects algorithms assume little endian RGBA surfaces
-    my $replace = SDL::Surface->new(-width => $imgbin{menu_logo}->width, -height => $imgbin{menu_logo}->height, -depth => 32);
-    $imgbin{menu_logo}->set_alpha(0, 0);  #- for RGBA->RGBA blits, SDL_SRCALPHA must be removed or destination alpha is preserved
-    $imgbin{menu_logo}->blit(undef, $replace, undef);
+    my $replace = SDL::Surface->new( SDL_ANYFORMAT, $imgbin{menu_logo}->w,  $imgbin{menu_logo}->h,  32, 0,0,0,0);
+    SDL::Video::set_alpha ($imgbin{menu_logo}, 0, 0);  #- for RGBA->RGBA blits, SDL_SRCALPHA must be removed or destination alpha is preserved
+    SDL::Video::blit_surface($imgbin{menu_logoi},undef, $replace, undef);
     $imgbin{menu_logo} = $replace;
     add_default_rect($replace);
 
@@ -5423,8 +5423,8 @@ sub menu {
 
     my $back_start;
     my $display_menu = sub {
-	$back_start->blit($apprects{main}, $app, $apprects{main});
-	$imgbin{stamp}->blit(undef, $app, SDL::Rect->new('-x' => 490, '-y' => 142));
+	SDL::Video::blit_surface($back_start,$apprects{main}, $app, $apprects{main});
+	SDL::Video::blit_surface($imgbin{stamp},undef, $app, SDL::Rect->new( 490,  142, 0, 0));
     };
 
     $back_start = $imgbin{back_menu};
@@ -5507,16 +5507,16 @@ sub menu {
         }
         if ($logo_candy_method == 8) {
             #- snow needs to extend top, and a little more wideness
-            my $newlogosurface = SDL::Surface->new(-width => $imgbin{menu_logo}->width * 1.1, -height => $imgbin{menu_logo}->height + $logoy, -depth => 32);
-            $imgbin{menu_logo}->set_alpha(0, 0); #- for RGBA->RGBA blits, SDL_SRCALPHA must be removed or destination alpha is preserved
-            $imgbin{menu_logo}->blit(undef, $newlogosurface, SDL::Rect->new(-x => $imgbin{menu_logo}->width * 0.05, '-y' => $logoy));
-            $logox -= $imgbin{menu_logo}->width * 0.05;
+            my $newlogosurface = SDL::Surface->new( SDL_ANYFORMAT, $imgbin{menu_logo}->w * 1.1,  $imgbin{menu_logo}->h + $logoy, 32, 0, 0,0,0);
+	    SDL::Video::set_alpha( $imgbin{menu_logo}, 0, 0); #- for RGBA->RGBA blits, SDL_SRCALPHA must be removed or destination alpha is preserved
+            SDL::Video::blit_surface( $imgbin{menu_logo}, undef, $newlogosurface, SDL::Rect->new(-x => $imgbin{menu_logo}->width * 0.05, '-y' => $logoy));
+            $logox -= $imgbin{menu_logo}->w * 0.05;
             $logoy = 0;
             $imgbin{menu_logo} = $newlogosurface;
             add_default_rect($imgbin{menu_logo});
             $logo_candy_method = 8.1; #- avoid doing it again at next menu run
         }
-        $candy = SDL::Surface->new(-width => $imgbin{menu_logo}->width, -height => $imgbin{menu_logo}->height, -depth => 32);
+        $candy = SDL::Surface->new( SDL_ANYFORMAT, $imgbin{menu_logo}->w,  $imgbin{menu_logo}->h, 32, 0, 0,0,0);
     };
     defined($candy) or $candy_init->();
 
@@ -5586,27 +5586,26 @@ sub menu {
 
     my $display_cursor = sub {
         my ($m, $alpha, $pixelize) = @_;
-        my $cursor_rect = SDL::Rect->new(-x => 248, '-y' => $menu_ypos{$m} + 8,
-                                         -width => $imgbin{menu_cursor}{$m}[$pdata{cursor_img}{$m}]->width,
-                                         -height => $imgbin{menu_cursor}{$m}[$pdata{cursor_img}{$m}]->height);
+        my $cursor_rect = SDL::Rect->new( 248,  $menu_ypos{$m} + 8,
+                                          $imgbin{menu_cursor}{$m}[$pdata{cursor_img}{$m}]->w,
+                                         $imgbin{menu_cursor}{$m}[$pdata{cursor_img}{$m}]->h);
         if (!defined($cursor_save_bg{$m})) {
-            $cursor_save_bg{$m} = SDL::Surface->new(-width => $imgbin{menu_cursor}{$m}[0]->width, -height => $imgbin{menu_cursor}{$m}[0]->height, -depth => 32);
-            $app->blit($cursor_rect, $cursor_save_bg{$m}, SDL::Rect->new('-x' => 0, '-y' => 0,
-                                                                         -width => $imgbin{menu_cursor}{$m}[0]->width, -height => $imgbin{menu_cursor}{$m}[0]->height));
+            $cursor_save_bg{$m} = SDL::Surface->new(SDL_ANYFORMAT, $imgbin{menu_cursor}{$m}[0]->w, $imgbin{menu_cursor}{$m}[0]->h, 32, 0,0,0,0);
+	    SDL::Video::blit_surface($app, $cursor_rect, $cursor_save_bg{$m}, SDL::Rect->new( 0,  0,  $imgbin{menu_cursor}{$m}[0]->w, $imgbin{menu_cursor}{$m}[0]->h));
         }
-        $cursor_save_bg{$m}->blit(undef, $app, $cursor_rect);
+	SDL::Video::blit_surface ($cursor_save_bg{$m}, undef, $app, $cursor_rect);
         if ($alpha) {
             if ($pixelize) {
                 if (!defined($cursor_tmp)) {
-                    $cursor_tmp = SDL::Surface->new(-width => $imgbin{menu_cursor}{$m}[0]->width, -height => $imgbin{menu_cursor}{$m}[0]->height, -depth => 32);
+                    $cursor_tmp = SDL::Surface->new( SDL_ANYFORMAT, $imgbin{menu_cursor}{$m}[0]->w,  $imgbin{menu_cursor}{$m}[0]->h, 32);
                 }
                 fb_c_stuff::pixelize(surf($cursor_tmp), surf($imgbin{menu_cursor}{"${m}alpha"}[$pdata{cursor_img}{$m}]));
-                $cursor_tmp->blit(undef, $app, $cursor_rect);
+		SDL::Video::blit_surface( $cursor_tmp, undef, $app, $cursor_rect);
             } else {
-                $imgbin{menu_cursor}{"${m}alpha"}[$pdata{cursor_img}{$m}]->blit(undef, $app, $cursor_rect);
+              	SDL::Video::blit_surface( $imgbin{menu_cursor}{"${m}alpha"}[$pdata{cursor_img}{$m}], undef, $app, $cursor_rect);
             }
         } else {
-            $imgbin{menu_cursor}{$m}[$pdata{cursor_img}{$m}]->blit(undef, $app, $cursor_rect);
+		SDL::Video::blit_surface( $imgbin{menu_cursor}{$m}[$pdata{cursor_img}{$m}], undef, $app, $cursor_rect);
         }
         return $cursor_rect;
     };
@@ -5643,13 +5642,13 @@ sub menu {
                                  + $imgbin{banner_cpucontrol}->width + $BANNER_SPACING);
     my ($BANNER_MINX, $BANNER_MAXX, $BANNER_Y) = (304, 596, 243);
     my $banners_max = $banners{leveleditor} - (640 - ($BANNER_MAXX - $BANNER_MINX)) + $BANNER_SPACING;
-    my $banner_rect = SDL::Rect->new(-width => $BANNER_MAXX-$BANNER_MINX, -height => 30, '-x' => $BANNER_MINX, '-y' => $BANNER_Y);
+    my $banner_rect = SDL::Rect->new( $BANNER_MINX, $BANNER_Y, $BANNER_MAXX-$BANNER_MINX, 30);
     my $time_counter;
 
     while (!$start_game) {
 	my $synchro_ticks = $app->ticks;
 
-	$graphics_level > 1 and $back_start->blit($banner_rect, $app, $banner_rect);
+	$graphics_level > 1 and SDL::Video::blit_surface($back_start, $banner_rect, $app, $banner_rect);
 
 	$event->pump;
 	while ($event->poll != 0) {
