@@ -417,10 +417,10 @@ sub switch_image_on_background($$$;$) {
     my $drect = SDL::Rect->new( $x, $y,  $image->w,  $image->h);
     if ($save) {
 	$save = SDL::Surface->new( SDL_ANYFORMAT, $image->w, $image->h, 32, 0 , 0, 0, 0);  #- grrr... this piece of shit of Amask made the surfaces slightly modify along the print/erase of "Hurry" and "Pause".... took me so much time to debug and find that the problem came from a bug when Amask is set to 0xFF000000 (while it's -supposed- to be set to 0xFF000000 with 32-bit graphics!!)
-	SDL::Video::blit($background, $drect, $save, $rects{$image});
+	SDL::Video::blit_surface($background, $drect, $save, $rects{$image});
     }
-    SDL::Video::blit($image, $rects{$image} || SDL::Rect->new(-width => $image->width, -height => $image->height), $background, $drect);
-    SDL::Video::blit($background, $drect, $app, $drect);
+    SDL::Video::blit_surface($image, $rects{$image} || SDL::Rect->new(-width => $image->width, -height => $image->height), $background, $drect);
+    SDL::Video::blit_surface($background, $drect, $app, $drect);
     push @update_rects, $drect;
     return $save;
 }
@@ -914,7 +914,7 @@ sub stick_bubble($$$$$) {
 	my $malus_val = @will_destroy + @falling - 2;
 	$malus_val > 0 && !is_mp_game() and $malus_val += ($player eq 'p1' ? $playermalus : -$playermalus);
 	$malus_val < 0 and $malus_val = 0;
-	SDL::Video::blit($background, $apprects{$player}, $app, $apprects{$player});
+	SDL::Video::blit_surface($background, $apprects{$player}, $app, $apprects{$player});
 	malus_change($malus_val, $player);
     }
 }
@@ -1089,9 +1089,9 @@ sub handle_graphics($) {
     if ($levels{current} eq 'mp_train' && $pdata{state} eq 'game') {
         if ($fun ne \&erase_image) {
             my $drect = SDL::Rect->new(-width => $imgbin{void_mp_training}->width, -height => 30, -x => $mp_train_xpos, '-y' => $mp_train_ypos);
-            SDL::Video::blit($background_orig, $drect, $background, $drect);
+            SDL::Video::blit_surface($background_orig, $drect, $background, $drect);
             mp_train_print_time();
-            SDL::Video::blit($background, $drect, $app, $drect);
+            SDL::Video::blit_surface($background, $drect, $app, $drect);
             push @update_rects, $drect;
             my $seconds = mp_train_time_left();
             if ($seconds == 0) {
@@ -1199,8 +1199,8 @@ sub print_compressor() {
 
     my $drect = SDL::Rect->new(-width => $comp_main->width, -height => $y,
 			       -x => $x - $comp_main->width/2, '-y' => 0);
-    SDL::Video::blit($background_orig, $drect, $background, $drect);
-    $display_on_app_disabled or SDL::Video::blit($background_orig, $drect, $app, $drect);
+    SDL::Video::blit_surface($background_orig, $drect, $background, $drect);
+    $display_on_app_disabled or SDL::Video::blit_surface($background_orig, $drect, $app, $drect);
     push @update_rects, $drect;
 
     put_image_to_background($comp_main, $x - $comp_main->width/2, $y - $comp_main->height);
@@ -1306,8 +1306,8 @@ sub redraw_attackingme {
     my $xpos = $POS{p1}{attackme}{x};
     my $drect = SDL::Rect->new(-width => 3*24 + $imgbin{attackme}{rp1}->width, -height => $imgbin{attackme}{rp1}->height,
                                -x => $xpos, '-y' => $POS{p1}{attackme}{'y'});
-	SDL::Video::blit($background_orig, $drect, $background, $drect);
-	SDL::Video::blit($background_orig, $drect, $app, $drect);
+	SDL::Video::blit_surface($background_orig, $drect, $background, $drect);
+	SDL::Video::blit_surface($background_orig, $drect, $app, $drect);
     push @update_rects, $drect;
     foreach my $attackingme (@{$pdata{attackingme}}) {
         put_image_to_background($imgbin{attackme}{$attackingme}, $xpos, $POS{p1}{attackme}{'y'});
@@ -1824,7 +1824,7 @@ sub print_scores($) {
         my $width = width(mini_graphics($::p_) ? 'ingame_small' : 'ingame', $score);
         my $xpos = $POS{$::p_}{scores}{x} - $width/2;
         my $drect = SDL::Rect->new(-width => $width, -height => mini_graphics($::p_) ? 12 : 24, -x => $xpos, '-y' => $POS{$::p_}{scores}{'y'});
-        SDL::Video::blit($background_orig, $drect, $surface, $drect);
+        SDL::Video::blit_surface($background_orig, $drect, $surface, $drect);
         push @update_rects, $drect;
         if (mini_graphics($::p_)) {
             print_('ingame_small', $surface, $xpos, $POS{$::p_}{scores}{'y'}, $score);
@@ -2987,7 +2987,7 @@ sub display_highscores {
     %POS = %POS_1P;
 
     if ($type eq 'levels' || !defined($type)) {
-        SDL::Video::blit($imgbin{back_hiscores}, $apprects{main}, $app, $apprects{main});
+        SDL::Video::blit_surface($imgbin{back_hiscores}, $apprects{main}, $app, $apprects{main});
         put_image($imgbin{hiscore_levelset}, 640 - 10 - $imgbin{hiscore_levelset}->width, 8);
 
         my $initial_high_posx = 90;
@@ -3007,7 +3007,7 @@ sub display_highscores {
             @{$root_bubbles{p1}} = ();
             $pdata{p1}{newrootlevel} = 0;
             $pdata{p1}{oddswap} = 0;
-            SDL::Video::blit($imgbin{back_1p}, $high_rect, $background, $high_rect);
+            SDL::Video::blit_surface($imgbin{back_1p}, $high_rect, $background, $high_rect);
 
             # try to get it from the default-levelset. If we can't, default to the
             # last level in the default levelset
@@ -3033,7 +3033,7 @@ sub display_highscores {
             my $tmp = SDL::Surface->new(-width => $high_rect->width/4, -height => $high_rect->height/4,
                                         -depth => 32, -Amask => "0 but true")->display_format;
             fb_c_stuff::shrink(surf($tmp), surf($background->display_format), 0, 0, rect($high_rect), 4);
-            SDL::Video::blit($tmp, undef, $app, SDL::Rect->new(-x => $high_posx, '-y' => $high_posy));
+            SDL::Video::blit_surface($tmp, undef, $app, SDL::Rect->new(-x => $high_posx, '-y' => $high_posy));
             $centered_print->($high_posx - 15, $high_posy, $high->{name}, $new_entry == $high);
             $centered_print->($high_posx - 15, $high_posy + 20, $high->{level} eq 'WON' ? t("won!") : t("level %s", i18n_number($high->{level})), $new_entry == $high);
             my $min = int($high->{time}/60);
@@ -3052,7 +3052,7 @@ sub display_highscores {
     }
 
     if (($type eq 'mptrain' || !defined($type)) && (@$HISCORES_MPTRAIN || @$HISCORES_MPTRAIN_CHAINREACTION)) {
-        SDL::Video::blit($imgbin{back_hiscores}, $apprects{main}, $app, $apprects{main});
+        SDL::Video::blit_surface($imgbin{back_hiscores}, $apprects{main}, $app, $apprects{main});
         put_image($imgbin{hiscore_mptraining}, 640 - 10 - $imgbin{hiscore_mptraining}->width, 8);
 
         print_('menu', $app, 0, 50, t("Regular"), 320, 'center');
@@ -3136,7 +3136,7 @@ sub ask_from($) {
   ask_from_entries:
     foreach my $entry (@{$w->{entries}}) {
         #- in case wrapping occurred
-        SDL::Video::blit($imgbin{void_panel}, SDL::Rect->new(-width => $imgbin{void_panel}->width - 20, -height => 30, -x => 10, '-y' => $ypos - $MENUPOS{ypos_panel}), $app,
+        SDL::Video::blit_surface($imgbin{void_panel}, SDL::Rect->new(-width => $imgbin{void_panel}->width - 20, -height => 30, -x => 10, '-y' => $ypos - $MENUPOS{ypos_panel}), $app,
                                   SDL::Rect->new(-x => $MENUPOS{xpos_panel} + 10, '-y' => $ypos));
 	print_('menu', $app, $xpos{questions}, $ypos, $entry->{'q'}, $imgbin{void_panel}->width*2/3 - 10, @{$w->{entries}} == 1 ? 'center' : 'right');
 	$app->flip;
@@ -3173,7 +3173,7 @@ sub ask_from($) {
               ask_from_main_loop:
                 while (1) {
                     if (callback_entry('ping')) {
-                        SDL::Video::blit($imgbin{void_panel}, $srect_mulchar_redraw, $app, $drect_mulchar_redraw);
+                        SDL::Video::blit_surface($imgbin{void_panel}, $srect_mulchar_redraw, $app, $drect_mulchar_redraw);
                         callback_entry('print', { xpos => $x_echo, ypos => $ypos, maxlen => 100, font => 'menu' });
                     }
                     $app->flip;
@@ -3189,7 +3189,7 @@ sub ask_from($) {
                                 last ask_from_main_loop;
                             } else {
                                 callback_entry('keypressed', { event => $event, maxlen => 100, font => 'menu' });
-                                SDL::Video::blit($imgbin{void_panel}, $srect_mulchar_redraw, $app, $drect_mulchar_redraw);
+                                SDL::Video::blit_surface($imgbin{void_panel}, $srect_mulchar_redraw, $app, $drect_mulchar_redraw);
                                 callback_entry('moved');
                                 callback_entry('print', { xpos => $x_echo, ypos => $ypos, maxlen => 100, font => 'menu' });
                             }
@@ -3265,12 +3265,12 @@ sub new_game() {
 	die "oops";
     }
 
-    SDL::Video::blit($backgr, $apprects{main}, $background_orig, $apprects{main});
+    SDL::Video::blit_surface($backgr, $apprects{main}, $background_orig, $apprects{main});
     if ($levels{current} eq 'mp_train') {
 	my $drect = SDL::Rect->new(-x => 32, '-y' => 152);
-	SDL::Video::blit($imgbin{void_mp_training}, $rects{$imgbin{void_mp_training}}, $background_orig, $drect);
+	SDL::Video::blit_surface($imgbin{void_mp_training}, $rects{$imgbin{void_mp_training}}, $background_orig, $drect);
     }
-    SDL::Video::blit($background_orig, $apprects{main}, $background, $apprects{main});
+    SDL::Video::blit_surface($background_orig, $apprects{main}, $background, $apprects{main});
 
     iter_players {
 	$actions{$::p}{$_} = 0 foreach qw(left right fire center);
@@ -3388,7 +3388,7 @@ sub new_game() {
     }
 
     if ($graphics_level == 1) {
-	SDL::Video::blit($background, $apprects{main}, $app, $apprects{main});
+	SDL::Video::blit_surface($background, $apprects{main}, $app, $apprects{main});
 	$app->flip;
     } else {
 	fb_c_stuff::effect(surf($app), surf($background->display_format));
@@ -3491,7 +3491,7 @@ sub choose_1p_game_mode() {
         my $draw_element = sub {
             my ($name, $mode) = @_;
             put_image($imgbin{"txt_1pmenu_$mode"}, $menu_xpos, $name2ypos{$name});
-            SDL::Video::blit($imgbin{"txt_1pmenu_${name}_outlined_text"}, undef, $app, my $rect = SDL::Rect->new(-x => $menu_xpos, '-y' => $name2ypos{$name}));
+            SDL::Video::blit_surface($imgbin{"txt_1pmenu_${name}_outlined_text"}, undef, $app, my $rect = SDL::Rect->new(-x => $menu_xpos, '-y' => $name2ypos{$name}));
         };
 
         my $img = $imgbin{'1p_panel'};
@@ -3499,11 +3499,11 @@ sub choose_1p_game_mode() {
         my $drect = SDL::Rect->new(-width => $img->width, -height => $img->height,
                                    -x => $MENUPOS{xpos_panel}, '-y' => $MENUPOS{ypos_panel});
         if ($save) {
-            SDL::Video::blit($save, $rects{img}, $app, $drect);
+            SDL::Video::blit_surface($save, $rects{img}, $app, $drect);
         } else {
             $save = SDL::Surface->new(-width => $img->width, -height => $img->height,
                                       -depth => 32, -Amask => "0 but true");
-            SDL::Video::blit($app, $drect, $save, $rects{$img});
+            SDL::Video::blit_surface($app, $drect, $save, $rects{$img});
         }
         put_image($img, $MENUPOS{xpos_panel}, $MENUPOS{ypos_panel});
 
@@ -3528,12 +3528,12 @@ sub choose_1p_game_mode() {
         my $name =  $ordered_names[$active_menu];
         put_image($imgbin{txt_1pmenu_over}, $menu_xpos, $name2ypos{$name});
         fb_c_stuff::overlook(surf($overlook), surf($imgbin{"txt_1pmenu_${name}_text"}), $overlook_index, $name2pivot{$name});
-        SDL::Video::blit($overlook, undef, $app, my $rect = SDL::Rect->new(-x => $menu_xpos, '-y' => $name2ypos{$name}));
+        SDL::Video::blit_surface($overlook, undef, $app, my $rect = SDL::Rect->new(-x => $menu_xpos, '-y' => $name2ypos{$name}));
         $overlook_index++;
         if ($overlook_index == 70) {
             $overlook_index = 0;
         }
-        SDL::Video::blit($imgbin{"txt_1pmenu_${name}_outlined_text"}, undef, $app, my $rect = SDL::Rect->new(-x => $menu_xpos, '-y' => $name2ypos{$name}));
+        SDL::Video::blit_surface($imgbin{"txt_1pmenu_${name}_outlined_text"}, undef, $app, my $rect = SDL::Rect->new(-x => $menu_xpos, '-y' => $name2ypos{$name}));
     };
 
     $redraw->();
@@ -3609,7 +3609,7 @@ our $smg_statusy = 435;
 sub erase_line($$;$$) {
     my ($pos, $background, $xpos, $width) = @_;
     my $drect = SDL::Rect->new(-width => $width || 640, -height => $smg_lineheight + 6, -x => $xpos || 0, '-y' => $pos);
-    SDL::Video::blit($background, $drect, $app, $drect);
+    SDL::Video::blit_surface($background, $drect, $app, $drect);
 }
 
 our @smg_status_messages;
@@ -3617,7 +3617,7 @@ our $smg_status_message_offsetpage = 1;
 
 sub smg_printstatus {
     my $drect = SDL::Rect->new(-x => 0, '-y' => $smg_statusy - $smg_max_messages * $smg_lineheight, -width => 640, -height => 480);
-    SDL::Video::blit($imgbin{back_netgame}, $drect, $app, $drect);
+    SDL::Video::blit_surface($imgbin{back_netgame}, $drect, $app, $drect);
     my $y = $smg_statusy;
     my $i = $smg_status_message_offsetpage;
     while ($i < $smg_max_messages + $smg_status_message_offsetpage && @smg_status_messages >= $i) {
@@ -3740,7 +3740,7 @@ sub smg_choose_server(@) {
     my $offset = 0;
     my $redraw = sub {
         my $drect = SDL::Rect->new(-width => 640, -height => $smg_statusy-$smg_lineheight*5, -x => 0, '-y' => 0);
-        SDL::Video::blit($imgbin{back_netgame}, $drect, $app, $drect);
+        SDL::Video::blit_surface($imgbin{back_netgame}, $drect, $app, $drect);
 
         my %parts = (flag =>    { xpos => $smg_startx,                    width => 30 },
                      name =>    { xpos => $smg_startx + 30 + 4,           width => 120 },
@@ -4027,7 +4027,7 @@ sub save_back_spot {
     $x -= $surface->width/2;
     $y -= $surface->height/2;
     $$back = SDL::Surface->new(-width => 20, -height => 20, -depth => 32, -Amask => '0 but true');
-    SDL::Video::blit($app, SDL::Rect->new('-x' => $x, '-y' => $y, -width => 20, -height => 20), $$back, undef);
+    SDL::Video::blit_surface($app, SDL::Rect->new('-x' => $x, '-y' => $y, -width => 20, -height => 20), $$back, undef);
     add_default_rect($$back);
 }
 sub print_spot {
@@ -4072,7 +4072,7 @@ sub smg_choose_game() {
 
     my $erase = sub {
         my $drect = SDL::Rect->new(-width => 640, -height => $smg_starty_players, -x => 0, '-y' => 0);
-        SDL::Video::blit($imgbin{back_netgame}, $drect, $app, $drect);
+        SDL::Video::blit_surface($imgbin{back_netgame}, $drect, $app, $drect);
     };
     callback_entry('reset');
     my @wholist;
@@ -5101,7 +5101,7 @@ sub smg_choose_game() {
 }
 
 sub show_mp_scores() {
-    SDL::Video::blit($imgbin{back_netgame}, $apprects{main}, $app, $apprects{main});
+    SDL::Video::blit_surface($imgbin{back_netgame}, $apprects{main}, $app, $apprects{main});
 
     if ($pdata{inconsistency}) {
         smg_add_status_msg(t("*** Game finished, because an inconsistency in game state was detected - sorry!"));
@@ -5124,7 +5124,7 @@ sub show_mp_scores() {
 
 sub setup_mp_game() {
     
-    SDL::Video::blit($imgbin{back_netgame}, $apprects{main}, $app, $apprects{main});
+    SDL::Video::blit_surface($imgbin{back_netgame}, $apprects{main}, $app, $apprects{main});
 
     if (!fb_net::isconnected()) {
         @smg_status_messages = ();
@@ -5670,7 +5670,8 @@ sub menu {
                         }
                     }
                 }
-                if (SDL::GetKeyState(SDLK_LCTRL()) == SDL_PRESSED()
+				my $keys_ref = SDL::Events::get_key_state();
+                if ($keys_ref->[SDLK_LCTRL] == SDL_PRESSED
                     && $keypressed == SDLK_n) {
                     $logo_candy_method = (int($logo_candy_method) + 1) % 9;
                     $candy_init->();
