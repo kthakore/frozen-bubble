@@ -35,6 +35,18 @@ sub sdlpango_getsize{
 	return [$w, $h];
 }
 
+sub sdlpango_draw{ return sdlpango_draw_givenalignment(shift, shift, shift, "left"); }
+sub sdlpango_draw_givenalignment{
+	my $context   = shift;
+	my $text      = shift;
+	my $width     = shift;
+	my $alignment = shift;
+	SDL::Pango::set_minimum_size($context, $width, 0);
+	SDL::Pango::set_text($context, $text, -1, $alignment == "left" ? SDLPANGO_ALIGN_LEFT 
+	                                                               : $alignment == "center" ? SDLPANGO_ALIGN_CENTER
+	                                                                                        : SDLPANGO_ALIGN_RIGHT );
+	return SDL::Pango::create_surface_draw($context);
+}
 
 1;
 

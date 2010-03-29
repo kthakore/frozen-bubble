@@ -27,7 +27,6 @@
 
 #include <SDL.h>
 #include <SDL_mixer.h>
-#include <SDL_Pango.h>
 
 const int XRES = 640;
 const int YRES = 480;
@@ -1525,16 +1524,6 @@ void draw_line_(SDL_Surface* surface, int x1, int y1, int x2, int y2, SDL_Color*
         }
 }
 
-SDL_Surface* sdlpango_draw_(SDLPango_Context* context, char* text, int width, char* align)
-{
-        SDLPango_Alignment alignment = !strcmp(align, "left") ? SDLPANGO_ALIGN_LEFT :
-                                       !strcmp(align, "center") ? SDLPANGO_ALIGN_CENTER : SDLPANGO_ALIGN_RIGHT;
-        SDLPango_SetMinimumSize(context, width, 0);
-        SDLPango_SetText_GivenAlignment(context, text, -1, alignment);
-	return SDLPango_CreateSurfaceDraw(context);
-}
-
-
 /************************** Gateway to Perl ****************************/
 
 MODULE = fb_c_stuff		PACKAGE = fb_c_stuff
@@ -1787,23 +1776,5 @@ Uint8
 JOYBUTTONUP ()
         CODE:
                 RETVAL = SDL_JOYBUTTONUP; // missing in 2.1.2
-        OUTPUT:
-                RETVAL
-
-SDL_Surface*
-sdlpango_draw(SDLPango_Context* context, char* text, int width)
-	PREINIT:
-		char* CLASS = "SDL::Surface";
-        CODE:
-                RETVAL = sdlpango_draw_(context, text, width, "left");
-        OUTPUT:
-                RETVAL
-
-SDL_Surface*
-sdlpango_draw_givenalignment(SDLPango_Context* context, char* text, int width, char* alignment)
-	PREINIT:
-		char* CLASS = "SDL::Surface";
-        CODE:
-                RETVAL = sdlpango_draw_(context, text, width, alignment);
         OUTPUT:
                 RETVAL
