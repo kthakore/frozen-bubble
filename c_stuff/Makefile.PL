@@ -1,6 +1,12 @@
 use ExtUtils::MakeMaker;
 use Config;
 use Alien::SDL;
+
+my $pango_libs   = '-lSDL_Pango ' 
+                 . `pkg-config --libs glib-2.0 pango gobject-2.0 gmodule-2.0`;
+my $pango_cflags = '-I/usr/local/share/perl/5.8.8/auto/share/dist/Alien-SDL/1.1_b85c4c18/include/ '
+                 . `pkg-config --cflags glib-2.0 pango gobject-2.0 gmodule-2.0`;
+
 # Taken from Makefile.PL from Gtk-Perl
 sub ccompile {
 	my ($headers, $main, $cflags, $libs) = @_;
@@ -49,23 +55,23 @@ ccompile('#include <SDL.h>
   die_ 'SDL_mixer >= 1.2.2 is needed (impossible to create an executable with function Mix_FadeInMusicPos)';
 
 
-system("pkg-config SDL_Pango --cflags 2>/dev/null 1>/dev/null") == 0
-  or
-  die_ 'SDL_Pango development environment seems to be missing ("pkg-config SDL_Pango" reports an error)';
+#system("pkg-config SDL_Pango --cflags 2>/dev/null 1>/dev/null") == 0
+#  or
+#  die_ 'SDL_Pango development environment seems to be missing ("pkg-config SDL_Pango" reports an error)';
 
 
 ccompile('#include <SDL_Pango.h>',
 	 'SDLPango_Context *context;',
-	 chomp_($cflags) . ' ' . chomp_(`pkg-config SDL_Pango --cflags`) . ' ',
-	 chomp_($libs) . ' ' . chomp_(`pkg-config SDL_Pango --libs`) . ' ')
+	 chomp_($cflags) . ' ' . chomp_($pango_cflags) . ' ',
+	 chomp_($libs) . ' ' . chomp_($pango_libs) . ' ')
   or
   die_ 'SDL_Pango is needed (impossible to create an executable containing an SDLPango_Context pointer.';
 
 
 ccompile('#include <SDL_Pango.h>',
 	 'SDLPango_Context * context = SDLPango_CreateContext_GivenFontDesc(NULL);',
-	 chomp_($cflags) . ' ' . chomp_(`pkg-config SDL_Pango --cflags`) . ' ',
-	 chomp_($libs) . ' ' . chomp_(`pkg-config SDL_Pango --libs`) . ' ')
+	 chomp_($cflags) . ' ' . chomp_($pango_cflags) . ' ',
+	 chomp_($libs) . ' ' . chomp_($pango_libs) . ' ')
   or
   die_ 'Frozen-Bubble patches are needed in SDL_Pango (impossible to create an executable calling the function SDLPango_CreateContext_GivenFontDesc)';
 
@@ -73,10 +79,10 @@ ccompile('#include <SDL_Pango.h>',
 
 WriteMakefile(
     'NAME'         => 'fb_c_stuff',
-    'LIBS'         => [ '-lm ' . chomp_($libs) . ' -lSDL_mixer ' . chomp_(`pkg-config SDL_Pango --libs`)],
+    'LIBS'         => [ '-lm ' . chomp_($libs) . ' -lSDL_mixer ' . chomp_($pango_libs)],
     'VERSION_FROM' => 'fb_c_stuff.pm', # finds VERSION
     'OBJECT'       => 'fb_c_stuff.o',
-    'INC'          => chomp_($cflags) . ' ' . chomp_(`pkg-config SDL_Pango --cflags`) . ' -I.',
+    'INC'          => chomp_($cflags) . ' ' . chomp_($pango_cflags) . ' -I.',
     'OPTIMIZE'     => '-O2 -Wall',
     'MAKEFILE'     => 'Makefile_c',
 );
