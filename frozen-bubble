@@ -421,7 +421,7 @@ sub switch_image_on_background($$$;$) {
 	$save = SDL::Surface->new( SDL_ANYFORMAT, $image->w, $image->h, 32, 0 , 0, 0, 0);  #- grrr... this piece of shit of Amask made the surfaces slightly modify along the print/erase of "Hurry" and "Pause".... took me so much time to debug and find that the problem came from a bug when Amask is set to 0xFF000000 (while it's -supposed- to be set to 0xFF000000 with 32-bit graphics!!)
 	SDL::Video::blit_surface($background, $drect, $save, $rects{$image});
     }
-    SDL::Video::blit_surface($image, $rects{$image} || SDL::Rect->new(-width => $image->width, -height => $image->height), $background, $drect);
+    SDL::Video::blit_surface($image, $rects{$image} || SDL::Rect->new(0, 0, $image->w, $image->h), $background, $drect);
     SDL::Video::blit_surface($background, $drect, $app, $drect);
     push @update_rects, $drect;
     return $save;
@@ -927,7 +927,7 @@ sub redraw_chat_message_if_needed {
         my $img = @PLAYERS == 2 ? $imgbin{void_chat_small_p2} : member($player, qw(rp1 rp3)) ? $imgbin{void_chat_small_rp1_rp3} : $imgbin{void_chat_small_rp2_rp4};
         put_image_to_background($img, $POS{$player}{chatting}{x}, $POS{$player}{chatting}{'y'});
         print_('ingame_small_chat', $background,
-               $POS{$player}{chatting}{x} + 3, $POS{$player}{chatting}{'y'} + 3, $pdata{current_chat_messages}{$player}, $img->width - 6, 'center');
+               $POS{$player}{chatting}{x} + 3, $POS{$player}{chatting}{'y'} + 3, $pdata{current_chat_messages}{$player}, $img->w - 6, 'center');
         erase_image($img, $POS{$player}{chatting}{x}, $POS{$player}{chatting}{'y'});
     }
 }
@@ -968,18 +968,18 @@ sub mp_train_time_left {
 
 our ($mp_train_xpos, $mp_train_ypos) = (32, 177);
 sub mp_train_print_time {
-    my $drect = SDL::Rect->new(-width => $imgbin{void_mp_training}->width, -height => 30, -x => $mp_train_xpos, '-y' => $mp_train_ypos);
+    my $drect = SDL::Rect->new($mp_train_xpos, $mp_train_ypos, $imgbin{void_mp_training}->w, 30);
     my $seconds = mp_train_time_left();
     my $m = int($seconds/60);
     my $s = int($seconds-$m*60); length($s) == 1 and $s = "0$s";
-    print_('ingame', $background, $mp_train_xpos, $mp_train_ypos, t("%s'%s\"", i18n_number($m), i18n_number($s)), $imgbin{void_mp_training}->width, 'center');
+    print_('ingame', $background, $mp_train_xpos, $mp_train_ypos, t("%s'%s\"", i18n_number($m), i18n_number($s)), $imgbin{void_mp_training}->w, 'center');
 }
 
 sub handle_progress($) {
     my ($p) = @_;
     if (defined($pdata{$p}{newrootlast})) {
         if ($pdata{$p}{newroot} != $pdata{$p}{newrootlast}) {
-            my $height = $imgbin{progress_red}->height + 1;
+            my $height = $imgbin{progress_red}->h + 1;
             my $xpos = $POS{$p}{progress}{x};
             my $ypos = $POS{$p}{progress}{y};
             put_image_to_background($imgbin{progress_green}, $xpos, $ypos + $pdata{$p}{newrootlast}*$height);
@@ -988,12 +988,11 @@ sub handle_progress($) {
         }
 
     } else {
-        my $height = $imgbin{progress_red}->height + 1;
+        my $height = $imgbin{progress_red}->h + 1;
         my $xpos = $POS{$p}{progress}{x};
         my $ypos = $POS{$p}{progress}{y};
         $pdata{$p}{newrootlast} = 0;
-        push @update_rects, SDL::Rect->new(-width => $imgbin{progress_red}->width, -height => $height*(1 + $TIME_APPEARS_NEW_ROOT),
-                                           -x => $xpos, '-y' => $ypos);
+        push @update_rects, SDL::Rect->new($xpos, $ypos, $imgbin{progress_red}->w, $height*(1 + $TIME_APPEARS_NEW_ROOT));
         for (my $i = 0; $i <= $TIME_APPEARS_NEW_ROOT; $i++) {
             put_image_to_background($imgbin{$i ? "progress_green" : "progress_red"}, $xpos, $ypos + $i*$height);
         }
@@ -1090,7 +1089,7 @@ sub handle_graphics($) {
 
     if ($levels{current} eq 'mp_train' && $pdata{state} eq 'game') {
         if ($fun ne \&erase_image) {
-            my $drect = SDL::Rect->new(-width => $imgbin{void_mp_training}->width, -height => 30, -x => $mp_train_xpos, '-y' => $mp_train_ypos);
+            my $drect = SDL::Rect->new($mp_train_xpos, $mp_train_ypos, $imgbin{void_mp_training}->w, 30);
             SDL::Video::blit_surface($background_orig, $drect, $background, $drect);
             mp_train_print_time();
             SDL::Video::blit_surface($background, $drect, $app, $drect);
@@ -1101,7 +1100,7 @@ sub handle_graphics($) {
                 my $y = $MENUPOS{ypos_panel} + 30;
                 my @messages = ('', '', '', '', t("Your score after two minutes:"), '', $pdata{p1}{score}, '', t("Press any key."));
                 foreach (@messages) {
-                    print_('menu', $app, $MENUPOS{xpos_panel}, $y, $_, $imgbin{void_panel}->width, 'center');
+                    print_('menu', $app, $MENUPOS{xpos_panel}, $y, $_, $imgbin{void_panel}->w, 'center');
                     $y += $smg_lineheight;
                 }
                 $app->sync;
@@ -1125,8 +1124,8 @@ sub update_malus($$) {
         my $print = sub($) {
             my ($type) = @_;
             my $type_real = translate_mini_image($type);
-            $fun->($type, $POS{$p}{malus}{x} - $type_real->width/2, $POS{$p}{malus}{'y'} - $y_shift - $type_real->height);
-            $y_shift += $type_real->height - 1;
+            $fun->($type, $POS{$p}{malus}{x} - $type_real->w/2, $POS{$p}{malus}{'y'} - $y_shift - $type_real->h);
+            $y_shift += $type_real->h - 1;
         };
         if ($malus_nb >= 7) {
             $print->($malus_gfx{tomate});
@@ -1199,19 +1198,18 @@ sub print_compressor() {
     my $y = $POS{p1}{top_limit} + $pdata{$PLAYERS[0]}{newrootlevel} * $ROW_SIZE;
     my ($comp_main, $comp_ext) = ($imgbin{compressor_main}, $imgbin{compressor_ext});
 
-    my $drect = SDL::Rect->new(-width => $comp_main->width, -height => $y,
-			       -x => $x - $comp_main->width/2, '-y' => 0);
+    my $drect = SDL::Rect->new($x - $comp_main->w/2, 0, $comp_main->w, $y);
     SDL::Video::blit_surface($background_orig, $drect, $background, $drect);
     $display_on_app_disabled or SDL::Video::blit_surface($background_orig, $drect, $app, $drect);
     push @update_rects, $drect;
 
-    put_image_to_background($comp_main, $x - $comp_main->width/2, $y - $comp_main->height);
+    put_image_to_background($comp_main, $x - $comp_main->w/2, $y - $comp_main->h);
 
-    $y -= $comp_main->height - 3;
+    $y -= $comp_main->h - 3;
 
     while ($y > 0) {
-	put_image_to_background($comp_ext, $x - $comp_ext->width/2, $y - $comp_ext->height);
-	$y -= $comp_ext->height;
+	put_image_to_background($comp_ext, $x - $comp_ext->w/2, $y - $comp_ext->h);
+	$y -= $comp_ext->h;
     }
 }
 
@@ -1226,19 +1224,17 @@ sub print_ {
         }
     }
     my $surf = fb_c_stuff::sdlpango_draw_givenalignment($pangocontext{$kind}{context_bg}, $text, $size || -1, $alignment || 'left');
-    my $rect = SDL::Rect->new('-x' => $x + 1, '-y' => $y + 1, '-width' => 0, '-height' => 0);
+    my $rect = SDL::Rect->new($x + 1, $y + 1, 0, 0);
     if ($callback) {
         if (!$callback->('about-to-draw', $surf)) {
             #- callback said do not draw
             return;
         }
     }
-    SDL::BlitSurface($surf, undef, surf($surface), rect($rect));
-    SDL::FreeSurface($surf);
+    SDL::Video::blit_surface($surf, undef, surf($surface), rect($rect));
     $surf = fb_c_stuff::sdlpango_draw_givenalignment($pangocontext{$kind}{context_fg}, $text, $size || -1, $alignment || 'left');
-    $rect = SDL::Rect->new('-x' => $x, '-y' => $y, '-width' => 0, '-height' => 0);
-    SDL::BlitSurface($surf, undef, surf($surface), rect($rect));
-    SDL::FreeSurface($surf);
+    $rect = SDL::Rect->new($x, $y, 0, 0);
+    SDL::Video::blit_surface($surf, undef, surf($surface), rect($rect));
 }
 
 sub width {
@@ -1253,7 +1249,7 @@ sub mp_disconnect_with_reason {
     put_image($imgbin{void_panel}, $MENUPOS{xpos_panel}, $MENUPOS{ypos_panel});
     my $y = $MENUPOS{ypos_panel} + 30;
     foreach (@messages) {
-        print_('menu', $app, $MENUPOS{xpos_panel} + 10, $y, $_, $imgbin{void_panel}->width - 20, 'center');
+        print_('menu', $app, $MENUPOS{xpos_panel} + 10, $y, $_, $imgbin{void_panel}->w - 20, 'center');
         $y += $smg_lineheight;
     }
     $app->flip;
@@ -1276,7 +1272,7 @@ sub check_mp_connection {
 
 sub update_say_mp {
     put_image($imgbin{void_chat}, $POS{p1}{chatting}{x}, $POS{p1}{chatting}{'y'});
-    callback_entry('print', { xpos => $POS{p1}{chatting}{x} + 15, ypos => $POS{p1}{chatting}{'y'} + 5, font => 'ingame_chat', maxlen => $imgbin{void_chat}->width - 30 });
+    callback_entry('print', { xpos => $POS{p1}{chatting}{x} + 15, ypos => $POS{p1}{chatting}{'y'} + 5, font => 'ingame_chat', maxlen => $imgbin{void_chat}->w - 30 });
     push @update_rects, $apprects{main};
 }
 
@@ -1306,8 +1302,7 @@ sub set_sendmalustoone {
 sub redraw_attackingme {
     $pdata{p1}{chatting} and return;
     my $xpos = $POS{p1}{attackme}{x};
-    my $drect = SDL::Rect->new(-width => 3*24 + $imgbin{attackme}{rp1}->width, -height => $imgbin{attackme}{rp1}->height,
-                               -x => $xpos, '-y' => $POS{p1}{attackme}{'y'});
+    my $drect = SDL::Rect->new($xpos, $POS{p1}{attackme}{'y'}, 3*24 + $imgbin{attackme}{rp1}->w, $imgbin{attackme}{rp1}->h);
 	SDL::Video::blit_surface($background_orig, $drect, $background, $drect);
 	SDL::Video::blit_surface($background_orig, $drect, $app, $drect);
     push @update_rects, $drect;
@@ -1571,7 +1566,7 @@ sub handle_game_events() {
                     }
                     cleanup_chatting();
                 } elsif ($event->type == SDL_KEYDOWN && !member($keypressed, SDLK_RETURN(), SDLK_KP_ENTER(), SDLK_TAB())) {
-                    callback_entry('keypressed', { event => $event, maxlen => $imgbin{void_chat}->width - 30, font => 'ingame_chat' });
+                    callback_entry('keypressed', { event => $event, maxlen => $imgbin{void_chat}->w - 30, font => 'ingame_chat' });
                     callback_entry('moved');
                     update_say_mp();
                 }
@@ -1606,8 +1601,8 @@ sub handle_game_events() {
                   pause_label:
                     while (1) {
                         my $ticks = $app->ticks;
-                        erase_image(${$imgbin{paused}}[$index], 320-${$imgbin{paused}}[$index]->width/2-5, 240-${$imgbin{paused}}[$index]->height/2-4);
-                        put_image(${$imgbin{paused}}[$index], 320-${$imgbin{paused}}[$index]->width/2-5, 240-${$imgbin{paused}}[$index]->height/2-4);
+                        erase_image(${$imgbin{paused}}[$index], 320-${$imgbin{paused}}[$index]->w/2-5, 240-${$imgbin{paused}}[$index]->h/2-4);
+                        put_image(${$imgbin{paused}}[$index], 320-${$imgbin{paused}}[$index]->w/2-5, 240-${$imgbin{paused}}[$index]->h/2-4);
                         $app->update(@update_rects);
                         @update_rects = ();
                         $app->delay(20);
@@ -1825,7 +1820,7 @@ sub print_scores($) {
         is_mp_game() and $score = sprintf("%s: %s", $pdata{$::p_}{nick}, i18n_number($score));
         my $width = width(mini_graphics($::p_) ? 'ingame_small' : 'ingame', $score);
         my $xpos = $POS{$::p_}{scores}{x} - $width/2;
-        my $drect = SDL::Rect->new(-width => $width, -height => mini_graphics($::p_) ? 12 : 24, -x => $xpos, '-y' => $POS{$::p_}{scores}{'y'});
+        my $drect = SDL::Rect->new($xpos, $POS{$::p_}{scores}{'y'}, $width, mini_graphics($::p_) ? 12 : 24);
         SDL::Video::blit_surface($background_orig, $drect, $surface, $drect);
         push @update_rects, $drect;
         if (mini_graphics($::p_)) {
@@ -2001,7 +1996,7 @@ sub update_lost {
     my $still_sticked = sum(map { @{$sticked_bubbles{$_}} } @PLAYERS);
     if ($pdata{state} eq 'won ' && $still_sticked == 1) {
         put_image($imgbin{void_panel}, $MENUPOS{xpos_panel}, $MENUPOS{ypos_panel});
-        print_('menu', $app, $MENUPOS{xpos_panel}, $MENUPOS{ypos_panel} + 30, t("Draw game!"), $imgbin{void_panel}->width - 20, 'center');
+        print_('menu', $app, $MENUPOS{xpos_panel}, $MENUPOS{ypos_panel} + 30, t("Draw game!"), $imgbin{void_panel}->w - 20, 'center');
         $app->flip;
     }
 }
@@ -2667,7 +2662,7 @@ sub init_game() {
     }
     $frame = 0;
 
-    $apprects{main} = SDL::Rect->new( 0,0, $app->w, $app->h);
+    $apprects{main} = SDL::Rect->new( 0, 0, $app->w, $app->h);
     $event = SDL::Event->new;
     SDL::Events::enable_unicode(1);
     SDL::Mouse::show_cursor(0);
@@ -2990,16 +2985,16 @@ sub display_highscores {
 
     if ($type eq 'levels' || !defined($type)) {
         SDL::Video::blit_surface($imgbin{back_hiscores}, $apprects{main}, $app, $apprects{main});
-        put_image($imgbin{hiscore_levelset}, 640 - 10 - $imgbin{hiscore_levelset}->width, 8);
+        put_image($imgbin{hiscore_levelset}, 640 - 10 - $imgbin{hiscore_levelset}->w, 8);
 
         my $initial_high_posx = 90;
         my ($high_posx, $high_posy) = ($initial_high_posx, 68);
-        my $high_rect = SDL::Rect->new('-x' => $POS{p1}{left_limit} & 0xFFFFFFFC, '-y' => $POS{p1}{top_limit} & 0xFFFFFFFC,
-                                       '-width' => ($POS{p1}{right_limit}-$POS{p1}{left_limit}) & 0xFFFFFFFC, -height => ($POS{p1}{'initial_bubble_y'}-$POS{p1}{top_limit}-10) & 0xFFFFFFFC);
+        my $high_rect = SDL::Rect->new($POS{p1}{left_limit} & 0xFFFFFFFC, $POS{p1}{top_limit} & 0xFFFFFFFC,
+                                       ($POS{p1}{right_limit}-$POS{p1}{left_limit}) & 0xFFFFFFFC, ($POS{p1}{'initial_bubble_y'}-$POS{p1}{top_limit}-10) & 0xFFFFFFFC);
 
         my $centered_print = sub($$$) {
             my ($x, $y, $txt, $bold) = @_;
-            print_($bold ? 'bold_menu' : 'menu', $app, $x, $y + $imgbin{hiscore_frame}->height - 8, $txt, $imgbin{hiscore_frame}->width + 12, 'center');
+            print_($bold ? 'bold_menu' : 'menu', $app, $x, $y + $imgbin{hiscore_frame}->h - 8, $txt, $imgbin{hiscore_frame}->w + 12, 'center');
         };
         
         my $old_levelset = $loaded_levelset;
@@ -3032,10 +3027,10 @@ sub display_highscores {
             }
 
             put_image($imgbin{hiscore_frame}, $high_posx - 7, $high_posy - 6);
-            my $tmp = SDL::Surface->new(-width => $high_rect->width/4, -height => $high_rect->height/4,
+            my $tmp = SDL::Surface->new(-width => $high_rect->w/4, -height => $high_rect->h/4,
                                         -depth => 32, -Amask => "0 but true")->display_format;
             fb_c_stuff::shrink(surf($tmp), surf($background->display_format), 0, 0, rect($high_rect), 4);
-            SDL::Video::blit_surface($tmp, undef, $app, SDL::Rect->new(-x => $high_posx, '-y' => $high_posy));
+            SDL::Video::blit_surface($tmp, undef, $app, SDL::Rect->new($high_posx, $high_posy, 0, 0));
             $centered_print->($high_posx - 15, $high_posy, $high->{name}, $new_entry == $high);
             $centered_print->($high_posx - 15, $high_posy + 20, $high->{level} eq 'WON' ? t("won!") : t("level %s", i18n_number($high->{level})), $new_entry == $high);
             my $min = int($high->{time}/60);
@@ -3055,7 +3050,7 @@ sub display_highscores {
 
     if (($type eq 'mptrain' || !defined($type)) && (@$HISCORES_MPTRAIN || @$HISCORES_MPTRAIN_CHAINREACTION)) {
         SDL::Video::blit_surface($imgbin{back_hiscores}, $apprects{main}, $app, $apprects{main});
-        put_image($imgbin{hiscore_mptraining}, 640 - 10 - $imgbin{hiscore_mptraining}->width, 8);
+        put_image($imgbin{hiscore_mptraining}, 640 - 10 - $imgbin{hiscore_mptraining}->w, 8);
 
         print_('menu', $app, 0, 50, t("Regular"), 320, 'center');
         my %parts = (rank => { xpos => 80, width => 40 },
@@ -3121,12 +3116,12 @@ sub ask_from($) {
 
     my $ypos = $MENUPOS{ypos_panel} + 12;
     my $lineheight = 18;
-    my %xpos = ( questions => $is_rtl ? $MENUPOS{xpos_panel} + $imgbin{void_panel}->width*1/3 + 10 : $MENUPOS{xpos_panel},
-                 echo => $is_rtl ? $MENUPOS{xpos_panel} + $imgbin{void_panel}->width*1/3 - 100 : $MENUPOS{xpos_panel} + $imgbin{void_panel}->width*2/3 );
+    my %xpos = ( questions => $is_rtl ? $MENUPOS{xpos_panel} + $imgbin{void_panel}->w*1/3 + 10 : $MENUPOS{xpos_panel},
+                 echo => $is_rtl ? $MENUPOS{xpos_panel} + $imgbin{void_panel}->w*1/3 - 100 : $MENUPOS{xpos_panel} + $imgbin{void_panel}->w*2/3 );
  
     foreach my $i (@{$w->{intro}}) {
 	if ($i) {
-	    print_('menu', $app, $MENUPOS{xpos_panel}, $ypos, $i, $imgbin{void_panel}->width, 'center');
+	    print_('menu', $app, $MENUPOS{xpos_panel}, $ypos, $i, $imgbin{void_panel}->w, 'center');
 	}
 	$ypos += $lineheight;
     }
@@ -3138,13 +3133,12 @@ sub ask_from($) {
   ask_from_entries:
     foreach my $entry (@{$w->{entries}}) {
         #- in case wrapping occurred
-        SDL::Video::blit_surface($imgbin{void_panel}, SDL::Rect->new(-width => $imgbin{void_panel}->width - 20, -height => 30, -x => 10, '-y' => $ypos - $MENUPOS{ypos_panel}), $app,
-                                  SDL::Rect->new(-x => $MENUPOS{xpos_panel} + 10, '-y' => $ypos));
-	print_('menu', $app, $xpos{questions}, $ypos, $entry->{'q'}, $imgbin{void_panel}->width*2/3 - 10, @{$w->{entries}} == 1 ? 'center' : 'right');
+        SDL::Video::blit_surface($imgbin{void_panel}, SDL::Rect->new(10, $ypos - $MENUPOS{ypos_panel}, $imgbin{void_panel}->w - 20, 30), $app,
+                                  SDL::Rect->new($MENUPOS{xpos_panel} + 10, $ypos, 0, 0));
+	print_('menu', $app, $xpos{questions}, $ypos, $entry->{'q'}, $imgbin{void_panel}->w*2/3 - 10, @{$w->{entries}} == 1 ? 'center' : 'right');
 	$app->flip;
-	my $srect_mulchar_redraw = SDL::Rect->new(-width => $imgbin{void_panel}->width*1/3, -height => 30,
-                                                  -x => $xpos{echo} - 3 - $MENUPOS{xpos_panel}, '-y' => $ypos - $MENUPOS{ypos_panel});
-	my $drect_mulchar_redraw = SDL::Rect->new(-x => $xpos{echo} - 3, '-y' => $ypos, -width => 0, -height => 0);
+	my $srect_mulchar_redraw = SDL::Rect->new($xpos{echo} - 3 - $MENUPOS{xpos_panel}, $ypos - $MENUPOS{ypos_panel}, $imgbin{void_panel}->w*1/3, 30);
+	my $drect_mulchar_redraw = SDL::Rect->new($xpos{echo} - 3, $ypos, 0, 0);
         my $x_echo = $xpos{echo};
 	my $txt;
         if ($entry->{f} ne 'SPACE') {
@@ -3208,7 +3202,7 @@ sub ask_from($) {
 
     if ($ok) {
 	${$_->{a}} = $_->{answer} foreach @{$w->{entries}};
-        print_('menu', $app, $MENUPOS{xpos_panel}, $MENUPOS{ypos_panel} + $imgbin{void_panel}->height - 35, $w->{outro}, $imgbin{void_panel}->width, 'center');
+        print_('menu', $app, $MENUPOS{xpos_panel}, $MENUPOS{ypos_panel} + $imgbin{void_panel}->h - 35, $w->{outro}, $imgbin{void_panel}->w, 'center');
 	$app->flip;
 	play_sound('menu_selected');
 	sleep 2;
@@ -3269,7 +3263,7 @@ sub new_game() {
 
     SDL::Video::blit_surface($backgr, $apprects{main}, $background_orig, $apprects{main});
     if ($levels{current} eq 'mp_train') {
-	my $drect = SDL::Rect->new(-x => 32, '-y' => 152);
+	my $drect = SDL::Rect->new(32, 152, 0, 0);
 	SDL::Video::blit_surface($imgbin{void_mp_training}, $rects{$imgbin{void_mp_training}}, $background_orig, $drect);
     }
     SDL::Video::blit_surface($background_orig, $apprects{main}, $background, $apprects{main});
@@ -3476,34 +3470,33 @@ sub choose_1p_game_mode() {
     my @ordered_names = qw(play_all_levels pick_start_level play_random_levels mp_train);
     my $active_menu = 0;
 
-    my $menu_xpos = $MENUPOS{xpos_panel} + ($imgbin{'1p_panel'}->width - $imgbin{txt_1pmenu_over}->width)/2; 
+    my $menu_xpos = $MENUPOS{xpos_panel} + ($imgbin{'1p_panel'}->w - $imgbin{txt_1pmenu_over}->w)/2; 
     my $menu_ypos = $MENUPOS{ypos_panel} + 90;
-    my $menu_ypos_spacer = $imgbin{txt_1pmenu_over}->height + 4;
+    my $menu_ypos_spacer = $imgbin{txt_1pmenu_over}->h + 4;
     my %name2ypos = (play_all_levels    => $menu_ypos,
                      pick_start_level   => $menu_ypos +     $menu_ypos_spacer,
                      play_random_levels => $menu_ypos + 2 * $menu_ypos_spacer,
                      mp_train           => $menu_ypos + 3 * $menu_ypos_spacer);
 
     my $overlook_index = 0;
-    my $overlook = SDL::Surface->new(-width => $imgbin{txt_1pmenu_pick_start_level_text}->width,
-                                     -height => $imgbin{txt_1pmenu_pick_start_level_text}->height,
+    my $overlook = SDL::Surface->new(-width => $imgbin{txt_1pmenu_pick_start_level_text}->w,
+                                     -height => $imgbin{txt_1pmenu_pick_start_level_text}->h,
                                      -depth => 32);
 
     my $redraw = sub {
         my $draw_element = sub {
             my ($name, $mode) = @_;
             put_image($imgbin{"txt_1pmenu_$mode"}, $menu_xpos, $name2ypos{$name});
-            SDL::Video::blit_surface($imgbin{"txt_1pmenu_${name}_outlined_text"}, undef, $app, my $rect = SDL::Rect->new(-x => $menu_xpos, '-y' => $name2ypos{$name}));
+            SDL::Video::blit_surface($imgbin{"txt_1pmenu_${name}_outlined_text"}, undef, $app, my $rect = SDL::Rect->new($menu_xpos, $name2ypos{$name}, 0, 0));
         };
 
         my $img = $imgbin{'1p_panel'};
         my $save if 0;
-        my $drect = SDL::Rect->new(-width => $img->width, -height => $img->height,
-                                   -x => $MENUPOS{xpos_panel}, '-y' => $MENUPOS{ypos_panel});
+        my $drect = SDL::Rect->new($MENUPOS{xpos_panel}, $MENUPOS{ypos_panel}, $img->w, $img->h);
         if ($save) {
             SDL::Video::blit_surface($save, $rects{img}, $app, $drect);
         } else {
-            $save = SDL::Surface->new(-width => $img->width, -height => $img->height,
+            $save = SDL::Surface->new(-width => $img->w, -height => $img->h,
                                       -depth => 32, -Amask => "0 but true");
             SDL::Video::blit_surface($app, $drect, $save, $rects{$img});
         }
@@ -3511,7 +3504,7 @@ sub choose_1p_game_mode() {
 
         my $title = t("Start 1-player game menu");
         my $ypos = $MENUPOS{ypos_panel} + 16;
-        print_('menu', $app, $MENUPOS{xpos_panel}, $ypos, $title, $imgbin{'1p_panel'}->width, 'center');
+        print_('menu', $app, $MENUPOS{xpos_panel}, $ypos, $title, $imgbin{'1p_panel'}->w, 'center');
 
         foreach (@ordered_names) {
             $_ ne $ordered_names[$active_menu] and $draw_element->($_, 'off');
@@ -3530,12 +3523,12 @@ sub choose_1p_game_mode() {
         my $name =  $ordered_names[$active_menu];
         put_image($imgbin{txt_1pmenu_over}, $menu_xpos, $name2ypos{$name});
         fb_c_stuff::overlook(surf($overlook), surf($imgbin{"txt_1pmenu_${name}_text"}), $overlook_index, $name2pivot{$name});
-        SDL::Video::blit_surface($overlook, undef, $app, my $rect = SDL::Rect->new(-x => $menu_xpos, '-y' => $name2ypos{$name}));
+        SDL::Video::blit_surface($overlook, undef, $app, my $rect = SDL::Rect->new($menu_xpos, $name2ypos{$name}, 0, 0));
         $overlook_index++;
         if ($overlook_index == 70) {
             $overlook_index = 0;
         }
-        SDL::Video::blit_surface($imgbin{"txt_1pmenu_${name}_outlined_text"}, undef, $app, my $rect = SDL::Rect->new(-x => $menu_xpos, '-y' => $name2ypos{$name}));
+        SDL::Video::blit_surface($imgbin{"txt_1pmenu_${name}_outlined_text"}, undef, $app, my $rect = SDL::Rect->new($menu_xpos, $name2ypos{$name}, 0, 0));
     };
 
     $redraw->();
@@ -3610,7 +3603,7 @@ our $smg_statusy = 435;
 
 sub erase_line($$;$$) {
     my ($pos, $background, $xpos, $width) = @_;
-    my $drect = SDL::Rect->new(-width => $width || 640, -height => $smg_lineheight + 6, -x => $xpos || 0, '-y' => $pos);
+    my $drect = SDL::Rect->new($xpos || 0, $pos, $width || 640, $smg_lineheight + 6);
     SDL::Video::blit_surface($background, $drect, $app, $drect);
 }
 
@@ -3618,7 +3611,7 @@ our @smg_status_messages;
 our $smg_status_message_offsetpage = 1;
 
 sub smg_printstatus {
-    my $drect = SDL::Rect->new(-x => 0, '-y' => $smg_statusy - $smg_max_messages * $smg_lineheight, -width => 640, -height => 480);
+    my $drect = SDL::Rect->new(0, $smg_statusy - $smg_max_messages * $smg_lineheight, 640, 480);
     SDL::Video::blit_surface($imgbin{back_netgame}, $drect, $app, $drect);
     my $y = $smg_statusy;
     my $i = $smg_status_message_offsetpage;
@@ -3741,7 +3734,7 @@ sub smg_choose_server(@) {
     my @sorted_servers;
     my $offset = 0;
     my $redraw = sub {
-        my $drect = SDL::Rect->new(-width => 640, -height => $smg_statusy-$smg_lineheight*5, -x => 0, '-y' => 0);
+        my $drect = SDL::Rect->new(0, 0, 640, $smg_statusy-$smg_lineheight*5);
         SDL::Video::blit_surface($imgbin{back_netgame}, $drect, $app, $drect);
 
         my %parts = (flag =>    { xpos => $smg_startx,                    width => 30 },
@@ -4026,18 +4019,18 @@ sub get_spot_location {
 sub save_back_spot {
     my ($latitude, $longitude, $surface, $back) = @_;
     my ($x, $y) = get_spot_location($latitude, $longitude);
-    $x -= $surface->width/2;
-    $y -= $surface->height/2;
+    $x -= $surface->w/2;
+    $y -= $surface->h/2;
     $$back = SDL::Surface->new(-width => 20, -height => 20, -depth => 32, -Amask => '0 but true');
-    SDL::Video::blit_surface($app, SDL::Rect->new('-x' => $x, '-y' => $y, -width => 20, -height => 20), $$back, undef);
+    SDL::Video::blit_surface($app, SDL::Rect->new($x, $y, 20, 20), $$back, undef);
     add_default_rect($$back);
 }
 sub print_spot {
     my ($latitude, $longitude, $kind, $surface, $back) = @_;
     $surface ||= $imgbin{"netspot_$kind"};
     my ($x, $y) = get_spot_location($latitude, $longitude);
-    $x -= $surface->width/2;
-    $y -= $surface->height/2;
+    $x -= $surface->w/2;
+    $y -= $surface->h/2;
     if ($back) {
         put_image($$back, $x, $y);
         pop @update_rects;
@@ -4073,7 +4066,7 @@ sub smg_choose_game() {
     my $state = 'game_select';
 
     my $erase = sub {
-        my $drect = SDL::Rect->new(-width => 640, -height => $smg_starty_players, -x => 0, '-y' => 0);
+        my $drect = SDL::Rect->new(0, 0, 640, $smg_starty_players);
         SDL::Video::blit_surface($imgbin{back_netgame}, $drect, $app, $drect);
     };
     callback_entry('reset');
@@ -4095,10 +4088,10 @@ sub smg_choose_game() {
         foreach (@playing_geolocs) {
             my ($x, $y) = get_spot_location($_->[0], $_->[1]);
             print_spot($_->[0], $_->[1], 'playing');
-            push @rectangles, SDL::Rect->new('-x' => $x - $imgbin{"netspot_free"}->width/2,
-                                             '-y' => $y - $imgbin{"netspot_free"}->height/2,
-                                             '-width' => $imgbin{"netspot_free"}->width,
-                                             '-height' => $imgbin{"netspot_free"}->height);
+            push @rectangles, SDL::Rect->new($x - $imgbin{"netspot_free"}->w/2,
+                                             $y - $imgbin{"netspot_free"}->h/2,
+                                             $imgbin{"netspot_free"}->w,
+                                             $imgbin{"netspot_free"}->h);
         }
 
         #- geoloc spots - free: spots and labels (nicks)
@@ -4107,10 +4100,10 @@ sub smg_choose_game() {
             @$_ or next;
             my ($x, $y) = get_spot_location($_->[0], $_->[1]);
             print_spot($_->[0], $_->[1], $ingame ? 'insamegame' : 'free');
-            push @rectangles, SDL::Rect->new('-x' => $x - $imgbin{"netspot_free"}->width/2,
-                                             '-y' => $y - $imgbin{"netspot_free"}->height/2,
-                                             '-width' => $imgbin{"netspot_free"}->width,
-                                             '-height' => $imgbin{"netspot_free"}->height);
+            push @rectangles, SDL::Rect->new($x - $imgbin{"netspot_free"}->w/2,
+                                             $y - $imgbin{"netspot_free"}->h/2,
+                                             $imgbin{"netspot_free"}->w,
+                                             $imgbin{"netspot_free"}->h);
         }
         #- second show labels, managing overlap
         my @labels = ();
@@ -4148,13 +4141,13 @@ sub smg_choose_game() {
                     $xb = $xc - $wb/2;
                     $yb = $yc - $hb/2;
                     #- check that background rectangle does not overlap any existing rectangle (spots or other labels)
-                    $r = SDL::Rect->new('-x' => $xb, '-y' => $yb, '-width' => $wb, '-height' => $hb);
+                    $r = SDL::Rect->new($xb, $yb, $wb, $hb);
                     foreach my $rect (@rectangles) {
                         if ($rect->x >= $xb && $wb > $rect->x - $xb
-                            || $xb >= $rect->x && $rect->width > $xb - $rect->x) {
+                            || $xb >= $rect->x && $rect->w > $xb - $rect->x) {
                             #- x overlap
                             if ($rect->y >= $yb && $hb > $rect->y - $yb
-                                || $yb >= $rect->y && $rect->height > $yb - $rect->y) {
+                                || $yb >= $rect->y && $rect->h > $yb - $rect->y) {
                                 $set_next_position->();
                                 while ($xb < 20 || $xb + $wb > 620 || $yb < 20 || $yb + $hb > 320) {
                                     $set_next_position->();
@@ -4177,7 +4170,7 @@ sub smg_choose_game() {
                 fb_c_stuff::draw_line(surf($app), $xspot, $yspot, $xc, $yc, col($label_line_color));
                 #- draw the label background and the label in another pass to handle overwriting of labels over lines
                 push @labels, { x => $xc - $sizing->[2]/2 - $sizing->[0], y => $yc - $sizing->[3]/2 - $sizing->[1], text => $text, backrect1 => $r,
-                                backrect2 => SDL::Rect->new('-x' => $xb + 1, '-y' => $yb + 1, '-width' => $wb - 2, '-height' => $hb - 2) };
+                                backrect2 => SDL::Rect->new($xb + 1, $yb + 1, $wb - 2, $hb - 2) };
                 push @rectangles, $r;
             }
         } \@wholist, \@free_geolocs;
@@ -5339,7 +5332,7 @@ sub maingame() {
     $frame++;
 
 #    print "rects:\n";
-#    printf "\t%d:%d %d:%d %s\n", $_->x, $_->y, $_->width, $_->height, $_->{from} foreach @update_rects;
+#    printf "\t%d:%d %d:%d %s\n", $_->x, $_->y, $_->w, $_->h, $_->{from} foreach @update_rects;
     $app->update(@update_rects);
     @update_rects = ();
 
@@ -5511,7 +5504,7 @@ sub menu {
             #- snow needs to extend top, and a little more wideness
             my $newlogosurface = SDL::Surface->new( SDL_ANYFORMAT, $imgbin{menu_logo}->w * 1.1,  $imgbin{menu_logo}->h + $logoy, 32, 0, 0,0,0);
 	    SDL::Video::set_alpha( $imgbin{menu_logo}, 0, 0); #- for RGBA->RGBA blits, SDL_SRCALPHA must be removed or destination alpha is preserved
-            SDL::Video::blit_surface( $imgbin{menu_logo}, undef, $newlogosurface, SDL::Rect->new(-x => $imgbin{menu_logo}->width * 0.05, '-y' => $logoy));
+            SDL::Video::blit_surface( $imgbin{menu_logo}, undef, $newlogosurface, SDL::Rect->new($imgbin{menu_logo}->w * 0.05, $logoy, 0, 0));
             $logox -= $imgbin{menu_logo}->w * 0.05;
             $logoy = 0;
             $imgbin{menu_logo} = $newlogosurface;
@@ -5538,7 +5531,7 @@ sub menu {
             $logo_candy_method == 7 and fb_c_stuff::brokentv(surf($candy), surf($imgbin{menu_logo}), $logo_candy_index);
             $logo_candy_method == 8.1 and fb_c_stuff::snow(surf($candy), surf($imgbin{menu_logo}));
             
-	    SDL::Video::blit_surface($candy, undef, $app, my $rect = SDL::Rect->new(-x => $logox, '-y' => $logoy));
+	    SDL::Video::blit_surface($candy, undef, $app, my $rect = SDL::Rect->new($logox, $logoy, 0, 0));
             $logo_candy_index++;
         }
         if (!$no_update) {
