@@ -1525,20 +1525,6 @@ void draw_line_(SDL_Surface* surface, int x1, int y1, int x2, int y2, SDL_Color*
         }
 }
 
-AV* sdlpango_getsize_(SDLPango_Context* context, char* text, int width)
-{
-        AV* ret;
-        int w, h;
-        SDLPango_SetMinimumSize(context, width, 0);
-        SDLPango_SetText(context, text, -1);
-        w = SDLPango_GetLayoutWidth(context);
-        h = SDLPango_GetLayoutHeight(context);
-        ret = newAV();
-        av_push(ret, newSViv(w));
-        av_push(ret, newSViv(h));
-        return ret;
-}
-
 SDL_Surface* sdlpango_draw_(SDLPango_Context* context, char* text, int width, char* align)
 {
         SDLPango_Alignment alignment = !strcmp(align, "left") ? SDLPANGO_ALIGN_LEFT :
@@ -1801,13 +1787,6 @@ Uint8
 JOYBUTTONUP ()
         CODE:
                 RETVAL = SDL_JOYBUTTONUP; // missing in 2.1.2
-        OUTPUT:
-                RETVAL
-
-AV*
-sdlpango_getsize(SDLPango_Context* context, char* text, int width)
-        CODE:
-                RETVAL = sdlpango_getsize_(context, text, width);
         OUTPUT:
                 RETVAL
 

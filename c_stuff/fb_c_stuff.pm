@@ -22,5 +22,19 @@ sub sdlpango_createcontext{
 	return $context;
 }
 
+sub sdlpango_getsize{
+	my $context = shift;
+	my $text    = shift;
+	my $width   = shift;
+	
+	SDL::Pango::set_minimum_size($context, $width, 0);
+	SDL::Pango::set_text($context, $text, -1);
+	my $w = SDL::Pango::get_layout_width($context);
+	my $h = SDL::Pango::get_layout_height($context);
+	
+	return [$w, $h];
+}
+
+
 1;
 
