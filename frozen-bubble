@@ -5485,22 +5485,22 @@ sub menu {
         ($logox, $logoy) = (400, 15);
         if ($logo_candy_method == 3) {
             #- stretch needs a bit more room
-            my $newlogosurface = SDL::Surface->new(-width => $imgbin{menu_logo}->width * 1.1, -height => $imgbin{menu_logo}->height * 1.1, -depth => 32);
-            $imgbin{menu_logo}->set_alpha(0, 0); #- for RGBA->RGBA blits, SDL_SRCALPHA must be removed or destination alpha is preserved
-            $imgbin{menu_logo}->blit(undef, $newlogosurface, SDL::Rect->new(-x => $imgbin{menu_logo}->width * 0.05, '-y' => $imgbin{menu_logo}->height * 0.05));
-            $logox -= $imgbin{menu_logo}->width * 0.05;
-            $logoy -= $imgbin{menu_logo}->height * 0.05;
+            my $newlogosurface = SDL::Surface->new(SDL_ANYFORMAT, $imgbin{menu_logo}->w * 1.1,  $imgbin{menu_logo}->h * 1.1,  32, 0, 0, 0 ,0);
+	    SDL::Video::set_alpha($imgbin{menu_logo}, 0, 0); #- for RGBA->RGBA blits, SDL_SRCALPHA must be removed or destination alpha is preserved
+            SDL::Video::blit_surface($imgbin{menu_logo}, undef, $newlogosurface, SDL::Rect->new( $imgbin{menu_logo}->w * 0.05, $imgbin{menu_logo}->h * 0.05, 0, 0));
+            $logox -= $imgbin{menu_logo}->w * 0.05;
+            $logoy -= $imgbin{menu_logo}->h * 0.05;
             $imgbin{menu_logo} = $newlogosurface;
             add_default_rect($imgbin{menu_logo});
             $logo_candy_method = 3.1; #- avoid doing it again at next menu run
         }
         if ($logo_candy_method == 4) {
             #- tilt needs a bit more horizontal room
-            my $newlogosurface = SDL::Surface->new(-width => $imgbin{menu_logo}->width * 1.1, -height => $imgbin{menu_logo}->height * 1.05, -depth => 32);
-            $imgbin{menu_logo}->set_alpha(0, 0); #- for RGBA->RGBA blits, SDL_SRCALPHA must be removed or destination alpha is preserved
-            $imgbin{menu_logo}->blit(undef, $newlogosurface, SDL::Rect->new(-x => $imgbin{menu_logo}->width * 0.05, '-y' => $imgbin{menu_logo}->height * 0.025));
-            $logox -= $imgbin{menu_logo}->width * 0.05;
-            $logoy -= $imgbin{menu_logo}->height * 0.025;
+            my $newlogosurface = SDL::Surface->new(SDL_ANYFORMAT, $imgbin{menu_logo}->w * 1.1,  $imgbin{menu_logo}->h * 1.05,  32, 0, 0, 0 ,0);
+	    SDL::Video::set_alpha($imgbin{menu_logo}, 0, 0); #- for RGBA->RGBA blits, SDL_SRCALPHA must be removed or destination alpha is preserved
+            SDL::Video::blit_surface($imgbin{menu_logo}, undef, $newlogosurface, SDL::Rect->new( $imgbin{menu_logo}->w * 0.05, $imgbin{menu_logo}->h * 0.025, 0, 0));
+            $logox -= $imgbin{menu_logo}->w * 0.05;
+            $logoy -= $imgbin{menu_logo}->h * 0.025;
             $imgbin{menu_logo} = $newlogosurface;
             add_default_rect($imgbin{menu_logo});
             $logo_candy_method = 4.1; #- avoid doing it again at next menu run
@@ -5622,24 +5622,24 @@ sub menu {
 	}
 	@menu_invalids = ();
         $draw_logo->('no-update');
-	$app->update(@update_rects);
+	SDL::Video::update_rects($app, @update_rects);
         @update_rects = ();
     };
     
     $invalidate_all->();
     $menu_update->();
-    $app->flip;
-    $event->pump while $event->poll != 0;
+    SDL::Video::flip($app);
+    SDL::Events::pump_events() while SDL::Events::poll_event($event) != 0;
 
     my $start_game = 0;
     my ($BANNER_START, $BANNER_SPACING) = (1000, 80);
     my %banners = (artwork => $BANNER_START,
-		   soundtrack => $BANNER_START + $imgbin{banner_artwork}->width + $BANNER_SPACING,
-		   cpucontrol => $BANNER_START + $imgbin{banner_artwork}->width + $BANNER_SPACING
-		                 + $imgbin{banner_soundtrack}->width + $BANNER_SPACING,
-		   leveleditor => $BANNER_START + $imgbin{banner_artwork}->width + $BANNER_SPACING
-                                 + $imgbin{banner_soundtrack}->width + $BANNER_SPACING
-                                 + $imgbin{banner_cpucontrol}->width + $BANNER_SPACING);
+		   soundtrack => $BANNER_START + $imgbin{banner_artwork}->w + $BANNER_SPACING,
+		   cpucontrol => $BANNER_START + $imgbin{banner_artwork}->w + $BANNER_SPACING
+		                 + $imgbin{banner_soundtrack}->w + $BANNER_SPACING,
+		   leveleditor => $BANNER_START + $imgbin{banner_artwork}->w + $BANNER_SPACING
+                                 + $imgbin{banner_soundtrack}->w + $BANNER_SPACING
+                                 + $imgbin{banner_cpucontrol}->w + $BANNER_SPACING);
     my ($BANNER_MINX, $BANNER_MAXX, $BANNER_Y) = (304, 596, 243);
     my $banners_max = $banners{leveleditor} - (640 - ($BANNER_MAXX - $BANNER_MINX)) + $BANNER_SPACING;
     my $banner_rect = SDL::Rect->new( $BANNER_MINX, $BANNER_Y, $BANNER_MAXX-$BANNER_MINX, 30);
@@ -5650,13 +5650,13 @@ sub menu {
 
 	$graphics_level > 1 and SDL::Video::blit_surface($back_start, $banner_rect, $app, $banner_rect);
 
-	$event->pump;
-	while ($event->poll != 0) {
+	SDL::Events::pump_events();
+	while (SDL::Events::poll_event($event)) {
             my $keypressed = extended_keypress($event);
             if ($keypressed) {
                 if ($keypressed eq SDLK_PAUSE) {
                     my $time_pause = $app->ticks;
-                    $event->pump while $event->poll != 0;
+		    SDL::Events::pump_events() while SDL::Events::poll_event($event);
                   pause_menu:
                     while (1) {
                         $event->wait;
