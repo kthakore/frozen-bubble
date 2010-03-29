@@ -2720,7 +2720,7 @@ sub init_game() {
         my $replace = SDL::Surface->new( SDL_ANYFORMAT, $canon{data}{$number}[2],  $canon{data}{$number}[3], 32, 0,0,0,0);
 	SDL::Video::set_alpha($canon{img}{$number}, 0, 0);
 	SDL::Video::blit_surface( $canon{img}{$number}, SDL::Rect->new( $canon{data}{$number}[0],  $canon{data}{$number}[1],
-                                                  $canon{data}{$number}[2],  $canon{data}{$number}[3]), $replace, undef);
+                                                  $canon{data}{$number}[2],  $canon{data}{$number}[3]), $replace, SDL::Rect->new(0,0,0,0));
         $canon{img}{$number} = $replace;
         add_default_rect($canon{img}{$number});
 
@@ -2731,7 +2731,7 @@ sub init_game() {
         my $replace = SDL::Surface->new( SDL_ANYFORMAT,  $canon{data_mini}{$number}[2],  $canon{data_mini}{$number}[3],  32, 0,0,0,0);
 	SDL::Video::set_alpha($canon{img_mini}{$number}, 0, 0);
 	SDL::Video::blit_surface( $canon{img_mini}{$number}, SDL::Rect->new( $canon{data_mini}{$number}[0], $canon{data_mini}{$number}[1],
-                                                        $canon{data_mini}{$number}[2], $canon{data_mini}{$number}[3]), $replace, undef);
+                                                        $canon{data_mini}{$number}[2], $canon{data_mini}{$number}[3]), $replace, SDL::Rect->new(0,0,0,0));
         $canon{img_mini}{$number} = $replace;
         add_default_rect($canon{img_mini}{$number});
 
@@ -3031,7 +3031,7 @@ sub display_highscores {
             my $tmp = SDL::Video::display_format(SDL::Surface->new(-width => $high_rect->w/4, -height => $high_rect->h/4,
                                         -depth => 32, -Amask => "0 but true"));
             fb_c_stuff::shrink(surf($tmp), surf(SDL::Video::display_format($background)), 0, 0, rect($high_rect), 4);
-            SDL::Video::blit_surface($tmp, undef, $app, SDL::Rect->new($high_posx, $high_posy, 0, 0));
+            SDL::Video::blit_surface($tmp, SDL::Rect->new(0,0,0,0), $app, SDL::Rect->new($high_posx, $high_posy, 0, 0));
             $centered_print->($high_posx - 15, $high_posy, $high->{name}, $new_entry == $high);
             $centered_print->($high_posx - 15, $high_posy + 20, $high->{level} eq 'WON' ? t("won!") : t("level %s", i18n_number($high->{level})), $new_entry == $high);
             my $min = int($high->{time}/60);
@@ -3487,7 +3487,7 @@ sub choose_1p_game_mode() {
         my $draw_element = sub {
             my ($name, $mode) = @_;
             put_image($imgbin{"txt_1pmenu_$mode"}, $menu_xpos, $name2ypos{$name});
-            SDL::Video::blit_surface($imgbin{"txt_1pmenu_${name}_outlined_text"}, undef, $app, my $rect = SDL::Rect->new($menu_xpos, $name2ypos{$name}, 0, 0));
+            SDL::Video::blit_surface($imgbin{"txt_1pmenu_${name}_outlined_text"}, SDL::Rect->new(0,0,0,0), $app, my $rect = SDL::Rect->new($menu_xpos, $name2ypos{$name}, 0, 0));
         };
 
         my $img = $imgbin{'1p_panel'};
@@ -3523,12 +3523,12 @@ sub choose_1p_game_mode() {
         my $name =  $ordered_names[$active_menu];
         put_image($imgbin{txt_1pmenu_over}, $menu_xpos, $name2ypos{$name});
         fb_c_stuff::overlook(surf($overlook), surf($imgbin{"txt_1pmenu_${name}_text"}), $overlook_index, $name2pivot{$name});
-        SDL::Video::blit_surface($overlook, undef, $app, my $rect = SDL::Rect->new($menu_xpos, $name2ypos{$name}, 0, 0));
+        SDL::Video::blit_surface($overlook, SDL::Rect->new(0,0,0,0), $app, my $rect = SDL::Rect->new($menu_xpos, $name2ypos{$name}, 0, 0));
         $overlook_index++;
         if ($overlook_index == 70) {
             $overlook_index = 0;
         }
-        SDL::Video::blit_surface($imgbin{"txt_1pmenu_${name}_outlined_text"}, undef, $app, my $rect = SDL::Rect->new($menu_xpos, $name2ypos{$name}, 0, 0));
+        SDL::Video::blit_surface($imgbin{"txt_1pmenu_${name}_outlined_text"}, SDL::Rect->new(0,0,0,0), $app, my $rect = SDL::Rect->new($menu_xpos, $name2ypos{$name}, 0, 0));
     };
 
     $redraw->();
@@ -4022,7 +4022,7 @@ sub save_back_spot {
     $x -= $surface->w/2;
     $y -= $surface->h/2;
     $$back = SDL::Surface->new(-width => 20, -height => 20, -depth => 32, -Amask => '0 but true');
-    SDL::Video::blit_surface($app, SDL::Rect->new($x, $y, 20, 20), $$back, undef);
+    SDL::Video::blit_surface($app, SDL::Rect->new($x, $y, 20, 20), $$back, SDL::Rect->new(0,0,0,0));
     add_default_rect($$back);
 }
 sub print_spot {
@@ -5419,7 +5419,7 @@ sub menu {
     my $back_start;
     my $display_menu = sub {
 	SDL::Video::blit_surface($back_start,$apprects{main}, $app, $apprects{main});
-	SDL::Video::blit_surface($imgbin{stamp},undef, $app, SDL::Rect->new( 490,  142, 0, 0));
+	SDL::Video::blit_surface($imgbin{stamp},SDL::Rect->new(0,0,0,0), $app, SDL::Rect->new( 490,  142, 0, 0));
     };
 
     $back_start = $imgbin{back_menu};
@@ -5482,7 +5482,7 @@ sub menu {
             #- stretch needs a bit more room
             my $newlogosurface = SDL::Surface->new(SDL_ANYFORMAT, $imgbin{menu_logo}->w * 1.1,  $imgbin{menu_logo}->h * 1.1,  32, 0, 0, 0 ,0);
 	    SDL::Video::set_alpha($imgbin{menu_logo}, 0, 0); #- for RGBA->RGBA blits, SDL_SRCALPHA must be removed or destination alpha is preserved
-            SDL::Video::blit_surface($imgbin{menu_logo}, undef, $newlogosurface, SDL::Rect->new( $imgbin{menu_logo}->w * 0.05, $imgbin{menu_logo}->h * 0.05, 0, 0));
+            SDL::Video::blit_surface($imgbin{menu_logo}, SDL::Rect->new(0,0,0,0), $newlogosurface, SDL::Rect->new( $imgbin{menu_logo}->w * 0.05, $imgbin{menu_logo}->h * 0.05, 0, 0));
             $logox -= $imgbin{menu_logo}->w * 0.05;
             $logoy -= $imgbin{menu_logo}->h * 0.05;
             $imgbin{menu_logo} = $newlogosurface;
@@ -5493,7 +5493,7 @@ sub menu {
             #- tilt needs a bit more horizontal room
             my $newlogosurface = SDL::Surface->new(SDL_ANYFORMAT, $imgbin{menu_logo}->w * 1.1,  $imgbin{menu_logo}->h * 1.05,  32, 0, 0, 0 ,0);
 	    SDL::Video::set_alpha($imgbin{menu_logo}, 0, 0); #- for RGBA->RGBA blits, SDL_SRCALPHA must be removed or destination alpha is preserved
-            SDL::Video::blit_surface($imgbin{menu_logo}, undef, $newlogosurface, SDL::Rect->new( $imgbin{menu_logo}->w * 0.05, $imgbin{menu_logo}->h * 0.025, 0, 0));
+            SDL::Video::blit_surface($imgbin{menu_logo}, SDL::Rect->new(0,0,0,0), $newlogosurface, SDL::Rect->new( $imgbin{menu_logo}->w * 0.05, $imgbin{menu_logo}->h * 0.025, 0, 0));
             $logox -= $imgbin{menu_logo}->w * 0.05;
             $logoy -= $imgbin{menu_logo}->h * 0.025;
             $imgbin{menu_logo} = $newlogosurface;
@@ -5504,7 +5504,7 @@ sub menu {
             #- snow needs to extend top, and a little more wideness
             my $newlogosurface = SDL::Surface->new( SDL_ANYFORMAT, $imgbin{menu_logo}->w * 1.1,  $imgbin{menu_logo}->h + $logoy, 32, 0, 0,0,0);
 	    SDL::Video::set_alpha( $imgbin{menu_logo}, 0, 0); #- for RGBA->RGBA blits, SDL_SRCALPHA must be removed or destination alpha is preserved
-            SDL::Video::blit_surface( $imgbin{menu_logo}, undef, $newlogosurface, SDL::Rect->new($imgbin{menu_logo}->w * 0.05, $logoy, 0, 0));
+            SDL::Video::blit_surface( $imgbin{menu_logo}, SDL::Rect->new(0,0,0,0), $newlogosurface, SDL::Rect->new($imgbin{menu_logo}->w * 0.05, $logoy, 0, 0));
             $logox -= $imgbin{menu_logo}->w * 0.05;
             $logoy = 0;
             $imgbin{menu_logo} = $newlogosurface;
@@ -5531,7 +5531,7 @@ sub menu {
             $logo_candy_method == 7 and fb_c_stuff::brokentv(surf($candy), surf($imgbin{menu_logo}), $logo_candy_index);
             $logo_candy_method == 8.1 and fb_c_stuff::snow(surf($candy), surf($imgbin{menu_logo}));
             
-	    SDL::Video::blit_surface($candy, undef, $app, my $rect = SDL::Rect->new($logox, $logoy, 0, 0));
+	    SDL::Video::blit_surface($candy, SDL::Rect->new(0,0,0,0), $app, my $rect = SDL::Rect->new($logox, $logoy, 0, 0));
             $logo_candy_index++;
         }
         if (!$no_update) {
@@ -5588,19 +5588,19 @@ sub menu {
             $cursor_save_bg{$m} = SDL::Surface->new(SDL_ANYFORMAT, $imgbin{menu_cursor}{$m}[0]->w, $imgbin{menu_cursor}{$m}[0]->h, 32, 0,0,0,0);
 	    SDL::Video::blit_surface($app, $cursor_rect, $cursor_save_bg{$m}, SDL::Rect->new( 0,  0,  $imgbin{menu_cursor}{$m}[0]->w, $imgbin{menu_cursor}{$m}[0]->h));
         }
-	SDL::Video::blit_surface ($cursor_save_bg{$m}, undef, $app, $cursor_rect);
+	SDL::Video::blit_surface ($cursor_save_bg{$m}, SDL::Rect->new(0,0,0,0), $app, $cursor_rect);
         if ($alpha) {
             if ($pixelize) {
                 if (!defined($cursor_tmp)) {
                     $cursor_tmp = SDL::Surface->new( SDL_ANYFORMAT, $imgbin{menu_cursor}{$m}[0]->w,  $imgbin{menu_cursor}{$m}[0]->h, 32, 0,0,0,0);
                 }
                 fb_c_stuff::pixelize(surf($cursor_tmp), surf($imgbin{menu_cursor}{"${m}alpha"}[$pdata{cursor_img}{$m}]));
-		SDL::Video::blit_surface( $cursor_tmp, undef, $app, $cursor_rect);
+		SDL::Video::blit_surface( $cursor_tmp, SDL::Rect->new(0,0,0,0), $app, $cursor_rect);
             } else {
-              	SDL::Video::blit_surface( $imgbin{menu_cursor}{"${m}alpha"}[$pdata{cursor_img}{$m}], undef, $app, $cursor_rect);
+              	SDL::Video::blit_surface( $imgbin{menu_cursor}{"${m}alpha"}[$pdata{cursor_img}{$m}], SDL::Rect->new(0,0,0,0), $app, $cursor_rect);
             }
         } else {
-		SDL::Video::blit_surface( $imgbin{menu_cursor}{$m}[$pdata{cursor_img}{$m}], undef, $app, $cursor_rect);
+		SDL::Video::blit_surface( $imgbin{menu_cursor}{$m}[$pdata{cursor_img}{$m}], SDL::Rect->new(0,0,0,0), $app, $cursor_rect);
         }
         return $cursor_rect;
     };
@@ -5792,15 +5792,15 @@ sub menu {
                 $blink_green++;
                 if (!$blink_green) {
                     $blink_green = 3;
-                    	SDL::Video::blit_surface ( $imgbin{menu_closedeye_green_left}, undef, $app, $green_left);
-                    	SDL::Video::blit_surface ( $imgbin{menu_closedeye_green_right}, undef, $app, $green_right);
+                    	SDL::Video::blit_surface ( $imgbin{menu_closedeye_green_left}, SDL::Rect->new(0,0,0,0), $app, $green_left);
+                    	SDL::Video::blit_surface ( $imgbin{menu_closedeye_green_right}, SDL::Rect->new(0,0,0,0), $app, $green_right);
 		    SDL::Video::update_rects( $app, $green_left, $green_right);
                 }
             } else {
                 if (rand(200) <= 1) {
                     $blink_green = 3;
-                    SDL::Video::blit_surface ( $imgbin{menu_closedeye_green_left},undef, $app, $green_left);
-                    SDL::Video::blit_surface ( $imgbin{menu_closedeye_green_right},undef, $app, $green_right);
+                    SDL::Video::blit_surface ( $imgbin{menu_closedeye_green_left},SDL::Rect->new(0,0,0,0), $app, $green_left);
+                    SDL::Video::blit_surface ( $imgbin{menu_closedeye_green_right},SDL::Rect->new(0,0,0,0), $app, $green_right);
                     SDL::Video::update_rects( $app,$green_left, $green_right);
                 }
             }
@@ -5818,15 +5818,15 @@ sub menu {
                 $blink_purple++;
                 if (!$blink_purple) {
                     $blink_purple = 3;
-                    SDL::Video::blit_surface ( $imgbin{menu_closedeye_purple_left},undef, $app, $purple_left);
-                    SDL::Video::blit_surface ( $imgbin{menu_closedeye_purple_right},undef, $app, $purple_right);
+                    SDL::Video::blit_surface ( $imgbin{menu_closedeye_purple_left},SDL::Rect->new(0,0,0,0), $app, $purple_left);
+                    SDL::Video::blit_surface ( $imgbin{menu_closedeye_purple_right},SDL::Rect->new(0,0,0,0), $app, $purple_right);
                     SDL::Video::update_rects( $app,$purple_left, $purple_right);
                 }
             } else {
                 if (rand(200) <= 1) {
                     $blink_purple = 3;
-                    SDL::Video::blit_surface ( $imgbin{menu_closedeye_purple_left},undef, $app, $purple_left);
-                   SDL::Video::blit_surface (  $imgbin{menu_closedeye_purple_right},undef, $app, $purple_right);
+                    SDL::Video::blit_surface ( $imgbin{menu_closedeye_purple_left},SDL::Rect->new(0,0,0,0), $app, $purple_left);
+                   SDL::Video::blit_surface (  $imgbin{menu_closedeye_purple_right},SDL::Rect->new(0,0,0,0), $app, $purple_right);
                     SDL::Video::update_rects( $app,$purple_left, $purple_right);
                 }
             }
