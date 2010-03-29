@@ -61,6 +61,7 @@ use SDL::Surface;
 use SDL::Video;
 use SDL::Event;
 use SDL::Events;
+use SDL::Color;
 use SDL::Cursor;
 use SDL::Mixer;
 use SDL::Joystick;
