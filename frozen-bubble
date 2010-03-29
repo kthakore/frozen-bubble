@@ -5738,30 +5738,30 @@ sub menu {
 
 		$xpos > $banners_max/2 and $xpos = $banners{$b} - ($banner_pos + $banners_max);
 
-		if ($xpos < $BANNER_MAXX && $xpos + $image->width >= 0) {
-		    my $irect = SDL::Rect->new(-width => min($image->width+$xpos, $BANNER_MAXX-$BANNER_MINX),
-                                               -height => $image->height, -x => -$xpos);
-		    $image->blit($irect, $app, SDL::Rect->new(-x => $BANNER_MINX, '-y' => $BANNER_Y));
+		if ($xpos < $BANNER_MAXX && $xpos + $image->w >= 0) {
+		    my $irect = SDL::Rect->new(-$xpos, 0,  min($image->w+$xpos, $BANNER_MAXX-$BANNER_MINX),
+                                                $image->h);
+					SDL::Video::blit_surface( $image, $irect, $app, SDL::Rect->new( $BANNER_MINX,  $BANNER_Y, 0, 0) );
 		}
 	    }
 	    $banner_pos++;
 	    $banner_pos >= $banners_max and $banner_pos = 1;
-            $app->update($banner_rect);
+	    SDL::Video::update_rects($app, $banner_rect);
 
             #- animate and break cursor
             foreach my $m (keys %menu_entries) {
                 if ($menu_entries{$m}->{pos} == $current_pos) {
                     $pdata{cursor_img}{$m}++;
                     $pdata{cursor_img}{$m} >= @{$imgbin{menu_cursor}{$m}} and $pdata{cursor_img}{$m} = 0;
-                    $app->update($display_cursor->($m, 0));
+		    SDL::Video::update_rects($app, $display_cursor->($m, 0));
                     
                 } else {
                     if ($broken_cursors{$m}) {
                         $broken_cursors{$m}--;
                         if ($broken_cursors{$m}) {
-                            $app->update($display_cursor->($m, 1, 1));
+				SDL::Video::update_rects($app, $display_cursor->($m, 1, 1));
                         } else {
-                            $app->update($display_cursor->($m, 1));
+                           SDL::Video::update_rects($app, $display_cursor->($m, 1));
                         }
                     } else {
                         rand() < 0.001 and $broken_cursors{$m} = int(20 + 10 * cos(rand(2*$PI)));
