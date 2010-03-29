@@ -405,8 +405,8 @@ sub remove_images_from_background {
 	($image->{'x'} == 0 && $image->{'y'} == 0) and print "remove_images_from_background: warning, X and Y are 0\n";
         my $img = translate_mini_image($image->{img});
 	my $drect = SDL::Rect->new( $image->{'x'}, $image->{'y'}, $img->w, $img->h );
-	SDL::Video::blit_video ($background_orig, $drect, $background, $drect);
-	SDL::Video::blit_video ($background_orig, $drect, $app, $drect);
+	SDL::Video::blit_surface($background_orig, $drect, $background, $drect);
+	SDL::Video::blit_surface($background_orig, $drect, $app, $drect);
 	push @update_rects, $drect;
     }
 }
@@ -1233,10 +1233,10 @@ sub print_ {
             return;
         }
     }
-    SDL::Video::blit_surface($surf, undef, surf($surface), rect($rect));
+    SDL::Video::blit_surface($surf, SDL::Rect->new(0,0,0,0), surf($surface), rect($rect));
     $surf = fb_c_stuff::sdlpango_draw_givenalignment($pangocontext{$kind}{context_fg}, $text, $size || -1, $alignment || 'left');
     $rect = SDL::Rect->new($x, $y, 0, 0);
-    SDL::Video::blit_surface($surf, undef, surf($surface), rect($rect));
+    SDL::Video::blit_surface($surf, SDL::Rect->new(0,0,0,0), surf($surface), rect($rect));
 }
 
 sub width {
