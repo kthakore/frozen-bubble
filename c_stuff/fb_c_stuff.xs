@@ -1525,18 +1525,6 @@ void draw_line_(SDL_Surface* surface, int x1, int y1, int x2, int y2, SDL_Color*
         }
 }
 
-/* only "white" and "black" are supported in the color parameter */
-SDLPango_Context* sdlpango_createcontext_(char* color, char* font_desc)
-{
-        SDLPango_Context * context = SDLPango_CreateContext_GivenFontDesc(font_desc);
-        if (!strcmp(color, "white")) {
-                SDLPango_SetDefaultColor(context, MATRIX_TRANSPARENT_BACK_WHITE_LETTER);
-        } else {
-                SDLPango_SetDefaultColor(context, MATRIX_TRANSPARENT_BACK_BLACK_LETTER);
-        }
-        return context;
-}
-
 AV* sdlpango_getsize_(SDLPango_Context* context, char* text, int width)
 {
         AV* ret;
@@ -1813,15 +1801,6 @@ Uint8
 JOYBUTTONUP ()
         CODE:
                 RETVAL = SDL_JOYBUTTONUP; // missing in 2.1.2
-        OUTPUT:
-                RETVAL
-
-SDLPango_Context*
-sdlpango_createcontext(char* color, char* font_desc)
-	PREINIT:
-		char* CLASS = "SDL::Pango::Context";
-        CODE:
-                RETVAL = sdlpango_createcontext_(color, font_desc);
         OUTPUT:
                 RETVAL
 
