@@ -1106,7 +1106,7 @@ sub handle_graphics($) {
                 $app->sync;
                 play_sound('cancel');
                 fb_c_stuff::fbdelay(1000);
-                $event->pump while $event->poll != 0;
+                SDL::Events::pump_events() while SDL::Events::poll_event($event) != 0;
                 grab_key() eq SDLK_ESCAPE() and die 'quit';
                 handle_new_hiscores();
                 die 'new_game';
@@ -1252,10 +1252,10 @@ sub mp_disconnect_with_reason {
         print_('menu', $app, $MENUPOS{xpos_panel} + 10, $y, $_, $imgbin{void_panel}->w - 20, 'center');
         $y += $smg_lineheight;
     }
-    $app->flip;
+    SDL::Video::flip($app);
     play_sound('cancel');
     fb_c_stuff::fbdelay(2000);
-    $event->pump while $event->poll != 0;
+    SDL::Events::pump_events() while SDL::Events::poll_event($event) != 0;
     grab_key();
     die 'quit';
 }
@@ -1278,7 +1278,7 @@ sub update_say_mp {
 
 sub cleanup_chatting {
     $pdata{p1}{chatting} = 0;
-    $event->set_key_repeat(0, 0);
+    SDL::Events::enable_key_repeat(0, 0);
     remove_image_from_background($imgbin{void_chat}, $POS{p1}{chatting}{x}, $POS{p1}{chatting}{'y'});
     print_next_bubble($next_bubble{p1}{img}, 'p1');
     redraw_attackingme();
@@ -1520,8 +1520,8 @@ sub handle_game_events() {
 
     if ($playdata) {
         play();
-        $event->pump;
-        while ($event->poll != 0) {
+        SDL::Events::pump_events();
+        while (SDL::Events::poll_event($event) != 0) {
             if ($event->type == SDL_QUIT) {
                 cleanup_and_exit();
             }
@@ -1532,10 +1532,10 @@ sub handle_game_events() {
             }
             if ($keypressed eq SDLK_PAUSE) {
                 my $time_pause = $app->ticks;
-                $event->pump while $event->poll != 0;
+                SDL::Events::pump_events() while SDL::Events::poll_event($event) != 0;
               pause_playdata:
                 while (1) {
-                    while ($event->poll != 0) {
+                    while (SDL::Events::poll_event($event) != 0) {
                         if ($event->type == SDL_QUIT) {
                             cleanup_and_exit();
                         }
@@ -1554,8 +1554,8 @@ sub handle_game_events() {
         return;
     }
 
-    $event->pump;
-    while ($event->poll != 0) {
+    SDL::Events::pump_events();
+    while (SDL::Events::poll_event($event) != 0) {
         my $keypressed = extended_keypress($event);
         if ($keypressed) {
 
@@ -1588,7 +1588,7 @@ sub handle_game_events() {
                 if ($keypressed eq $KEYS->{misc}{chat} && is_mp_game()) {
                     callback_entry('reset');
                     $pdata{p1}{chatting} = 1;
-                    $event->set_key_repeat(200, 50);
+                    SDL::Events::enable_key_repeat(200, 50);
                     put_image_to_background($imgbin{void_chat}, $POS{p1}{chatting}{x}, $POS{p1}{chatting}{'y'});
                 }
 
@@ -1603,11 +1603,11 @@ sub handle_game_events() {
                         my $ticks = $app->ticks;
                         erase_image(${$imgbin{paused}}[$index], 320-${$imgbin{paused}}[$index]->w/2-5, 240-${$imgbin{paused}}[$index]->h/2-4);
                         put_image(${$imgbin{paused}}[$index], 320-${$imgbin{paused}}[$index]->w/2-5, 240-${$imgbin{paused}}[$index]->h/2-4);
-                        $app->update(@update_rects);
+                        SDL::Video::update_rects($app, @update_rects);
                         @update_rects = ();
                         $app->delay(20);
-                        $event->pump;
-                        while ($event->poll != 0) {
+                        SDL::Events::pump_events();
+                        while (SDL::Events::poll_event($event) != 0) {
                             if ($event->type == SDL_QUIT) {
                                 cleanup_and_exit();
                             }
@@ -1628,8 +1628,8 @@ sub handle_game_events() {
                     switch_image_on_background($back_saved, 0, 0);
                     iter_local_players { $actions{$::p}{left} = 0; $actions{$::p}{right} = 0; };
                     $mixer_enabled && $mixer and $mixer->resume_music;
-                    $event->pump while $event->poll != 0;
-                    $app->flip;
+                    SDL::Events::pump_events() while SDL::Events::poll_event($event) != 0;
+                    SDL::Video::flip($app);
                     $start_time += $app->ticks - $time_pause;
                     is_1p_game() and $time_1pgame += $app->ticks - $time_pause;
                     return;
@@ -1977,8 +1977,8 @@ sub update_lost {
     }
 
     if (!is_mp_game()) {
-        $event->pump;
-        while ($event->poll != 0) {
+        SDL::Events::pump_events();
+        while (SDL::Events::poll_event($event) != 0) {
             if ($event->type == SDL_QUIT) {
                 cleanup_and_exit();
             }
@@ -1997,7 +1997,7 @@ sub update_lost {
     if ($pdata{state} eq 'won ' && $still_sticked == 1) {
         put_image($imgbin{void_panel}, $MENUPOS{xpos_panel}, $MENUPOS{ypos_panel});
         print_('menu', $app, $MENUPOS{xpos_panel}, $MENUPOS{ypos_panel} + 30, t("Draw game!"), $imgbin{void_panel}->w - 20, 'center');
-        $app->flip;
+        SDL::Video::flip($app);
     }
 }
 
@@ -2282,7 +2282,7 @@ sub update_game() {
             }
 
         } else {
-            $event->pump while $event->poll != 0;
+            SDL::Events::pump_events() while SDL::Events::poll_event($event) != 0;
             #- mp game only state when we're trying to figure out if this is not a draw game
 
             if (my $msg = fb_net::grecv_get1msg_ifdata()) {
@@ -2343,7 +2343,7 @@ sub update_game() {
                 $still_needwait += @{$sticked_bubbles{$::p}};
             };
             if (!$still_needwait) {
-                $event->pump;
+                SDL::Events::pump_events();
                 $events_pumped = 1;
 
                 my $mp_newgame = sub {
@@ -2369,8 +2369,8 @@ sub update_game() {
                         };
                         die 'new_game';
                       still_waiting:
-                        $event->pump;
-                        while ($event->poll != 0) {
+                        SDL::Events::pump_events();
+                        while (SDL::Events::poll_event($event) != 0) {
                             if ($event->type == SDL_KEYDOWN && $event->key_sym == SDLK_ESCAPE()) {
                                 die 'quit';
                             }
@@ -2386,7 +2386,7 @@ sub update_game() {
                     }
                 };
 
-                while ($event->poll != 0) {
+                while (SDL::Events::poll_event($event) != 0) {
                     if ($event->type == SDL_QUIT) {
                         cleanup_and_exit();
                     }
@@ -2419,8 +2419,8 @@ sub update_game() {
             }
         }
         if (!$events_pumped) {
-            $event->pump;
-            while ($event->poll != 0) {
+            SDL::Events::pump_events();
+            while (SDL::Events::poll_event($event) != 0) {
                 if ($event->type == SDL_QUIT) {
                     cleanup_and_exit();
                 }
@@ -3027,9 +3027,9 @@ sub display_highscores {
             }
 
             put_image($imgbin{hiscore_frame}, $high_posx - 7, $high_posy - 6);
-            my $tmp = SDL::Surface->new(-width => $high_rect->w/4, -height => $high_rect->h/4,
-                                        -depth => 32, -Amask => "0 but true")->display_format;
-            fb_c_stuff::shrink(surf($tmp), surf($background->display_format), 0, 0, rect($high_rect), 4);
+            my $tmp = SDL::Video::display_format(SDL::Surface->new(-width => $high_rect->w/4, -height => $high_rect->h/4,
+                                        -depth => 32, -Amask => "0 but true"));
+            fb_c_stuff::shrink(surf($tmp), surf(SDL::Video::display_format($background)), 0, 0, rect($high_rect), 4);
             SDL::Video::blit_surface($tmp, undef, $app, SDL::Rect->new($high_posx, $high_posy, 0, 0));
             $centered_print->($high_posx - 15, $high_posy, $high->{name}, $new_entry == $high);
             $centered_print->($high_posx - 15, $high_posy + 20, $high->{level} eq 'WON' ? t("won!") : t("level %s", i18n_number($high->{level})), $new_entry == $high);
@@ -3042,9 +3042,9 @@ sub display_highscores {
         }
         load_levelset($old_levelset);    
 
-        $app->flip;
+        SDL::Video::flip($app);
         
-        $event->pump while $event->poll != 0;
+        SDL::Events::pump_events() while SDL::Events::poll_event($event) != 0;
         grab_key() eq SDLK_ESCAPE() and return;
     }
 
@@ -3088,9 +3088,9 @@ sub display_highscores {
             $lastvalue = $high->{score};
         }
 
-        $app->flip;
+        SDL::Video::flip($app);
         
-        $event->pump while $event->poll != 0;
+        SDL::Events::pump_events() while SDL::Events::poll_event($event) != 0;
         grab_key() eq SDLK_ESCAPE() and die "quit";
     }
 
@@ -3129,14 +3129,14 @@ sub ask_from($) {
     $ypos += 10;
 
     my $ok = 1;
-    $event->set_key_repeat(200, 50);
+    SDL::Events::enable_key_repeat(200, 50);
   ask_from_entries:
     foreach my $entry (@{$w->{entries}}) {
         #- in case wrapping occurred
         SDL::Video::blit_surface($imgbin{void_panel}, SDL::Rect->new(10, $ypos - $MENUPOS{ypos_panel}, $imgbin{void_panel}->w - 20, 30), $app,
                                   SDL::Rect->new($MENUPOS{xpos_panel} + 10, $ypos, 0, 0));
 	print_('menu', $app, $xpos{questions}, $ypos, $entry->{'q'}, $imgbin{void_panel}->w*2/3 - 10, @{$w->{entries}} == 1 ? 'center' : 'right');
-	$app->flip;
+	SDL::Video::flip($app);
 	my $srect_mulchar_redraw = SDL::Rect->new($xpos{echo} - 3 - $MENUPOS{xpos_panel}, $ypos - $MENUPOS{ypos_panel}, $imgbin{void_panel}->w*1/3, 30);
 	my $drect_mulchar_redraw = SDL::Rect->new($xpos{echo} - 3, $ypos, 0, 0);
         my $x_echo = $xpos{echo};
@@ -3172,9 +3172,9 @@ sub ask_from($) {
                         SDL::Video::blit_surface($imgbin{void_panel}, $srect_mulchar_redraw, $app, $drect_mulchar_redraw);
                         callback_entry('print', { xpos => $x_echo, ypos => $ypos, maxlen => 100, font => 'menu' });
                     }
-                    $app->flip;
-                    $event->pump;
-                    while ($event->poll != 0) {
+                    SDL::Video::flip($app);
+                    SDL::Events::pump_events();
+                    while (SDL::Events::poll_event($event) != 0) {
                         if ($event->type == SDL_KEYDOWN) {
                             my $k = $event->key_sym;
                             if ($k == SDLK_ESCAPE()) {
@@ -3198,12 +3198,12 @@ sub ask_from($) {
 	$entry->{answer} = $txt;
 	$ypos += $entry->{f} eq 'SPACE' ? $lineheight / 2 : $lineheight;
     }
-    $event->set_key_repeat(0, 0);
+    SDL::Events::enable_key_repeat(0, 0);
 
     if ($ok) {
 	${$_->{a}} = $_->{answer} foreach @{$w->{entries}};
         print_('menu', $app, $MENUPOS{xpos_panel}, $MENUPOS{ypos_panel} + $imgbin{void_panel}->h - 35, $w->{outro}, $imgbin{void_panel}->w, 'center');
-	$app->flip;
+	SDL::Video::flip($app);
 	play_sound('menu_selected');
 	sleep 2;
     } else {
@@ -3211,8 +3211,8 @@ sub ask_from($) {
     }
 
     exists $w->{erase_background} and erase_image_from($imgbin{void_panel}, $MENUPOS{xpos_panel}, $MENUPOS{ypos_panel}, $w->{erase_background});
-    $app->flip;
-    $event->pump while $event->poll != 0;
+    SDL::Video::flip($app);
+    SDL::Events::pump_events() while SDL::Events::poll_event($event) != 0;
 
     return $ok;
 }
@@ -3385,14 +3385,14 @@ sub new_game() {
 
     if ($graphics_level == 1) {
 	SDL::Video::blit_surface($background, $apprects{main}, $app, $apprects{main});
-	$app->flip;
+	SDL::Video::flip($app);
     } else {
-	fb_c_stuff::effect(surf($app), surf($background->display_format));
+	fb_c_stuff::effect(surf($app), surf(SDL::Video::display_format($background)));
     }
 
     $display_on_app_disabled = 0;
 
-    $event->pump while $event->poll != 0;
+    SDL::Events::pump_events() while SDL::Events::poll_event($event) != 0;
     $pdata{state} = 'game';
 
     $direct = undef;
@@ -3515,7 +3515,7 @@ sub choose_1p_game_mode() {
         fb_c_stuff::overlook_init(surf($overlook));
         $overlook_index = 0;
 
-        $app->flip();
+        SDL::Video::flip($app);
     };
 
     my $draw_overlook = sub {
@@ -3537,11 +3537,11 @@ sub choose_1p_game_mode() {
 	my $synchro_ticks = $app->ticks;
         if ($graphics_level > 1) {
             $draw_overlook->();
-            $app->update(@update_rects);
+            SDL::Video::update_rects($app, @update_rects);
             @update_rects = ();
         }
-        $event->pump;
-        while ($event->poll != 0) {
+        SDL::Events::pump_events();
+        while (SDL::Events::poll_event($event) != 0) {
             if ($event->type == SDL_KEYDOWN) {
                 my $k = $event->key_sym;
                 if ($k == SDLK_RETURN() || $k == SDLK_KP_ENTER()) {
@@ -3629,7 +3629,7 @@ sub smg_printstatus {
         $y -= $smg_lineheight;
         $i++;
     }
-    $app->flip();
+    SDL::Video::flip($app);
 }
 
 sub smg_add_status_msg {
@@ -3764,7 +3764,7 @@ sub smg_choose_server(@) {
                                                      
             $y += $smg_lineheight + 2;
         }
-        $app->flip();
+        SDL::Video::flip($app);
     };
 
     my @potential_servers;
@@ -3803,8 +3803,8 @@ sub smg_choose_server(@) {
                 last;
             }
         }
-        $event->pump;
-        while ($event->poll != 0) {
+        SDL::Events::pump_events();
+        while (SDL::Events::poll_event($event) != 0) {
             if ($event->type == SDL_QUIT) {
                 cleanup_and_exit();
             } elsif ($init) {
@@ -3896,8 +3896,8 @@ sub smg_verify_command($;$) {
     };
     if ($@) {
         smg_add_status_msg(t("*** Sorry, your computer or the network is too slow, giving up - press any key"));
-        $app->flip;
-        $event->pump while $event->poll != 0;
+        SDL::Video::flip($app);
+        SDL::Events::pump_events() while SDL::Events::poll_event($event) != 0;
         grab_key();
         die 'quit';
     }
@@ -4505,14 +4505,14 @@ sub smg_choose_game() {
         } else {
             if ($relist % 3 == 0) {
                 $print_selfspot->();
-                $app->update(@update_rects);
+                SDL::Video::update_rects($app, @update_rects);
                 @update_rects = ();
             }
         }
 
         my $need_redraw;
-        $event->pump;
-        while ($event->poll != 0) {
+        SDL::Events::pump_events();
+        while (SDL::Events::poll_event($event) != 0) {
             if ($event->type == SDL_QUIT) {
                 cleanup_and_exit();
             }
@@ -5048,7 +5048,7 @@ sub smg_choose_game() {
             @actions = ();
             $redraw->();
             play_sound('cancel');
-            $event->pump while $event->poll != 0;
+            SDL::Events::pump_events() while SDL::Events::poll_event($event) != 0;
             grab_key();
             $erase->();
             return 0;
@@ -5180,13 +5180,13 @@ sub new_game_once {
     }
     $pdata{$_}{left} = 0 foreach @ALL_PLAYERS;
     if (is_mp_game() && !$playdata) {
-        $event->set_key_repeat(200, 50);
+        SDL::Events::enable_key_repeat(200, 50);
         my $ok_game;
         eval {
             $ok_game = setup_mp_game();
         };
         my $failure = $@;
-        $event->set_key_repeat(0, 0);
+        SDL::Events::enable_key_repeat(0, 0);
         if ($failure && $failure ne 'quit') {
             die $failure;
         }
@@ -5333,7 +5333,7 @@ sub maingame() {
 
 #    print "rects:\n";
 #    printf "\t%d:%d %d:%d %s\n", $_->x, $_->y, $_->w, $_->h, $_->{from} foreach @update_rects;
-    $app->update(@update_rects);
+    SDL::Video::update_rects($app, @update_rects);
     @update_rects = ();
 
     my $to_wait = $TARGET_ANIM_SPEED - ($app->ticks - $synchro_ticks);
@@ -5431,7 +5431,7 @@ sub menu {
 	display_highscores();
 
 	$display_menu->();
-	$app->flip;
+	SDL::Video::flip($app);
 	$invalidate_all->();
     };
 
@@ -5465,7 +5465,7 @@ sub menu {
         FBLE::handle_events();
         SDL::Mouse::show_cursor(0);
 	$display_menu->();
-        $app->flip;
+        SDL::Video::flip($app);
         $invalidate_all->();
     };
 
@@ -5863,12 +5863,12 @@ sub menu {
             foreach my $step (1..35) {
                 my $ticks = $app->ticks;
                 fb_c_stuff::blacken(surf($app), $step);
-                $app->flip;
+                SDL::Video::flip($app);
                 my $to_wait = $TARGET_ANIM_SPEED - ($app->ticks - $ticks);
                 $to_wait > 0 and fb_c_stuff::fbdelay($to_wait);
 
-                $event->pump;
-                while ($event->poll != 0) {
+                SDL::Events::pump_events();
+                while (SDL::Events::poll_event($event) != 0) {
                     if ($event->type == SDL_QUIT) {
                         cleanup_and_exit();
                     }
@@ -5880,7 +5880,7 @@ sub menu {
             $display_menu->();
             $invalidate_all->();
             $menu_update->();
-            $app->flip;
+            SDL::Video::flip($app);
             $time_counter = 0;
             play_music('intro');
         }
