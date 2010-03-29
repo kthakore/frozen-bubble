@@ -89,7 +89,8 @@ $KEYS = { p1 => { left => SDLK_LEFT, right => SDLK_RIGHT, fire => SDLK_UP, cente
 	  misc => { fs => SDLK_f, chat => SDLK_RETURN, send_malus_to_rp1 => SDLK_F1, send_malus_to_rp2 => SDLK_F2, send_malus_to_rp3 => SDLK_F3,
                     send_malus_to_rp4 => SDLK_F4, send_malus_to_all => SDLK_F10, next_playlist_elem => SDLK_TAB, save_record => SDLK_PRINT,
                     toggle_music => SDLK_F11, toggle_sound => SDLK_F12, raise_volume => SDLK_KP_PLUS, lower_volume => SDLK_KP_MINUS } };
-$sdl_flags = SDL_ANYFORMAT | SDL_HWSURFACE | SDL_DOUBLEBUF | SDL_HWACCEL | SDL_ASYNCBLIT;
+$sdl_flags = SDL_HWSURFACE | SDL_DOUBLEBUF | SDL_HWACCEL | SDL_ASYNCBLIT;
+$sdl_flags = SDL_SWSURFACE;
 $mixer = 0;
 $graphics_level = 3;
 @PLAYERS = qw(p1 p2);
@@ -2580,9 +2581,8 @@ sub print_step($) {
     my ($txt) = @_;
     print $txt;
     SDL::Events::pump_events();
-    while (SDL::Events::poll_event($event) != 0) {
-        if ($event->type == SDL_QUIT
-            || $event->type == SDL_KEYDOWN && $event->key_sym == SDLK_ESCAPE) {
+    while (SDL::Events::poll_event($event)) {
+        if ($event->type == SDL_QUIT || ($event->type == SDL_KEYDOWN && $event->key_sym == SDLK_ESCAPE)) {
             cleanup_and_exit();
         }
     }
@@ -2590,7 +2590,7 @@ sub print_step($) {
     if ($init_step == 0) {
         put_image($imgbin{loading_step_initial}, 100 + $_*12, 10) foreach 1..11;
     }
-    $app->sync;
+    SDL::Video::flip($app);
     $init_step++;
 }
 
@@ -2677,8 +2677,8 @@ sub init_game() {
     $imgbin{back_2p} = SDL::Image::load("$FPATH/gfx/backgrnd.png");
     $imgbin{back_1p} = SDL::Image::load("$FPATH/gfx/back_one_player.png");
     $imgbin{back_mp} = SDL::Image::load("$FPATH/gfx/back_multiplayer.png");
-    $background = SDL::Surface->new( SDL_ANYFORMAT, $app->w, $app->h, 32, 0, 0, 0, 0);
-    $background_orig =  SDL::Surface->new( SDL_ANYFORMAT, $app->w, $app->h, 32, 0, 0, 0, 0);
+    $background      = SDL::Surface->new( SDL_SWSURFACE, $app->w, $app->h, 32, 0, 0, 0, 0);
+    $background_orig =  SDL::Surface->new( SDL_SWSURFACE, $app->w, $app->h, 32, 0, 0, 0, 0);
 
     fb_c_stuff::sdlpango_init();
     $pangocontext{netdialogs} =           { params => { desc => 'sans 10', fg => 'white', bg => 'black' } };
@@ -2894,7 +2894,7 @@ sub init_game() {
     #- the RGBA effects algorithms assume little endian RGBA surfaces
     my $replace = SDL::Surface->new( SDL_ANYFORMAT, $imgbin{menu_logo}->w,  $imgbin{menu_logo}->h,  32, 0,0,0,0);
     SDL::Video::set_alpha ($imgbin{menu_logo}, 0, 0);  #- for RGBA->RGBA blits, SDL_SRCALPHA must be removed or destination alpha is preserved
-    SDL::Video::blit_surface($imgbin{menu_logoi},undef, $replace, undef);
+    SDL::Video::blit_surface($imgbin{menu_logoi}, SDL::Rect->new(0,0,0,0), $replace, SDL::Rect->new(0,0,0,0));
     $imgbin{menu_logo} = $replace;
     add_default_rect($replace);
 
