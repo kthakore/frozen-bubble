@@ -1217,6 +1217,7 @@ sub print_compressor() {
 
 sub print_ {
     my ($kind, $surface, $x, $y, $text, $size, $alignment, $callback) = @_;
+	printf("print_: $text\n");
     exists $pangocontext{$kind} or die "$kind is no kind\n";
     if ($size) {
         #- instead of segfaulting
@@ -1226,17 +1227,17 @@ sub print_ {
         }
     }
     my $surf = fb_c_stuff::sdlpango_draw_givenalignment($pangocontext{$kind}{context_bg}, $text, $size || -1, $alignment || 'left');
-    my $rect = SDL::Rect->new($x + 1, $y + 1, 0, 0);
+    my $rect = SDL::Rect->new($x + 1, $y + 1, $surf->w, $surf->h);
     if ($callback) {
         if (!$callback->('about-to-draw', $surf)) {
             #- callback said do not draw
             return;
         }
     }
-    SDL::Video::blit_surface($surf, SDL::Rect->new(0,0,0,0), surf($surface), rect($rect));
+    SDL::Video::blit_surface($surf, SDL::Rect->new(0,0,0,0), $surface, $rect);
     $surf = fb_c_stuff::sdlpango_draw_givenalignment($pangocontext{$kind}{context_fg}, $text, $size || -1, $alignment || 'left');
-    $rect = SDL::Rect->new($x, $y, 0, 0);
-    SDL::Video::blit_surface($surf, SDL::Rect->new(0,0,0,0), surf($surface), rect($rect));
+    $rect = SDL::Rect->new($x, $y, $surf->w, $surf->h);
+    SDL::Video::blit_surface($surf, SDL::Rect->new(0,0,0,0), $surface, $rect);
 }
 
 sub width {
@@ -2678,7 +2679,7 @@ sub init_game() {
     $imgbin{back_1p} = SDL::Image::load("$FPATH/gfx/back_one_player.png");
     $imgbin{back_mp} = SDL::Image::load("$FPATH/gfx/back_multiplayer.png");
     $background      = SDL::Surface->new( SDL_SWSURFACE, $app->w, $app->h, 32, 0, 0, 0, 0);
-    $background_orig =  SDL::Surface->new( SDL_SWSURFACE, $app->w, $app->h, 32, 0, 0, 0, 0);
+    $background_orig = SDL::Surface->new( SDL_SWSURFACE, $app->w, $app->h, 32, 0, 0, 0, 0);
 
     fb_c_stuff::sdlpango_init();
     $pangocontext{netdialogs} =           { params => { desc => 'sans 10', fg => 'white', bg => 'black' } };
