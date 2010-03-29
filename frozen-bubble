@@ -381,7 +381,7 @@ sub put_image_to_background($$$) {
 	SDL::Video::blit_surface($image , $rects{$image}, $background, $drect);
     } else {  #- clipping seems to not work when from one Surface to another Surface, so I need to do clipping by hand
 	$drect = SDL::Rect->new( $x, 0, $image->w, $image->h + $y);
-	my $irect = SDL::Rect->new( 0 , $y , $image->w,  $image->h + $y,);
+	my $irect = SDL::Rect->new( 0 , -$y , $image->w,  $image->h + $y);
 	$display_on_app_disabled or SDL::Video::blit_surface($image, $irect, $app, $drect);
 	SDL::Video::blit_surface($image, $irect, $background, $drect);
     }
@@ -3483,7 +3483,6 @@ sub choose_1p_game_mode() {
     my $overlook = SDL::Surface->new(SDL_ANYFORMAT, $imgbin{txt_1pmenu_pick_start_level_text}->w, 
 	                                                $imgbin{txt_1pmenu_pick_start_level_text}->h, 
 													32, 0xFF000000, 0x00FF0000, 0x0000FF00, 0x000000FF);
-
     my $redraw = sub {
         my $draw_element = sub {
             my ($name, $mode) = @_;
