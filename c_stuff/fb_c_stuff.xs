@@ -1525,11 +1525,6 @@ void draw_line_(SDL_Surface* surface, int x1, int y1, int x2, int y2, SDL_Color*
         }
 }
 
-void sdlpango_init_()
-{
-        SDLPango_Init();
-}
-
 /* only "white" and "black" are supported in the color parameter */
 SDLPango_Context* sdlpango_createcontext_(char* color, char* font_desc)
 {
@@ -1820,11 +1815,6 @@ JOYBUTTONUP ()
                 RETVAL = SDL_JOYBUTTONUP; // missing in 2.1.2
         OUTPUT:
                 RETVAL
-
-void
-sdlpango_init()
-        CODE:
-                sdlpango_init_();
 
 SDLPango_Context*
 sdlpango_createcontext(char* color, char* font_desc)
