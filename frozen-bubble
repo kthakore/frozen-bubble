@@ -3293,8 +3293,8 @@ sub new_game() {
 	$pdata{$::p}{ping_right}{img} = 0;
 	$pdata{$::p}{ping_right}{state} = 'normal';
         $pdata{$::p}{hurry_save_img} = undef;
-	$apprects{$::p} = SDL::Rect->new('-x' => $POS{$::p}{left_limit}, '-y' => $POS{$::p}{top_limit},
-					 -width => $POS{$::p}{right_limit}-$POS{$::p}{left_limit}, -height => $POS{$::p}{'initial_bubble_y'}-$POS{$::p}{top_limit});
+	$apprects{$::p} = SDL::Rect->new( $POS{$::p}{left_limit},  $POS{$::p}{top_limit},
+					  $POS{$::p}{right_limit}-$POS{$::p}{left_limit}, $POS{$::p}{'initial_bubble_y'}-$POS{$::p}{top_limit});
         if (is_distant_player($::p)) {
             if (!$pdata{$::p}{left}) {
                 $pdata{$::p}{still_game_messages} = 1;
