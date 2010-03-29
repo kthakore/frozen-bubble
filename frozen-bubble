@@ -304,7 +304,9 @@ sub play_music($) {
 }
 
 sub init_sound() {
-    $mixer = eval { SDL::Mixer->new(-frequency => 22050, -channels => 2, -size => 1024); };
+    $mixer = eval { 
+	     SDL::Mixer::open_audio( 22050, AUDIO_S16SYS, 2,1024);
+      		 };
     if ($@) {
 	$@ =~ s| at \S+ line.*\n||;
 	print STDERR "\nWarning: can't initialize sound (reason: $@).\n";
@@ -314,7 +316,7 @@ sub init_sound() {
     my @sounds = qw(stick destroy_group newroot newroot_solo lose hurry pause menu_change menu_selected rebound launch malus noh snore cancel typewriter applause chatted);
     foreach (@sounds) {
 	my $sound_path = "$FPATH/snd/$_.ogg";
-	$sound{$_} = SDL::Sound->new($sound_path);
+	$sound{$_} = SDL::Mixer::Samples::load_WAV($sound_path);
 	if (UNIVERSAL::isa($sound{$_}, 'HASH') ? $sound{$_}{-data} : ${$sound{$_}}) {
 	    $sound{$_}->volume(100);
 	} else {
