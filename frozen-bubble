@@ -5536,11 +5536,11 @@ sub menu {
             $logo_candy_method == 7 and fb_c_stuff::brokentv(surf($candy), surf($imgbin{menu_logo}), $logo_candy_index);
             $logo_candy_method == 8.1 and fb_c_stuff::snow(surf($candy), surf($imgbin{menu_logo}));
             
-            $candy->blit(undef, $app, my $rect = SDL::Rect->new(-x => $logox, '-y' => $logoy));
+	    SDL::Video::blit_surface($candy, undef, $app, my $rect = SDL::Rect->new(-x => $logox, '-y' => $logoy));
             $logo_candy_index++;
         }
         if (!$no_update) {
-            $app->update(@update_rects);
+		SDL::Video::update_rects($app, @update_rects);
             @update_rects = ();
         }
     };
