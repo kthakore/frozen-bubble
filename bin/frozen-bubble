@@ -70,11 +70,11 @@ use SDL::Joystick;
 use SDL::Mouse;
 use SDL::Image;
 
-use fb_stuff;
-use fb_net;
-use fb_net_discover;
-use fbsyms;
-use FBLE;
+use Games::FrozenBubble::Stuff;
+use Games::FrozenBubble::Net;
+use Games::FrozenBubble::NetDiscover;
+use Games::FrozenBubble::Symbols;
+use Games::FrozenBubble::LevelEditor;
 
 $| = 1;
 
@@ -124,7 +124,7 @@ print "        [[ Frozen-Bubble-$version ]]\n\n";
 print '  http://www.frozen-bubble.org/
 
   Copyright (c) 2000-2008 The Frozen-Bubble Team.
- 
+
     Artwork: Alexis Younes
              Amaury Amblard-Ladurantie
     Soundtrack: Matthias Le Bidan
@@ -157,7 +157,7 @@ GetOptions("fullscreen|fs!" => \$fullscreen,
            "level|l=i" => sub { $levels{current} = $_[1]; $direct = 1; @PLAYERS = ('p1') },
            "levelset=s" => sub { $direct_levelset = $_[1]; $levels{current} = 1; $direct = 1; @PLAYERS = ('p1') },
            "no-time-limit" => \$no_time_limit,
-           "master-server=s" => \$fb_net::masterserver,
+           "master-server=s" => \$Games::FrozenBubble::Net::masterserver,
            "gameserver|gs=s" => sub { $gameserver = $_[1]; $direct = 1; @PLAYERS = qw(p1 rp1); $pdata{gametype} = 'net' },
            "no-echo" => \$no_echo,
            "my-nick=s" => \$mynick,
@@ -290,7 +290,7 @@ sub play_music($) {
 		print STDERR "[Playlist] playing `$elem'\n";
 		SDL::Mixer::Music::play_music($mus, 0);
 		return 1;
-	    } else { 
+	    } else {
 		print STDERR "Warning, could not create new music from '$elem' (reason: ", $app->error, ").\n";
 		return 0;
 	    }
@@ -308,7 +308,7 @@ sub play_music($) {
 }
 
 sub init_sound() {
-    eval { 
+    eval {
 	     SDL::Mixer::open_audio( 22050, AUDIO_S16SYS, 2,1024);
       		 };
     if ($@) {
@@ -533,7 +533,7 @@ sub is_distant_player($) {
 sub mp_ping_if_needed {
     my ($ticks) = @_;
     if ($app->ticks - $$ticks > 1000) {
-        fb_net::gsend('p');
+        Games::FrozenBubble::Net::gsend('p');
         $$ticks = $app->ticks;
     }
 }
@@ -542,10 +542,10 @@ sub mp_propagate {
     my ($key, $value, $ticks) = @_;
     if (is_leader()) {
         dbgnet("as leader, sending $key$value");
-        fb_net::gsend("$key$value");
+        Games::FrozenBubble::Net::gsend("$key$value");
         return $value;
     } else {
-        my $m = fb_net::grecv_get1msg();
+        my $m = Games::FrozenBubble::Net::grecv_get1msg();
         mp_ping_if_needed($ticks);
         if ($m->{msg} !~ /^\Q$key\E(.+)/) {
             if ($m->{msg} eq 'l') {
@@ -608,7 +608,7 @@ sub is_collision($$$) {
     my ($bub, $x, $y) = @_;
     my $DISTANCE_COLLISION_SQRED = sqr($BUBBLE_SIZE * 0.82);
     my $xs = sqr($bub->{x} - $x);
-    ($xs > $DISTANCE_COLLISION_SQRED) and return 0; 
+    ($xs > $DISTANCE_COLLISION_SQRED) and return 0;
     return ($xs + sqr($bub->{'y'} - $y)) < $DISTANCE_COLLISION_SQRED;
 }
 
@@ -804,7 +804,7 @@ sub stick_bubble($$$$$) {
 				    ($falling->{chaindestx}, $falling->{chaindesty}) = calc_real_pos_given_arraypos($npos->[0], $npos->[1], $player);
 				    push @{$chains{$player}{falling_chained}}, $falling;
 				    push @occupied_positions, $npos->[1]*8 + $npos->[0];
-				    
+
 				    #- next lines will allow not to chain-react on the same group from two different positions,
 				    #- and even to not chain-react on a group that will itself fall from a chain-reaction
 				    @{$falling->{neighbours}} = grep { bubble_next_to($_->{cx}, $_->{cy}, $npos->[0], $npos->[1], $player) } @{$sticked_bubbles{$player}};
@@ -1111,7 +1111,7 @@ sub handle_graphics($) {
                 }
                 $app->sync;
                 play_sound('cancel');
-                fb_c_stuff::fbdelay(1000);
+                Games::FrozenBubble::CStuff::fbdelay(1000);
                 SDL::Events::pump_events() while SDL::Events::poll_event($event) != 0;
                 grab_key() eq SDLK_ESCAPE() and die 'quit';
                 handle_new_hiscores();
@@ -1171,7 +1171,7 @@ sub malus_change($$) {
                         $numb = int($numb/(@living-1) + 0.99);
                         iter_players_ {
                             if ($::p_ ne $player && member($::p_, @living)) {
-                                is_mp_game() and fb_net::gsend("g$pdata{$::p_}{nick}:$numb");
+                                is_mp_game() and Games::FrozenBubble::Net::gsend("g$pdata{$::p_}{nick}:$numb");
                                 update_malus(\&remove_image_from_background, $::p_);
                                 push @{$pdata{$::p_}{malus}}, ($frame) x $numb;
                                 update_malus(\&put_image_to_background, $::p_);
@@ -1180,7 +1180,7 @@ sub malus_change($$) {
                     }
                 } else {
                     my $p = $pdata{sendmalustoone};
-                    is_mp_game() and fb_net::gsend("g$pdata{$p}{nick}:$numb");
+                    is_mp_game() and Games::FrozenBubble::Net::gsend("g$pdata{$p}{nick}:$numb");
                     iter_players_ {  #- get mini graphics
                         if ($::p_ eq $p) {
                             update_malus(\&remove_image_from_background, $::p_);
@@ -1230,7 +1230,7 @@ sub print_ {
             $size = $minsize;
         }
     }
-    my $surf = fb_c_stuff::sdlpango_draw_givenalignment($pangocontext{$kind}{context_bg}, $text, $size || -1, $alignment || 'left');
+    my $surf = Games::FrozenBubble::CStuff::sdlpango_draw_givenalignment($pangocontext{$kind}{context_bg}, $text, $size || -1, $alignment || 'left');
     if ($callback) {
         if (!$callback->('about-to-draw', $surf)) {
             #- callback said do not draw
@@ -1238,7 +1238,7 @@ sub print_ {
         }
     }
     SDL::Video::blit_surface($surf, SDL::Rect->new(0, 0, $surf->w, $surf->h), $surface, SDL::Rect->new($x + 1, $y + 1, $surf->w, $surf->h));
-    $surf = fb_c_stuff::sdlpango_draw_givenalignment($pangocontext{$kind}{context_fg}, $text, $size || -1, $alignment || 'left');
+    $surf = Games::FrozenBubble::CStuff::sdlpango_draw_givenalignment($pangocontext{$kind}{context_fg}, $text, $size || -1, $alignment || 'left');
 	#printf("sdlpango_draw_givenalignment: %s, %s, %s, %s\n", $kind, $text, $size || -1, $alignment || 'left');
 	#printf("SDL::Rect->new($x, $y, " . $surf->w . ", " . $surf->h . ")\n");
     SDL::Video::blit_surface($surf, SDL::Rect->new(0, 0, $surf->w, $surf->h), $surface, SDL::Rect->new($x, $y, $surf->w, $surf->h));
@@ -1247,7 +1247,7 @@ sub print_ {
 sub width {
     my ($kind, $text) = @_;
     exists $pangocontext{$kind} or die "$kind is no kind\n";
-    my $size = fb_c_stuff::sdlpango_getsize($pangocontext{$kind}{context_fg}, $text, -1);
+    my $size = Games::FrozenBubble::CStuff::sdlpango_getsize($pangocontext{$kind}{context_fg}, $text, -1);
     return $size->[0];
 }
 
@@ -1261,14 +1261,14 @@ sub mp_disconnect_with_reason {
     }
     SDL::Video::flip($app);
     play_sound('cancel');
-    fb_c_stuff::fbdelay(2000);
+    Games::FrozenBubble::CStuff::fbdelay(2000);
     SDL::Events::pump_events() while SDL::Events::poll_event($event) != 0;
     grab_key();
     die 'quit';
 }
 
 sub check_mp_connection {
-    if (!fb_net::isconnected()) {
+    if (!Games::FrozenBubble::Net::isconnected()) {
         if ($pdata{gametype} eq 'lan') {
             mp_disconnect_with_reason('', '', '', '', t("Lost connection to server!"), '', t("Hoster aborted the game."));
         } else {
@@ -1302,7 +1302,7 @@ sub set_sendmalustoone {
         put_image_to_background($imgbin{attack}{$pdata{sendmalustoone}}, $POS{$pdata{sendmalustoone}}{attack}{x}, $POS{$pdata{sendmalustoone}}{attack}{'y'});
     }
     if ($pdata{protocollevel} >= 1) {
-        fb_net::gsend("A$pdata{$pdata{sendmalustoone}}{nick}");
+        Games::FrozenBubble::Net::gsend("A$pdata{$pdata{sendmalustoone}}{nick}");
     }
 }
 
@@ -1426,7 +1426,7 @@ sub handle_mp_messages {
                     }
                 }
                 die "could not find malus bubble to malusstick!\n";
-              ok_malusstick:                    
+              ok_malusstick:
             }
         } elsif ($command eq 'F') {
             #- this is coming too soon. it needs to be collected in the algo to restart a game.
@@ -1467,7 +1467,7 @@ sub handle_mp_messages {
             $angle{$player} += $difference / 2;
         }
     }
-            
+
 }
 
 sub handle_whenever_events {
@@ -1569,7 +1569,7 @@ sub handle_game_events() {
             if (is_mp_game() && $pdata{p1}{chatting}) {
                 if (($keypressed eq SDLK_RETURN() || $keypressed eq SDLK_KP_ENTER())) {
                     if (callback_entry('gettext') > 0) {
-                        fb_net::gsend('t' . join('', callback_entry('gettext')));
+                        Games::FrozenBubble::Net::gsend('t' . join('', callback_entry('gettext')));
                     }
                     cleanup_chatting();
                 } elsif ($event->type == SDL_KEYDOWN && !member($keypressed, SDLK_RETURN(), SDLK_KP_ENTER(), SDLK_TAB())) {
@@ -1585,13 +1585,13 @@ sub handle_game_events() {
                             $actions{$::p}{$action} = 1;
                             if (is_mp_game() && $action ne 'fire') {
                                 $action =~ /./;  #- first letter
-                                fb_net::gsend("r$&");
+                                Games::FrozenBubble::Net::gsend("r$&");
                             }
                             last;
                         }
                     }
                 };
-                
+
                 if ($keypressed eq $KEYS->{misc}{chat} && is_mp_game()) {
                     callback_entry('reset');
                     $pdata{p1}{chatting} = 1;
@@ -1630,7 +1630,7 @@ sub handle_game_events() {
                             $index = 11;
                         }
                         my $to_wait = $TARGET_ANIM_SPEED - ($app->ticks - $ticks);
-                        $to_wait > 0 and fb_c_stuff::fbdelay($to_wait);
+                        $to_wait > 0 and Games::FrozenBubble::CStuff::fbdelay($to_wait);
                     }
                     switch_image_on_background($back_saved, 0, 0);
                     iter_local_players { $actions{$::p}{left} = 0; $actions{$::p}{right} = 0; };
@@ -1665,9 +1665,9 @@ sub handle_game_events() {
         $keypressed = undef;
 	if ($event->type == SDL_KEYUP) {
 	    $keypressed = $event->key_sym;
-	} elsif ($event->type == fb_c_stuff::JOYAXISMOTION() || $event->type() == fb_c_stuff::JOYBUTTONUP()) {
+	} elsif ($event->type == Games::FrozenBubble::CStuff::JOYAXISMOTION() || $event->type() == Games::FrozenBubble::CStuff::JOYBUTTONUP()) {
 	    $keypressed = translate_joystick_tokey($event);
-            if ($event->type == fb_c_stuff::JOYAXISMOTION() && $keypressed !~ /^joystick\|axisvalue\|\d+\|\d+\|0$/) {  #- we treat position at 0 as KEYUP
+            if ($event->type == Games::FrozenBubble::CStuff::JOYAXISMOTION() && $keypressed !~ /^joystick\|axisvalue\|\d+\|\d+\|0$/) {  #- we treat position at 0 as KEYUP
                 $keypressed = undef;
             }
             $keypressed =~ s/^joystick\|buttonup/joystick|buttondown/;
@@ -1678,11 +1678,11 @@ sub handle_game_events() {
 		foreach my $action (qw(left right fire center)) {
 		    if ($keypressed eq $KEYS->{$::p}{$action}) {
                         $actions{$::p}{$action} = 0;
-                        is_mp_game() && $action ne 'fire' and fb_net::gsend('r');
+                        is_mp_game() && $action ne 'fire' and Games::FrozenBubble::Net::gsend('r');
                         last;
                     } elsif ($keypressed =~ /^joystick\|axisvalue\|(\d+)\|(\d+)\|0$/ && $KEYS->{$::p}{$action} =~ /^joystick\|axisvalue\|$1\|$2\|/) {
                         $actions{$::p}{$action} = 0;
-                        is_mp_game() && $action ne 'fire' and fb_net::gsend('r');
+                        is_mp_game() && $action ne 'fire' and Games::FrozenBubble::Net::gsend('r');
                         #- no last, there might be two values of the same axis
                     }
 		}
@@ -1712,13 +1712,13 @@ sub handle_game_events() {
     if (is_mp_game()) {
         $pdata{p1}{chatting} && callback_entry('ping') and update_say_mp();
 
-        my @messages = fb_net::grecv();
+        my @messages = Games::FrozenBubble::Net::grecv();
         check_mp_connection();
         $recorddata{mp_messages} = deep_copy(\@messages);  #- if we don't do a deep copy, the dumped data will be recursive for delayed messages
 
         handle_mp_messages(\@messages);
 
-        fb_net::gdelay_messages(@messages);
+        Games::FrozenBubble::Net::gdelay_messages(@messages);
     }
 
     record();
@@ -1819,7 +1819,7 @@ sub play {
 }
 
 sub print_scores($) {
-    my ($surface) = @_;  
+    my ($surface) = @_;
     iter_players_ {  #- sometimes called from within a iter_players so...
         my $score = @PLAYERS == 1 ? ($pdata{$::p_}{score} eq 'random' ? t("Random level")
                                          : $levels{current} eq 'mp_train' ? t("Score: %s", i18n_number($pdata{$::p_}{score}))
@@ -1880,7 +1880,7 @@ sub lose {
         print_next_bubble($bubbles_anim{lose}, $player, 1);
     }
     cleanup_player_bubbles($player);
-    
+
     if (is_mp_game()) {
         $pdata{$player}{state} = 'lost';
         my @living = living_players();
@@ -1899,7 +1899,7 @@ sub lose {
                 #- if I am about to leave, destinations need to receive leave not finished message, else they'll
                 #- be waiting forever for it (and there's no point anyway)
                 if (!$pdata{p1}{left}) {
-                    fb_net::gsend("F$winnernick");
+                    Games::FrozenBubble::Net::gsend("F$winnernick");
                 }
             }
         } else {
@@ -1971,7 +1971,7 @@ sub update_lost {
     if (@{$sticked_bubbles{$player}}) {
         my $b = shift @{$sticked_bubbles{$player}};
         put_image_to_background($bubbles_anim{lose}, --$b->{'x'}, --$b->{'y'});
-        
+
         if (@{$sticked_bubbles{$player}} == 0) {
             if ($graphics_level == 1 && $pdata{state} =~ /^lost (.*)/ && !is_1p_game()) {
                 put_image_to_background($imgbin{win}{$player eq 'p1' ? 'p2' : 'p1'}, $POS{centerpanel}{x}, $POS{centerpanel}{'y'});
@@ -1993,7 +1993,7 @@ sub update_lost {
                 die 'new_game';
             }
             if (!@{$sticked_bubbles{$player}}) {
-                if ($event->type == SDL_KEYDOWN || $event->type == fb_c_stuff::JOYBUTTONUP()) {
+                if ($event->type == SDL_KEYDOWN || $event->type == Games::FrozenBubble::CStuff::JOYBUTTONUP()) {
                     die 'new_game';
                 }
             }
@@ -2079,7 +2079,7 @@ sub update_game() {
                 ($angle{$::p} < 0.1) and $angle{$::p} = 0.1;
                 ($angle{$::p} > $PI-0.1) and $angle{$::p} = $PI-0.1;
                 if (is_mp_game() && is_local_player($::p) && ($actions{$::p}{left} || $actions{$::p}{right} || $actions{$::p}{center})) {
-                    fb_net::gsend(sprintf("a%.2f", $angle{$::p}));
+                    Games::FrozenBubble::Net::gsend(sprintf("a%.2f", $angle{$::p}));
                 }
                 if (every { ! exists $_->{chaindestx} } @{$falling_bubble{$::p}}) {
                     $pdata{$::p}{hurry}++;
@@ -2118,7 +2118,7 @@ sub update_game() {
                     }
                     if (is_mp_game()) {
                         if (is_local_player($::p)) {
-                            fb_net::gsend(sprintf("f%.3f:$pdata{$::p}{nextcolor}", $angle{$::p}));
+                            Games::FrozenBubble::Net::gsend(sprintf("f%.3f:$pdata{$::p}{nextcolor}", $angle{$::p}));
                         } else {
                             $actions{$::p}{mp_fire} = 0;
                         }
@@ -2154,7 +2154,7 @@ sub update_game() {
                         my ($cx, $cy) = get_array_closest_pos($launched_bubble{$::p}->{x}, $launched_bubble{$::p}->{'y'}, $::p);
                         if (is_local_player($::p)) {
                             my $col = get_bubble_num($launched_bubble{$::p});
-                            is_mp_game() and fb_net::gsend("s$cx:$cy:$col:@{$pdata{$::p}{nextcolors}}");
+                            is_mp_game() and Games::FrozenBubble::Net::gsend("s$cx:$cy:$col:@{$pdata{$::p}{nextcolors}}");
                             stick_bubble($launched_bubble{$::p}, $cx, $cy, $::p, 1);
                             $launched_bubble{$::p} = undef;
                         } else {
@@ -2168,10 +2168,10 @@ sub update_game() {
                                                                       $::p);
                                 if (is_local_player($::p)) {
                                     my $col = get_bubble_num($launched_bubble{$::p});
-                                    is_mp_game() and fb_net::gsend("s$cx:$cy:$col:@{$pdata{$::p}{nextcolors}}");
+                                    is_mp_game() and Games::FrozenBubble::Net::gsend("s$cx:$cy:$col:@{$pdata{$::p}{nextcolors}}");
                                     stick_bubble($launched_bubble{$::p}, $cx, $cy, $::p, 1);
                                     $launched_bubble{$::p} = undef;
-                                    
+
                                     #- malus generation
                                     if (!any { $_->{chaindestx} } @{$falling_bubble{$::p}}) {
                                         my $malusfreezeframes = 20;
@@ -2203,10 +2203,10 @@ sub update_game() {
                                         my $shifting = 0;
                                         $_->{'y'} += ($shifting += 7) + int(rand(20)) foreach @{$malus_bubble{$::p}};
                                         if (is_mp_game()) {
-                                            fb_net::gsend("m$_->{num}:$_->{cx}:$_->{cy}:$_->{stick_y}") foreach @{$malus_bubble{$::p}};
+                                            Games::FrozenBubble::Net::gsend("m$_->{num}:$_->{cx}:$_->{cy}:$_->{stick_y}") foreach @{$malus_bubble{$::p}};
                                         }
                                     }
-                                    
+
                                 } else {
                                     $pdata{$::p}{freezelaunchedbubble} = 1;
                                 }
@@ -2274,7 +2274,7 @@ sub update_game() {
         my $loser = $1;
         update_lost($loser);
         is_2p_game() and update_won($loser eq 'p1' ? 'p2' : 'p1');
-        
+
     } elsif ($pdata{state} =~ /^finished (\S+):(\S+) (\S+)/) {
         my $supposed_winner_player = $1;
         my $supposed_winner_nick = $2;
@@ -2292,7 +2292,7 @@ sub update_game() {
             SDL::Events::pump_events() while SDL::Events::poll_event($event) != 0;
             #- mp game only state when we're trying to figure out if this is not a draw game
 
-            if (my $msg = fb_net::grecv_get1msg_ifdata()) {
+            if (my $msg = Games::FrozenBubble::Net::grecv_get1msg_ifdata()) {
                 my $result = decode_postgame_message($msg);
                 iter_players { dbgnet("\tstill game message of=$pdata{$::p}{nick} value=$pdata{$::p}{still_game_messages}"); };
                 if ($result =~ /^(\S+) finished (\S+)/) {
@@ -2313,9 +2313,9 @@ sub update_game() {
                     $pdata{state} = "won $supposed_winner_player";
                 } elsif ($result !~ /^(\S+) gamemsg/) {
                     #- delay other players already asking for a new game (we're waiting for agreement on winner from others)
-                    fb_net::gdelay_messages($msg);
+                    Games::FrozenBubble::Net::gdelay_messages($msg);
                 }
-                
+
             } else {
                 check_mp_connection();
                 #- timeout for receiving the winners. it could happen when a client is badly killed.
@@ -2341,7 +2341,7 @@ sub update_game() {
                 }
             };
             check_mp_connection();
-            $frame % (1000/$TARGET_ANIM_SPEED) == 0 and fb_net::gsend('p');
+            $frame % (1000/$TARGET_ANIM_SPEED) == 0 and Games::FrozenBubble::Net::gsend('p');
         }
 	if (!$winner || @{$exploding_bubble{$winner}} == 0) {
             my $still_needwait = 0;
@@ -2360,11 +2360,11 @@ sub update_game() {
                         die 'quit';
                     };
                     dbgnet("send newgame 'n'");
-                    fb_net::gsend('n');
+                    Games::FrozenBubble::Net::gsend('n');
                     my $timeout_counter;
 
                     while (1) {
-                        if (my $msg = fb_net::grecv_get1msg_ifdata()) {
+                        if (my $msg = Games::FrozenBubble::Net::grecv_get1msg_ifdata()) {
                             my $result = decode_postgame_message($msg);
                             if ($result =~ /^(\S+) other/) {
                                 $pdata{$pdata{id2p}{$msg->{id}}}{left} = 1;
@@ -2383,9 +2383,9 @@ sub update_game() {
                             }
                         }
                         check_mp_connection();
-                        fb_c_stuff::fbdelay($TARGET_ANIM_SPEED);
+                        Games::FrozenBubble::CStuff::fbdelay($TARGET_ANIM_SPEED);
                         $frame++;
-                        $frame % (1000/$TARGET_ANIM_SPEED) == 0 and fb_net::gsend('p');
+                        $frame % (1000/$TARGET_ANIM_SPEED) == 0 and Games::FrozenBubble::Net::gsend('p');
                         $timeout_counter++;
                         if ($timeout_counter > 10 * (1000/$TARGET_ANIM_SPEED) ) {  #- 10 seconds
                             mp_disconnect_with_reason('', '', '', '', '', t("Lost synchronization %s!", 2));
@@ -2400,7 +2400,7 @@ sub update_game() {
                     if ($event->type == SDL_KEYDOWN && $event->key_sym == SDLK_ESCAPE()) {
                         die 'quit';
                     }
-                    if ($event->type == SDL_KEYDOWN || $event->type == fb_c_stuff::JOYBUTTONUP()) {
+                    if ($event->type == SDL_KEYDOWN || $event->type == Games::FrozenBubble::CStuff::JOYBUTTONUP()) {
                         if ($playdata) {
                             die 'quit';
                         } elsif (is_mp_game()) {
@@ -2412,7 +2412,7 @@ sub update_game() {
                 }
 
                 if (is_mp_game()) {
-                    if (my $msg = fb_net::grecv_get1msg_ifdata()) {
+                    if (my $msg = Games::FrozenBubble::Net::grecv_get1msg_ifdata()) {
                         my $result = decode_postgame_message($msg);
                         if ($result =~ /^(\S+) newgame/) {
                             $mp_newgame->();
@@ -2442,7 +2442,7 @@ sub update_game() {
     }
 
     if (is_mp_game()) {
-        $frame % (1000/$TARGET_ANIM_SPEED) == 0 and fb_net::gsend('p');
+        $frame % (1000/$TARGET_ANIM_SPEED) == 0 and Games::FrozenBubble::Net::gsend('p');
     }
 
     #- things that need to be updated in all states of the game
@@ -2455,7 +2455,7 @@ sub update_game() {
                     real_stick_bubble($b, $b->{'cx'}, $b->{'stick_y'}, $::p, 0);
                     push @$malus_end, $b;
                     #- remote decode_postgame_message will not like receiving the M command after we sent the F command
-                    is_mp_game() && $pdata{state} eq 'game' and fb_net::gsend("M$b->{cx}:$b->{stick_y}");
+                    is_mp_game() && $pdata{state} eq 'game' and Games::FrozenBubble::Net::gsend("M$b->{cx}:$b->{stick_y}");
                 } else {
                     $b->{freeze} = 1;
                 }
@@ -2677,7 +2677,7 @@ sub init_game() {
     $app->sync;
     $imgbin{loading_step} = add_image('loading_step.png');
     $imgbin{loading_step_initial} = add_image('loading_step_initial.png');
- 
+
     print_step('[Graphics');
     $imgbin{back_2p} = SDL::Image::load("$FPATH/gfx/backgrnd.png");
     $imgbin{back_1p} = SDL::Image::load("$FPATH/gfx/back_one_player.png");
@@ -2685,7 +2685,7 @@ sub init_game() {
     $background      = SDL::Surface->new( SDL_SWSURFACE, $app->w, $app->h, 32, 0, 0, 0, 0);
     $background_orig = SDL::Surface->new( SDL_SWSURFACE, $app->w, $app->h, 32, 0, 0, 0, 0);
 
-    fb_c_stuff::sdlpango_init();
+    Games::FrozenBubble::CStuff::sdlpango_init();
     $pangocontext{netdialogs} =           { params => { desc => 'sans 10', fg => 'white', bg => 'black' } };
     $pangocontext{netdialogs_servermsg} = { params => { desc => 'sans italic 10', fg => 'white', bg => 'black' } };
     $pangocontext{menu} =                 { params => { desc => 'sans 11', fg => 'white', bg => 'black' } };
@@ -2694,8 +2694,8 @@ sub init_game() {
     $pangocontext{ingame_chat} =          { params => { desc => 'sans 10', fg => 'black', bg => 'white' } };
     $pangocontext{ingame_small} =         { params => { desc => 'sans 8', fg => 'white', bg => 'black' } };
     $pangocontext{ingame_small_chat} =    { params => { desc => 'sans 8', fg => 'white', bg => 'black' } };
-    $pangocontext{$_}{context_fg} = fb_c_stuff::sdlpango_createcontext($pangocontext{$_}{params}{fg}, $pangocontext{$_}{params}{desc}) foreach keys %pangocontext;
-    $pangocontext{$_}{context_bg} = fb_c_stuff::sdlpango_createcontext($pangocontext{$_}{params}{bg}, $pangocontext{$_}{params}{desc}) foreach keys %pangocontext;
+    $pangocontext{$_}{context_fg} = Games::FrozenBubble::CStuff::sdlpango_createcontext($pangocontext{$_}{params}{fg}, $pangocontext{$_}{params}{desc}) foreach keys %pangocontext;
+    $pangocontext{$_}{context_bg} = Games::FrozenBubble::CStuff::sdlpango_createcontext($pangocontext{$_}{params}{bg}, $pangocontext{$_}{params}{desc}) foreach keys %pangocontext;
 
     foreach my $ball (1..8) {
         my $img = add_bubble_image('balls/bubble-'.($colourblind && 'colourblind-')."$ball.gif");
@@ -2719,35 +2719,35 @@ sub init_game() {
         my $angle = $number*($PI/2)/$CANON_ROTATIONS_NB;
 
         $canon{img}{$number} = SDL::Surface->new( SDL_ANYFORMAT, $shooter->w, $shooter->h);
-        fb_c_stuff::rotate_bicubic($canon{img}{$number}, $shooter, $angle);
-        $canon{data}{$number} = fb_c_stuff::autopseudocrop($canon{img}{$number});
+        Games::FrozenBubble::CStuff::rotate_bicubic($canon{img}{$number}, $shooter, $angle);
+        $canon{data}{$number} = Games::FrozenBubble::CStuff::autopseudocrop($canon{img}{$number});
         #- now crop (and use native RGBA ordering)
         my $replace = SDL::Surface->new( SDL_ANYFORMAT, $canon{data}{$number}[2],  $canon{data}{$number}[3]);
 	SDL::Video::set_alpha($canon{img}{$number}, 0, 0);
 	SDL::Video::blit_surface( $canon{img}{$number}, SDL::Rect->new( $canon{data}{$number}[0],  $canon{data}{$number}[1],
-                                                                    $canon{data}{$number}[2],  $canon{data}{$number}[3]), 
+                                                                    $canon{data}{$number}[2],  $canon{data}{$number}[3]),
 							  $replace, SDL::Rect->new(0, 0, $canon{img}{$number}->w, $canon{img}{$number}->h));
         $canon{img}{$number} = $replace;
         add_default_rect($canon{img}{$number});
 
         $canon{img_mini}{$number} = SDL::Surface->new( SDL_ANYFORMAT,  $shooter_mini->w,  $shooter_mini->h);
-        fb_c_stuff::rotate_bicubic($canon{img_mini}{$number}, $shooter_mini, $angle);
-        $canon{data_mini}{$number} = fb_c_stuff::autopseudocrop(surf($canon{img_mini}{$number}));
+        Games::FrozenBubble::CStuff::rotate_bicubic($canon{img_mini}{$number}, $shooter_mini, $angle);
+        $canon{data_mini}{$number} = Games::FrozenBubble::CStuff::autopseudocrop(surf($canon{img_mini}{$number}));
         #- now crop (and use native RGBA ordering)
         my $replace = SDL::Surface->new( SDL_ANYFORMAT,  $canon{data_mini}{$number}[2],  $canon{data_mini}{$number}[3]);
 	SDL::Video::set_alpha($canon{img_mini}{$number}, 0, 0);
 	SDL::Video::blit_surface( $canon{img_mini}{$number}, SDL::Rect->new( $canon{data_mini}{$number}[0], $canon{data_mini}{$number}[1],
-                                                        $canon{data_mini}{$number}[2], $canon{data_mini}{$number}[3]), $replace, 
+                                                        $canon{data_mini}{$number}[2], $canon{data_mini}{$number}[3]), $replace,
 														SDL::Rect->new(0,0,$canon{img_mini}{$number}->w,$canon{img_mini}{$number}->h));
         $canon{img_mini}{$number} = $replace;
         add_default_rect($canon{img_mini}{$number});
 
-        $number eq -$CANON_ROTATIONS_NB/2 and print_step('.'); 
-        $number eq 0 and print_step('.'); 
-        $number eq $CANON_ROTATIONS_NB/2 and print_step('.'); 
+        $number eq -$CANON_ROTATIONS_NB/2 and print_step('.');
+        $number eq 0 and print_step('.');
+        $number eq $CANON_ROTATIONS_NB/2 and print_step('.');
     }
 
-    print_step('.'); 
+    print_step('.');
     $malus_gfx{banane} = add_image('banane.png');
     $img_mini{$malus_gfx{banane}} = add_image('banane-mini.png');
     $malus_gfx{tomate} = add_image('tomate.png');
@@ -2812,9 +2812,9 @@ sub init_game() {
             my $alpha = SDL::Surface->new( SDL_ANYFORMAT,  $img->w,  $img->h,  32, 0,0,0,0);
 	    SDL::Video::set_alpha($img, 0, 0);  #- for RGBA->RGBA blits, SDL_SRCALPHA must be removed or destination alpha is preserved
             SDL::Video::blit_surface($img, SDL::Rect->new(0,0,0,0), $alpha, SDL::Rect->new(0,0,$img->w,$img->h));
-            fb_c_stuff::alphaize(surf($alpha));
+            Games::FrozenBubble::CStuff::alphaize(surf($alpha));
             push @{$imgbin{menu_cursor}{"${cursortype}alpha"}}, $alpha;
-	    SDL::Video::set_alpha($img, SDL_SRCALPHA, 0);  
+	    SDL::Video::set_alpha($img, SDL_SRCALPHA, 0);
         }
     }
     $imgbin{left_rp1} = add_image('left-rp1.png');
@@ -2862,10 +2862,10 @@ sub init_game() {
     $imgbin{hiscore_frame} = add_image('hiscore_frame.png');
     $imgbin{hiscore_levelset} = add_image('hiscore-levelset.png');
     $imgbin{hiscore_mptraining} = add_image('hiscore-mptraining.png');
-    
+
     local @PLAYERS = @ALL_PLAYERS;  #- load all images even if -so commandline option was passed
     iter_players {
-        print_step('.'); 
+        print_step('.');
 	$imgbin{hurry}{$::p} = add_image("hurry_$::p.png");
 	$imgbin{win}{$::p} = add_image("win_panel_$::p.png");
 	$::p ne 'p2' and $imgbin{net_lose}{$::p} = add_image("net_lose_$::p.png");
@@ -2890,7 +2890,7 @@ sub init_game() {
         $pinguin{$::p}{lose} = [ map { add_image("pinguins/loose_${p}_0$_.png") } ('065'..'158') ];
     };
 
-    print_step('] '); 
+    print_step('] ');
 
     if ($mixer eq 'SOUND_DISABLED') {
         $mixer_enabled = 0; $mixer = undef;
@@ -2908,7 +2908,7 @@ sub init_game() {
     $lev_number = 0;
     load_levelset("$FPATH/data/levels");
 
-    fb_c_stuff::init_effects($FPATH);
+    Games::FrozenBubble::CStuff::init_effects($FPATH);
     $addicted_time = 0;
 
     $start_time = 0;
@@ -2932,20 +2932,20 @@ sub open_level($) {
 sub translate_joystick_tokey($) {
     my ($event) = @_;
     my $which =  SDL::JoyAxisEventWhich(evt($event));
-    if ($event->type == fb_c_stuff::JOYAXISMOTION()) {
+    if ($event->type == Games::FrozenBubble::CStuff::JOYAXISMOTION()) {
         my $axis = SDL::JoyAxisEventAxis(evt($event));
-        my $value = fb_c_stuff::JoyAxisEventValue(evt($event));
+        my $value = Games::FrozenBubble::CStuff::JoyAxisEventValue(evt($event));
         if ($value <= -10000) {  #- should work properly with analog joysticks
             return "joystick|axisvalue|$which|$axis|-10000";
-        } elsif ($value >= 10000) {  
+        } elsif ($value >= 10000) {
             return "joystick|axisvalue|$which|$axis|10000";
         } else {
             return "joystick|axisvalue|$which|$axis|0";
         }
-    } elsif ($event->type() == fb_c_stuff::JOYBUTTONDOWN()) {
+    } elsif ($event->type() == Games::FrozenBubble::CStuff::JOYBUTTONDOWN()) {
         my $button = SDL::JoyButtonEventButton(evt($event)) + 1;
         return "joystick|buttondown|$which|$button";
-    } elsif ($event->type() == fb_c_stuff::JOYBUTTONUP()) {
+    } elsif ($event->type() == Games::FrozenBubble::CStuff::JOYBUTTONUP()) {
         my $button = SDL::JoyButtonEventButton(evt($event)) + 1;
         return "joystick|buttonup|$which|$button";
     }
@@ -2955,7 +2955,7 @@ sub extended_keypress($) {
     my ($event) = @_;
     if ($event->type == SDL_KEYDOWN) {
         return $event->key_sym;
-    } elsif ($event->type == fb_c_stuff::JOYAXISMOTION() || $event->type() == fb_c_stuff::JOYBUTTONDOWN()) {
+    } elsif ($event->type == Games::FrozenBubble::CStuff::JOYAXISMOTION() || $event->type() == Games::FrozenBubble::CStuff::JOYBUTTONDOWN()) {
         my $keypressed = translate_joystick_tokey($event);
         if ($keypressed =~ /^joystick\|axisvalue\|\d+\|\d+\|0$/) {  #- we treat position at 0 as KEYUP
             $keypressed = undef;
@@ -2971,7 +2971,7 @@ sub grab_key {
 	SDL::Events::wait_event($event);
 	if ($event->type == SDL_KEYDOWN) {
 	    $keyp = $event->key_sym;
-	} elsif ($event->type == fb_c_stuff::JOYAXISMOTION() || $event->type() == fb_c_stuff::JOYBUTTONDOWN()) {
+	} elsif ($event->type == Games::FrozenBubble::CStuff::JOYAXISMOTION() || $event->type() == Games::FrozenBubble::CStuff::JOYBUTTONDOWN()) {
 	    $keyp = translate_joystick_tokey($event);
         }
     } while (!defined($keyp));
@@ -3004,9 +3004,9 @@ sub display_highscores {
             my ($x, $y, $txt, $bold) = @_;
             print_($bold ? 'bold_menu' : 'menu', $app, $x, $y + $imgbin{hiscore_frame}->h - 8, $txt, $imgbin{hiscore_frame}->w + 12, 'center');
         };
-        
+
         my $old_levelset = $loaded_levelset;
-        
+
         foreach my $high (ordered_highscores()) {
             @{$sticked_bubbles{p1}} = ();
             @{$root_bubbles{p1}} = ();
@@ -3018,7 +3018,7 @@ sub display_highscores {
             # last level in the default levelset
             if (!$high->{piclevel}) {
                 $loaded_levelset ne "$FPATH/data/levels" and load_levelset("$FPATH/data/levels");
-                
+
                 # handle the case where the user has edited/created a levelset with more levels
                 # than the default levelset and then got a high score
                 if ($high->{level} > $lev_number) {
@@ -3037,7 +3037,7 @@ sub display_highscores {
             put_image($imgbin{hiscore_frame}, $high_posx - 7, $high_posy - 6);
             my $tmp = SDL::Video::display_format(SDL::Surface->new(-width => $high_rect->w/4, -height => $high_rect->h/4,
                                         -depth => 32, -Amask => "0 but true"));
-            fb_c_stuff::shrink(surf($tmp), surf(SDL::Video::display_format($background)), 0, 0, rect($high_rect), 4);
+            Games::FrozenBubble::CStuff::shrink(surf($tmp), surf(SDL::Video::display_format($background)), 0, 0, rect($high_rect), 4);
             SDL::Video::blit_surface($tmp, SDL::Rect->new(0,0,0,0), $app, SDL::Rect->new($high_posx, $high_posy, $tmp->w, $tmp->h));
             $centered_print->($high_posx - 15, $high_posy, $high->{name}, $new_entry == $high);
             $centered_print->($high_posx - 15, $high_posy + 20, $high->{level} eq 'WON' ? t("won!") : t("level %s", i18n_number($high->{level})), $new_entry == $high);
@@ -3048,10 +3048,10 @@ sub display_highscores {
             $high_posx > 550 and $high_posx = $initial_high_posx, $high_posy += 175;
             $high_posy > 440 and last;
         }
-        load_levelset($old_levelset);    
+        load_levelset($old_levelset);
 
         SDL::Video::flip($app);
-        
+
         SDL::Events::pump_events() while SDL::Events::poll_event($event) != 0;
         grab_key() eq SDLK_ESCAPE() and return;
     }
@@ -3097,7 +3097,7 @@ sub display_highscores {
         }
 
         SDL::Video::flip($app);
-        
+
         SDL::Events::pump_events() while SDL::Events::poll_event($event) != 0;
         grab_key() eq SDLK_ESCAPE() and die "quit";
     }
@@ -3107,7 +3107,7 @@ sub display_highscores {
 
 sub keysym_to_char($) {
     my ($key) = @_;
-    eval("$key eq SDLK_$_()") and return uc($_) foreach @fbsyms::syms;
+    eval("$key eq SDLK_$_()") and return uc($_) foreach @Games::FrozenBubble::Symbols::syms;
     if ($key >= 160 && $key <= 255) {
         return 'WORLD_' . ($key - 160);  #- "world" keys are not exported
     }
@@ -3126,7 +3126,7 @@ sub ask_from($) {
     my $lineheight = 18;
     my %xpos = ( questions => $is_rtl ? $MENUPOS{xpos_panel} + $imgbin{void_panel}->w*1/3 + 10 : $MENUPOS{xpos_panel},
                  echo => $is_rtl ? $MENUPOS{xpos_panel} + $imgbin{void_panel}->w*1/3 - 100 : $MENUPOS{xpos_panel} + $imgbin{void_panel}->w*2/3 );
- 
+
     foreach my $i (@{$w->{intro}}) {
 	if ($i) {
 	    print_('menu', $app, $MENUPOS{xpos_panel}, $ypos, $i, $imgbin{void_panel}->w, 'center');
@@ -3199,7 +3199,7 @@ sub ask_from($) {
                             }
                         }
                     }
-                    fb_c_stuff::fbdelay($TARGET_ANIM_SPEED);
+                    Games::FrozenBubble::CStuff::fbdelay($TARGET_ANIM_SPEED);
                 }
             }
 	}
@@ -3395,7 +3395,7 @@ sub new_game() {
 	SDL::Video::blit_surface($background, $apprects{main}, $app, $apprects{main});
 	SDL::Video::flip($app);
     } else {
-	fb_c_stuff::effect(surf($app), surf(SDL::Video::display_format($background)));
+	Games::FrozenBubble::CStuff::effect(surf($app), surf(SDL::Video::display_format($background)));
     }
 
     $display_on_app_disabled = 0;
@@ -3410,17 +3410,17 @@ sub new_game() {
 
         #- 1. first wait on a common barrier with others, so that everyone has finished previous things
         dbgnet("send barrier 'n'");
-        fb_net::gsend('n');
+        Games::FrozenBubble::Net::gsend('n');
         check_mp_connection();
         iter_distant_players {
             $pdata{$::p}{barrier4newgame} = 0;
         };
-        
+
         #- at this point, we can receive first commands of quickies instead of synchro
         my @keep_messages;
         while (1) {
             my $m;
-            eval { $m = fb_net::grecv_get1msg(); };  #- blocking
+            eval { $m = Games::FrozenBubble::Net::grecv_get1msg(); };  #- blocking
             if ($@) {
                 $@ =~ /^quit/ and return 0;
                 die;
@@ -3441,12 +3441,12 @@ sub new_game() {
         }
 
         #- 2. now that we're all ready to synchronize, let a unique synchro message be sent, the leader and others will all wait on
-        is_leader() and fb_net::gsend('!');
+        is_leader() and Games::FrozenBubble::Net::gsend('!');
         check_mp_connection();
-        
+
         while (1) {
             my $m;
-            eval { $m = fb_net::grecv_get1msg(); }; #- blocking
+            eval { $m = Games::FrozenBubble::Net::grecv_get1msg(); }; #- blocking
             if ($@) {
                 $@ =~ /^quit/ and return 0;
                 die;
@@ -3458,8 +3458,8 @@ sub new_game() {
                 push @keep_messages, $m;
             }
         }
-        
-        fb_net::gdelay_messages(@keep_messages);
+
+        Games::FrozenBubble::Net::gdelay_messages(@keep_messages);
 
         @{$pdata{attackingme}} = ();
     }
@@ -3478,7 +3478,7 @@ sub choose_1p_game_mode() {
     my @ordered_names = qw(play_all_levels pick_start_level play_random_levels mp_train);
     my $active_menu = 0;
 
-    my $menu_xpos = $MENUPOS{xpos_panel} + ($imgbin{'1p_panel'}->w - $imgbin{txt_1pmenu_over}->w)/2; 
+    my $menu_xpos = $MENUPOS{xpos_panel} + ($imgbin{'1p_panel'}->w - $imgbin{txt_1pmenu_over}->w)/2;
     my $menu_ypos = $MENUPOS{ypos_panel} + 90;
     my $menu_ypos_spacer = $imgbin{txt_1pmenu_over}->h + 4;
     my %name2ypos = (play_all_levels    => $menu_ypos,
@@ -3487,15 +3487,15 @@ sub choose_1p_game_mode() {
                      mp_train           => $menu_ypos + 3 * $menu_ypos_spacer);
 
     my $overlook_index = 0;
-    my $overlook = SDL::Surface->new(SDL_ANYFORMAT, $imgbin{txt_1pmenu_pick_start_level_text}->w, 
-	                                                $imgbin{txt_1pmenu_pick_start_level_text}->h, 
+    my $overlook = SDL::Surface->new(SDL_ANYFORMAT, $imgbin{txt_1pmenu_pick_start_level_text}->w,
+	                                                $imgbin{txt_1pmenu_pick_start_level_text}->h,
 													32, 0xFF000000, 0x00FF0000, 0x0000FF00, 0x000000FF);
     my $redraw = sub {
         my $draw_element = sub {
             my ($name, $mode) = @_;
             put_image($imgbin{"txt_1pmenu_$mode"}, $menu_xpos, $name2ypos{$name});
-            SDL::Video::blit_surface($imgbin{"txt_1pmenu_${name}_outlined_text"}, SDL::Rect->new(0,0,0,0), 
-			                         $app, SDL::Rect->new($menu_xpos, $name2ypos{$name}, $imgbin{"txt_1pmenu_${name}_outlined_text"}->w, 
+            SDL::Video::blit_surface($imgbin{"txt_1pmenu_${name}_outlined_text"}, SDL::Rect->new(0,0,0,0),
+			                         $app, SDL::Rect->new($menu_xpos, $name2ypos{$name}, $imgbin{"txt_1pmenu_${name}_outlined_text"}->w,
 									                                                     $imgbin{"txt_1pmenu_${name}_outlined_text"}->h));
         };
 
@@ -3520,7 +3520,7 @@ sub choose_1p_game_mode() {
 
         $draw_element->($ordered_names[$active_menu], 'over');
 
-        fb_c_stuff::overlook_init(surf($overlook));
+        Games::FrozenBubble::CStuff::overlook_init(surf($overlook));
         $overlook_index = 0;
 
         SDL::Video::flip($app);
@@ -3530,7 +3530,7 @@ sub choose_1p_game_mode() {
         my %name2pivot = (play_all_levels => 90, pick_start_level => 135, play_random_levels => 82, mp_train => 105);
         my $name =  $ordered_names[$active_menu];
         put_image($imgbin{txt_1pmenu_over}, $menu_xpos, $name2ypos{$name});
-        fb_c_stuff::overlook(surf($overlook), surf($imgbin{"txt_1pmenu_${name}_text"}), $overlook_index, $name2pivot{$name});
+        Games::FrozenBubble::CStuff::overlook(surf($overlook), surf($imgbin{"txt_1pmenu_${name}_text"}), $overlook_index, $name2pivot{$name});
         SDL::Video::blit_surface($overlook, SDL::Rect->new(0,0,0,0), $app, SDL::Rect->new($menu_xpos, $name2ypos{$name}, $overlook->w, $overlook->h));
         $overlook_index++;
         if ($overlook_index == 70) {
@@ -3596,7 +3596,7 @@ sub choose_1p_game_mode() {
             }
         }
         my $to_wait = $TARGET_ANIM_SPEED - ($app->ticks - $synchro_ticks);
-        $to_wait > 0 and fb_c_stuff::fbdelay($to_wait);
+        $to_wait > 0 and Games::FrozenBubble::CStuff::fbdelay($to_wait);
     }
 }
 
@@ -3667,7 +3667,7 @@ sub smg_servers() {
 
     if ($pdata{gametype} eq 'lan') {
         smg_add_status_msg(t("*** Please wait, probing for available servers on local network..."));
-        my $ret = fb_net::discover_lan_servers();
+        my $ret = Games::FrozenBubble::Net::discover_lan_servers();
         if ($ret->{failure}) {
             smg_add_status_msg(t("*** Unable to probe for available servers on local network!"),
                                "*** " . $ret->{failure},
@@ -3705,7 +3705,7 @@ sub smg_servers() {
 
     } else {
         smg_add_status_msg(t("*** Contacting master server..."));
-        my $serverlist = fb_net::get_server_list();
+        my $serverlist = Games::FrozenBubble::Net::get_server_list();
         my @servers;
         if (defined $serverlist) {
             foreach my $line (split /\n/, $serverlist) {
@@ -3735,8 +3735,8 @@ sub smg_choose_server(@) {
 
     if ($pdata{autochooseserver}) {
         $pdata{autochooseserver} = 0;
-        fb_net::connect($servers[0]{host}, $servers[0]{port});
-        return fb_net::isconnected();
+        Games::FrozenBubble::Net::connect($servers[0]{host}, $servers[0]{port});
+        return Games::FrozenBubble::Net::isconnected();
     }
 
     my @sorted_servers;
@@ -3769,7 +3769,7 @@ sub smg_choose_server(@) {
             my $pingimg = $server->{ping} < 80 ? "ping_low" : $server->{ping} < 200 ? "ping_mid" : "ping_high";
             put_image($imgbin{$pingimg}, $is_rtl ? $parts{details}{xpos} + $parts{details}{width} - width('netdialogs', $details) - 17
                                                  : $parts{details}{xpos} + width('netdialogs', $details), $y);
-                                                     
+
             $y += $smg_lineheight + 2;
         }
         SDL::Video::flip($app);
@@ -3781,7 +3781,7 @@ sub smg_choose_server(@) {
             push @potential_servers, $server;
         }
     }
-    my $discover = fb_net_discover->new(@potential_servers);
+    my $discover = Games::FrozenBubble::Net_discover->new(@potential_servers);
     my $looped = 0;
     my $init = 0;
     while (1) {
@@ -3860,7 +3860,7 @@ sub smg_choose_server(@) {
                 $redraw->();
             }
         }
-        fb_c_stuff::fbdelay($TARGET_ANIM_SPEED) if $init;
+        Games::FrozenBubble::CStuff::fbdelay($TARGET_ANIM_SPEED) if $init;
     }
 
     if (@servers == 0 || every { $_->{disabled} } @servers) {
@@ -3873,8 +3873,8 @@ sub smg_choose_server(@) {
   ok_smg_choose_server:
     foreach my $server (@servers) {
         if ($server->{selected}) {
-            fb_net::connect($server);
-            if (!fb_net::isconnected()) {
+            Games::FrozenBubble::Net::connect($server);
+            if (!Games::FrozenBubble::Net::isconnected()) {
                 smg_add_status_msg(t("*** Impossible to connect to specified server, going back to server list"));
                 $server->{selected} = 0;
                 return smg_choose_server(@servers);
@@ -3900,7 +3900,7 @@ sub smg_verify_command($;$) {
     my ($command, $rest) = @_;
     my $answer;
     eval {
-        $answer = fb_net::send_and_receive($command, $rest);
+        $answer = Games::FrozenBubble::Net::send_and_receive($command, $rest);
     };
     if ($@) {
         smg_add_status_msg(t("*** Sorry, your computer or the network is too slow, giving up - press any key"));
@@ -3969,7 +3969,7 @@ sub callback_entry {
                 $entry_position = $#entry_typed + 1;
             }
         } else {
-            my $utf8char = fb_c_stuff::utf8key(evt($params->{event}));
+            my $utf8char = Games::FrozenBubble::CStuff::utf8key(evt($params->{event}));
             if ($utf8char ne '' && $utf8char ne "\n" && $utf8char ne "\r") {
                 splice @entry_typed, $entry_position, 0, $utf8char;
                 if (width($params->{font}, $params->{prefix} . join('', @entry_typed)) >= $params->{maxlen}) {
@@ -4135,7 +4135,7 @@ sub smg_choose_game() {
                 print_('netdialogs_servermsg', $app, 0, 0, $text, undef, undef, #- coordinates are unimportant, we'll cancel this printing
                        sub {
                            my ($action, $textsurface) = @_;
-                           $sizing = fb_c_stuff::autopseudocrop($textsurface);
+                           $sizing = Games::FrozenBubble::CStuff::autopseudocrop($textsurface);
                            $wb = $sizing->[2] + 6;
                            $hb = $sizing->[3] + 6;
                            return 0;
@@ -4175,7 +4175,7 @@ sub smg_choose_game() {
                     last;
                 }
                 #- draw a line between the spot and the center of the label
-                fb_c_stuff::draw_line(surf($app), $xspot, $yspot, $xc, $yc, col($label_line_color));
+                Games::FrozenBubble::CStuff::draw_line(surf($app), $xspot, $yspot, $xc, $yc, col($label_line_color));
                 #- draw the label background and the label in another pass to handle overwriting of labels over lines
                 push @labels, { x => $xc - $sizing->[2]/2 - $sizing->[0], y => $yc - $sizing->[3]/2 - $sizing->[1], text => $text, backrect1 => $r,
                                 backrect2 => SDL::Rect->new($xb + 1, $yb + 1, $wb - 2, $hb - 2) };
@@ -4235,7 +4235,7 @@ sub smg_choose_game() {
             }
         }
     };
-    
+
     my $myoldnick;
     my $list = sub {
         my ($firsttime) = @_;
@@ -4243,7 +4243,7 @@ sub smg_choose_game() {
         my @games;
         my @old_wholist = @wholist;
         eval {
-            ($free_players, undef, my $freenicks, undef, my $playing_geolocs, @games) = fb_net::list();
+            ($free_players, undef, my $freenicks, undef, my $playing_geolocs, @games) = Games::FrozenBubble::Net::list();
             @wholist = ();
             @free_geolocs = ();
             @playing_geolocs = ();
@@ -4295,7 +4295,7 @@ sub smg_choose_game() {
                 }
             }
         }
-        
+
         my ($join, $rest) = partition { $_->{action} eq 'JOIN' } @actions;
         $_->{ok} = 0 foreach @$join;
       listgames:
@@ -4336,14 +4336,14 @@ sub smg_choose_game() {
         }
     };
 
-    fb_net::send_and_receive('NICK', $mynick);
+    Games::FrozenBubble::Net::send_and_receive('NICK', $mynick);
 
     my $geolocate = sub {
         smg_add_status_msg(t("*** Please wait, retrieving your geographical location from http://hostip.info/..."));
         eval {
             local $SIG{ALRM} = sub { die "alarm\n" };
             alarm 5;
-            my $data = fb_net::http_download('http://api.hostip.info/get_html.php?position=true');
+            my $data = Games::FrozenBubble::Net::http_download('http://api.hostip.info/get_html.php?position=true');
             ($mylatitude) = $data =~ /Latitude: (-?\S{1,5})/;
             ($mylongitude) = $data =~ /Longitude: (-?\S{1,5})/;
             if (defined($mylatitude)) {
@@ -4363,9 +4363,9 @@ sub smg_choose_game() {
             $mylatitude = '';
         }
         if ($mylatitude) {
-            fb_net::send_and_receive('GEOLOC', "$mylatitude:$mylongitude");
+            Games::FrozenBubble::Net::send_and_receive('GEOLOC', "$mylatitude:$mylongitude");
         } else {
-            fb_net::send_and_receive('GEOLOC', "");
+            Games::FrozenBubble::Net::send_and_receive('GEOLOC', "");
         }
     };
 
@@ -4373,11 +4373,11 @@ sub smg_choose_game() {
         if (!defined($mylatitude)) {
             $geolocate->();
         } else {
-            fb_net::send_and_receive('GEOLOC', "$mylatitude:$mylongitude");
+            Games::FrozenBubble::Net::send_and_receive('GEOLOC', "$mylatitude:$mylongitude");
         }
     }
     smg_add_status_msg(t("*** You may now create or join a game"));
-    
+
     my $need4update;
     my $relist;
     my $can_start = 0;
@@ -4396,7 +4396,7 @@ sub smg_choose_game() {
     $list_players->();
 
     my $setoptions = sub {
-        my $level = fb_net::send_and_receive('PROTOCOL_LEVEL');
+        my $level = Games::FrozenBubble::Net::send_and_receive('PROTOCOL_LEVEL');
         if ($level < 2) {  #- continue game when players leave available from minor level 2 onwards
             smg_verify_command('SETOPTIONS', 'CHAINREACTION:' . to_bool($chain_reaction_state eq t("enabled")) . ','
                                            . "VICTORIESLIMIT:$victories_limits[$victories_limit_index]{value}");
@@ -4410,7 +4410,7 @@ sub smg_choose_game() {
 
     my $toggle_chain_reaction = sub {
         if ($chain_reaction_state eq t("disabled")) {
-            my $level = fb_net::send_and_receive('PROTOCOL_LEVEL');
+            my $level = Games::FrozenBubble::Net::send_and_receive('PROTOCOL_LEVEL');
             if ($level < 1) {  #- available from minor level 1 onwards
                 smg_add_status_msg(t("*** Cannot modify this option, as a player is using a too old version of Frozen-Bubble"));
                 play_sound('cancel');
@@ -4430,7 +4430,7 @@ sub smg_choose_game() {
 
     my $toggle_continue_game_when_players_leave = sub {
         if ($continue_game_when_players_leave_state eq t("disabled")) {
-            my $level = fb_net::send_and_receive('PROTOCOL_LEVEL');
+            my $level = Games::FrozenBubble::Net::send_and_receive('PROTOCOL_LEVEL');
             if ($level < 2) {  #- available from minor level 2 onwards
                 smg_add_status_msg(t("*** Cannot modify this option, as a player is using a too old version of Frozen-Bubble"));
                 play_sound('cancel');
@@ -4450,7 +4450,7 @@ sub smg_choose_game() {
 
     my $toggle_single_player_targetting = sub {
         if ($single_player_targetting_state eq t("enabled")) {
-            my $level = fb_net::send_and_receive('PROTOCOL_LEVEL');
+            my $level = Games::FrozenBubble::Net::send_and_receive('PROTOCOL_LEVEL');
             if ($level < 2) {  #- available from minor level 2 onwards
                 smg_add_status_msg(t("*** Cannot modify this option, as a player is using a too old version of Frozen-Bubble"));
                 play_sound('cancel');
@@ -4470,7 +4470,7 @@ sub smg_choose_game() {
 
     my $change_victories_limit = sub {
         my ($action) = @_;
-        my $level = fb_net::send_and_receive('PROTOCOL_LEVEL');
+        my $level = Games::FrozenBubble::Net::send_and_receive('PROTOCOL_LEVEL');
         if ($level < 1) {  #- available from minor level 1 onwards
             smg_add_status_msg(t("*** Cannot modify this option, as a player is using a too old version of Frozen-Bubble"));
             play_sound('cancel');
@@ -4527,17 +4527,17 @@ sub smg_choose_game() {
             my $k;
             if ($event->type == SDL_KEYDOWN) {
                 $k = $event->key_sym;
-            } elsif ($curaction->()->{action} ne 'CHAT' && ($event->type == fb_c_stuff::JOYAXISMOTION() || $event->type() == fb_c_stuff::JOYBUTTONDOWN())) {
+            } elsif ($curaction->()->{action} ne 'CHAT' && ($event->type == Games::FrozenBubble::CStuff::JOYAXISMOTION() || $event->type() == Games::FrozenBubble::CStuff::JOYBUTTONDOWN())) {
                 $k = translate_joystick_tokey($event);
             }
             if ($k) {
                 if ($k eq SDLK_ESCAPE()) {
                     if ($ingame) {
                         smg_add_status_msg(t("*** Leaving game..."));
-                        fb_net::reconnect();
+                        Games::FrozenBubble::Net::reconnect();
                         return smg_choose_game();
                     } else {
-                        fb_net::disconnect();
+                        Games::FrozenBubble::Net::disconnect();
                         $erase->();
                         return 0;
                     }
@@ -4608,7 +4608,7 @@ sub smg_choose_game() {
                             $mynick = sanitize_nick($1);
                             if ($mynick) {
                                 smg_add_status_msg(t("*** You are now known as %s", $mynick));
-                                fb_net::send_and_receive('NICK', $mynick);
+                                Games::FrozenBubble::Net::send_and_receive('NICK', $mynick);
                                 $myoldnick = $save_mynick;
                             } else {
                                 smg_add_status_msg(t("*** Erroneous nickname"));
@@ -4619,8 +4619,8 @@ sub smg_choose_game() {
                             $list_players->();
                             $text = undef;
                         } elsif ($text =~ m|^/server|) {
-                            my $servername = fb_net::current_server_name();
-                            $servername or $servername = fb_net::current_server_hostport();
+                            my $servername = Games::FrozenBubble::Net::current_server_name();
+                            $servername or $servername = Games::FrozenBubble::Net::current_server_hostport();
                             smg_add_status_msg(t("*** You're connected to server '%s'", $servername));
                             $text = undef;
                         } elsif ($text =~ m|^/fs|) {
@@ -4632,7 +4632,7 @@ sub smg_choose_game() {
                             $text = undef;
                         } elsif ($text =~ m|^/kick (\S+)(?: (.+))?| && $can_start) {
                             my $kicked = $1;
-                            $2 and fb_net::send_("TALK $kicked <-- $2");
+                            $2 and Games::FrozenBubble::Net::send_("TALK $kicked <-- $2");
                             if ($kicked eq $mynick) {
                                 my $rand = int(rand(3));
                                 $rand == 0 and smg_add_status_msg(t("*** Sado-masochist, hmm?"));
@@ -4659,7 +4659,7 @@ sub smg_choose_game() {
                                     smg_add_status_msg(t("*** Adding %s to autokick list.", $kicked));
                                     $autokick{$kicked} = $message;
                                     if ($can_start && any { $_ eq $kicked } @wholist) {
-                                        $message and fb_net::send_("TALK $kicked <-- $message");
+                                        $message and Games::FrozenBubble::Net::send_("TALK $kicked <-- $message");
                                         $kick->($kicked);
                                     }
                                 }
@@ -4691,7 +4691,7 @@ sub smg_choose_game() {
                             }
                         }
                         if ($text) {
-                            fb_net::send_("TALK $text");
+                            Games::FrozenBubble::Net::send_("TALK $text");
                             @wholist == 1 and smg_add_status_msg(t("*** Notice: no one's listening here"));
                         }
                         callback_entry('reset');
@@ -4743,7 +4743,7 @@ sub smg_choose_game() {
                         $need4update = 1;
                     }
                   not_in_game:
-                            
+
                     if ($curaction->()->{action} eq 'TOGGLE_CHAIN_REACTION') {
                         $toggle_chain_reaction->();
                     }
@@ -4764,7 +4764,7 @@ sub smg_choose_game() {
                         my $close = smg_verify_command('CLOSE');
                         if ($close) {
                             smg_add_status_msg(t("*** Can't start game: '%s'", $close));
-                            fb_c_stuff::fbdelay(2000);
+                            Games::FrozenBubble::CStuff::fbdelay(2000);
                             return;
                         }
                         #- game is closed, need to check one last time if options are really possible
@@ -4772,7 +4772,7 @@ sub smg_choose_game() {
                             || $victories_limit_index > 0
                             || $continue_game_when_players_leave_state eq t("enabled")
                             || $single_player_targetting_state eq t("disabled")) {
-                            my $level = fb_net::send_and_receive('PROTOCOL_LEVEL');
+                            my $level = Games::FrozenBubble::Net::send_and_receive('PROTOCOL_LEVEL');
                             my $isdelay = 0;
                             if ($level < 1) {  #- chain reaction available from minor level 1 onwards
                                 if ($chain_reaction_state eq t("enabled")) {
@@ -4798,21 +4798,21 @@ sub smg_choose_game() {
                                     $isdelay = 1;
                                 }
                             }
-                            $isdelay and fb_c_stuff::fbdelay(2000);
+                            $isdelay and Games::FrozenBubble::CStuff::fbdelay(2000);
                         }
                         if ($setoptions->()) {
                             smg_add_status_msg(t("*** Can't start game: '%s'", $setoptions));
-                            fb_c_stuff::fbdelay(2000);
+                            Games::FrozenBubble::CStuff::fbdelay(2000);
                             return;
                         }
                         my $start = smg_verify_command('START');
                         if ($start) {
                             smg_add_status_msg(t("*** Can't start game: '%s'", $start));
-                            fb_c_stuff::fbdelay(2000);
+                            Games::FrozenBubble::CStuff::fbdelay(2000);
                             return;
                         }
                     }
-                    
+
 
                 } elsif ($k eq SDLK_RIGHT() && $curaction->()->{action} ne 'CHAT') {
                     if ($curaction->()->{action} eq 'TOGGLE_CHAIN_REACTION') {
@@ -4877,10 +4877,10 @@ sub smg_choose_game() {
                                                                }
                                                            }
                                                        } });
-                    
+
                     } else {
                         if ($curaction->()->{action} eq 'SWITCH_VICTORIES_LIMIT') {
-                            my $utf8char = fb_c_stuff::utf8key(evt($event));
+                            my $utf8char = Games::FrozenBubble::CStuff::utf8key(evt($event));
                             $change_victories_limit->($utf8char) if defined $utf8char && $utf8char eq int($utf8char);
                         }
 
@@ -4895,10 +4895,10 @@ sub smg_choose_game() {
             callback_entry('moved');
             $redraw->();
         }
-        fb_c_stuff::fbdelay($TARGET_ANIM_SPEED);
+        Games::FrozenBubble::CStuff::fbdelay($TARGET_ANIM_SPEED);
 
-        while (my $msg = fb_net::readline_ifdata()) {
-            my ($command, $message) = fb_net::decode_msg($msg);
+        while (my $msg = Games::FrozenBubble::Net::readline_ifdata()) {
+            my ($command, $message) = Games::FrozenBubble::Net::decode_msg($msg);
             if ($command eq 'PUSH') {
                 if ($message =~ /^TALK: (.*)/) {
                     my $message = $1;
@@ -4909,7 +4909,7 @@ sub smg_choose_game() {
                     my $joined = $1;
                     smg_add_status_msg(t("*** %s joined the game!", $joined));
                     if ($can_start && exists $autokick{$joined}) {
-                        $autokick{$joined} and fb_net::send_("TALK $joined <-- $autokick{$joined}");
+                        $autokick{$joined} and Games::FrozenBubble::Net::send_("TALK $joined <-- $autokick{$joined}");
                         $kick->($joined);
                     } else {
                         push @wholist, $joined;
@@ -4919,7 +4919,7 @@ sub smg_choose_game() {
                                 || $victories_limit_index > 0
                                 || $continue_game_when_players_leave_state eq t("enabled")
                                 || $single_player_targetting_state eq t("disabled"))) {
-                            my $level = fb_net::send_and_receive('PROTOCOL_LEVEL');
+                            my $level = Games::FrozenBubble::Net::send_and_receive('PROTOCOL_LEVEL');
                             if ($level < 1) {  #- available from minor level 1 onwards
                                 if ($chain_reaction_state eq t("enabled")) {
                                     smg_add_status_msg(t("*** Chain-reaction disabled, %s is using a too old version of Frozen-Bubble", $joined));
@@ -4947,7 +4947,7 @@ sub smg_choose_game() {
                     if ($1 eq $joined_leader) {
                         smg_add_status_msg(t("*** Game creator left the game..."));
                         play_sound('cancel');
-                        fb_net::reconnect();
+                        Games::FrozenBubble::Net::reconnect();
                         return smg_choose_game();
                     } else {
                         smg_add_status_msg(t("*** %s left the game...", $1));
@@ -4962,12 +4962,12 @@ sub smg_choose_game() {
                     $forget_because_kicked = $joined_leader;
                     smg_add_status_msg(t("*** You were kicked out of the game..."));
                     play_sound('cancel');
-                    fb_net::reconnect();
+                    Games::FrozenBubble::Net::reconnect();
                     return smg_choose_game();
                 } elsif ($message eq 'NO_ACTIVITY_WITHIN_GRACETIME') {
                     smg_add_status_msg(t("*** You were disconnected because of too long inactivity"));
                     play_sound('cancel');
-                    fb_net::reconnect();
+                    Games::FrozenBubble::Net::reconnect();
                     return smg_choose_game();
                 } elsif ($message =~ /^OPTIONS: (.*)/) {
                     my $options = $1;
@@ -5023,7 +5023,7 @@ sub smg_choose_game() {
                         $pdata{$player}{nick} = $m->{nick};
                         $pdata{id2p}{$m->{id}} = $player;
                     }
-                    fb_net::setmyid($pdata{p1}{id});
+                    Games::FrozenBubble::Net::setmyid($pdata{p1}{id});
                     $pdata{$_}{score} = 0 foreach @PLAYERS;
                     #- leader must wait for all others being in prio mode before sending a prio message,
                     #- else first messages might not get properly received on the other end and startup fails.
@@ -5031,12 +5031,12 @@ sub smg_choose_game() {
                       leader_check_game_start:
                         my $can_start = smg_verify_command('LEADER_CHECK_GAME_START');
                         if ($can_start eq 'OTHERS_NOT_READY') {
-                            fb_net::sleep_reasonably();
+                            Games::FrozenBubble::Net::sleep_reasonably();
                             goto leader_check_game_start;
                         } elsif ($can_start) {
                             smg_add_status_msg(t("*** Failure: '%s'", $can_start));
                             play_sound('cancel');
-                            fb_net::reconnect();
+                            Games::FrozenBubble::Net::reconnect();
                             return smg_choose_game();
                         }
                     }
@@ -5051,7 +5051,7 @@ sub smg_choose_game() {
             }
         }
 
-        if (!fb_net::isconnected()) {
+        if (!Games::FrozenBubble::Net::isconnected()) {
             smg_add_status_msg(t("*** Lost connection to server, abandoning - press any key"));
             @actions = ();
             $redraw->();
@@ -5064,7 +5064,7 @@ sub smg_choose_game() {
 
         if ($need4update) {
             if ($state ne 'game_select') {
-                my $status = fb_net::send_and_receive('STATUSGEO');
+                my $status = Games::FrozenBubble::Net::send_and_receive('STATUSGEO');
                 @wholist = ();
                 @free_geolocs = ();
                 foreach (split ',', $status) {
@@ -5126,10 +5126,10 @@ sub show_mp_scores() {
 }
 
 sub setup_mp_game() {
-    
+
     SDL::Video::blit_surface($imgbin{back_netgame}, $apprects{main}, $app, $apprects{main});
 
-    if (!fb_net::isconnected()) {
+    if (!Games::FrozenBubble::Net::isconnected()) {
         @smg_status_messages = ();
         $smg_status_message_offsetpage = 1;
         if ($gameserver) {
@@ -5138,8 +5138,8 @@ sub setup_mp_game() {
                 $host = $gameserver;
                 $port = 1511;
             }
-            fb_net::connect($host, $port);
-            if (!fb_net::isconnected()) {
+            Games::FrozenBubble::Net::connect($host, $port);
+            if (!Games::FrozenBubble::Net::isconnected()) {
                 smg_add_status_msg(t("*** Cannot connect to specified gameserver, fallbacking to contacting master server"));
 		print STDERR "Cannot connect to specified gameserver, fallbacking to contacting master server\n";
                 goto choose_server;
@@ -5149,11 +5149,11 @@ sub setup_mp_game() {
             #- 1. get list of servers
             my $servers = smg_servers();
             defined $servers or return;
-            
+
             #- 2. let user choose server
             smg_choose_server(@$servers) or return;
         }
-            
+
     } else {
         show_mp_scores();
     }
@@ -5298,7 +5298,7 @@ sub append_highscore_level() {
 	    if ($row_numb) {
 		$lvl++;
 		$row_numb = 0;
-            } 
+            }
         } else {
             $row_numb++;
             $lvl == ($levels{current} eq 'WON' ? (keys %levels)-1 : $levels{current})
@@ -5317,13 +5317,13 @@ sub count_highscorehistory_levels() {
 	    if ($row_numb) {
 		$cnt++;
 		$row_numb = 0;
-            } 
+            }
         } else {
             $row_numb++;
         }
     }
     return $cnt;
-} 
+}
 
 sub save_frame() {
     $replayparam and $app->save_bmp(sprintf("$saveframes/frame_\%d_%08d.bmp", $saveframesbase, $saveframescounter++));
@@ -5346,7 +5346,7 @@ sub maingame() {
 
     my $to_wait = $TARGET_ANIM_SPEED - ($app->ticks - $synchro_ticks);
 #    print "$to_wait\n";
-    $to_wait > 0 and fb_c_stuff::fbdelay($to_wait);
+    $to_wait > 0 and Games::FrozenBubble::CStuff::fbdelay($to_wait);
     $saveframes and save_frame();
 }
 
@@ -5394,7 +5394,7 @@ sub save_config {
     foreach my $p (keys %$KEYS) {
 	foreach my $k (keys %{$KEYS->{$p}}) {
             if ($KEYS->{$p}{$k} =~ /^\d+$/) {
-                foreach (@fbsyms::syms) {
+                foreach (@Games::FrozenBubble::Symbols::syms) {
                     if (eval("$KEYS->{$p}{$k} eq SDLK_$_")) {
                         $KEYS_->{$p}{$k} = "SDLK_$_";
                         goto nextkey;
@@ -5469,8 +5469,8 @@ sub menu {
 
     my $launch_editor = sub {
         SDL::Mouse::show_cursor(1);
-        FBLE::init_setup('embedded', $app);
-        FBLE::handle_events();
+        Games::FrozenBubble::LevelEditor::init_setup('embedded', $app);
+        Games::FrozenBubble::LevelEditor::handle_events();
         SDL::Mouse::show_cursor(0);
 	$display_menu->();
         SDL::Video::flip($app);
@@ -5529,16 +5529,16 @@ sub menu {
         if ($graphics_level < 3 || !$speed_ok) {
             put_image($imgbin{menu_logo}, $logox, $logoy);
         } else {
-            $logo_candy_method == 0 and fb_c_stuff::rotate_bilinear(surf($candy), surf($imgbin{menu_logo}), sin($logo_candy_index/40)/20);
-            $logo_candy_method == 1 and fb_c_stuff::flipflop(surf($candy), surf($imgbin{menu_logo}), $logo_candy_index);
-            $logo_candy_method == 2 and fb_c_stuff::enlighten(surf($candy), surf($imgbin{menu_logo}), $logo_candy_index);
-            $logo_candy_method == 3.1 and fb_c_stuff::stretch(surf($candy), surf($imgbin{menu_logo}), $logo_candy_index);
-            $logo_candy_method == 4.1 and fb_c_stuff::tilt(surf($candy), surf($imgbin{menu_logo}), $logo_candy_index);
-            $logo_candy_method == 5 and fb_c_stuff::points(surf($candy), surf($imgbin{menu_logo}), surf($imgbin{menu_logo_mask}));
-            $logo_candy_method == 6 and fb_c_stuff::waterize(surf($candy), surf($imgbin{menu_logo}), $logo_candy_index);
-            $logo_candy_method == 7 and fb_c_stuff::brokentv(surf($candy), surf($imgbin{menu_logo}), $logo_candy_index);
-            $logo_candy_method == 8.1 and fb_c_stuff::snow(surf($candy), surf($imgbin{menu_logo}));
-            
+            $logo_candy_method == 0 and Games::FrozenBubble::CStuff::rotate_bilinear(surf($candy), surf($imgbin{menu_logo}), sin($logo_candy_index/40)/20);
+            $logo_candy_method == 1 and Games::FrozenBubble::CStuff::flipflop(surf($candy), surf($imgbin{menu_logo}), $logo_candy_index);
+            $logo_candy_method == 2 and Games::FrozenBubble::CStuff::enlighten(surf($candy), surf($imgbin{menu_logo}), $logo_candy_index);
+            $logo_candy_method == 3.1 and Games::FrozenBubble::CStuff::stretch(surf($candy), surf($imgbin{menu_logo}), $logo_candy_index);
+            $logo_candy_method == 4.1 and Games::FrozenBubble::CStuff::tilt(surf($candy), surf($imgbin{menu_logo}), $logo_candy_index);
+            $logo_candy_method == 5 and Games::FrozenBubble::CStuff::points(surf($candy), surf($imgbin{menu_logo}), surf($imgbin{menu_logo_mask}));
+            $logo_candy_method == 6 and Games::FrozenBubble::CStuff::waterize(surf($candy), surf($imgbin{menu_logo}), $logo_candy_index);
+            $logo_candy_method == 7 and Games::FrozenBubble::CStuff::brokentv(surf($candy), surf($imgbin{menu_logo}), $logo_candy_index);
+            $logo_candy_method == 8.1 and Games::FrozenBubble::CStuff::snow(surf($candy), surf($imgbin{menu_logo}));
+
 	    SDL::Video::blit_surface($candy, SDL::Rect->new(0,0,0,0), $app, my $rect = SDL::Rect->new($logox, $logoy, 0, 0));
             $logo_candy_index++;
         }
@@ -5602,7 +5602,7 @@ sub menu {
                 if (!defined($cursor_tmp)) {
                     $cursor_tmp = SDL::Surface->new( SDL_ANYFORMAT, $imgbin{menu_cursor}{$m}[0]->w,  $imgbin{menu_cursor}{$m}[0]->h, 32, 0,0,0,0);
                 }
-                fb_c_stuff::pixelize(surf($cursor_tmp), surf($imgbin{menu_cursor}{"${m}alpha"}[$pdata{cursor_img}{$m}]));
+                Games::FrozenBubble::CStuff::pixelize(surf($cursor_tmp), surf($imgbin{menu_cursor}{"${m}alpha"}[$pdata{cursor_img}{$m}]));
 		SDL::Video::blit_surface( $cursor_tmp, SDL::Rect->new(0,0,0,0), $app, $cursor_rect);
             } else {
               	SDL::Video::blit_surface( $imgbin{menu_cursor}{"${m}alpha"}[$pdata{cursor_img}{$m}], SDL::Rect->new(0,0,0,0), $app, $cursor_rect);
@@ -5628,7 +5628,7 @@ sub menu {
 	SDL::Video::update_rects($app, @update_rects);
         @update_rects = ();
     };
-    
+
     $invalidate_all->();
     $menu_update->();
     SDL::Video::flip($app);
@@ -5758,7 +5758,7 @@ sub menu {
                     $pdata{cursor_img}{$m}++;
                     $pdata{cursor_img}{$m} >= @{$imgbin{menu_cursor}{$m}} and $pdata{cursor_img}{$m} = 0;
 		    SDL::Video::update_rects($app, $display_cursor->($m, 0));
-                    
+
                 } else {
                     if ($broken_cursors{$m}) {
                         $broken_cursors{$m}--;
@@ -5772,7 +5772,7 @@ sub menu {
                     }
                 }
             }
-            
+
             #- blinking handling follows
             my $blink_green_left = [ 411, 385 ];
             my $blink_green_right = [ 434, 378 ];
@@ -5838,7 +5838,7 @@ sub menu {
                     SDL::Video::update_rects( $app,$purple_left, $purple_right);
                 }
             }
-            
+
 	}
 
 	if ($graphics_level > 2 && $speed_ok) {
@@ -5848,7 +5848,7 @@ sub menu {
 	my $to_wait = $TARGET_ANIM_SPEED - ($app->ticks - $synchro_ticks);
 #        print "$to_wait\n";
 	if ($to_wait > 0) {
-            fb_c_stuff::fbdelay($to_wait);
+            Games::FrozenBubble::CStuff::fbdelay($to_wait);
             $speed_ok and $speed_ok = 4;
         } else {
             #- disable nice graphics artwork if computer is too slow
@@ -5870,10 +5870,10 @@ sub menu {
           blacken:
             foreach my $step (1..35) {
                 my $ticks = $app->ticks;
-                fb_c_stuff::blacken(surf($app), $step);
+                Games::FrozenBubble::CStuff::blacken(surf($app), $step);
                 SDL::Video::flip($app);
                 my $to_wait = $TARGET_ANIM_SPEED - ($app->ticks - $ticks);
-                $to_wait > 0 and fb_c_stuff::fbdelay($to_wait);
+                $to_wait > 0 and Games::FrozenBubble::CStuff::fbdelay($to_wait);
 
                 SDL::Events::pump_events();
                 while (SDL::Events::poll_event($event) != 0) {
@@ -5914,7 +5914,7 @@ sub choose_levelset() {
         # game continue (means that the level editor has never been opened)
 
     } else {
-	
+
 	if (@levelsets <= 1 && !$choose_level) {
 	    load_levelset($levelsets[0]);
 	} else {
@@ -5925,11 +5925,11 @@ sub choose_levelset() {
                 -d $FBLEVELS or die "Can't create $FBLEVELS directory.\n";
                 -f "$FBLEVELS/default-levelset" or cp_af("$FPATH/data/levels", "$FBLEVELS/default-levelset");
             }
-            
-	    FBLE::init_app('embedded', $app);
-            FBLE::create_play_levelset_dialog($choose_level, $levels{current});
+
+	    Games::FrozenBubble::LevelEditor::init_app('embedded', $app);
+            Games::FrozenBubble::LevelEditor::create_play_levelset_dialog($choose_level, $levels{current});
 	    SDL::Mouse::show_cursor(1);
-            my @game_info = FBLE::handle_events();
+            my @game_info = Games::FrozenBubble::LevelEditor::handle_events();
             @game_info or return;
             load_levelset("$FBLEVELS/$game_info[0]");
             $levels{current} = $game_info[1];
@@ -5944,7 +5944,7 @@ sub replay {
     my ($replayfile) = @_;
     if ($replayfile =~ /^http/) {
         my $filename = $replayfile;
-        $replayfile = fb_net::http_download($replayfile);
+        $replayfile = Games::FrozenBubble::Net::http_download($replayfile);
         $replayfile or return;
         if ($filename =~ /\.bz2$/) {
             my $fh;
@@ -6048,8 +6048,8 @@ sub replay {
     }
     local $direct = 1;
     #- I'm wondering if the following is really more dirty than adding a $playdata test in the beginning of the three functions..
-    local *fb_net::gsend = sub {};
-    local *fb_net::grecv_get1msg_ifdata = sub { return; };
+    local *Games::FrozenBubble::Net::gsend = sub {};
+    local *Games::FrozenBubble::Net::grecv_get1msg_ifdata = sub { return; };
     local *check_mp_connection = sub {};
     new_game_once();
     new_game();
@@ -6097,12 +6097,12 @@ while (1) {
 	} elsif ($died =~ /^quit/) {
             if (is_mp_game()) {
                 if ($pdata{gametype} eq 'lan') {
-                    fb_net::disconnect();
+                    Games::FrozenBubble::Net::disconnect();
                     show_mp_scores();
                     grab_key();
                     goto go_to_menu;
                 } else {
-                    if (fb_net::reconnect() && new_game_once()) {
+                    if (Games::FrozenBubble::Net::reconnect() && new_game_once()) {
                         new_game() or goto go_to_menu;
                     } else {
                         goto go_to_menu;

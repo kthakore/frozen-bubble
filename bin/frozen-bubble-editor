@@ -23,12 +23,12 @@
 #
 # Design & Programming by Kim Joham and David Joham, October 2002 to January 2003
 # Email - [k|d]joham at yahoo.com
-# 
+#
 # *****************************************************************************
 
 use SDL::App;
-use fb_stuff;
-use FBLE;
+use Games::FrozenBubble::Stuff;
+use Games::FrozenBubble::LevelEditor;
 
 # command line options modified from frozen-bubble code
 local $_ = "@ARGV";
@@ -36,7 +36,7 @@ local $_ = "@ARGV";
 /-h/ and die 'Usage:  [OPTION]...
 -h, --help                      display this help screen
 -cb, --colourblind              use bubbles for colourblind people
--ls<filename>, 
+-ls<filename>,
         --levelset<filename>    directly start with the specified levelset name
 -l<#n>, --level<#n>             directly start the n-th level
 -fs, --fullscreen               start in fullscreen mode
@@ -51,5 +51,5 @@ my $app = SDL::App->new(-icon => "$FPATH/gfx/pinguins/window_icon_penguin.png",
                         -title => 'frozen-bubble level editor',
                         -width => 640, -height => 480);
 
-FBLE::init_setup('stand-alone', $app);
-FBLE::handle_events();
+Games::FrozenBubble::LevelEditor::init_setup('stand-alone', $app);
+Games::FrozenBubble::LevelEditor::handle_events();

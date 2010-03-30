@@ -1,4 +1,4 @@
-package fb_c_stuff;
+package Games::FrozenBubble::CStuff;
 
 use strict;
 use vars qw($VERSION @ISA);
@@ -8,9 +8,9 @@ use SDL::Pango::Context;
 require DynaLoader;
 
 @ISA = qw(DynaLoader);
-$VERSION = '1.0';
+$VERSION = '2.20';
 
-bootstrap fb_c_stuff $VERSION;
+bootstrap Games::FrozenBubble::CStuff $VERSION;
 
 sub sdlpango_init{ SDL::Pango::init(); }
 sub sdlpango_createcontext{
@@ -18,7 +18,7 @@ sub sdlpango_createcontext{
 	my $font_desc = shift;
 	my $context   = SDL::Pango::Context->new($font_desc);
 	SDL::Pango::set_default_color($context, $color == "white" ? 0xFFFFFFFF : 0x000000FF, 0x00000000);
-	
+
 	return $context;
 }
 
@@ -26,12 +26,12 @@ sub sdlpango_getsize{
 	my $context = shift;
 	my $text    = shift;
 	my $width   = shift;
-	
+
 	SDL::Pango::set_minimum_size($context, $width, 0);
 	SDL::Pango::set_text($context, $text, -1);
 	my $w = SDL::Pango::get_layout_width($context);
 	my $h = SDL::Pango::get_layout_height($context);
-	
+
 	return [$w, $h];
 }
 
@@ -42,7 +42,7 @@ sub sdlpango_draw_givenalignment{
 	my $width     = shift;
 	my $alignment = shift;
 	SDL::Pango::set_minimum_size($context, $width, 0);
-	SDL::Pango::set_text($context, $text, -1, $alignment == "left" ? SDLPANGO_ALIGN_LEFT 
+	SDL::Pango::set_text($context, $text, -1, $alignment == "left" ? SDLPANGO_ALIGN_LEFT
 	                                                               : $alignment == "center" ? SDLPANGO_ALIGN_CENTER
 	                                                                                        : SDLPANGO_ALIGN_RIGHT );
 	return SDL::Pango::create_surface_draw($context);

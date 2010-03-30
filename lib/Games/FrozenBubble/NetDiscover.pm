@@ -18,11 +18,11 @@
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
 #
-# fb_net_discover - high performance server discovery plugin for frozen bubble
-# 
+# Games::FrozenBubble::NetDiscover - high performance server discovery plugin for frozen bubble
+#
 # SYNOPSIS
-# 
-#     my $discover = fb_net_discover->new(
+#
+#     my $discover = Games::FrozenBubble::NetDiscover->new(
 #         { host => "1.2.3.4", port => 1511 },
 #         { host => "5.6.7.8", port => 1512 }, ...);
 #     while($discover->pending()) {
@@ -32,69 +32,69 @@
 #                 $server, $servers[$server]{ip}, $servers[$server]{ping});
 #         }
 #         $discover->work(0.1); # sit in a select loop for 100ms
-# 
+#
 #         # update your screen, and all of that stuff, here.
 #     }
-# 
-# 
+#
+#
 # DESCRIPTION
-# 
-# fb_net_discover checks a list of servers, finding their versions, ping times,
+#
+# Games::FrozenBubble::NetDiscover checks a list of servers, finding their versions, ping times,
 # and number of current clients.  It uses nonblocking IO and select, to
 # connect to multiple servers in parallel, thus reducing the total amount of
 # time elapsed.  This, in turn, allows the user to begin playing frozen bubble
 # more quickly. :)
-# 
+#
 # This module is designed to be called from a GUI loop.  It has to spend sit in
 # a select loop for most of its life in order to get accurate ping times, but
 # it will return back to your loop at intervals you specify, so you can check
 # for keystrokes and refresh the screen and so forth.
-# 
+#
 # In order to get consistent results on slow dialup links, this module will only
 # attempt to connect to one server per each 200ms.  This means for 18 servers
 # that there are 3.4 seconds of extra guaranteed lag, but it also means packets
 # from multiple servers are less likely to bump into eachother in the queue, so
 # ping reply times will be more reliable.
-# 
+#
 # In the source script, there are two configuration parameters: $number_of_pings
 # and $time_between_connections.  These are set to 2 and 0.2, respectively.
 # These two parameters will determine the amount of bandwidth used, and the
 # amount of time taken before the user can select a server.  Assuming the user's
 # internet connection can handle the traffic without extra latency from queueing
 # or retransmissions, the worst case latency will be, in seconds:
-# 
+#
 #     N*L + T*(S-1)
-# 
+#
 # where
-# 
+#
 #     N = $number_of_pings
 #     L = the roundtrip time of the slowest server in the list, in seconds
 #     T = $time_between_connections
 #     S = the number of servers in the list
-# 
-# 
+#
+#
 # CONSTRUCTOR
-# 
+#
 #     ...->new ({host => "server1", port => port}, {host => "server2", port => port}, ...)
-# 
+#
 # Takes a list of servers as arguments.  Each server argument should be a hash
 # reference, consisting of {host => host, port => port}.  Returns a
-# fb_net_discover object, which can be used within a GUI loop to discover all of
+# Games::FrozenBubble::NetDiscover object, which can be used within a GUI loop to discover all of
 # your servers.
-# 
+#
 # The host string should ideally be an IP address.  A hostname string should work
 # too, but DNS lookups will introduce extra, unpredictable latency later on.
-# 
+#
 #
 # METHODS
-# 
+#
 # These methods define the public API for instances of this class.
-# 
+#
 #   found
-# 
+#
 # Returns a list of 0 or more servers found.  Each return value is a hash
 # reference, containing the following keys:
-# 
+#
 #     host: the IP address of the server
 #     port: the TCP port of the server
 #     pingtimes: array reference, contains the actual result times of 4 pings
@@ -107,69 +107,69 @@
 #     geolocs: the geolocations of players in games
 #     name: the self-proclaimed "name" reported by the server
 #     language: the preferred language reported by the server
-# 
+#
 #   pending
-# 
+#
 # Returns non-zero if we are still waiting for a response from one or more
 # servers; returns 0 if processing is complete.
-# 
+#
 #   work(seconds)
-# 
+#
 # Enters the main loop of this module.  This method requires one argument, a
 # numeric count of seconds to work for.  This is expected to be a floating point
 # decimal, for sub-second precision.  Returns the number of servers pending, just
 # like the pending method does.
 #
-# 
+#
 # INTERNAL METHODS
-# 
+#
 # These methods are only meant to be called from within the module.  They are
 # subject to change without notice.
-# 
+#
 #   try_connect
-# 
+#
 # Attempts to connect to a server.  Moves the first "not_started" server to the
 # "pending" list, and creates a non-blocking IO::Socket::INET object for it.
 # Updates the begin_time timestamp, to determine when the next server should be
 # connected.
-# 
+#
 #   server_sm(connection_number)
 #
 # Implements a simple state machine.  Called with an index into the pending
 # array, to indicate that data is available for reading from this server.
-# 
+#
 #   give_up_on(connection_number, reason)
-# 
+#
 # Called if select reports a socket as has_exception.  Also called if the
 # server has a bogus version, times out, or we can't parse the IP address or
 # something.  Removes the entry from further processing, and emits an error
 # message on stderr.
-# 
+#
 #
 # EXPORT
-# 
+#
 # None.
 #
-# 
+#
 # BUGS
-# 
+#
 # implement some sort of timeout, for servers which don't respond within 5 seconds.
-# 
+#
 #
 # AUTHOR
-# 
+#
 # Mark Glines, <mark@glines.org>.
-# 
+#
 #
 # COPYRIGHT AND LICENSE
-# 
+#
 # This code is donated to the frozen bubble project, www.frozen-bubble.org, so
 # they can do whatever they want with it.  Copyright is therefore assigned to
 # those guys.
-# 
+#
 #******************************************************************************
 
-package fb_net_discover;
+package Games::FrozenBubble::NetDiscover;
 
 use strict;
 use warnings;
@@ -178,8 +178,8 @@ use IO::Select;
 use Time::HiRes qw(gettimeofday tv_interval);
 use Carp;
 
-use fb_net;
-my $proto_hdr = "FB/" . $fb_net::proto_major . "." .$fb_net::proto_minor;
+use Games::FrozenBubble::Net;
+my $proto_hdr = "FB/" . $Games::FrozenBubble::Net::proto_major . "." .$Games::FrozenBubble::Net::proto_minor;
 
 # configuration parameters
 my $number_of_pings = 2;   # ping each server this many times

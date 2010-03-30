@@ -1,0 +1,73 @@
+#!perl
+use 5.008;
+use strict;
+use warnings FATAL => 'all';
+use lib 'inc';
+use Alien::SDL qw();
+use Config qw(%Config);
+use Devel::CheckLib qw(check_lib_or_exit);
+use Local::Games::FrozenBubble::Build qw();
+
+sub chomped {
+    my $value = $_[0];
+    chomp $value;
+    return $value;
+}
+
+check_lib_or_exit(header => 'iconv.h');
+check_lib_or_exit(header => 'math.h');
+check_lib_or_exit(header => 'SDL/SDL.h');
+check_lib_or_exit(header => 'SDL/SDL_mixer.h');
+
+Local::Games::FrozenBubble::Build->new(
+    add_to_cleanup     => [
+        'lib/Games/FrozenBubble/CStuff.c',
+        'lib/Games/FrozenBubble/CStuff.o',
+    ],
+    configure_requires => {
+        perl                => '5.008',
+        'Alien::SDL'        => '1.1',
+        Config              => 0,
+        'Devel::CheckLib'   => '0.6',
+        'ExtUtils::ParseXS' => '2.16',
+        'IO::File'          => 0,
+        'Module::Build'     => '0.36',    # for share_dir
+    },
+    build_requires       => {
+    },
+    dist_abstract        => 'Puzzle with Bubbles',    # taken from openSUSE rpm spec file
+    dynamic_config       => 1,
+    extra_compiler_flags => [
+        Alien::SDL->config('cflags'),
+        chomped(`pkg-config --cflags glib-2.0 pango gobject-2.0 gmodule-2.0`),
+        '-lm', Alien::SDL->config('libs'),
+        '-lSDL_mixer', '-lSDL_Pango', chomped(`pkg-config --libs glib-2.0 pango gobject-2.0 gmodule-2.0`),
+    ],
+    license    => 'gpl2',
+    meta_merge => {
+        resources => {
+            repository => 'http://github.com/kthakore/frozen-bubble',
+            bugtracker => 'http://github.com/kthakore/frozen-bubble/issues',
+        },
+    },
+    module_name => 'Games::FrozenBubble',
+    requires    => {
+        'perl'            => '5.008',
+        Carp              => 0,
+        'Data::Dumper'    => 0,
+        DynaLoader        => 0,
+        Errno             => 0,
+        Fcntl             => 0,
+        'Getopt::Long'    => 0,
+        'IO::File'        => 0,
+        'IO::Select'      => 0,
+        'IO::Socket'      => 0,
+        'Locale::gettext' => 0,
+        'Math::Trig'      => 0,
+        parent            => 0,
+        POSIX             => 0,
+        SDL               => '1.19.0',
+        'Time::HiRes'     => 0,
+    },
+    share_dir => 'share',
+)->create_build_script;

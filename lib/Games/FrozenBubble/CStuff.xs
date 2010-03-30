@@ -25,8 +25,9 @@
 #include <sys/time.h>
 #include <unistd.h>
 
-#include <SDL.h>
-#include <SDL_mixer.h>
+
+#include <SDL/SDL.h>
+#include <SDL/SDL_mixer.h>
 
 const int XRES = 640;
 const int YRES = 480;
@@ -54,7 +55,7 @@ void myUnlockSurface(SDL_Surface * s)
 }
 void synchro_before(SDL_Surface * s)
 {
-	ticks = SDL_GetTicks();	
+	ticks = SDL_GetTicks();
 	myLockSurface(s);
 }
 void synchro_after(SDL_Surface * s)
@@ -109,9 +110,9 @@ void store_effect(SDL_Surface * s, SDL_Surface * img)
 
 	if (rand_(2) == 1) {
 		while (step < YRES/2/store_thickness + store_thickness) {
-			
+
 			synchro_before(s);
-			
+
 			for (i=0; i<=YRES/2/store_thickness; i++) {
 				int v = step - i;
 				if (v >= 0 && v < store_thickness) {
@@ -120,15 +121,15 @@ void store_effect(SDL_Surface * s, SDL_Surface * img)
 				}
 			}
 			step++;
-			
+
 			synchro_after(s);
 		}
 	}
 	else {
 		while (step < XRES/2/store_thickness + store_thickness) {
-			
+
 			synchro_before(s);
-			
+
 			for (i=0; i<=XRES/2/store_thickness; i++) {
 				int v = step - i;
 				if (v >= 0 && v < store_thickness) {
@@ -137,7 +138,7 @@ void store_effect(SDL_Surface * s, SDL_Surface * img)
 				}
 			}
 			step++;
-			
+
 			synchro_after(s);
 		}
 	}
@@ -151,7 +152,7 @@ void bars_effect(SDL_Surface * s, SDL_Surface * img)
 	int bpp = img->format->BytesPerPixel;
 	const int bars_max_steps = 40;
 	const int bars_num = 16;
-	
+
 	for (i=0; i<bars_max_steps; i++) {
 
 		synchro_before(s);
@@ -159,7 +160,7 @@ void bars_effect(SDL_Surface * s, SDL_Surface * img)
 		for (y=0; y<YRES/bars_max_steps; y++) {
 			int y_  = (i*YRES/bars_max_steps + y) * img->pitch;
 			int y__ = (YRES - 1 - (i*YRES/bars_max_steps + y)) * img->pitch;
-			
+
 			for (j=0; j<bars_num/2; j++) {
 				int x_ =    (j*2) * (XRES/bars_num) * bpp;
 				int x__ = (j*2+1) * (XRES/bars_num) * bpp;
@@ -238,11 +239,11 @@ void circle_effect(SDL_Surface * s, SDL_Surface * img)
 	while (step >= 0) {
 
 		synchro_before(s);
-		
+
 		for (y=0; y<YRES; y++) {
                         void* src_line = img->pixels + y*img->pitch;
                         void* dest_line = s->pixels + y*img->pitch;
-			for (x=0; x<XRES; x++) 
+			for (x=0; x<XRES; x++)
                                 if (in_or_out == 1) {
                                         if (circle_steps[x+y*XRES] == step)
                                                 memcpy(dest_line + x*bpp, src_line + x*bpp, bpp);
@@ -252,7 +253,7 @@ void circle_effect(SDL_Surface * s, SDL_Surface * img)
                                 }
                 }
 		step--;
-				
+
 		synchro_after(s);
 	}
 
@@ -391,7 +392,7 @@ void plasma_effect(SDL_Surface * s, SDL_Surface * img)
 		}
 
 		step++;
-				
+
 		synchro_after(s);
 	}
 }
@@ -670,17 +671,17 @@ void rotate_bicubic_(SDL_Surface * dest, SDL_Surface * orig, double angle)
                                                         CUBIC_ROW(dx, origptr + 3 + dest->pitch * 2),
                                                         CUBIC_ROW(dx, origptr + 3 + dest->pitch * 3));
                                 if (a_val <= 0.0) {
-                                        a_recip = 0.0; 
+                                        a_recip = 0.0;
                                         *(ptr+3) = 0;
                                 } else if (a_val > 255.0) {
                                         a_recip = 1.0 / a_val;
                                         *(ptr+3) = 255;
-                                } else { 
+                                } else {
                                         a_recip = 1.0 / a_val;
                                         *(ptr+3) = (int) a_val;
                                 }
                                 /* for RGB, result = bicubic (c * alpha) / bicubic (alpha) */
-                                for (i = 0; i < 3; i++) { 
+                                for (i = 0; i < 3; i++) {
                                         int newval = a_recip * transform_cubic(dy,
                                                                                CUBIC_SCALED_ROW (dx, origptr + i,                   origptr + 3),
                                                                                CUBIC_SCALED_ROW (dx, origptr + i + dest->pitch,     origptr + 3 + dest->pitch),
@@ -977,7 +978,7 @@ void points_(SDL_Surface * dest, SDL_Surface * orig, SDL_Surface * mask)
         }
         for (i = 0; i < amount; i++) {
                 double angle_distance = 0;
-                
+
                 *( (Uint32*) ( dest->pixels + ((int)points[i].y)*dest->pitch + ((int)points[i].x)*Bpp ) ) = 0xFFCCCCCC;
 
                 points[i].x += cos(points[i].angle);
@@ -989,7 +990,7 @@ void points_(SDL_Surface * dest, SDL_Surface * orig, SDL_Surface * mask)
                         points[i].y -= sin(points[i].angle);
                         while (1) {
                                 angle_distance += 2 * M_PI / 100;
-                                
+
                                 points[i].x += cos(points[i].angle + angle_distance);
                                 points[i].y += sin(points[i].angle + angle_distance);
                                 if (* ( (Uint32*) ( mask->pixels + ((int)points[i].y)*mask->pitch + ((int)points[i].x)*mask->format->BytesPerPixel ) ) == 0xFFFFFFFF) {
@@ -1283,7 +1284,7 @@ void overlook_(SDL_Surface * dest, SDL_Surface * orig, int step, int pivot)
                         double y__ = dest->h/2 + (y - dest->h/2) * y_factor;
                         Uint32 *A, *B, *C, *D;
                         y_ = floor(y__);
-                        
+
                         if (x_ < 0 || x_ > orig->w - 2 || y_ < 0 || y_ > orig->h - 2) {
                                 // out of band
                                 * ( ptr + Adec ) = * (ptr + Adec ) * fade;
@@ -1526,7 +1527,7 @@ void draw_line_(SDL_Surface* surface, int x1, int y1, int x2, int y2, SDL_Color*
 
 /************************** Gateway to Perl ****************************/
 
-MODULE = fb_c_stuff		PACKAGE = fb_c_stuff
+MODULE = Games::FrozenBubble::CStuff		PACKAGE = Games::FrozenBubble::CStuff
 
 void
 init_effects(datapath)
@@ -1740,7 +1741,7 @@ fbdelay(ms)
 			 SDL_Delay(ms);
 			 ms -= SDL_GetTicks() - then;
 		     } while (ms > 1);
-		     
+
 SV *
 utf8key(event)
   SDL_Event * event
@@ -1755,7 +1756,7 @@ JoyAxisEventValue ( e )
         SDL_Event *e
         CODE:
                 RETVAL = e->jaxis.value;   // buggy up to 2.1.2
-        OUTPUT: 
+        OUTPUT:
                 RETVAL
 
 Uint8

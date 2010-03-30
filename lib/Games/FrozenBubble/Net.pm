@@ -20,7 +20,7 @@
 #
 #******************************************************************************
 
-package fb_net;
+package Games::FrozenBubble::Net;
 
 use strict;
 use IO::Socket;
@@ -28,7 +28,7 @@ use Fcntl;
 use Errno qw(:POSIX);
 use POSIX qw(uname);
 use Time::HiRes qw(gettimeofday sleep);
-use fb_stuff;
+use Games::FrozenBubble::Stuff;
 
 our $proto_major = '1';  #- this is our protocol level
 our $proto_minor = '2';  #-
@@ -45,7 +45,7 @@ sub discover_lan_servers {
         print STDERR "Cannot create socket: $!\n";
         return { failure => 'Cannot send broadcast.' };
     }
-    
+
     if (!$socket->setsockopt(SOL_SOCKET, SO_BROADCAST, 1)) {
         print STDERR "Cannot setsockopt: $!\n";
         return { failure => 'Cannot send broadcast.' };
@@ -195,7 +195,7 @@ sub send_and_receive($;$) {
     while (!defined($answer)) {
         my $msg = readline_();
         !defined($msg) and $answer = '';
-        my ($rcv_command, $rcv_message) = fb_net::decode_msg($msg);
+        my ($rcv_command, $rcv_message) = Games::FrozenBubble::Net::decode_msg($msg);
         if ($rcv_command eq $command) {
             $answer = $rcv_message;
         } else {
@@ -376,7 +376,7 @@ sub current_server_hostport {
 sub reconnect() {
     if (defined($current_host) && defined($current_port)) {
         disconnect();
-        my $ret = fb_net::connect();
+        my $ret = Games::FrozenBubble::Net::connect();
         return exists $ret->{ping};
     }
 }
@@ -423,7 +423,7 @@ sub http_download($) {
             &$read; &$read if $buf =~ /\015/;
             $now = $buf =~ /\012/;
         } until $now && $last;
-        
+
         if ($tmp =~ m|^HTTP/\d\.\d (.*\b(\d+)\b.*)| && $2 == 200) {
             $tmp = '';
             while (1) { &$read }
@@ -524,7 +524,7 @@ sub grecv() {
     $buffered_buf = undef;
 #    my @ascii = unpack("C*", $buf);
 #    print "bytes in buf: @ascii\n";
-    
+
     while ($buf) {
         #- first byte of a "frame" is the id of the sender
         my $id = substr($buf, 0, 1);

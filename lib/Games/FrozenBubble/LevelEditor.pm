@@ -29,7 +29,7 @@
 #
 # *****************************************************************************
 
-package FBLE;
+package Games::FrozenBubble::LevelEditor;
 
 use POSIX(qw(floor ceil));
 use SDL;
@@ -42,8 +42,8 @@ use SDL::Cursor;
 use SDL::Font;
 use SDL::Mixer;
 
-use fb_stuff;
-use fbsyms;
+use Games::FrozenBubble::Stuff;
+use Games::FrozenBubble::Symbols;
 
 use strict;
 our ($NUM_ROWS, $NUM_BUBBLES_AVAIL,
@@ -105,7 +105,7 @@ sub get_col {
     if (even(get_row($y))) {
         return floor(($x-$POS_1P{p1}{left_limit})/$BUBBLE_SIZE);
 
-    } elsif ($POS_1P{p1}{left_limit} + $BUBBLE_SIZE/2 <= $x && $x < $POS_1P{p1}{right_limit} - $BUBBLE_SIZE/2)  { 
+    } elsif ($POS_1P{p1}{left_limit} + $BUBBLE_SIZE/2 <= $x && $x < $POS_1P{p1}{right_limit} - $BUBBLE_SIZE/2)  {
         return floor(($x-($POS_1P{p1}{left_limit}+$BUBBLE_SIZE/2))/$BUBBLE_SIZE);
 
     } else {
@@ -139,7 +139,7 @@ sub draw_bubble {
 sub erase_bubble {
     my ($x, $y) = @_;
     $background->blit($bubble_rects{$x}{$y}, $app, $bubble_rects{$x}{$y});
-    #- redraw close bubbles because the rectangular blit of the previous statement erased a bit of them 
+    #- redraw close bubbles because the rectangular blit of the previous statement erased a bit of them
     my $DISTANCE_CLOSE_SQRED = sqr($BUBBLE_SIZE*1.1);
     foreach my $x_ (keys %bubble_rects) {
 	foreach my $y_ (%{$bubble_rects{$x_}}) {
@@ -261,15 +261,15 @@ sub unhighlight_option {
 	    my $rect = $bubble_rects{bubble_optionx($col)}{bubble_optiony($row)};
             $background->blit($rect, $app, $rect);
             $app->update($rect);
-            
+
             add_bubble_option($highlighted_option, $col, $row);
-    
+
         } elsif ($highlighted_option eq 'erase') {
             $background->blit($rect{erase}, $app, $rect{erase});
             $app->update($rect{erase});
-            
+
             add_erase_option();
-                                  
+
         } elsif ($highlighted_option =~ m/arrow/) {
             eval "print_dialog_$highlighted_option(0)";
 
@@ -312,14 +312,14 @@ sub choose_action {
         $previousx = -1;
         $previousy = -1;
     }
-   
+
     # selecting a bubble or erase bubble??
     if ($y >= $BUBBLE_WOOD_Y + $WOOD_PLANK_HEIGHT && $y <= $BUBBLE_WOOD_Y + 4 * $WOOD_PLANK_HEIGHT
 	&& $x > $BUBBLE_OPTION_INIT_X - $BUBBLE_OPTION_SEPARATION/2
 	&& $x <= $BUBBLE_OPTION_INIT_X + $BUBBLES_PER_ROW * ($BUBBLE_SIZE + $BUBBLE_OPTION_SEPARATION) - $BUBBLE_OPTION_SEPARATION/2) {
         my $col = ceil(($x - $BUBBLE_OPTION_INIT_X + $BUBBLE_OPTION_SEPARATION/2) / ($BUBBLE_SIZE + $BUBBLE_OPTION_SEPARATION));
         my $row = ceil(($y - ($BUBBLE_WOOD_Y + $WOOD_PLANK_HEIGHT) + $BUBBLE_OPTION_SEPARATION/2) / ($BUBBLE_SIZE + $BUBBLE_OPTION_SEPARATION));
-        
+
         my $color_tmp = $BUBBLES_PER_ROW * ($row - 1) + $col;
         if (0 < $color_tmp && $color_tmp <= $NUM_BUBBLES_AVAIL) {
             highlight_option("bubble-$color_tmp", bubble_optionx($col - 1), bubble_optiony($row - 1));
@@ -336,7 +336,7 @@ sub choose_action {
     } elsif ($LEFT_WOOD_X <= $x && $x <= $WOOD_WIDTH && $rect{prev}->y <= $y && $y <= $rect{last}->y + $rect{last}->height) {
 	my @nav_options = ({ name => 'prev',
 			     unhighlight => $curr_level == 1,
-			     action => sub { if ($curr_level != 1) { 
+			     action => sub { if ($curr_level != 1) {
 				                 prev_level();
 						 $curr_level == 1 and unhighlight_option();
 					     } } },
@@ -401,14 +401,14 @@ sub choose_action {
     # check if over help
     } elsif ($RIGHT_WOOD_X <= $x && $x <= $RIGHT_WOOD_X + $WOOD_WIDTH
              && $y >= $rect{help}->y && $y <= $rect{help}->y + $rect{help}->height) {
-		     
+
         if ($caller eq 'button') {
             create_help_dialog();
         }
         else {
             highlight_option('help');
         }
-        
+
     # not over an option so I may need to unhighlight
     } else {
         unhighlight_option();
@@ -433,7 +433,7 @@ sub betw {
 sub choose_dialog_action {
     my ($x, $y, $caller, $event) = @_;
     my ($ok_rect, $cancel_rect, $surface_tmp);
-    
+
     # todo - can we get this info somewhere else in a better way?
     $surface_tmp = SDL::Surface->new(-name => "$FPATH/gfx/list_arrow_up.png");
 
@@ -464,10 +464,10 @@ sub choose_dialog_action {
                 return 1;
 	    }
 	}
-	
+
 	$displaying_dialog ne 'ls_new' and highlight_option('ok');
 
-	
+
 	if ($caller eq 'button') {
 	    if ($displaying_dialog eq 'ls_new' && is_ok_filename() == 1) {
 		remove_dialog();
@@ -590,10 +590,10 @@ sub choose_dialog_action {
                     if (is_ok_select_start_value($start_level) == 0) {
                         #- we're over (since we can't be under) so go to the last
                         #- level in this new set
-                        $start_level = $file_browser_levelsets_num_levels[$list_browser_highlight_offset];	
+                        $start_level = $file_browser_levelsets_num_levels[$list_browser_highlight_offset];
                         show_selected_level();
                     }
-                    
+
 		}
 	    }
         } elsif ($displaying_dialog eq 'ls_play_choose_level' && betw($x, 435, 470)) {
@@ -626,7 +626,7 @@ sub handle_events {
     while (1) {
         $event->pump;
         if ($event->poll != 0) {
-    
+
             if ($event->type == SDL_MOUSEMOTION) {
                 if ($displaying_dialog eq '') {
                     choose_action($event->button_x, $event->button_y, 'motion', $event->button);  #- , )
@@ -662,7 +662,7 @@ sub handle_events {
                     $event->key_sym == SDLK_UP() and first_level();
                     $event->key_sym == SDLK_DOWN() and last_level();
                     $event->key_sym == SDLK_a() and append_level();
-                    $event->key_sym == SDLK_d() and do { delete_level(); FBLE::load_level() };
+                    $event->key_sym == SDLK_d() and do { delete_level(); Games::FrozenBubble::LevelEditor::load_level() };
                     $event->key_sym == SDLK_f() and $app->fullscreen;
                     $event->key_sym == SDLK_h() and prev_level();
                     $event->key_sym == SDLK_i() and insert_level();
@@ -674,7 +674,7 @@ sub handle_events {
                     $event->key_sym == SDLK_RIGHTBRACKET() and move_level_right();
                     $event->key_sym == SDLK_LEFTBRACKET() and move_level_left();
                     $event->key_sym == SDLK_F1() and create_help_dialog();
-                    $event->key_sym == SDLK_j() and create_jump_to_level_dialog(); 
+                    $event->key_sym == SDLK_j() and create_jump_to_level_dialog();
 		    if ((($highlighted_option eq 'prev' || $highlighted_option eq 'first') && $curr_level == 1)
 			|| (($highlighted_option eq 'next' || $highlighted_option eq 'last') && $curr_level == keys %bubble_hash)) {
 			unhighlight_option();
@@ -716,7 +716,7 @@ sub handle_events {
                         $app->delay(200);
                         remove_dialog();
                     }
-                    
+
                 } elsif (member($displaying_dialog, qw(ls_play ls_play_choose_level))) {
                     if ($event->key_sym == SDLK_ESCAPE() || $event->key_sym == SDLK_q() ) {
                         $displaying_dialog = '';
@@ -735,7 +735,7 @@ sub handle_events {
                         if (is_ok_select_start_value($start_level) == 0) {
                             #- we're over (since we can't be under) so go to the last
                             #- level in this new set
-                            $start_level = $file_browser_levelsets_num_levels[$list_browser_highlight_offset];	
+                            $start_level = $file_browser_levelsets_num_levels[$list_browser_highlight_offset];
                             if ($displaying_dialog eq 'ls_play_choose_level') {
                                 show_selected_level();
                             }
@@ -745,7 +745,7 @@ sub handle_events {
                         if (is_ok_select_start_value($start_level) == 0) {
                             #- we're over (since we can't be under) so go to the last
                             #- level in this new set
-                            $start_level = $file_browser_levelsets_num_levels[$list_browser_highlight_offset];	
+                            $start_level = $file_browser_levelsets_num_levels[$list_browser_highlight_offset];
                             if ($displaying_dialog eq 'ls_play_choose_level') {
                                 show_selected_level();
                             }
@@ -809,7 +809,7 @@ sub handle_events {
                         eval($modified_levelset_action);
                     }
                 }
-        
+
                 $app->flip;
 
             } elsif ($event->type == SDL_QUIT) {
@@ -835,8 +835,8 @@ sub handle_events {
                     return $1;
                 }
             }
-            
-        } else { 
+
+        } else {
             $app->delay(1);
         }
 
@@ -864,9 +864,9 @@ sub create_dialog_base {
     }
     $rect{dialog} = SDL::Rect->new(-x => 0, '-y' => 0, -width => $surface_dialog->width, -height => $surface_dialog->height);
     $rect{middle} = get_dialog_rect();
-    
+
     $surface_dialog->blit($rect{dialog}, $app, $rect{middle});
-    
+
     $app->print($rect{middle}->x + $rect{middle}->width/2 - 12 * length($title_text)/2, $rect{middle}->y + 5, uc($title_text));
 }
 
@@ -894,7 +894,7 @@ sub remove_dialog {
 # subroutine to ask the user what to do if they delete the current levelset
 sub create_deleted_current_levelset_dialog {
     $displaying_dialog = 'ls_deleted_current';
-    $deleted_current_levelset = 1; 
+    $deleted_current_levelset = 1;
     create_dialog('DELETED CURRENT LEVELSET');
     $rect{middle} = get_dialog_rect();
     $app->print($rect{middle}->x + 25, $rect{middle}->y + 15 + $WOOD_PLANK_HEIGHT, "PRESS \"OK\" TO CHOOSE");
@@ -910,20 +910,20 @@ sub create_delete_levelset_dialog {
         $displaying_dialog = 'ls_delete';
         create_dialog('SELECT LEVELSET TO DELETE');
         $list_browser_highlight_offset = -1;
-        $list_browser_file_start_offset = -1; 
+        $list_browser_file_start_offset = -1;
         display_levelset_list_browser(0, 0);
     } else {
         $displaying_dialog = 'ls_nothing_to_delete';
         create_ok_dialog('NO LEVELSET TO DELETE');
         $rect{middle} = get_dialog_rect();
-        $app->print($rect{middle}->x + 50, $rect{middle}->y + 30 + $WOOD_PLANK_HEIGHT, "THERE ARE NO CUSTOM"); 
+        $app->print($rect{middle}->x + 50, $rect{middle}->y + 30 + $WOOD_PLANK_HEIGHT, "THERE ARE NO CUSTOM");
         $app->print($rect{middle}->x + 50, $rect{middle}->y + 55 + $WOOD_PLANK_HEIGHT, "LEVELSETS TO DELETE.");
         $app->print($rect{middle}->x + 40, $rect{middle}->y + 125 + $WOOD_PLANK_HEIGHT, "PRESS \"OK\" TO CONTINUE");
     }
 }
 
 
-#subroutine to display the help dialog. 
+#subroutine to display the help dialog.
 sub create_help_dialog {
     $displaying_dialog = 'help';
     create_ok_dialog("HELP - KEY SHORTCUTS");
@@ -934,7 +934,7 @@ sub create_help_dialog {
 sub create_jump_to_level_dialog {
     $jump_to_level_value = '';
     $displaying_dialog = 'jump';
-    create_dialog("ENTER LEVEL TO JUMP TO");	
+    create_dialog("ENTER LEVEL TO JUMP TO");
 }
 
 # subroutine to create a new levelset dialog. This dialog asks for the name of the new levelset
@@ -975,7 +975,7 @@ sub create_open_levelset_dialog {
         $displaying_dialog = 'ls_open';
         create_dialog('SELECT LEVELSET TO OPEN');
         $list_browser_highlight_offset = -1;
-        $list_browser_file_start_offset = -1; 
+        $list_browser_file_start_offset = -1;
         display_levelset_list_browser(0,0);
     }
 }
@@ -985,7 +985,7 @@ sub create_open_levelset_dialog_ok_only {
     $displaying_dialog = 'ls_open_ok_only';
     create_ok_dialog('SELECT LEVELSET TO OPEN');
     $list_browser_highlight_offset = -1;
-    $list_browser_file_start_offset = -1; 
+    $list_browser_file_start_offset = -1;
     display_levelset_list_browser(0,0);
 
 }
@@ -1019,12 +1019,12 @@ sub save_file {
 
 sub create_play_levelset_dialog {
     my ($chooseStartingLevel, $defaultLevel) = @_;
-    
-    #initialize the start level to the default level 
+
+    #initialize the start level to the default level
     #this is only modified in ls_play_choose_level dialogs
     #but it is always referenced
     $start_level = $defaultLevel;
-    
+
     #we do the check for $chooseStartingLevel twice because create_ok_dialog
     #needs to know the displaying levelset but display_level_selector
     #needs things that are set up in display_levelset_list_browser
@@ -1033,10 +1033,10 @@ sub create_play_levelset_dialog {
     } else {
         $displaying_dialog = 'ls_play';
     }
-    
+
     create_ok_dialog('SELECT LEVELSET TO PLAY');
     $list_browser_highlight_offset = -1;
-    $list_browser_file_start_offset = -1; 
+    $list_browser_file_start_offset = -1;
     display_levelset_list_browser(0, 0);
     if ($chooseStartingLevel == 1) {
         display_level_selector();
@@ -1061,11 +1061,11 @@ sub create_save_changes_dialog {
 }
 
 sub display_level_selector {
-    
+
     $rect{middle} = get_dialog_rect();
     $app->print($rect{middle}->x + 15, $rect{middle}->y + 190, "START LEVEL:");
     $app->update($rect{middle});
-    
+
     show_selected_level();
     print_dialog_select_level_arrow(0, 'down');
     print_dialog_select_level_arrow(0, 'up');
@@ -1075,7 +1075,7 @@ sub display_level_selector {
 
 sub is_ok_modify_selected_level {
     my ($modification) = @_;
-    
+
     if ($modification =~ /up/ && is_ok_select_start_value($start_level + 1)
         || $modification =~ /down/ && is_ok_select_start_value($start_level - 1)) {
         return 1;
@@ -1085,11 +1085,11 @@ sub is_ok_modify_selected_level {
 }
 
 sub modify_selected_level {
-    
+
     my ($event, $modification) = @_;
     my $loops = 0;
-    
-    
+
+
     #loop until we get a keyup or a mouse up
     while (1) {
         $event->pump;
@@ -1124,7 +1124,7 @@ sub modify_selected_level {
                 }
 
             }
-			
+
 			#no change in the event, delay and then try again
             if ($loops <= 5) {
 				#special case here. If the user hits the keys fast, we need
@@ -1143,7 +1143,7 @@ sub modify_selected_level {
 
             } elsif ($loops <= 10) {
                 $app->delay(150);
-				
+
             } elsif ($loops <= 20) {
                 $app->delay(80);
 
@@ -1156,15 +1156,15 @@ sub modify_selected_level {
         } else {
             if ($event->type == SDL_MOUSEMOTION) {
                 #let them move the mouse around in the arrow that's already highlighted
-                
+
                 my $x = $event->button_x;
                 my $y = $event->button_y;  #;;
-                
+
                 #if I'm outside of the x range, just exit
                 if (!betw($x, 435, 470)) {
                     goto done;
                 }
-                
+
                 if ($modification =~ /up/) {
                     if ( !betw($y, $rect{middle}->y + 180, $rect{middle}->y + 200) ) {
                         goto done;
@@ -1174,15 +1174,15 @@ sub modify_selected_level {
                         goto done;
                     }
                 }
-                
+
             } else {
                 goto done;
             }
         }
     }
-    
+
   done:
-    
+
 }
 
 #- from gentoo patch IIRC
@@ -1202,20 +1202,20 @@ sub show_selected_level {
     $rect{select_level_background_src}
       = SDL::Rect->new(-width => $surf_select_level_background->width,
                        -height => $surf_select_level_background->height);
-    
+
     $rect{select_level_background_dest}
       = SDL::Rect->new(-x => 305,
                        -y => $rect{middle}->y + 190,  #==
                        -width => $rect{select_level_background_src}->width,
                        -height => $rect{select_level_background_src}->height);
-    
+
     $surf_select_level_background->blit($rect{select_level_background_src}, $app, $rect{select_level_background_dest});
-    
+
     #now write the selected level
     $font = SDL::Font->new("$FPATH/gfx/font-hi.png");
     $app->print(427 - SDL_TEXTWIDTH($start_level), $rect{middle}->y + 190, $start_level);
     $font = SDL::Font->new("$FPATH/gfx/font.png");
-    
+
     $app->update($rect{select_level_background_dest});
 
     display_levelset_screenshot();
@@ -1257,7 +1257,7 @@ sub display_levelset_list_browser {
 
     $rect{list_box_src} = SDL::Rect->new(-width => $surf_file_list_background->width,
 					 -height => 3 * $WOOD_PLANK_HEIGHT);
-    
+
     # if the user is choosing the start level, we need to move things up a little bit to make
     # room for the choose level widget
     my $widgetMove = 0;
@@ -1278,7 +1278,7 @@ sub display_levelset_list_browser {
 
         $rect{scroll_list_background_src} = SDL::Rect->new(-width => $surf_scroll_list_background,
 							   -height => 3 * $WOOD_PLANK_HEIGHT);
-    
+
         $rect{scroll_list_background_dest} = SDL::Rect->new(-x => $rect{dialog_file_list}->x + $rect{dialog_file_list}->width,
 							    '-y' => $rect{dialog_file_list}->y,
 							    -width => $rect{scroll_list_background_src}->width,
@@ -1286,7 +1286,7 @@ sub display_levelset_list_browser {
 
         $surf_scroll_list_background->blit($rect{scroll_list_background_src}, $app, $rect{scroll_list_background_dest});
         $app->update($rect{scroll_list_background_dest});
-    
+
         print_dialog_list_arrow_down(0);
         print_dialog_list_arrow_up(0);
     }
@@ -1301,20 +1301,20 @@ sub display_levelset_list_browser {
                   = SDL::Rect->new(-x => $rect{middle}->x + 12,
                                    '-y' => $rect{dialog_file_list}->y + 10 + 25 * ($cnt - $file_start_offset),
                                    -width => $surf_purple_highlight->width, -height => $surf_purple_highlight->height);
-                
+
                 $surf_purple_highlight->blit($rect{purple_highlight_src}, $app, $rect{purple_highlight_dest});
                 $app->update($rect{purple_highlight_dest});
             }
             $app->print($rect{middle}->x + 19, $rect{dialog_file_list}->y + 8 + 25 * ($cnt - $file_start_offset),
-			uc($levelsets[$cnt])); 
+			uc($levelsets[$cnt]));
         }
     } else {
-        # erase the old highlight 
+        # erase the old highlight
         $rect{old_highlight} = SDL::Rect->new(
             -x => $rect{middle}->x + 12,
-            '-y' => $rect{dialog_file_list}->y + 10 + 25 * ($list_browser_highlight_offset - $list_browser_file_start_offset), 
+            '-y' => $rect{dialog_file_list}->y + 10 + 25 * ($list_browser_highlight_offset - $list_browser_file_start_offset),
             -width => $surf_purple_highlight->width, -height => $surf_purple_highlight->height);
-        
+
         $rect{erase_highlight} = SDL::Rect->new(
             -x => $rect{old_highlight}->x - $rect{dialog_file_list}->x,
 	    '-y' => $rect{old_highlight}->y - $rect{dialog_file_list}->y,
@@ -1323,30 +1323,30 @@ sub display_levelset_list_browser {
         # it is possible that the highlighed dude is off the screen. In this case, do not
         # call the blit, because there is no visible highlight to remove
         if ($list_browser_highlight_offset >= $list_browser_file_start_offset
-            && $list_browser_highlight_offset <= $list_browser_file_start_offset + 3) { 
+            && $list_browser_highlight_offset <= $list_browser_file_start_offset + 3) {
             $surf_file_list_background->blit($rect{erase_highlight}, $app, $rect{old_highlight});
             $app->update($rect{old_highlight});
             # draw the text of the old highligted dude
             $app->print($rect{middle}->x + 19,
 			$rect{dialog_file_list}->y + 8 + 25 * ($list_browser_highlight_offset - $list_browser_file_start_offset),
-			uc($levelsets[$list_browser_highlight_offset])); 
+			uc($levelsets[$list_browser_highlight_offset]));
         }
 
         # draw the highlight
         $rect{purple_highlight_dest} = SDL::Rect->new(
             -x => $rect{middle}->x + 12,
-            '-y' => $rect{dialog_file_list}->y + 10 + 25 * ($file_highlight_offset - $file_start_offset), 
+            '-y' => $rect{dialog_file_list}->y + 10 + 25 * ($file_highlight_offset - $file_start_offset),
             -width => $surf_purple_highlight->width,
             -height => $surf_purple_highlight->height);
         $surf_purple_highlight->blit($rect{purple_highlight_src}, $app, $rect{purple_highlight_dest});
         $app->update($rect{purple_highlight_dest});
 		$app->print($rect{middle}->x + 19,
 		    $rect{dialog_file_list}->y + 8 + 25 * ($file_highlight_offset - $file_start_offset),
-		    uc($levelsets[$file_highlight_offset])); 
+		    uc($levelsets[$file_highlight_offset]));
 
     }
 
-    # set the unhighlight so the app thinks nothing's highlighted and will highlight 
+    # set the unhighlight so the app thinks nothing's highlighted and will highlight
     # the correct item in the next highlight function call
     unhighlight_option();
 
@@ -1394,7 +1394,7 @@ sub display_levelset_screenshot {
     my $name = $levelsets[$list_browser_highlight_offset];
 
     $rect{middle} = get_dialog_rect();
-    $rect{screenshot} = SDL::Rect->new(-x => $POS_1P{p1}{left_limit} - 40, '-y' => 0, 
+    $rect{screenshot} = SDL::Rect->new(-x => $POS_1P{p1}{left_limit} - 40, '-y' => 0,
 				       -width => $POS_1P{p1}{right_limit} - $POS_1P{p1}{left_limit} + 80,
 				       -height => $POS_1P{bottom_limit} - $POS_1P{p1}{top_limit} + 190);
     # if the user is choosing the start level, we need to move things up a little bit to make
@@ -1438,7 +1438,7 @@ sub display_levelset_screenshot {
             load_level($s, $nb, %ls);
             my $dest = SDL::Surface->new(-width => $rect{screenshot}->width / 4, -height => $rect{screenshot}->height / 4,
                                          -depth => 32, -Amask => "0 but true");
-            fb_c_stuff::shrink(surf($dest), surf($s), 0, 0, rect($rect{screenshot}), 4);
+            Games::FrozenBubble::CStuff::shrink(surf($dest), surf($s), 0, 0, rect($rect{screenshot}), 4);
             $shrinks{$name}{$nb} = $dest;
         }
     }
@@ -1483,7 +1483,7 @@ sub clear_level {
 				  -height => $POS_1P{bottom_limit} - $POS_1P{p1}{top_limit} + $BUBBLE_SIZE,
 				  -x => $POS_1P{p1}{left_limit},
 				  '-y' => $POS_1P{p1}{top_limit});
-    
+
     $background->blit($rect{clear}, $app, $rect{clear});
 }
 
@@ -1502,7 +1502,7 @@ sub delete_level {
         }
 
         delete $bubble_hash{keys %bubble_hash};
-    }   
+    }
 
     $modified_levelset = 1;
 }
@@ -1565,7 +1565,7 @@ sub open_levelset {
     # reset the deleted_current_levelset flag in case
     # we were in that situation
 
-    $deleted_current_levelset = 0; 
+    $deleted_current_levelset = 0;
     @levelsets = get_levelset_list();
 
     $levelset_name = $levelsets[$list_browser_highlight_offset];
@@ -1613,7 +1613,7 @@ sub insert_level {
     }
 
     delete $bubble_hash{$curr_level};
-    
+
     # initialize our new level
     iter_rowscols { $bubble_hash{$curr_level}{$::col}{$::row} = '-' };
 
@@ -1651,17 +1651,17 @@ sub print_cancel_text {
     if ($displaying_dialog ne '') {
         $rect{middle} = get_dialog_rect();
 
-        $rect{cancel_src} = SDL::Rect->new(-x => $rect{middle}->width - $rect{option_highlight}->width, 
+        $rect{cancel_src} = SDL::Rect->new(-x => $rect{middle}->width - $rect{option_highlight}->width,
 					   '-y' => 6 * $WOOD_PLANK_HEIGHT - 4,
 					   -width => $rect{middle}->width/2, -height => $WOOD_PLANK_HEIGHT);
-    
+
         $rect{cancel} = SDL::Rect->new(-x => $rect{middle}->x + $rect{middle}->width - $rect{option_highlight}->width,
 				       '-y' => $rect{middle}->y + 6 * $WOOD_PLANK_HEIGHT - 4,
 				       -width => $rect{middle}->width/2, -height => $WOOD_PLANK_HEIGHT);
 
         $surface_dialog->blit($rect{cancel_src}, $app, $rect{cancel});
         $app->update($rect{cancel});
-    
+
         $app->print($rect{middle}->x + $rect{middle}->width - 120, $rect{middle}->y + 6 * $WOOD_PLANK_HEIGHT, 'CANCEL');
         if ($do_highlight) {
             $highlight->blit($rect{option_highlight}, $app, $rect{cancel});
@@ -1674,7 +1674,7 @@ sub print_dialog_list_arrow {
     my ($do_highlight, $type) = @_;
 
     $rect{middle} = get_dialog_rect();
-    
+
     my $surf_list_arrow = SDL::Surface->new(-name => "$FPATH/gfx/list_arrow_$type.png");
     $rect{list_arrow_src} = SDL::Rect->new(-width => $surf_list_arrow->width, -height => $surf_list_arrow->height);
     $rect{list_arrow_dest} = SDL::Rect->new(
@@ -1704,20 +1704,20 @@ sub print_dialog_list_arrow {
 sub print_dialog_select_level_arrow {
     my ($do_highlight, $type, $more) = @_;
     $rect{middle} = get_dialog_rect();
-    
+
     my $surf_list_arrow = SDL::Surface->new(-name => "$FPATH/gfx/list_arrow_$type.png");
     $rect{list_arrow_src} = SDL::Rect->new(-width => $surf_list_arrow->width, -height => $surf_list_arrow->height);
     my $x = $type =~ /more/ ? 457 : 437;
     $rect{list_arrow_dest} = SDL::Rect->new(
 		    '-x' => $x,
-		    '-y' => $type =~ /up/ ? $rect{middle}->y + 180 
+		    '-y' => $type =~ /up/ ? $rect{middle}->y + 180
                                           : $rect{middle}->y + 202,
 		    -width => $surf_list_arrow->width, -height => $surf_list_arrow->height);
 
     my $surf_arrow_background = SDL::Surface->new(-name => "$FPATH/gfx/menu/void_panel.png");
     $rect{erase_arrow} = SDL::Rect->new('-x' => $x - $rect{middle}->x,
 					'-y' => $type =~ /up/ ? 180
-					                      : 202, 
+					                      : 202,
 					-width => $surf_list_arrow->width, -height => $surf_list_arrow->height);
 
     $surf_arrow_background->blit($rect{erase_arrow}, $app, $rect{list_arrow_dest});
@@ -1736,22 +1736,22 @@ sub print_dialog_select_level_arrow_down {
     my ($do_highlight) = @_;
     print_dialog_select_level_arrow($do_highlight, 'down');
 }
-  
+
 sub print_dialog_select_level_arrow_up {
     my ($do_highlight) = @_;
     print_dialog_select_level_arrow($do_highlight, 'up');
 }
-    
+
 sub print_dialog_select_level_arrow_down_more {
     my ($do_highlight) = @_;
     print_dialog_select_level_arrow($do_highlight, 'down_more');
 }
-  
+
 sub print_dialog_select_level_arrow_up_more {
     my ($do_highlight) = @_;
     print_dialog_select_level_arrow($do_highlight, 'up_more');
 }
-    
+
 sub print_dialog_list_arrow_down {
     my ($do_highlight) = @_;
     print_dialog_list_arrow($do_highlight, 'down');
@@ -1782,7 +1782,7 @@ sub print_text_generic {
         $app->update($rect{$name});
     }
 }
-    
+
 sub print_first_text {
     print_text_generic($_[0], 'first', $WOOD_WIDTH/2, $rect{first}->y + 6);
 }
@@ -1848,35 +1848,35 @@ sub is_ok_jump_value {
     } else {
         return 1;
     }
-    
+
 }
 
 sub is_ok_select_start_value {
-    
+
     my ($proposed_level) = @_;
     if ($proposed_level >= 1 && $proposed_level <= $file_browser_levelsets_num_levels[$list_browser_highlight_offset]) {
         return 1;
     } else {
         return 0;
     }
-    
+
 }
 
 # subroutine to get the letter pressed by the user on the keyboard
 # this subroutine is taken from frozen-bubble code
-sub keysym_to_char($) { 
-    my ($key) = @_; 
-    eval "$key eq SDLK_$_" and return uc($_) foreach @fbsyms::syms; 
+sub keysym_to_char($) {
+    my ($key) = @_;
+    eval "$key eq SDLK_$_" and return uc($_) foreach @Games::FrozenBubble::Symbols::syms;
 }
 
 
 sub print_jump_to_level_value {
-    
+
     my ($key) = @_;
     if ($key == SDLK_ESCAPE()) {
         highlight_option('cancel');
         $app->delay(200);
-        remove_dialog(); 
+        remove_dialog();
     } elsif (($key == SDLK_RETURN() || $key == SDLK_KP_ENTER()) && length($jump_to_level_value) > 0 ) {
         highlight_option('ok');
         $app->delay(200);
@@ -1895,8 +1895,8 @@ sub print_jump_to_level_value {
         $rect{dialog_blank} = SDL::Rect->new('-y' => 2 * $WOOD_PLANK_HEIGHT,
 					     -width => $surface_dialog->width,
 					     -height => $surface_dialog->height - 3 * $WOOD_PLANK_HEIGHT);
-        $rect{dialog_new} = SDL::Rect->new(-x => $background->width/2 - $surface_dialog->width/2, 
-					   '-y' => $background->height/2 - $surface_dialog->height/2 + 2 * $WOOD_PLANK_HEIGHT, 
+        $rect{dialog_new} = SDL::Rect->new(-x => $background->width/2 - $surface_dialog->width/2,
+					   '-y' => $background->height/2 - $surface_dialog->height/2 + 2 * $WOOD_PLANK_HEIGHT,
 					   -width => $surface_dialog->width,
 					   -height => $surface_dialog->height - 3*$WOOD_PLANK_HEIGHT);
         $surface_dialog->blit($rect{dialog_blank}, $app, $rect{dialog_new});
@@ -1905,7 +1905,7 @@ sub print_jump_to_level_value {
             chop $jump_to_level_value;
         } else {
             #- adjust the value, but then check to make sure its a valid value
-            $jump_to_level_value .= keysym_to_char($key); 
+            $jump_to_level_value .= keysym_to_char($key);
             if (!is_ok_jump_value()) {
                 chop $jump_to_level_value;
                 unhighlight_option();
@@ -1923,7 +1923,7 @@ sub print_new_ls_name {
         if ($displaying_dialog eq 'ls_new') {
             highlight_option('cancel');
             $app->delay(200);
-            remove_dialog(); 
+            remove_dialog();
         }
     } elsif (($key == SDLK_RETURN() || $key == SDLK_KP_ENTER()) && length($new_ls_name_text) > 0 && is_ok_filename() ) {
         if ($displaying_dialog eq 'ls_new') {
@@ -1932,7 +1932,7 @@ sub print_new_ls_name {
             highlight_option('ok_right');
         }
         $app->delay(200);
-        remove_dialog(); 
+        remove_dialog();
         create_new_levelset();
     } elsif ($key == SDLK_BACKSPACE()
 	     || (length($new_ls_name_text) < 14 && ($key == SDLK_KP_MINUS()
@@ -1944,8 +1944,8 @@ sub print_new_ls_name {
         $rect{dialog_blank} = SDL::Rect->new('-y' => 2 * $WOOD_PLANK_HEIGHT,
 					     -width => $surface_dialog->width,
 					     -height => $surface_dialog->height - 3 * $WOOD_PLANK_HEIGHT);
-        $rect{dialog_new} = SDL::Rect->new(-x => $background->width/2 - $surface_dialog->width/2, 
-					   '-y' => $background->height/2 - $surface_dialog->height/2 + 2 * $WOOD_PLANK_HEIGHT, 
+        $rect{dialog_new} = SDL::Rect->new(-x => $background->width/2 - $surface_dialog->width/2,
+					   '-y' => $background->height/2 - $surface_dialog->height/2 + 2 * $WOOD_PLANK_HEIGHT,
 					   -width => $surface_dialog->width,
 					   -height => $surface_dialog->height - 3*$WOOD_PLANK_HEIGHT);
         $surface_dialog->blit($rect{dialog_blank}, $app, $rect{dialog_new});
@@ -1958,7 +1958,7 @@ sub print_new_ls_name {
             my $kp_num;
 	    eval("SDLK_KP$_() eq $key") and $new_ls_name_text .= $_ foreach 0..9;
         } else {
-            $new_ls_name_text .= keysym_to_char($key); 
+            $new_ls_name_text .= keysym_to_char($key);
         }
         $app->print($rect{dialog_new}->x + $rect{dialog_new}->width/2 - 12 * length($new_ls_name_text)/2, 210, $new_ls_name_text);
     }
@@ -1975,11 +1975,11 @@ sub print_ok_right_text {
     if ($displaying_dialog ne '') {
         $rect{middle} = get_dialog_rect();
 
-        $rect{cancel_src} = SDL::Rect->new(-x => $rect{middle}->width - $rect{option_highlight}->width, 
+        $rect{cancel_src} = SDL::Rect->new(-x => $rect{middle}->width - $rect{option_highlight}->width,
 					   '-y' => 6 * $WOOD_PLANK_HEIGHT - 4,
 					   -width => $rect{middle}->width/2,
 					   -height => $WOOD_PLANK_HEIGHT);
-    
+
         $rect{cancel} = SDL::Rect->new(-x => $rect{middle}->x + $rect{middle}->width - $rect{option_highlight}->width,
 				       '-y' => $rect{middle}->y + 6 * $WOOD_PLANK_HEIGHT - 4,
 				       -width => $rect{middle}->width/2,
@@ -1987,7 +1987,7 @@ sub print_ok_right_text {
 
         $surface_dialog->blit($rect{cancel_src}, $app, $rect{cancel});
         $app->update($rect{cancel});
-    
+
         $app->print($rect{middle}->x + $rect{middle}->width - 80, $rect{middle}->y + 6 * $WOOD_PLANK_HEIGHT, 'OK');
         if ($do_highlight) {
             $highlight->blit($rect{option_highlight}, $app, $rect{cancel});
@@ -2002,10 +2002,10 @@ sub print_ok_text {
     if ($displaying_dialog ne '') {
         $rect{middle} = get_dialog_rect();
 
-        $rect{ok_src} = SDL::Rect->new('-y' => 6 * $WOOD_PLANK_HEIGHT - 4, 
+        $rect{ok_src} = SDL::Rect->new('-y' => 6 * $WOOD_PLANK_HEIGHT - 4,
 				       -width => $rect{middle}->width/2,
 				       -height => $WOOD_PLANK_HEIGHT);
-    
+
         $rect{ok} = SDL::Rect->new(-x => $rect{middle}->x,
 				   '-y' => $rect{middle}->y + 6 * $WOOD_PLANK_HEIGHT - 4,
 				   -width => $rect{middle}->width/2,
@@ -2013,7 +2013,7 @@ sub print_ok_text {
 
         $surface_dialog->blit($rect{ok_src}, $app, $rect{ok});
         $app->update($rect{ok});
-    
+
         $app->print($rect{middle}->x + 60, $rect{middle}->y + 6 * $WOOD_PLANK_HEIGHT, 'OK');
         if ($do_highlight) {
             $highlight->blit($rect{option_highlight}, $app, $rect{ok});
@@ -2083,7 +2083,7 @@ sub init_setup {
 
     # set font
     $font = new SDL::Font("$FPATH/gfx/font.png");
-    
+
     $app->print(5, $BUBBLE_WOOD_Y + 3, 'CHOOSE BUBBLE');
 
     # add navigation words
@@ -2108,7 +2108,7 @@ sub init_setup {
 
     # add help words
     print_help_text(0);
-    
+
     # add initial bubble to draw
     change_color(1);
 
@@ -2198,7 +2198,7 @@ sub init_app {
       # help rectangle
       { name => 'help', x => $RIGHT_WOOD_X, 'y' => $HELP_WOOD_Y,
         width => $WOOD_WIDTH, height => $WOOD_PLANK_HEIGHT},
-	
+
       { name => 'bubble_option_highlight', x => 0, 'y' => 0,
 	width => $BUBBLE_SIZE, height => $BUBBLE_SIZE },
       { name => 'option_highlight', x => 0, 'y' => 0,

@@ -21,10 +21,10 @@
 #
 #******************************************************************************
 
-package fb_stuff;
+package Games::FrozenBubble::Stuff;
 
-use fb_c_stuff;
-use fb_config;
+use Games::FrozenBubble::CStuff;
+# use Games::FrozenBubble::Config;
 use Locale::gettext;
 use vars qw(@ISA @EXPORT $FPATH $FLPATH $FBHOME $FBLEVELS $colourblind %POS_1P %POS_2P %POS_MP $BUBBLE_SIZE $ROW_SIZE
             $PI $version);
@@ -292,13 +292,13 @@ sub mapn_(&@) {
 sub add_f4before_leaving {
     my ($f, $b, $name) = @_;
 
-    $fb_stuff::before_leaving::_list->{$b}{$name} = $f;
-    if (!$fb_stuff::before_leaving::_added{$name}) {
-	$fb_stuff::before_leaving::_added{$name} = 1;
+    $Games::FrozenBubble::Stuff::before_leaving::_list->{$b}{$name} = $f;
+    if (!$Games::FrozenBubble::Stuff::before_leaving::_added{$name}) {
+	$Games::FrozenBubble::Stuff::before_leaving::_added{$name} = 1;
 	no strict 'refs';
-	*{"fb_stuff::before_leaving::$name"} = sub {
-	    my $f = $fb_stuff::before_leaving::_list->{$_[0]}{$name} or die '';
-	    $name eq 'DESTROY' and delete $fb_stuff::before_leaving::_list->{$_[0]};
+	*{"Games::FrozenBubble::Stuff::before_leaving::$name"} = sub {
+	    my $f = $Games::FrozenBubble::Stuff::before_leaving::_list->{$_[0]}{$name} or die '';
+	    $name eq 'DESTROY' and delete $Games::FrozenBubble::Stuff::before_leaving::_list->{$_[0]};
 	    &$f;
 	};
     }
@@ -306,7 +306,7 @@ sub add_f4before_leaving {
 #- ! the functions are not called in the order wanted, in case of multiple before_leaving :(
 sub before_leaving(&) {
     my ($f) = @_;
-    my $b = bless {}, 'fb_stuff::before_leaving';
+    my $b = bless {}, 'Games::FrozenBubble::Stuff::before_leaving';
     add_f4before_leaving($f, $b, 'DESTROY');
     $b;
 }
@@ -358,3 +358,5 @@ sub migrate_resource_files {
         system "mv '$file' '$FBHOME/$files{$file}'";
     }
 }
+
+1;
