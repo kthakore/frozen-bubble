@@ -1217,7 +1217,7 @@ sub print_compressor() {
 
 sub print_ {
     my ($kind, $surface, $x, $y, $text, $size, $alignment, $callback) = @_;
-	printf("print_: $text\n");
+	printf("print_: " . join(' ', (caller(1))) . " $text\n");
     exists $pangocontext{$kind} or die "$kind is no kind\n";
     if ($size) {
         #- instead of segfaulting
@@ -1227,17 +1227,17 @@ sub print_ {
         }
     }
     my $surf = fb_c_stuff::sdlpango_draw_givenalignment($pangocontext{$kind}{context_bg}, $text, $size || -1, $alignment || 'left');
-    my $rect = SDL::Rect->new($x + 1, $y + 1, $surf->w, $surf->h);
     if ($callback) {
         if (!$callback->('about-to-draw', $surf)) {
             #- callback said do not draw
             return;
         }
     }
-    SDL::Video::blit_surface($surf, SDL::Rect->new(0,0,0,0), $surface, $rect);
+    SDL::Video::blit_surface($surf, SDL::Rect->new(0, 0, $surf->w, $surf->h), $surface, SDL::Rect->new($x + 1, $y + 1, $surf->w, $surf->h));
     $surf = fb_c_stuff::sdlpango_draw_givenalignment($pangocontext{$kind}{context_fg}, $text, $size || -1, $alignment || 'left');
-    $rect = SDL::Rect->new($x, $y, $surf->w, $surf->h);
-    SDL::Video::blit_surface($surf, SDL::Rect->new(0,0,0,0), $surface, $rect);
+	#printf("sdlpango_draw_givenalignment: %s, %s, %s, %s\n", $kind, $text, $size || -1, $alignment || 'left');
+	#printf("SDL::Rect->new($x, $y, " . $surf->w . ", " . $surf->h . ")\n");
+    SDL::Video::blit_surface($surf, SDL::Rect->new(0, 0, $surf->w, $surf->h), $surface, SDL::Rect->new($x, $y, $surf->w, $surf->h));
 }
 
 sub width {
@@ -2714,25 +2714,27 @@ sub init_game() {
     foreach my $number (-$CANON_ROTATIONS_NB..$CANON_ROTATIONS_NB) {
         my $angle = $number*($PI/2)/$CANON_ROTATIONS_NB;
 
-        $canon{img}{$number} = SDL::Surface->new( SDL_ANYFORMAT, $shooter->w, $shooter->h,  32, 0,0,0,0);
+        $canon{img}{$number} = SDL::Surface->new( SDL_ANYFORMAT, $shooter->w, $shooter->h);
         fb_c_stuff::rotate_bicubic($canon{img}{$number}, $shooter, $angle);
         $canon{data}{$number} = fb_c_stuff::autopseudocrop($canon{img}{$number});
         #- now crop (and use native RGBA ordering)
-        my $replace = SDL::Surface->new( SDL_ANYFORMAT, $canon{data}{$number}[2],  $canon{data}{$number}[3], 32, 0,0,0,0);
+        my $replace = SDL::Surface->new( SDL_ANYFORMAT, $canon{data}{$number}[2],  $canon{data}{$number}[3]);
 	SDL::Video::set_alpha($canon{img}{$number}, 0, 0);
 	SDL::Video::blit_surface( $canon{img}{$number}, SDL::Rect->new( $canon{data}{$number}[0],  $canon{data}{$number}[1],
-                                                  $canon{data}{$number}[2],  $canon{data}{$number}[3]), $replace, SDL::Rect->new(0,0,0,0));
+                                                                    $canon{data}{$number}[2],  $canon{data}{$number}[3]), 
+							  $replace, SDL::Rect->new(0, 0, $canon{img}{$number}->w, $canon{img}{$number}->h));
         $canon{img}{$number} = $replace;
         add_default_rect($canon{img}{$number});
 
-        $canon{img_mini}{$number} = SDL::Surface->new( SDL_ANYFORMAT,  $shooter_mini->w,  $shooter_mini->h,  32, 0,0,0,0);
+        $canon{img_mini}{$number} = SDL::Surface->new( SDL_ANYFORMAT,  $shooter_mini->w,  $shooter_mini->h);
         fb_c_stuff::rotate_bicubic($canon{img_mini}{$number}, $shooter_mini, $angle);
         $canon{data_mini}{$number} = fb_c_stuff::autopseudocrop(surf($canon{img_mini}{$number}));
         #- now crop (and use native RGBA ordering)
-        my $replace = SDL::Surface->new( SDL_ANYFORMAT,  $canon{data_mini}{$number}[2],  $canon{data_mini}{$number}[3],  32, 0,0,0,0);
+        my $replace = SDL::Surface->new( SDL_ANYFORMAT,  $canon{data_mini}{$number}[2],  $canon{data_mini}{$number}[3]);
 	SDL::Video::set_alpha($canon{img_mini}{$number}, 0, 0);
 	SDL::Video::blit_surface( $canon{img_mini}{$number}, SDL::Rect->new( $canon{data_mini}{$number}[0], $canon{data_mini}{$number}[1],
-                                                        $canon{data_mini}{$number}[2], $canon{data_mini}{$number}[3]), $replace, SDL::Rect->new(0,0,0,0));
+                                                        $canon{data_mini}{$number}[2], $canon{data_mini}{$number}[3]), $replace, 
+														SDL::Rect->new(0,0,$canon{img_mini}{$number}->w,$canon{img_mini}{$number}->h));
         $canon{img_mini}{$number} = $replace;
         add_default_rect($canon{img_mini}{$number});
 
@@ -2805,7 +2807,7 @@ sub init_game() {
         foreach my $img (@{$imgbin{menu_cursor}{$cursortype}}) {
             my $alpha = SDL::Surface->new( SDL_ANYFORMAT,  $img->w,  $img->h,  32, 0,0,0,0);
 	    SDL::Video::set_alpha($img, 0, 0);  #- for RGBA->RGBA blits, SDL_SRCALPHA must be removed or destination alpha is preserved
-            SDL::Video::blit_surface($img, NULL, $alpha, NULL);
+            SDL::Video::blit_surface($img, SDL::Rect->new(0,0,0,0), $alpha, SDL::Rect->new(0,0,$img->w,$img->h));
             fb_c_stuff::alphaize(surf($alpha));
             push @{$imgbin{menu_cursor}{"${cursortype}alpha"}}, $alpha;
 	    SDL::Video::set_alpha($img, SDL_SRCALPHA, 0);  
@@ -2893,9 +2895,9 @@ sub init_game() {
     }
 
     #- the RGBA effects algorithms assume little endian RGBA surfaces
-    my $replace = SDL::Surface->new( SDL_ANYFORMAT, $imgbin{menu_logo}->w,  $imgbin{menu_logo}->h,  32, 0,0,0,0);
+    my $replace = SDL::Surface->new( SDL_ANYFORMAT, $imgbin{menu_logo}->w,  $imgbin{menu_logo}->h);
     SDL::Video::set_alpha ($imgbin{menu_logo}, 0, 0);  #- for RGBA->RGBA blits, SDL_SRCALPHA must be removed or destination alpha is preserved
-    SDL::Video::blit_surface($imgbin{menu_logoi}, SDL::Rect->new(0,0,0,0), $replace, SDL::Rect->new(0,0,0,0));
+    SDL::Video::blit_surface($imgbin{menu_logo}, SDL::Rect->new(0,0,0,0), $replace, SDL::Rect->new(0,0,$imgbin{menu_logo}->w,$imgbin{menu_logo}->h));
     $imgbin{menu_logo} = $replace;
     add_default_rect($replace);
 
@@ -3032,7 +3034,7 @@ sub display_highscores {
             my $tmp = SDL::Video::display_format(SDL::Surface->new(-width => $high_rect->w/4, -height => $high_rect->h/4,
                                         -depth => 32, -Amask => "0 but true"));
             fb_c_stuff::shrink(surf($tmp), surf(SDL::Video::display_format($background)), 0, 0, rect($high_rect), 4);
-            SDL::Video::blit_surface($tmp, SDL::Rect->new(0,0,0,0), $app, SDL::Rect->new($high_posx, $high_posy, 0, 0));
+            SDL::Video::blit_surface($tmp, SDL::Rect->new(0,0,0,0), $app, SDL::Rect->new($high_posx, $high_posy, $tmp->w, $tmp->h));
             $centered_print->($high_posx - 15, $high_posy, $high->{name}, $new_entry == $high);
             $centered_print->($high_posx - 15, $high_posy + 20, $high->{level} eq 'WON' ? t("won!") : t("level %s", i18n_number($high->{level})), $new_entry == $high);
             my $min = int($high->{time}/60);
@@ -3136,11 +3138,11 @@ sub ask_from($) {
     foreach my $entry (@{$w->{entries}}) {
         #- in case wrapping occurred
         SDL::Video::blit_surface($imgbin{void_panel}, SDL::Rect->new(10, $ypos - $MENUPOS{ypos_panel}, $imgbin{void_panel}->w - 20, 30), $app,
-                                  SDL::Rect->new($MENUPOS{xpos_panel} + 10, $ypos, 0, 0));
+                                  SDL::Rect->new($MENUPOS{xpos_panel} + 10, $ypos, $imgbin{void_panel}->w, $imgbin{void_panel}->h));
 	print_('menu', $app, $xpos{questions}, $ypos, $entry->{'q'}, $imgbin{void_panel}->w*2/3 - 10, @{$w->{entries}} == 1 ? 'center' : 'right');
 	SDL::Video::flip($app);
 	my $srect_mulchar_redraw = SDL::Rect->new($xpos{echo} - 3 - $MENUPOS{xpos_panel}, $ypos - $MENUPOS{ypos_panel}, $imgbin{void_panel}->w*1/3, 30);
-	my $drect_mulchar_redraw = SDL::Rect->new($xpos{echo} - 3, $ypos, 0, 0);
+	my $drect_mulchar_redraw = SDL::Rect->new($xpos{echo} - 3, $ypos, $imgbin{void_panel}->w, $imgbin{void_panel}->h);
         my $x_echo = $xpos{echo};
 	my $txt;
         if ($entry->{f} ne 'SPACE') {
@@ -3265,7 +3267,7 @@ sub new_game() {
 
     SDL::Video::blit_surface($backgr, $apprects{main}, $background_orig, $apprects{main});
     if ($levels{current} eq 'mp_train') {
-	my $drect = SDL::Rect->new(32, 152, 0, 0);
+	my $drect = SDL::Rect->new(32, 152, $imgbin{void_mp_training}->w, $imgbin{void_mp_training}->h);
 	SDL::Video::blit_surface($imgbin{void_mp_training}, $rects{$imgbin{void_mp_training}}, $background_orig, $drect);
     }
     SDL::Video::blit_surface($background_orig, $apprects{main}, $background, $apprects{main});
@@ -3488,7 +3490,9 @@ sub choose_1p_game_mode() {
         my $draw_element = sub {
             my ($name, $mode) = @_;
             put_image($imgbin{"txt_1pmenu_$mode"}, $menu_xpos, $name2ypos{$name});
-            SDL::Video::blit_surface($imgbin{"txt_1pmenu_${name}_outlined_text"}, SDL::Rect->new(0,0,0,0), $app, my $rect = SDL::Rect->new($menu_xpos, $name2ypos{$name}, 0, 0));
+            SDL::Video::blit_surface($imgbin{"txt_1pmenu_${name}_outlined_text"}, SDL::Rect->new(0,0,0,0), 
+			                         $app, SDL::Rect->new($menu_xpos, $name2ypos{$name}, $imgbin{"txt_1pmenu_${name}_outlined_text"}->w, 
+									                                                     $imgbin{"txt_1pmenu_${name}_outlined_text"}->h));
         };
 
         my $img = $imgbin{'1p_panel'};
@@ -3497,8 +3501,7 @@ sub choose_1p_game_mode() {
         if ($save) {
             SDL::Video::blit_surface($save, $rects{img}, $app, $drect);
         } else {
-            $save = SDL::Surface->new(-width => $img->w, -height => $img->h,
-                                      -depth => 32, -Amask => "0 but true");
+            $save = SDL::Surface->new(SDL_SWSURFACE, $img->w, $img->h, 32, 0xFF000000, 0x00FF0000, 0x0000FF00, 0x000000FF);
             SDL::Video::blit_surface($app, $drect, $save, $rects{$img});
         }
         put_image($img, $MENUPOS{xpos_panel}, $MENUPOS{ypos_panel});
@@ -3524,12 +3527,12 @@ sub choose_1p_game_mode() {
         my $name =  $ordered_names[$active_menu];
         put_image($imgbin{txt_1pmenu_over}, $menu_xpos, $name2ypos{$name});
         fb_c_stuff::overlook(surf($overlook), surf($imgbin{"txt_1pmenu_${name}_text"}), $overlook_index, $name2pivot{$name});
-        SDL::Video::blit_surface($overlook, SDL::Rect->new(0,0,0,0), $app, my $rect = SDL::Rect->new($menu_xpos, $name2ypos{$name}, 0, 0));
+        SDL::Video::blit_surface($overlook, SDL::Rect->new(0,0,0,0), $app, SDL::Rect->new($menu_xpos, $name2ypos{$name}, $overlook->w, $overlook->h));
         $overlook_index++;
         if ($overlook_index == 70) {
             $overlook_index = 0;
         }
-        SDL::Video::blit_surface($imgbin{"txt_1pmenu_${name}_outlined_text"}, SDL::Rect->new(0,0,0,0), $app, my $rect = SDL::Rect->new($menu_xpos, $name2ypos{$name}, 0, 0));
+        SDL::Video::blit_surface($imgbin{"txt_1pmenu_${name}_outlined_text"}, SDL::Rect->new(0,0,0,0), $app, SDL::Rect->new($menu_xpos, $name2ypos{$name}, $imgbin{"txt_1pmenu_${name}_outlined_text"}->w, $imgbin{"txt_1pmenu_${name}_outlined_text"}->h));
     };
 
     $redraw->();
