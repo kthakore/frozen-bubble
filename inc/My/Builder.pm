@@ -1,4 +1,4 @@
-package Local::Games::FrozenBubble::Build;
+package My::Builder;
 use 5.008;
 use strict;
 use warnings FATAL => 'all';

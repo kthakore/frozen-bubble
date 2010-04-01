@@ -7,7 +7,7 @@ use Alien::SDL qw();
 use File::Spec ;
 use Config qw(%Config);
 use Devel::CheckLib qw(check_lib_or_exit);
-use Local::Games::FrozenBubble::Build qw();
+use My::Builder;
 
 sub chomped {
     my $value = $_[0];
@@ -25,7 +25,7 @@ check_lib_or_exit(header => 'math.h');
 die "Cannot find 'SDL.h'" unless Alien::SDL->check_header('SDL.h');
 die "Cannot find 'SDL_mixer.h'" unless Alien::SDL->check_header('SDL_mixer.h');
 
-Local::Games::FrozenBubble::Build->new(
+My::Builder->new(
     add_to_cleanup     => [
         'lib/Games/FrozenBubble/CStuff.c',
         'lib/Games/FrozenBubble/CStuff.o',
