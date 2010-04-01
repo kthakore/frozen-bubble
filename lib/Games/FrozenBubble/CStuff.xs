@@ -938,6 +938,15 @@ void tilt_(SDL_Surface * dest, SDL_Surface * orig, int offset)
 
 struct point { double x; double y; double angle; };
 
+#ifndef MAX
+#define MAX(a,b) ( (a) > (b) ? (a) : (b) )
+#endif
+
+#ifndef MIN
+#define MIN(a,b) ( (a) < (b) ? (a) : (b) )
+#endif
+
+
 #define min(a,b) ( (a) < (b) ? (a) : (b) )
 
 void points_(SDL_Surface * dest, SDL_Surface * orig, SDL_Surface * mask)
