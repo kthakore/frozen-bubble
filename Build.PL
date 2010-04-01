@@ -9,18 +9,21 @@ use Config qw(%Config);
 use Devel::CheckLib qw(check_lib_or_exit);
 use Local::Games::FrozenBubble::Build qw();
 
-my $prefix = Alien::SDL->config('prefix'); 
-my $include = "-I".File::Spec->catfile($prefix, 'include');
-print STDERR "###$include\n";
 sub chomped {
     my $value = $_[0];
     chomp $value;
     return $value;
 }
+
+my $prefix = Alien::SDL->config('prefix'); 
+my $devnull = File::Spec->devnull();
+my $pango_cflags = chomped(`pkg-config --cflags glib-2.0 pango gobject-2.0 gmodule-2.0 2>$devnull` || '');
+my $pango_libs = chomped(`pkg-config --libs glib-2.0 pango gobject-2.0 gmodule-2.0 2>$devnull` || '');
+
 check_lib_or_exit(header => 'iconv.h');
 check_lib_or_exit(header => 'math.h');
-#check_lib_or_exit(header => 'SDL/SDL.h' , INC => $include  );
-#check_lib_or_exit(header => 'SDL/SDL_mixer.h' , INC => $include );
+die "Cannot find 'SDL.h'" unless Alien::SDL->check_header('SDL.h');
+die "Cannot find 'SDL_mixer.h'" unless Alien::SDL->check_header('SDL_mixer.h');
 
 Local::Games::FrozenBubble::Build->new(
     add_to_cleanup     => [
@@ -42,12 +45,13 @@ Local::Games::FrozenBubble::Build->new(
     dynamic_config       => 1,
     extra_compiler_flags => [
         Alien::SDL->config('cflags'),
- #       chomped(`pkg-config --cflags glib-2.0 pango gobject-2.0 gmodule-2.0`),
-        '-lm', Alien::SDL->config('libs'),
-        '-lSDL_mixer', '-lSDL_Pango', 
-#	chomped(`pkg-config --libs glib-2.0 pango gobject-2.0 gmodule-2.0`),
+	$pango_cflags,
     ],
-    extra_linker_flags => [ Alien::SDL->config('libs'), '-lintl', '-liconv', '-lSDL_mixer', '-lSDL_Pango' ] ,
+    extra_linker_flags => [
+	Alien::SDL->config('libs'),
+	$pango_libs,
+	'-liconv', '-lSDL_mixer', '-lSDL_Pango',
+    ],
     license    => 'gpl2',
     meta_merge => {
         resources => {
