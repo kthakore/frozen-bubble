@@ -4,20 +4,30 @@ use strict;
 use warnings FATAL => 'all';
 use lib 'inc';
 use Alien::SDL qw();
+use File::Spec ;
 use Config qw(%Config);
 use Devel::CheckLib qw(check_lib_or_exit);
 use Local::Games::FrozenBubble::Build qw();
+
+my $include = Alien::SDL->config('cflags');
+my $lib = Alien::SDL->config('libs');
+
+warn $include;
+
+$lib =~ s/(?!(-l|-L)) (,|-|\\|\/|\.|\w)+//;
+$include =~ s/(?!(-I|-i))(,|-|_|\\|\/|\.|\w)+//;
+
+warn $include;
 
 sub chomped {
     my $value = $_[0];
     chomp $value;
     return $value;
 }
-
 check_lib_or_exit(header => 'iconv.h');
 check_lib_or_exit(header => 'math.h');
-check_lib_or_exit(header => 'SDL/SDL.h');
-check_lib_or_exit(header => 'SDL/SDL_mixer.h');
+check_lib_or_exit(header => 'SDL/SDL.h' , LIBS => $lib, INC => $include  );
+check_lib_or_exit(header => 'SDL/SDL_mixer.h' , LIBS => $lib, INC => $include );
 
 Local::Games::FrozenBubble::Build->new(
     add_to_cleanup     => [
