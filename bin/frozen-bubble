@@ -64,19 +64,26 @@ use SDL::Events;
 use SDL::Color;
 use SDL::Cursor;
 use SDL::Mixer;
+use SDL::Mixer::Samples;
 use SDL::Mixer::Channels;
 use SDL::Mixer::Music;
+use SDL::Mixer::MixChunk;
+use SDL::Mixer::MixMusic;
 use SDL::Joystick;
 use SDL::Mouse;
 use SDL::Image;
-
+use File::ShareDir qw(dist_dir);
+use Games::FrozenBubble::Config;
 use Games::FrozenBubble::Stuff;
 use Games::FrozenBubble::Net;
 use Games::FrozenBubble::NetDiscover;
 use Games::FrozenBubble::Symbols;
 use Games::FrozenBubble::LevelEditor;
 
+
 $| = 1;
+
+$FPATH = dist_dir('Games-FrozenBubble');
 
 $TARGET_ANIM_SPEED = 20;        # number of milliseconds that should last between two animation frames
 $LAUNCHER_SPEED = 0.03;	        # speed of rotation of launchers
@@ -124,7 +131,7 @@ print "        [[ Frozen-Bubble-$version ]]\n\n";
 print '  http://www.frozen-bubble.org/
 
   Copyright (c) 2000-2008 The Frozen-Bubble Team.
-
+ 
     Artwork: Alexis Younes
              Amaury Amblard-Ladurantie
     Soundtrack: Matthias Le Bidan
@@ -274,7 +281,7 @@ sub play_music($) {
     $mixer_enabled && $mixer && !$music_disabled or return;
     @playlist && SDL::Mixer::Music::playing_music and return;
     $app->delay(10) while SDL::Mixer::Music::fading_music;   #- mikmod will deadlock if we try to fade_out while still fading in
-    $mixer->playing_music and SDL::Mixer::Music::fade_out_music(500);
+    SDL::Mixer::Music::playing_music and SDL::Mixer::Music::fade_out_music(500);
     $app->delay(400);
     $app->delay(10) while SDL::Mixer::Music::playing_music;  #- mikmod will segfault if we try to load a music while old one is still fading out
     my %musics = (intro => '/snd/introzik.ogg', main1p => '/snd/frozen-mainzik-1p.ogg', main2p => '/snd/frozen-mainzik-2p.xm');
@@ -285,20 +292,20 @@ sub play_music($) {
 	    $elem or return -1;
 	    -f $elem or return 0;
 	    push @playlist, $elem;
-	    $mus = SDL::Music->new($elem);
-	    if (UNIVERSAL::isa($mus, 'HASH') ? $mus->{-data} : $$mus) {
+	    $mus = SDL::Mixer::Music::load_MUS($elem) if -e $elem;
+	    if ($mus) {
 		print STDERR "[Playlist] playing `$elem'\n";
 		SDL::Mixer::Music::play_music($mus, 0);
 		return 1;
-	    } else {
+	    } else { 
 		print STDERR "Warning, could not create new music from '$elem' (reason: ", $app->error, ").\n";
 		return 0;
 	    }
 	};
 	while ($tryanother->() == 0) {};
     } else {
-	$mus = SDL::Music->new("$FPATH$musics{$name}");
-        if (UNIVERSAL::isa($mus, 'HASH') ? $mus->{-data} : $$mus) {
+	$mus = SDL::Mixer::Music::load_MUS("$FPATH$musics{$name}") if -e "$FPATH$musics{$name}";
+        if ($mus) {
 		SDL::Mixer::Music::play_music($mus, -1);
             $music{current} = $name;
         } else {
@@ -308,7 +315,7 @@ sub play_music($) {
 }
 
 sub init_sound() {
-    eval {
+    eval { 
 	     SDL::Mixer::open_audio( 22050, AUDIO_S16SYS, 2,1024);
       		 };
     if ($@) {
@@ -532,9 +539,9 @@ sub is_distant_player($) {
 
 sub mp_ping_if_needed {
     my ($ticks) = @_;
-    if ($app->ticks - $$ticks > 1000) {
+    if ($app->ticks - $ticks > 1000) {
         Games::FrozenBubble::Net::gsend('p');
-        $$ticks = $app->ticks;
+        $ticks = $app->ticks;
     }
 }
 
@@ -608,7 +615,7 @@ sub is_collision($$$) {
     my ($bub, $x, $y) = @_;
     my $DISTANCE_COLLISION_SQRED = sqr($BUBBLE_SIZE * 0.82);
     my $xs = sqr($bub->{x} - $x);
-    ($xs > $DISTANCE_COLLISION_SQRED) and return 0;
+    ($xs > $DISTANCE_COLLISION_SQRED) and return 0; 
     return ($xs + sqr($bub->{'y'} - $y)) < $DISTANCE_COLLISION_SQRED;
 }
 
@@ -804,7 +811,7 @@ sub stick_bubble($$$$$) {
 				    ($falling->{chaindestx}, $falling->{chaindesty}) = calc_real_pos_given_arraypos($npos->[0], $npos->[1], $player);
 				    push @{$chains{$player}{falling_chained}}, $falling;
 				    push @occupied_positions, $npos->[1]*8 + $npos->[0];
-
+				    
 				    #- next lines will allow not to chain-react on the same group from two different positions,
 				    #- and even to not chain-react on a group that will itself fall from a chain-reaction
 				    @{$falling->{neighbours}} = grep { bubble_next_to($_->{cx}, $_->{cy}, $npos->[0], $npos->[1], $player) } @{$sticked_bubbles{$player}};
@@ -1109,7 +1116,7 @@ sub handle_graphics($) {
                     print_('menu', $app, $MENUPOS{xpos_panel}, $y, $_, $imgbin{void_panel}->w, 'center');
                     $y += $smg_lineheight;
                 }
-                $app->sync;
+                SDL::Video::update_rect($app, 0, 0, 0, 0);
                 play_sound('cancel');
                 Games::FrozenBubble::CStuff::fbdelay(1000);
                 SDL::Events::pump_events() while SDL::Events::poll_event($event) != 0;
@@ -1259,7 +1266,7 @@ sub mp_disconnect_with_reason {
         print_('menu', $app, $MENUPOS{xpos_panel} + 10, $y, $_, $imgbin{void_panel}->w - 20, 'center');
         $y += $smg_lineheight;
     }
-    SDL::Video::flip($app);
+    SDL::Video::update_rect($app, 0, 0, 0, 0);
     play_sound('cancel');
     Games::FrozenBubble::CStuff::fbdelay(2000);
     SDL::Events::pump_events() while SDL::Events::poll_event($event) != 0;
@@ -1426,7 +1433,7 @@ sub handle_mp_messages {
                     }
                 }
                 die "could not find malus bubble to malusstick!\n";
-              ok_malusstick:
+              ok_malusstick:                    
             }
         } elsif ($command eq 'F') {
             #- this is coming too soon. it needs to be collected in the algo to restart a game.
@@ -1467,7 +1474,7 @@ sub handle_mp_messages {
             $angle{$player} += $difference / 2;
         }
     }
-
+            
 }
 
 sub handle_whenever_events {
@@ -1484,10 +1491,10 @@ sub handle_whenever_events {
                 play_music($current_theoretical_music);
             }
         } else {
-            if ($mixer_enabled && $mixer && $mixer->playing_music) {
+            if ($mixer_enabled && $mixer && SDL::Mixer::Music::playing_music) {
                 $app->delay(10) while $mixer->fading_music;   #- mikmod will deadlock if we try to fade_out while still fading in
-                $mixer->playing_music and $mixer->halt_music;
-                $app->delay(10) while $mixer->playing_music;  #- mikmod will segfault if we try to load a music while old one is still fading out
+                SDL::Mixer::Music::playing_music and $mixer->halt_music;
+                $app->delay(10) while SDL::Mixer::Music::playing_music;  #- mikmod will segfault if we try to load a music while old one is still fading out
             }
             $mixer_enabled = 0;
         }
@@ -1591,7 +1598,7 @@ sub handle_game_events() {
                         }
                     }
                 };
-
+                
                 if ($keypressed eq $KEYS->{misc}{chat} && is_mp_game()) {
                     callback_entry('reset');
                     $pdata{p1}{chatting} = 1;
@@ -1636,7 +1643,7 @@ sub handle_game_events() {
                     iter_local_players { $actions{$::p}{left} = 0; $actions{$::p}{right} = 0; };
                     $mixer_enabled && $mixer and $mixer->resume_music;
                     SDL::Events::pump_events() while SDL::Events::poll_event($event) != 0;
-                    SDL::Video::flip($app);
+                    SDL::Video::update_rect($app, 0, 0, 0, 0);
                     $start_time += $app->ticks - $time_pause;
                     is_1p_game() and $time_1pgame += $app->ticks - $time_pause;
                     return;
@@ -1819,7 +1826,7 @@ sub play {
 }
 
 sub print_scores($) {
-    my ($surface) = @_;
+    my ($surface) = @_;  
     iter_players_ {  #- sometimes called from within a iter_players so...
         my $score = @PLAYERS == 1 ? ($pdata{$::p_}{score} eq 'random' ? t("Random level")
                                          : $levels{current} eq 'mp_train' ? t("Score: %s", i18n_number($pdata{$::p_}{score}))
@@ -1880,7 +1887,7 @@ sub lose {
         print_next_bubble($bubbles_anim{lose}, $player, 1);
     }
     cleanup_player_bubbles($player);
-
+    
     if (is_mp_game()) {
         $pdata{$player}{state} = 'lost';
         my @living = living_players();
@@ -1971,7 +1978,7 @@ sub update_lost {
     if (@{$sticked_bubbles{$player}}) {
         my $b = shift @{$sticked_bubbles{$player}};
         put_image_to_background($bubbles_anim{lose}, --$b->{'x'}, --$b->{'y'});
-
+        
         if (@{$sticked_bubbles{$player}} == 0) {
             if ($graphics_level == 1 && $pdata{state} =~ /^lost (.*)/ && !is_1p_game()) {
                 put_image_to_background($imgbin{win}{$player eq 'p1' ? 'p2' : 'p1'}, $POS{centerpanel}{x}, $POS{centerpanel}{'y'});
@@ -2004,7 +2011,7 @@ sub update_lost {
     if ($pdata{state} eq 'won ' && $still_sticked == 1) {
         put_image($imgbin{void_panel}, $MENUPOS{xpos_panel}, $MENUPOS{ypos_panel});
         print_('menu', $app, $MENUPOS{xpos_panel}, $MENUPOS{ypos_panel} + 30, t("Draw game!"), $imgbin{void_panel}->w - 20, 'center');
-        SDL::Video::flip($app);
+        SDL::Video::update_rect($app, 0, 0, 0, 0);
     }
 }
 
@@ -2171,7 +2178,7 @@ sub update_game() {
                                     is_mp_game() and Games::FrozenBubble::Net::gsend("s$cx:$cy:$col:@{$pdata{$::p}{nextcolors}}");
                                     stick_bubble($launched_bubble{$::p}, $cx, $cy, $::p, 1);
                                     $launched_bubble{$::p} = undef;
-
+                                    
                                     #- malus generation
                                     if (!any { $_->{chaindestx} } @{$falling_bubble{$::p}}) {
                                         my $malusfreezeframes = 20;
@@ -2206,7 +2213,7 @@ sub update_game() {
                                             Games::FrozenBubble::Net::gsend("m$_->{num}:$_->{cx}:$_->{cy}:$_->{stick_y}") foreach @{$malus_bubble{$::p}};
                                         }
                                     }
-
+                                    
                                 } else {
                                     $pdata{$::p}{freezelaunchedbubble} = 1;
                                 }
@@ -2274,7 +2281,7 @@ sub update_game() {
         my $loser = $1;
         update_lost($loser);
         is_2p_game() and update_won($loser eq 'p1' ? 'p2' : 'p1');
-
+        
     } elsif ($pdata{state} =~ /^finished (\S+):(\S+) (\S+)/) {
         my $supposed_winner_player = $1;
         my $supposed_winner_nick = $2;
@@ -2315,7 +2322,7 @@ sub update_game() {
                     #- delay other players already asking for a new game (we're waiting for agreement on winner from others)
                     Games::FrozenBubble::Net::gdelay_messages($msg);
                 }
-
+                
             } else {
                 check_mp_connection();
                 #- timeout for receiving the winners. it could happen when a client is badly killed.
@@ -2576,7 +2583,7 @@ sub update_game() {
     };
 
     #- advance playlist when the current song finished
-    $mixer_enabled && $mixer && @playlist && !$mixer->playing_music and play_music('dummy');
+    $mixer_enabled && $mixer && @playlist && !SDL::Mixer::Music::playing_music and play_music('dummy');
 }
 
 #- ----------- init stuff -------------------------------------------------
@@ -2595,7 +2602,7 @@ sub print_step($) {
     if ($init_step == 0) {
         put_image($imgbin{loading_step_initial}, 100 + $_*12, 10) foreach 1..11;
     }
-    SDL::Video::flip($app);
+    SDL::Video::update_rect($app, 0, 0, 0, 0);
     $init_step++;
 }
 
@@ -2629,29 +2636,6 @@ sub load_levelset {
     }
 }
 
-our $surfstyle;
-sub surf {
-    my ($surface) = @_;
-    $surfstyle ||= UNIVERSAL::isa($surface, 'HASH') ? 'hashref' : 'scalarref';
-    return $surfstyle eq 'hashref' ? $surface->{-surface} : $$surface;
-}
-sub rect {
-    my ($rect) = @_;
-    return $surfstyle eq 'hashref' ? $rect->{-rect} : $$rect;
-}
-our $evtstyle;
-sub evt {
-    my ($evt) = @_;
-    $evtstyle ||= UNIVERSAL::isa($evt, 'HASH') ? 'hashref' : 'scalarref';
-    return $evtstyle eq 'hashref' ? $evt->{-event} : $$evt;
-}
-our $colstyle;
-sub col {
-    my ($color) = @_;
-    $colstyle ||= UNIVERSAL::isa($color, 'HASH') ? 'hashref' : 'scalarref';
-    return $colstyle eq 'hashref' ? $color->{-color} : $$color;
-}
-
 sub init_game() {
     -r "$FPATH/$_" or die "[*ERROR*] the datafiles seem to be missing! (could not read `$FPATH/$_')\n".
                           "          The datafiles need to go to `$FPATH'.\n"
@@ -2674,10 +2658,10 @@ sub init_game() {
     SDL::Mouse::show_cursor(0);
     $imgbin{loading} = add_image('loading.png');
     put_image($imgbin{loading}, 10, 10);
-    $app->sync;
+	SDL::Video::update_rect($app, 0, 0, 0, 0);
     $imgbin{loading_step} = add_image('loading_step.png');
     $imgbin{loading_step_initial} = add_image('loading_step_initial.png');
-
+ 
     print_step('[Graphics');
     $imgbin{back_2p} = SDL::Image::load("$FPATH/gfx/backgrnd.png");
     $imgbin{back_1p} = SDL::Image::load("$FPATH/gfx/back_one_player.png");
@@ -2718,36 +2702,36 @@ sub init_game() {
     foreach my $number (-$CANON_ROTATIONS_NB..$CANON_ROTATIONS_NB) {
         my $angle = $number*($PI/2)/$CANON_ROTATIONS_NB;
 
-        $canon{img}{$number} = SDL::Surface->new( SDL_ANYFORMAT, $shooter->w, $shooter->h);
+        $canon{img}{$number} = SDL::Surface->new( SDL_ANYFORMAT, $shooter->w, $shooter->h, 32, 0, 0, 0, 0);
         Games::FrozenBubble::CStuff::rotate_bicubic($canon{img}{$number}, $shooter, $angle);
         $canon{data}{$number} = Games::FrozenBubble::CStuff::autopseudocrop($canon{img}{$number});
         #- now crop (and use native RGBA ordering)
-        my $replace = SDL::Surface->new( SDL_ANYFORMAT, $canon{data}{$number}[2],  $canon{data}{$number}[3]);
+        my $replace = SDL::Surface->new( SDL_ANYFORMAT, $canon{data}{$number}[2],  $canon{data}{$number}[3], 32, 0, 0, 0, 0);
 	SDL::Video::set_alpha($canon{img}{$number}, 0, 0);
 	SDL::Video::blit_surface( $canon{img}{$number}, SDL::Rect->new( $canon{data}{$number}[0],  $canon{data}{$number}[1],
-                                                                    $canon{data}{$number}[2],  $canon{data}{$number}[3]),
+                                                                    $canon{data}{$number}[2],  $canon{data}{$number}[3]), 
 							  $replace, SDL::Rect->new(0, 0, $canon{img}{$number}->w, $canon{img}{$number}->h));
         $canon{img}{$number} = $replace;
         add_default_rect($canon{img}{$number});
 
-        $canon{img_mini}{$number} = SDL::Surface->new( SDL_ANYFORMAT,  $shooter_mini->w,  $shooter_mini->h);
+        $canon{img_mini}{$number} = SDL::Surface->new( SDL_ANYFORMAT,  $shooter_mini->w,  $shooter_mini->h, 32, 0, 0, 0, 0);
         Games::FrozenBubble::CStuff::rotate_bicubic($canon{img_mini}{$number}, $shooter_mini, $angle);
-        $canon{data_mini}{$number} = Games::FrozenBubble::CStuff::autopseudocrop(surf($canon{img_mini}{$number}));
+        $canon{data_mini}{$number} = Games::FrozenBubble::CStuff::autopseudocrop($canon{img_mini}{$number});
         #- now crop (and use native RGBA ordering)
-        my $replace = SDL::Surface->new( SDL_ANYFORMAT,  $canon{data_mini}{$number}[2],  $canon{data_mini}{$number}[3]);
+        my $replace = SDL::Surface->new( SDL_ANYFORMAT, $canon{data_mini}{$number}[2], $canon{data_mini}{$number}[3], 32, 0, 0, 0, 0);
 	SDL::Video::set_alpha($canon{img_mini}{$number}, 0, 0);
 	SDL::Video::blit_surface( $canon{img_mini}{$number}, SDL::Rect->new( $canon{data_mini}{$number}[0], $canon{data_mini}{$number}[1],
-                                                        $canon{data_mini}{$number}[2], $canon{data_mini}{$number}[3]), $replace,
+                                                        $canon{data_mini}{$number}[2], $canon{data_mini}{$number}[3]), $replace, 
 														SDL::Rect->new(0,0,$canon{img_mini}{$number}->w,$canon{img_mini}{$number}->h));
         $canon{img_mini}{$number} = $replace;
         add_default_rect($canon{img_mini}{$number});
 
-        $number eq -$CANON_ROTATIONS_NB/2 and print_step('.');
-        $number eq 0 and print_step('.');
-        $number eq $CANON_ROTATIONS_NB/2 and print_step('.');
+        $number eq -$CANON_ROTATIONS_NB/2 and print_step('.'); 
+        $number eq 0 and print_step('.'); 
+        $number eq $CANON_ROTATIONS_NB/2 and print_step('.'); 
     }
 
-    print_step('.');
+    print_step('.'); 
     $malus_gfx{banane} = add_image('banane.png');
     $img_mini{$malus_gfx{banane}} = add_image('banane-mini.png');
     $malus_gfx{tomate} = add_image('tomate.png');
@@ -2811,10 +2795,10 @@ sub init_game() {
         foreach my $img (@{$imgbin{menu_cursor}{$cursortype}}) {
             my $alpha = SDL::Surface->new( SDL_ANYFORMAT,  $img->w,  $img->h,  32, 0,0,0,0);
 	    SDL::Video::set_alpha($img, 0, 0);  #- for RGBA->RGBA blits, SDL_SRCALPHA must be removed or destination alpha is preserved
-            SDL::Video::blit_surface($img, SDL::Rect->new(0,0,0,0), $alpha, SDL::Rect->new(0,0,$img->w,$img->h));
-            Games::FrozenBubble::CStuff::alphaize(surf($alpha));
+            SDL::Video::blit_surface($img, SDL::Rect->new(0,0,$img->w,$img->h), $alpha, SDL::Rect->new(0,0,$img->w,$img->h));
+            Games::FrozenBubble::CStuff::alphaize($alpha);
             push @{$imgbin{menu_cursor}{"${cursortype}alpha"}}, $alpha;
-	    SDL::Video::set_alpha($img, SDL_SRCALPHA, 0);
+	    SDL::Video::set_alpha($img, SDL_SRCALPHA, 0);  
         }
     }
     $imgbin{left_rp1} = add_image('left-rp1.png');
@@ -2862,10 +2846,10 @@ sub init_game() {
     $imgbin{hiscore_frame} = add_image('hiscore_frame.png');
     $imgbin{hiscore_levelset} = add_image('hiscore-levelset.png');
     $imgbin{hiscore_mptraining} = add_image('hiscore-mptraining.png');
-
+    
     local @PLAYERS = @ALL_PLAYERS;  #- load all images even if -so commandline option was passed
     iter_players {
-        print_step('.');
+        print_step('.'); 
 	$imgbin{hurry}{$::p} = add_image("hurry_$::p.png");
 	$imgbin{win}{$::p} = add_image("win_panel_$::p.png");
 	$::p ne 'p2' and $imgbin{net_lose}{$::p} = add_image("net_lose_$::p.png");
@@ -2890,7 +2874,7 @@ sub init_game() {
         $pinguin{$::p}{lose} = [ map { add_image("pinguins/loose_${p}_0$_.png") } ('065'..'158') ];
     };
 
-    print_step('] ');
+    print_step('] '); 
 
     if ($mixer eq 'SOUND_DISABLED') {
         $mixer_enabled = 0; $mixer = undef;
@@ -2899,9 +2883,9 @@ sub init_game() {
     }
 
     #- the RGBA effects algorithms assume little endian RGBA surfaces
-    my $replace = SDL::Surface->new( SDL_ANYFORMAT, $imgbin{menu_logo}->w,  $imgbin{menu_logo}->h);
-    SDL::Video::set_alpha ($imgbin{menu_logo}, 0, 0);  #- for RGBA->RGBA blits, SDL_SRCALPHA must be removed or destination alpha is preserved
-    SDL::Video::blit_surface($imgbin{menu_logo}, SDL::Rect->new(0,0,0,0), $replace, SDL::Rect->new(0,0,$imgbin{menu_logo}->w,$imgbin{menu_logo}->h));
+    my $replace = SDL::Surface->new( SDL_ANYFORMAT, $imgbin{menu_logo}->w,  $imgbin{menu_logo}->h, 32, 0, 0, 0, 0);
+    SDL::Video::set_alpha($imgbin{menu_logo}, 0, 0);  #- for RGBA->RGBA blits, SDL_SRCALPHA must be removed or destination alpha is preserved
+    SDL::Video::blit_surface($imgbin{menu_logo}, SDL::Rect->new(0,0,$imgbin{menu_logo}->w,$imgbin{menu_logo}->h), $replace, SDL::Rect->new(0,0,$imgbin{menu_logo}->w,$imgbin{menu_logo}->h));
     $imgbin{menu_logo} = $replace;
     add_default_rect($replace);
 
@@ -2931,22 +2915,22 @@ sub open_level($) {
 
 sub translate_joystick_tokey($) {
     my ($event) = @_;
-    my $which =  SDL::JoyAxisEventWhich(evt($event));
+    my $which =  SDL::JoyAxisEventWhich($event);
     if ($event->type == Games::FrozenBubble::CStuff::JOYAXISMOTION()) {
-        my $axis = SDL::JoyAxisEventAxis(evt($event));
-        my $value = Games::FrozenBubble::CStuff::JoyAxisEventValue(evt($event));
+        my $axis = SDL::JoyAxisEventAxis($event);
+        my $value = Games::FrozenBubble::CStuff::JoyAxisEventValue($event);
         if ($value <= -10000) {  #- should work properly with analog joysticks
             return "joystick|axisvalue|$which|$axis|-10000";
-        } elsif ($value >= 10000) {
+        } elsif ($value >= 10000) {  
             return "joystick|axisvalue|$which|$axis|10000";
         } else {
             return "joystick|axisvalue|$which|$axis|0";
         }
     } elsif ($event->type() == Games::FrozenBubble::CStuff::JOYBUTTONDOWN()) {
-        my $button = SDL::JoyButtonEventButton(evt($event)) + 1;
+        my $button = SDL::JoyButtonEventButton($event) + 1;
         return "joystick|buttondown|$which|$button";
     } elsif ($event->type() == Games::FrozenBubble::CStuff::JOYBUTTONUP()) {
-        my $button = SDL::JoyButtonEventButton(evt($event)) + 1;
+        my $button = SDL::JoyButtonEventButton($event) + 1;
         return "joystick|buttonup|$which|$button";
     }
 }
@@ -3004,9 +2988,9 @@ sub display_highscores {
             my ($x, $y, $txt, $bold) = @_;
             print_($bold ? 'bold_menu' : 'menu', $app, $x, $y + $imgbin{hiscore_frame}->h - 8, $txt, $imgbin{hiscore_frame}->w + 12, 'center');
         };
-
+        
         my $old_levelset = $loaded_levelset;
-
+        
         foreach my $high (ordered_highscores()) {
             @{$sticked_bubbles{p1}} = ();
             @{$root_bubbles{p1}} = ();
@@ -3018,7 +3002,7 @@ sub display_highscores {
             # last level in the default levelset
             if (!$high->{piclevel}) {
                 $loaded_levelset ne "$FPATH/data/levels" and load_levelset("$FPATH/data/levels");
-
+                
                 # handle the case where the user has edited/created a levelset with more levels
                 # than the default levelset and then got a high score
                 if ($high->{level} > $lev_number) {
@@ -3035,10 +3019,9 @@ sub display_highscores {
             }
 
             put_image($imgbin{hiscore_frame}, $high_posx - 7, $high_posy - 6);
-            my $tmp = SDL::Video::display_format(SDL::Surface->new(-width => $high_rect->w/4, -height => $high_rect->h/4,
-                                        -depth => 32, -Amask => "0 but true"));
-            Games::FrozenBubble::CStuff::shrink(surf($tmp), surf(SDL::Video::display_format($background)), 0, 0, rect($high_rect), 4);
-            SDL::Video::blit_surface($tmp, SDL::Rect->new(0,0,0,0), $app, SDL::Rect->new($high_posx, $high_posy, $tmp->w, $tmp->h));
+            my $tmp = SDL::Video::display_format(SDL::Surface->new($high_rect->w/4, $high_rect->h/4, 32, 0, 0, 0, 0));
+            Games::FrozenBubble::CStuff::shrink($tmp, SDL::Video::display_format($background), 0, 0, $high_rect, 4);
+            SDL::Video::blit_surface($tmp, SDL::Rect->new(0,0,$tmp->w,$tmp->h), $app, SDL::Rect->new($high_posx, $high_posy, $tmp->w, $tmp->h));
             $centered_print->($high_posx - 15, $high_posy, $high->{name}, $new_entry == $high);
             $centered_print->($high_posx - 15, $high_posy + 20, $high->{level} eq 'WON' ? t("won!") : t("level %s", i18n_number($high->{level})), $new_entry == $high);
             my $min = int($high->{time}/60);
@@ -3048,10 +3031,10 @@ sub display_highscores {
             $high_posx > 550 and $high_posx = $initial_high_posx, $high_posy += 175;
             $high_posy > 440 and last;
         }
-        load_levelset($old_levelset);
+        load_levelset($old_levelset);    
 
-        SDL::Video::flip($app);
-
+        SDL::Video::update_rect($app, 0, 0, 0, 0);
+        
         SDL::Events::pump_events() while SDL::Events::poll_event($event) != 0;
         grab_key() eq SDLK_ESCAPE() and return;
     }
@@ -3096,8 +3079,8 @@ sub display_highscores {
             $lastvalue = $high->{score};
         }
 
-        SDL::Video::flip($app);
-
+        SDL::Video::update_rect($app, 0, 0, 0, 0);
+        
         SDL::Events::pump_events() while SDL::Events::poll_event($event) != 0;
         grab_key() eq SDLK_ESCAPE() and die "quit";
     }
@@ -3107,7 +3090,7 @@ sub display_highscores {
 
 sub keysym_to_char($) {
     my ($key) = @_;
-    eval("$key eq SDLK_$_()") and return uc($_) foreach @Games::FrozenBubble::Symbols::syms;
+    eval("$key eq SDLK_$_()") and return uc($_) foreach @fbsyms::syms;
     if ($key >= 160 && $key <= 255) {
         return 'WORLD_' . ($key - 160);  #- "world" keys are not exported
     }
@@ -3126,7 +3109,7 @@ sub ask_from($) {
     my $lineheight = 18;
     my %xpos = ( questions => $is_rtl ? $MENUPOS{xpos_panel} + $imgbin{void_panel}->w*1/3 + 10 : $MENUPOS{xpos_panel},
                  echo => $is_rtl ? $MENUPOS{xpos_panel} + $imgbin{void_panel}->w*1/3 - 100 : $MENUPOS{xpos_panel} + $imgbin{void_panel}->w*2/3 );
-
+ 
     foreach my $i (@{$w->{intro}}) {
 	if ($i) {
 	    print_('menu', $app, $MENUPOS{xpos_panel}, $ypos, $i, $imgbin{void_panel}->w, 'center');
@@ -3144,7 +3127,7 @@ sub ask_from($) {
         SDL::Video::blit_surface($imgbin{void_panel}, SDL::Rect->new(10, $ypos - $MENUPOS{ypos_panel}, $imgbin{void_panel}->w - 20, 30), $app,
                                   SDL::Rect->new($MENUPOS{xpos_panel} + 10, $ypos, $imgbin{void_panel}->w, $imgbin{void_panel}->h));
 	print_('menu', $app, $xpos{questions}, $ypos, $entry->{'q'}, $imgbin{void_panel}->w*2/3 - 10, @{$w->{entries}} == 1 ? 'center' : 'right');
-	SDL::Video::flip($app);
+	SDL::Video::update_rect($app, 0, 0, 0, 0);
 	my $srect_mulchar_redraw = SDL::Rect->new($xpos{echo} - 3 - $MENUPOS{xpos_panel}, $ypos - $MENUPOS{ypos_panel}, $imgbin{void_panel}->w*1/3, 30);
 	my $drect_mulchar_redraw = SDL::Rect->new($xpos{echo} - 3, $ypos, $imgbin{void_panel}->w, $imgbin{void_panel}->h);
         my $x_echo = $xpos{echo};
@@ -3180,7 +3163,7 @@ sub ask_from($) {
                         SDL::Video::blit_surface($imgbin{void_panel}, $srect_mulchar_redraw, $app, $drect_mulchar_redraw);
                         callback_entry('print', { xpos => $x_echo, ypos => $ypos, maxlen => 100, font => 'menu' });
                     }
-                    SDL::Video::flip($app);
+                    SDL::Video::update_rect($app, 0, 0, 0, 0);
                     SDL::Events::pump_events();
                     while (SDL::Events::poll_event($event) != 0) {
                         if ($event->type == SDL_KEYDOWN) {
@@ -3211,7 +3194,7 @@ sub ask_from($) {
     if ($ok) {
 	${$_->{a}} = $_->{answer} foreach @{$w->{entries}};
         print_('menu', $app, $MENUPOS{xpos_panel}, $MENUPOS{ypos_panel} + $imgbin{void_panel}->h - 35, $w->{outro}, $imgbin{void_panel}->w, 'center');
-	SDL::Video::flip($app);
+	SDL::Video::update_rect($app, 0, 0, 0, 0);
 	play_sound('menu_selected');
 	sleep 2;
     } else {
@@ -3219,7 +3202,7 @@ sub ask_from($) {
     }
 
     exists $w->{erase_background} and erase_image_from($imgbin{void_panel}, $MENUPOS{xpos_panel}, $MENUPOS{ypos_panel}, $w->{erase_background});
-    SDL::Video::flip($app);
+    SDL::Video::update_rect($app, 0, 0, 0, 0);
     SDL::Events::pump_events() while SDL::Events::poll_event($event) != 0;
 
     return $ok;
@@ -3393,9 +3376,9 @@ sub new_game() {
 
     if ($graphics_level == 1) {
 	SDL::Video::blit_surface($background, $apprects{main}, $app, $apprects{main});
-	SDL::Video::flip($app);
+	SDL::Video::update_rect($app, 0, 0, 0, 0);
     } else {
-	Games::FrozenBubble::CStuff::effect(surf($app), surf(SDL::Video::display_format($background)));
+	Games::FrozenBubble::CStuff::effect($app, SDL::Video::display_format($background));
     }
 
     $display_on_app_disabled = 0;
@@ -3415,7 +3398,7 @@ sub new_game() {
         iter_distant_players {
             $pdata{$::p}{barrier4newgame} = 0;
         };
-
+        
         #- at this point, we can receive first commands of quickies instead of synchro
         my @keep_messages;
         while (1) {
@@ -3443,7 +3426,7 @@ sub new_game() {
         #- 2. now that we're all ready to synchronize, let a unique synchro message be sent, the leader and others will all wait on
         is_leader() and Games::FrozenBubble::Net::gsend('!');
         check_mp_connection();
-
+        
         while (1) {
             my $m;
             eval { $m = Games::FrozenBubble::Net::grecv_get1msg(); }; #- blocking
@@ -3458,7 +3441,7 @@ sub new_game() {
                 push @keep_messages, $m;
             }
         }
-
+        
         Games::FrozenBubble::Net::gdelay_messages(@keep_messages);
 
         @{$pdata{attackingme}} = ();
@@ -3478,7 +3461,7 @@ sub choose_1p_game_mode() {
     my @ordered_names = qw(play_all_levels pick_start_level play_random_levels mp_train);
     my $active_menu = 0;
 
-    my $menu_xpos = $MENUPOS{xpos_panel} + ($imgbin{'1p_panel'}->w - $imgbin{txt_1pmenu_over}->w)/2;
+    my $menu_xpos = $MENUPOS{xpos_panel} + ($imgbin{'1p_panel'}->w - $imgbin{txt_1pmenu_over}->w)/2; 
     my $menu_ypos = $MENUPOS{ypos_panel} + 90;
     my $menu_ypos_spacer = $imgbin{txt_1pmenu_over}->h + 4;
     my %name2ypos = (play_all_levels    => $menu_ypos,
@@ -3487,15 +3470,14 @@ sub choose_1p_game_mode() {
                      mp_train           => $menu_ypos + 3 * $menu_ypos_spacer);
 
     my $overlook_index = 0;
-    my $overlook = SDL::Surface->new(SDL_ANYFORMAT, $imgbin{txt_1pmenu_pick_start_level_text}->w,
-	                                                $imgbin{txt_1pmenu_pick_start_level_text}->h,
-													32, 0xFF000000, 0x00FF0000, 0x0000FF00, 0x000000FF);
+    my $overlook = SDL::Surface->new(SDL_ANYFORMAT, $imgbin{txt_1pmenu_pick_start_level_text}->w, 
+	                                                $imgbin{txt_1pmenu_pick_start_level_text}->h, 32, 0, 0, 0, 0);
     my $redraw = sub {
         my $draw_element = sub {
             my ($name, $mode) = @_;
             put_image($imgbin{"txt_1pmenu_$mode"}, $menu_xpos, $name2ypos{$name});
-            SDL::Video::blit_surface($imgbin{"txt_1pmenu_${name}_outlined_text"}, SDL::Rect->new(0,0,0,0),
-			                         $app, SDL::Rect->new($menu_xpos, $name2ypos{$name}, $imgbin{"txt_1pmenu_${name}_outlined_text"}->w,
+            SDL::Video::blit_surface($imgbin{"txt_1pmenu_${name}_outlined_text"}, SDL::Rect->new(0,0,$imgbin{"txt_1pmenu_${name}_outlined_text"}->w,$imgbin{"txt_1pmenu_${name}_outlined_text"}->h), 
+			                         $app, SDL::Rect->new($menu_xpos, $name2ypos{$name}, $imgbin{"txt_1pmenu_${name}_outlined_text"}->w, 
 									                                                     $imgbin{"txt_1pmenu_${name}_outlined_text"}->h));
         };
 
@@ -3505,7 +3487,7 @@ sub choose_1p_game_mode() {
         if ($save) {
             SDL::Video::blit_surface($save, $rects{img}, $app, $drect);
         } else {
-            $save = SDL::Surface->new(SDL_SWSURFACE, $img->w, $img->h, 32, 0xFF000000, 0x00FF0000, 0x0000FF00, 0x000000FF);
+            $save = SDL::Surface->new(SDL_SWSURFACE, $img->w, $img->h, 32, 0, 0, 0, 0);
             SDL::Video::blit_surface($app, $drect, $save, $rects{$img});
         }
         put_image($img, $MENUPOS{xpos_panel}, $MENUPOS{ypos_panel});
@@ -3520,23 +3502,23 @@ sub choose_1p_game_mode() {
 
         $draw_element->($ordered_names[$active_menu], 'over');
 
-        Games::FrozenBubble::CStuff::overlook_init(surf($overlook));
+        Games::FrozenBubble::CStuff::overlook_init($overlook);
         $overlook_index = 0;
 
-        SDL::Video::flip($app);
+        SDL::Video::update_rect($app, 0, 0, 0, 0);
     };
 
     my $draw_overlook = sub {
         my %name2pivot = (play_all_levels => 90, pick_start_level => 135, play_random_levels => 82, mp_train => 105);
         my $name =  $ordered_names[$active_menu];
         put_image($imgbin{txt_1pmenu_over}, $menu_xpos, $name2ypos{$name});
-        Games::FrozenBubble::CStuff::overlook(surf($overlook), surf($imgbin{"txt_1pmenu_${name}_text"}), $overlook_index, $name2pivot{$name});
-        SDL::Video::blit_surface($overlook, SDL::Rect->new(0,0,0,0), $app, SDL::Rect->new($menu_xpos, $name2ypos{$name}, $overlook->w, $overlook->h));
+        Games::FrozenBubble::CStuff::overlook($overlook, $imgbin{"txt_1pmenu_${name}_text"}, $overlook_index, $name2pivot{$name});
+        SDL::Video::blit_surface($overlook, SDL::Rect->new(0,0,$overlook->w,$overlook->h), $app, SDL::Rect->new($menu_xpos, $name2ypos{$name}, $overlook->w, $overlook->h));
         $overlook_index++;
         if ($overlook_index == 70) {
             $overlook_index = 0;
         }
-        SDL::Video::blit_surface($imgbin{"txt_1pmenu_${name}_outlined_text"}, SDL::Rect->new(0,0,0,0), $app, SDL::Rect->new($menu_xpos, $name2ypos{$name}, $imgbin{"txt_1pmenu_${name}_outlined_text"}->w, $imgbin{"txt_1pmenu_${name}_outlined_text"}->h));
+        SDL::Video::blit_surface($imgbin{"txt_1pmenu_${name}_outlined_text"}, SDL::Rect->new(0,0,$imgbin{"txt_1pmenu_${name}_outlined_text"}->w,$imgbin{"txt_1pmenu_${name}_outlined_text"}->h), $app, SDL::Rect->new($menu_xpos, $name2ypos{$name}, $imgbin{"txt_1pmenu_${name}_outlined_text"}->w, $imgbin{"txt_1pmenu_${name}_outlined_text"}->h));
     };
 
     $redraw->();
@@ -3626,7 +3608,7 @@ sub smg_printstatus {
     while ($i < $smg_max_messages + $smg_status_message_offsetpage && @smg_status_messages >= $i) {
         if ($smg_status_messages[-$i]) {
             my $kind = $smg_status_messages[-$i] =~ /^\*\*\*/ ? 'netdialogs_servermsg' : 'netdialogs';
-            if ($smg_status_messages[-$i] =~ /^‫/) {
+            if ($smg_status_messages[-$i] =~ /^?/) {
                 #- if text begins with unicode RTL direction, we also need to tell pango to align on the right
                 #- (is there another unicode special character which does both?)
                 print_($kind, $app, $smg_statusx, $y, $smg_status_messages[-$i], 620, 'right');
@@ -3637,7 +3619,7 @@ sub smg_printstatus {
         $y -= $smg_lineheight;
         $i++;
     }
-    SDL::Video::flip($app);
+    SDL::Video::update_rect($app, 0, 0, 0, 0);
 }
 
 sub smg_add_status_msg {
@@ -3769,10 +3751,10 @@ sub smg_choose_server(@) {
             my $pingimg = $server->{ping} < 80 ? "ping_low" : $server->{ping} < 200 ? "ping_mid" : "ping_high";
             put_image($imgbin{$pingimg}, $is_rtl ? $parts{details}{xpos} + $parts{details}{width} - width('netdialogs', $details) - 17
                                                  : $parts{details}{xpos} + width('netdialogs', $details), $y);
-
+                                                     
             $y += $smg_lineheight + 2;
         }
-        SDL::Video::flip($app);
+        SDL::Video::update_rect($app, 0, 0, 0, 0);
     };
 
     my @potential_servers;
@@ -3781,7 +3763,7 @@ sub smg_choose_server(@) {
             push @potential_servers, $server;
         }
     }
-    my $discover = Games::FrozenBubble::Net_discover->new(@potential_servers);
+    my $discover = fb_net_discover->new(@potential_servers);
     my $looped = 0;
     my $init = 0;
     while (1) {
@@ -3904,7 +3886,7 @@ sub smg_verify_command($;$) {
     };
     if ($@) {
         smg_add_status_msg(t("*** Sorry, your computer or the network is too slow, giving up - press any key"));
-        SDL::Video::flip($app);
+        SDL::Video::update_rect($app, 0, 0, 0, 0);
         SDL::Events::pump_events() while SDL::Events::poll_event($event) != 0;
         grab_key();
         die 'quit';
@@ -3969,7 +3951,7 @@ sub callback_entry {
                 $entry_position = $#entry_typed + 1;
             }
         } else {
-            my $utf8char = Games::FrozenBubble::CStuff::utf8key(evt($params->{event}));
+            my $utf8char = Games::FrozenBubble::CStuff::utf8key($params->{event});
             if ($utf8char ne '' && $utf8char ne "\n" && $utf8char ne "\r") {
                 splice @entry_typed, $entry_position, 0, $utf8char;
                 if (width($params->{font}, $params->{prefix} . join('', @entry_typed)) >= $params->{maxlen}) {
@@ -4029,9 +4011,9 @@ sub save_back_spot {
     my ($x, $y) = get_spot_location($latitude, $longitude);
     $x -= $surface->w/2;
     $y -= $surface->h/2;
-    $$back = SDL::Surface->new(-width => 20, -height => 20, -depth => 32, -Amask => '0 but true');
-    SDL::Video::blit_surface($app, SDL::Rect->new($x, $y, 20, 20), $$back, SDL::Rect->new(0,0,0,0));
-    add_default_rect($$back);
+    $$back = SDL::Surface->new(20, 20, 32, 0, 0, 0, 0);
+    SDL::Video::blit_surface($app, SDL::Rect->new($x, $y, 20, 20), $$back, SDL::Rect->new(0,0,$$back->w,$$back->h));
+    add_default_rect($back);
 }
 sub print_spot {
     my ($latitude, $longitude, $kind, $surface, $back) = @_;
@@ -4039,8 +4021,8 @@ sub print_spot {
     my ($x, $y) = get_spot_location($latitude, $longitude);
     $x -= $surface->w/2;
     $y -= $surface->h/2;
-    if ($back) {
-        put_image($$back, $x, $y);
+    if ($back and ref $back ne 'SCALAR') {
+        put_image($back, $x, $y);
         pop @update_rects;
     }
     put_image($surface, $x, $y);
@@ -4085,9 +4067,9 @@ sub smg_choose_game() {
     my $free_players;
     my $ingame = 0;
     my $players_in_game = '';
-    my $label_outer_color = SDL::Color->new(-r => 0x7b, -g => 0x2f, -b => 0x03);
-    my $label_background_color = SDL::Color->new(-r => 0x5b, -g => 0x1f, -b => 0x09);
-    my $label_line_color = SDL::Color->new(-r => 0x9b, -g => 0x3f, -b => 0x03);
+    my $label_outer_color = SDL::Color->new( 0x7b,  0x2f,  0x03);
+    my $label_background_color = SDL::Color->new( 0x5b,  0x1f,  0x09);
+    my $label_line_color = SDL::Color->new( 0x9b,  0x3f,  0x03);
     my $redraw = sub {
         $erase->();
 
@@ -4115,7 +4097,7 @@ sub smg_choose_game() {
         }
         #- second show labels, managing overlap
         my @labels = ();
-        my $linecolor = SDL::Color->new(-r => 0x7b, -g => 0x2f, -b => 0x03);
+        my $linecolor = SDL::Color->new( 0x7b,  0x2f,  0x03);
         mapn {
             if (@{$_[1]}) {
                 my ($xspot, $yspot) = get_spot_location($_[1][0], $_[1][1]);
@@ -4175,7 +4157,7 @@ sub smg_choose_game() {
                     last;
                 }
                 #- draw a line between the spot and the center of the label
-                Games::FrozenBubble::CStuff::draw_line(surf($app), $xspot, $yspot, $xc, $yc, col($label_line_color));
+                Games::FrozenBubble::CStuff::draw_line($app, $xspot, $yspot, $xc, $yc, $label_line_color);
                 #- draw the label background and the label in another pass to handle overwriting of labels over lines
                 push @labels, { x => $xc - $sizing->[2]/2 - $sizing->[0], y => $yc - $sizing->[3]/2 - $sizing->[1], text => $text, backrect1 => $r,
                                 backrect2 => SDL::Rect->new($xb + 1, $yb + 1, $wb - 2, $hb - 2) };
@@ -4184,8 +4166,8 @@ sub smg_choose_game() {
         } \@wholist, \@free_geolocs;
 
         foreach (@labels) {
-            $app->fill($_->{backrect1}, $label_outer_color);
-            $app->fill($_->{backrect2}, $label_background_color);
+		SDL::Video::fill_rect($app, $_->{backrect1}, $label_outer_color);
+		SDL::Video::fill_rect($app, $_->{backrect2}, $label_background_color);
             print_('netdialogs_servermsg', $app, $_->{x}, $_->{y}, $_->{text});
         }
 
@@ -4200,7 +4182,7 @@ sub smg_choose_game() {
         }
 
         #- selfspot will need to properly erase selection overlay
-        if ($mylatitude && !$private) {
+        if ($mylatitude && !$private && $back_selfspot) {
             save_back_spot($mylatitude, $mylongitude, $imgbin{netspot_self}[0], \$back_selfspot);
             if ($index_selfspot >= 0) {
                 print_spot($mylatitude, $mylongitude, 'free', $imgbin{netspot_self}[$index_selfspot], \$back_selfspot);
@@ -4228,14 +4210,14 @@ sub smg_choose_game() {
         if ($mylatitude && !$private) {
             $index_selfspot >= 0 and print_spot($mylatitude, $mylongitude, 'free', $imgbin{netspot_self}[$index_selfspot], \$back_selfspot);
             $index_selfspot++;
-            if ($index_selfspot == @{$imgbin{netspot_self}}) {
+            if ($back_selfspot and $index_selfspot == @{$imgbin{netspot_self}}) {
                 my ($x, $y) = get_spot_location($mylatitude, $mylongitude);
                 put_image($back_selfspot, $x - 10, $y - 10);
                 $index_selfspot = -15;
             }
         }
     };
-
+    
     my $myoldnick;
     my $list = sub {
         my ($firsttime) = @_;
@@ -4295,7 +4277,7 @@ sub smg_choose_game() {
                 }
             }
         }
-
+        
         my ($join, $rest) = partition { $_->{action} eq 'JOIN' } @actions;
         $_->{ok} = 0 foreach @$join;
       listgames:
@@ -4377,7 +4359,7 @@ sub smg_choose_game() {
         }
     }
     smg_add_status_msg(t("*** You may now create or join a game"));
-
+    
     my $need4update;
     my $relist;
     my $can_start = 0;
@@ -4685,7 +4667,7 @@ sub smg_choose_game() {
                         } else {
                             #- for RTL language, force beginning on the right, but non RTL content will appear wrongly so at least don't do for pure ASCII
                             if ($is_rtl && !is_only_ascii($text)) {
-                                $text = "‫<$mynick> $text";
+                                $text = "?<$mynick> $text";
                             } else {
                                 $text = "<$mynick> $text";
                             }
@@ -4743,7 +4725,7 @@ sub smg_choose_game() {
                         $need4update = 1;
                     }
                   not_in_game:
-
+                            
                     if ($curaction->()->{action} eq 'TOGGLE_CHAIN_REACTION') {
                         $toggle_chain_reaction->();
                     }
@@ -4812,7 +4794,7 @@ sub smg_choose_game() {
                             return;
                         }
                     }
-
+                    
 
                 } elsif ($k eq SDLK_RIGHT() && $curaction->()->{action} ne 'CHAT') {
                     if ($curaction->()->{action} eq 'TOGGLE_CHAIN_REACTION') {
@@ -4877,10 +4859,10 @@ sub smg_choose_game() {
                                                                }
                                                            }
                                                        } });
-
+                    
                     } else {
                         if ($curaction->()->{action} eq 'SWITCH_VICTORIES_LIMIT') {
-                            my $utf8char = Games::FrozenBubble::CStuff::utf8key(evt($event));
+                            my $utf8char = Games::FrozenBubble::CStuff::utf8key($event);
                             $change_victories_limit->($utf8char) if defined $utf8char && $utf8char eq int($utf8char);
                         }
 
@@ -5126,7 +5108,7 @@ sub show_mp_scores() {
 }
 
 sub setup_mp_game() {
-
+    
     SDL::Video::blit_surface($imgbin{back_netgame}, $apprects{main}, $app, $apprects{main});
 
     if (!Games::FrozenBubble::Net::isconnected()) {
@@ -5149,11 +5131,11 @@ sub setup_mp_game() {
             #- 1. get list of servers
             my $servers = smg_servers();
             defined $servers or return;
-
+            
             #- 2. let user choose server
             smg_choose_server(@$servers) or return;
         }
-
+            
     } else {
         show_mp_scores();
     }
@@ -5298,7 +5280,7 @@ sub append_highscore_level() {
 	    if ($row_numb) {
 		$lvl++;
 		$row_numb = 0;
-            }
+            } 
         } else {
             $row_numb++;
             $lvl == ($levels{current} eq 'WON' ? (keys %levels)-1 : $levels{current})
@@ -5317,13 +5299,13 @@ sub count_highscorehistory_levels() {
 	    if ($row_numb) {
 		$cnt++;
 		$row_numb = 0;
-            }
+            } 
         } else {
             $row_numb++;
         }
     }
     return $cnt;
-}
+} 
 
 sub save_frame() {
     $replayparam and $app->save_bmp(sprintf("$saveframes/frame_\%d_%08d.bmp", $saveframesbase, $saveframescounter++));
@@ -5394,7 +5376,7 @@ sub save_config {
     foreach my $p (keys %$KEYS) {
 	foreach my $k (keys %{$KEYS->{$p}}) {
             if ($KEYS->{$p}{$k} =~ /^\d+$/) {
-                foreach (@Games::FrozenBubble::Symbols::syms) {
+                foreach (@fbsyms::syms) {
                     if (eval("$KEYS->{$p}{$k} eq SDLK_$_")) {
                         $KEYS_->{$p}{$k} = "SDLK_$_";
                         goto nextkey;
@@ -5427,7 +5409,7 @@ sub menu {
     my $back_start;
     my $display_menu = sub {
 	SDL::Video::blit_surface($back_start,$apprects{main}, $app, $apprects{main});
-	SDL::Video::blit_surface($imgbin{stamp},SDL::Rect->new(0,0,0,0), $app, SDL::Rect->new( 490,  142, 0, 0));
+	SDL::Video::blit_surface($imgbin{stamp},SDL::Rect->new(0,0,$imgbin{stamp}->w,$imgbin{stamp}->h), $app, SDL::Rect->new( 490,  142, $imgbin{stamp}->w, $imgbin{stamp}->h));
     };
 
     $back_start = $imgbin{back_menu};
@@ -5439,7 +5421,7 @@ sub menu {
 	display_highscores();
 
 	$display_menu->();
-	SDL::Video::flip($app);
+	SDL::Video::update_rect($app, 0, 0, 0, 0);
 	$invalidate_all->();
     };
 
@@ -5469,11 +5451,11 @@ sub menu {
 
     my $launch_editor = sub {
         SDL::Mouse::show_cursor(1);
-        Games::FrozenBubble::LevelEditor::init_setup('embedded', $app);
-        Games::FrozenBubble::LevelEditor::handle_events();
+        FBLE::init_setup('embedded', $app);
+        FBLE::handle_events();
         SDL::Mouse::show_cursor(0);
 	$display_menu->();
-        SDL::Video::flip($app);
+        SDL::Video::update_rect($app, 0, 0, 0, 0);
         $invalidate_all->();
     };
 
@@ -5490,7 +5472,7 @@ sub menu {
             #- stretch needs a bit more room
             my $newlogosurface = SDL::Surface->new(SDL_ANYFORMAT, $imgbin{menu_logo}->w * 1.1,  $imgbin{menu_logo}->h * 1.1,  32, 0, 0, 0 ,0);
 	    SDL::Video::set_alpha($imgbin{menu_logo}, 0, 0); #- for RGBA->RGBA blits, SDL_SRCALPHA must be removed or destination alpha is preserved
-            SDL::Video::blit_surface($imgbin{menu_logo}, SDL::Rect->new(0,0,0,0), $newlogosurface, SDL::Rect->new( $imgbin{menu_logo}->w * 0.05, $imgbin{menu_logo}->h * 0.05, 0, 0));
+            SDL::Video::blit_surface($imgbin{menu_logo}, SDL::Rect->new(0,0,$imgbin{menu_logo}->w,$imgbin{menu_logo}->h), $newlogosurface, SDL::Rect->new( $imgbin{menu_logo}->w * 0.05, $imgbin{menu_logo}->h * 0.05, $imgbin{menu_logo}->w, $imgbin{menu_logo}->h));
             $logox -= $imgbin{menu_logo}->w * 0.05;
             $logoy -= $imgbin{menu_logo}->h * 0.05;
             $imgbin{menu_logo} = $newlogosurface;
@@ -5501,7 +5483,7 @@ sub menu {
             #- tilt needs a bit more horizontal room
             my $newlogosurface = SDL::Surface->new(SDL_ANYFORMAT, $imgbin{menu_logo}->w * 1.1,  $imgbin{menu_logo}->h * 1.05,  32, 0, 0, 0 ,0);
 	    SDL::Video::set_alpha($imgbin{menu_logo}, 0, 0); #- for RGBA->RGBA blits, SDL_SRCALPHA must be removed or destination alpha is preserved
-            SDL::Video::blit_surface($imgbin{menu_logo}, SDL::Rect->new(0,0,0,0), $newlogosurface, SDL::Rect->new( $imgbin{menu_logo}->w * 0.05, $imgbin{menu_logo}->h * 0.025, 0, 0));
+            SDL::Video::blit_surface($imgbin{menu_logo}, SDL::Rect->new(0,0,$imgbin{menu_logo}->w,$imgbin{menu_logo}->h), $newlogosurface, SDL::Rect->new( $imgbin{menu_logo}->w * 0.05, $imgbin{menu_logo}->h * 0.025, $imgbin{menu_logo}->w, $imgbin{menu_logo}->h));
             $logox -= $imgbin{menu_logo}->w * 0.05;
             $logoy -= $imgbin{menu_logo}->h * 0.025;
             $imgbin{menu_logo} = $newlogosurface;
@@ -5512,7 +5494,7 @@ sub menu {
             #- snow needs to extend top, and a little more wideness
             my $newlogosurface = SDL::Surface->new( SDL_ANYFORMAT, $imgbin{menu_logo}->w * 1.1,  $imgbin{menu_logo}->h + $logoy, 32, 0, 0,0,0);
 	    SDL::Video::set_alpha( $imgbin{menu_logo}, 0, 0); #- for RGBA->RGBA blits, SDL_SRCALPHA must be removed or destination alpha is preserved
-            SDL::Video::blit_surface( $imgbin{menu_logo}, SDL::Rect->new(0,0,0,0), $newlogosurface, SDL::Rect->new($imgbin{menu_logo}->w * 0.05, $logoy, 0, 0));
+            SDL::Video::blit_surface( $imgbin{menu_logo}, SDL::Rect->new(0,0,$imgbin{menu_logo}->w,$imgbin{menu_logo}->h), $newlogosurface, SDL::Rect->new($imgbin{menu_logo}->w * 0.05, $logoy, $imgbin{menu_logo}->w, $imgbin{menu_logo}->h));
             $logox -= $imgbin{menu_logo}->w * 0.05;
             $logoy = 0;
             $imgbin{menu_logo} = $newlogosurface;
@@ -5529,17 +5511,17 @@ sub menu {
         if ($graphics_level < 3 || !$speed_ok) {
             put_image($imgbin{menu_logo}, $logox, $logoy);
         } else {
-            $logo_candy_method == 0 and Games::FrozenBubble::CStuff::rotate_bilinear(surf($candy), surf($imgbin{menu_logo}), sin($logo_candy_index/40)/20);
-            $logo_candy_method == 1 and Games::FrozenBubble::CStuff::flipflop(surf($candy), surf($imgbin{menu_logo}), $logo_candy_index);
-            $logo_candy_method == 2 and Games::FrozenBubble::CStuff::enlighten(surf($candy), surf($imgbin{menu_logo}), $logo_candy_index);
-            $logo_candy_method == 3.1 and Games::FrozenBubble::CStuff::stretch(surf($candy), surf($imgbin{menu_logo}), $logo_candy_index);
-            $logo_candy_method == 4.1 and Games::FrozenBubble::CStuff::tilt(surf($candy), surf($imgbin{menu_logo}), $logo_candy_index);
-            $logo_candy_method == 5 and Games::FrozenBubble::CStuff::points(surf($candy), surf($imgbin{menu_logo}), surf($imgbin{menu_logo_mask}));
-            $logo_candy_method == 6 and Games::FrozenBubble::CStuff::waterize(surf($candy), surf($imgbin{menu_logo}), $logo_candy_index);
-            $logo_candy_method == 7 and Games::FrozenBubble::CStuff::brokentv(surf($candy), surf($imgbin{menu_logo}), $logo_candy_index);
-            $logo_candy_method == 8.1 and Games::FrozenBubble::CStuff::snow(surf($candy), surf($imgbin{menu_logo}));
-
-	    SDL::Video::blit_surface($candy, SDL::Rect->new(0,0,0,0), $app, my $rect = SDL::Rect->new($logox, $logoy, 0, 0));
+            $logo_candy_method == 0 and Games::FrozenBubble::CStuff::rotate_bilinear($candy, $imgbin{menu_logo}, sin($logo_candy_index/40)/20);
+            $logo_candy_method == 1 and Games::FrozenBubble::CStuff::flipflop($candy, $imgbin{menu_logo}, $logo_candy_index);
+            $logo_candy_method == 2 and Games::FrozenBubble::CStuff::enlighten($candy, $imgbin{menu_logo}, $logo_candy_index);
+            $logo_candy_method == 3.1 and Games::FrozenBubble::CStuff::stretch($candy, $imgbin{menu_logo}, $logo_candy_index);
+            $logo_candy_method == 4.1 and Games::FrozenBubble::CStuff::tilt($candy, $imgbin{menu_logo}, $logo_candy_index);
+            $logo_candy_method == 5 and Games::FrozenBubble::CStuff::points($candy, $imgbin{menu_logo}, $imgbin{menu_logo_mask});
+            $logo_candy_method == 6 and Games::FrozenBubble::CStuff::waterize($candy, $imgbin{menu_logo}, $logo_candy_index);
+            $logo_candy_method == 7 and Games::FrozenBubble::CStuff::brokentv($candy, $imgbin{menu_logo}, $logo_candy_index);
+            $logo_candy_method == 8.1 and Games::FrozenBubble::CStuff::snow($candy, $imgbin{menu_logo});
+            
+	    SDL::Video::blit_surface($candy, SDL::Rect->new(0,0,$candy->w,$candy->h), $app, my $rect = SDL::Rect->new($logox, $logoy, $candy->w, $candy->h));
             $logo_candy_index++;
         }
         if (!$no_update) {
@@ -5596,19 +5578,19 @@ sub menu {
             $cursor_save_bg{$m} = SDL::Surface->new(SDL_ANYFORMAT, $imgbin{menu_cursor}{$m}[0]->w, $imgbin{menu_cursor}{$m}[0]->h, 32, 0,0,0,0);
 	    SDL::Video::blit_surface($app, $cursor_rect, $cursor_save_bg{$m}, SDL::Rect->new( 0,  0,  $imgbin{menu_cursor}{$m}[0]->w, $imgbin{menu_cursor}{$m}[0]->h));
         }
-	SDL::Video::blit_surface ($cursor_save_bg{$m}, SDL::Rect->new(0,0,0,0), $app, $cursor_rect);
+	SDL::Video::blit_surface ($cursor_save_bg{$m}, SDL::Rect->new(0,0,$cursor_save_bg{$m}->w,$cursor_save_bg{$m}->h), $app, $cursor_rect);
         if ($alpha) {
             if ($pixelize) {
                 if (!defined($cursor_tmp)) {
                     $cursor_tmp = SDL::Surface->new( SDL_ANYFORMAT, $imgbin{menu_cursor}{$m}[0]->w,  $imgbin{menu_cursor}{$m}[0]->h, 32, 0,0,0,0);
                 }
-                Games::FrozenBubble::CStuff::pixelize(surf($cursor_tmp), surf($imgbin{menu_cursor}{"${m}alpha"}[$pdata{cursor_img}{$m}]));
-		SDL::Video::blit_surface( $cursor_tmp, SDL::Rect->new(0,0,0,0), $app, $cursor_rect);
+                Games::FrozenBubble::CStuff::pixelize($cursor_tmp, $imgbin{menu_cursor}{"${m}alpha"}[$pdata{cursor_img}{$m}]);
+		SDL::Video::blit_surface( $cursor_tmp, SDL::Rect->new(0,0,$cursor_tmp->w,$cursor_tmp->h), $app, $cursor_rect);
             } else {
-              	SDL::Video::blit_surface( $imgbin{menu_cursor}{"${m}alpha"}[$pdata{cursor_img}{$m}], SDL::Rect->new(0,0,0,0), $app, $cursor_rect);
+              	SDL::Video::blit_surface( $imgbin{menu_cursor}{"${m}alpha"}[$pdata{cursor_img}{$m}], SDL::Rect->new(0,0,$imgbin{menu_cursor}{"${m}alpha"}[$pdata{cursor_img}{$m}]->w,$imgbin{menu_cursor}{"${m}alpha"}[$pdata{cursor_img}{$m}]->h), $app, $cursor_rect);
             }
         } else {
-		SDL::Video::blit_surface( $imgbin{menu_cursor}{$m}[$pdata{cursor_img}{$m}], SDL::Rect->new(0,0,0,0), $app, $cursor_rect);
+		SDL::Video::blit_surface( $imgbin{menu_cursor}{$m}[$pdata{cursor_img}{$m}], SDL::Rect->new(0,0,$imgbin{menu_cursor}{$m}[$pdata{cursor_img}{$m}]->w,$imgbin{menu_cursor}{$m}[$pdata{cursor_img}{$m}]->h), $app, $cursor_rect);
         }
         return $cursor_rect;
     };
@@ -5628,10 +5610,10 @@ sub menu {
 	SDL::Video::update_rects($app, @update_rects);
         @update_rects = ();
     };
-
+    
     $invalidate_all->();
     $menu_update->();
-    SDL::Video::flip($app);
+    SDL::Video::update_rect($app, 0, 0, 0, 0);
     SDL::Events::pump_events() while SDL::Events::poll_event($event) != 0;
 
     my $start_game = 0;
@@ -5745,7 +5727,7 @@ sub menu {
 		if ($xpos < $BANNER_MAXX && $xpos + $image->w >= 0) {
 		    my $irect = SDL::Rect->new(-$xpos, 0,  min($image->w+$xpos, $BANNER_MAXX-$BANNER_MINX),
                                                 $image->h);
-					SDL::Video::blit_surface( $image, $irect, $app, SDL::Rect->new( $BANNER_MINX,  $BANNER_Y, 0, 0) );
+					SDL::Video::blit_surface( $image, $irect, $app, SDL::Rect->new( $BANNER_MINX,  $BANNER_Y, $image->w, $image->h) );
 		}
 	    }
 	    $banner_pos++;
@@ -5758,7 +5740,7 @@ sub menu {
                     $pdata{cursor_img}{$m}++;
                     $pdata{cursor_img}{$m} >= @{$imgbin{menu_cursor}{$m}} and $pdata{cursor_img}{$m} = 0;
 		    SDL::Video::update_rects($app, $display_cursor->($m, 0));
-
+                    
                 } else {
                     if ($broken_cursors{$m}) {
                         $broken_cursors{$m}--;
@@ -5772,7 +5754,7 @@ sub menu {
                     }
                 }
             }
-
+            
             #- blinking handling follows
             my $blink_green_left = [ 411, 385 ];
             my $blink_green_right = [ 434, 378 ];
@@ -5800,15 +5782,15 @@ sub menu {
                 $blink_green++;
                 if (!$blink_green) {
                     $blink_green = 3;
-                    	SDL::Video::blit_surface ( $imgbin{menu_closedeye_green_left}, SDL::Rect->new(0,0,0,0), $app, $green_left);
-                    	SDL::Video::blit_surface ( $imgbin{menu_closedeye_green_right}, SDL::Rect->new(0,0,0,0), $app, $green_right);
+                    	SDL::Video::blit_surface ( $imgbin{menu_closedeye_green_left}, SDL::Rect->new(0,0,$imgbin{menu_closedeye_green_left}->w,$imgbin{menu_closedeye_green_left}->h), $app, $green_left);
+                    	SDL::Video::blit_surface ( $imgbin{menu_closedeye_green_right}, SDL::Rect->new(0,0,$imgbin{menu_closedeye_green_right}->w,$imgbin{menu_closedeye_green_right}->h), $app, $green_right);
 		    SDL::Video::update_rects( $app, $green_left, $green_right);
                 }
             } else {
                 if (rand(200) <= 1) {
                     $blink_green = 3;
-                    SDL::Video::blit_surface ( $imgbin{menu_closedeye_green_left},SDL::Rect->new(0,0,0,0), $app, $green_left);
-                    SDL::Video::blit_surface ( $imgbin{menu_closedeye_green_right},SDL::Rect->new(0,0,0,0), $app, $green_right);
+                    SDL::Video::blit_surface ( $imgbin{menu_closedeye_green_left},SDL::Rect->new(0,0,$imgbin{menu_closedeye_green_left}->w,$imgbin{menu_closedeye_green_left}->h), $app, $green_left);
+                    SDL::Video::blit_surface ( $imgbin{menu_closedeye_green_right},SDL::Rect->new(0,0,$imgbin{menu_closedeye_green_right}->w,$imgbin{menu_closedeye_green_right}->h), $app, $green_right);
                     SDL::Video::update_rects( $app,$green_left, $green_right);
                 }
             }
@@ -5826,19 +5808,19 @@ sub menu {
                 $blink_purple++;
                 if (!$blink_purple) {
                     $blink_purple = 3;
-                    SDL::Video::blit_surface ( $imgbin{menu_closedeye_purple_left},SDL::Rect->new(0,0,0,0), $app, $purple_left);
-                    SDL::Video::blit_surface ( $imgbin{menu_closedeye_purple_right},SDL::Rect->new(0,0,0,0), $app, $purple_right);
+                    SDL::Video::blit_surface ( $imgbin{menu_closedeye_purple_left},SDL::Rect->new(0,0,$imgbin{menu_closedeye_purple_left}->w,$imgbin{menu_closedeye_purple_left}->h), $app, $purple_left);
+                    SDL::Video::blit_surface ( $imgbin{menu_closedeye_purple_right},SDL::Rect->new(0,0,$imgbin{menu_closedeye_purple_right}->w,$imgbin{menu_closedeye_purple_right}->h), $app, $purple_right);
                     SDL::Video::update_rects( $app,$purple_left, $purple_right);
                 }
             } else {
                 if (rand(200) <= 1) {
                     $blink_purple = 3;
-                    SDL::Video::blit_surface ( $imgbin{menu_closedeye_purple_left},SDL::Rect->new(0,0,0,0), $app, $purple_left);
-                   SDL::Video::blit_surface (  $imgbin{menu_closedeye_purple_right},SDL::Rect->new(0,0,0,0), $app, $purple_right);
+                    SDL::Video::blit_surface ( $imgbin{menu_closedeye_purple_left},SDL::Rect->new(0,0,$imgbin{menu_closedeye_purple_left}->w,$imgbin{menu_closedeye_purple_left}->h), $app, $purple_left);
+                   SDL::Video::blit_surface (  $imgbin{menu_closedeye_purple_right},SDL::Rect->new(0,0,$imgbin{menu_closedeye_purple_right}->w,$imgbin{menu_closedeye_purple_right}->h), $app, $purple_right);
                     SDL::Video::update_rects( $app,$purple_left, $purple_right);
                 }
             }
-
+            
 	}
 
 	if ($graphics_level > 2 && $speed_ok) {
@@ -5870,8 +5852,8 @@ sub menu {
           blacken:
             foreach my $step (1..35) {
                 my $ticks = $app->ticks;
-                Games::FrozenBubble::CStuff::blacken(surf($app), $step);
-                SDL::Video::flip($app);
+                Games::FrozenBubble::CStuff::blacken($app, $step);
+                SDL::Video::update_rect($app, 0, 0, 0, 0);
                 my $to_wait = $TARGET_ANIM_SPEED - ($app->ticks - $ticks);
                 $to_wait > 0 and Games::FrozenBubble::CStuff::fbdelay($to_wait);
 
@@ -5888,7 +5870,7 @@ sub menu {
             $display_menu->();
             $invalidate_all->();
             $menu_update->();
-            SDL::Video::flip($app);
+            SDL::Video::update_rect($app, 0, 0, 0, 0);
             $time_counter = 0;
             play_music('intro');
         }
@@ -5914,7 +5896,7 @@ sub choose_levelset() {
         # game continue (means that the level editor has never been opened)
 
     } else {
-
+	
 	if (@levelsets <= 1 && !$choose_level) {
 	    load_levelset($levelsets[0]);
 	} else {
@@ -5925,11 +5907,11 @@ sub choose_levelset() {
                 -d $FBLEVELS or die "Can't create $FBLEVELS directory.\n";
                 -f "$FBLEVELS/default-levelset" or cp_af("$FPATH/data/levels", "$FBLEVELS/default-levelset");
             }
-
-	    Games::FrozenBubble::LevelEditor::init_app('embedded', $app);
-            Games::FrozenBubble::LevelEditor::create_play_levelset_dialog($choose_level, $levels{current});
+            
+	    FBLE::init_app('embedded', $app);
+            FBLE::create_play_levelset_dialog($choose_level, $levels{current});
 	    SDL::Mouse::show_cursor(1);
-            my @game_info = Games::FrozenBubble::LevelEditor::handle_events();
+            my @game_info = FBLE::handle_events();
             @game_info or return;
             load_levelset("$FBLEVELS/$game_info[0]");
             $levels{current} = $game_info[1];
