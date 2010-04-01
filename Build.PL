@@ -9,15 +9,8 @@ use Config qw(%Config);
 use Devel::CheckLib qw(check_lib_or_exit);
 use Local::Games::FrozenBubble::Build qw();
 
-my $include = Alien::SDL->config('cflags');
-my $lib = Alien::SDL->config('libs');
-
-warn $include;
-
-$lib =~ s/(?!(-l|-L)) (,|-|\\|\/|\.|\w)+//;
-$include =~ s/(?!(-I|-i))(,|-|_|\\|\/|\.|\w)+//;
-
-warn $include;
+my $prefix = Alien::SDL->config('prefix'); 
+my $include = "-I".File::Spec->catfile($prefix, 'include');
 
 sub chomped {
     my $value = $_[0];
@@ -26,8 +19,8 @@ sub chomped {
 }
 check_lib_or_exit(header => 'iconv.h');
 check_lib_or_exit(header => 'math.h');
-check_lib_or_exit(header => 'SDL/SDL.h' , LIBS => $lib, INC => $include  );
-check_lib_or_exit(header => 'SDL/SDL_mixer.h' , LIBS => $lib, INC => $include );
+check_lib_or_exit(header => 'SDL/SDL.h' , INC => $include  );
+check_lib_or_exit(header => 'SDL/SDL_mixer.h' , INC => $include );
 
 Local::Games::FrozenBubble::Build->new(
     add_to_cleanup     => [
