@@ -49,7 +49,7 @@ use vars qw($TARGET_ANIM_SPEED $BUBBLE_SIZE $ROW_SIZE $LAUNCHER_SPEED $BUBBLE_SP
 
 use Getopt::Long;
 use Data::Dumper;
-use Locale::gettext;
+use Locale::Maketext::Simple;
 use POSIX();
 use Math::Trig;
 use IO::File;
@@ -84,6 +84,7 @@ use Games::FrozenBubble::LevelEditor;
 $| = 1;
 
 $FPATH = dist_dir('Games-FrozenBubble');
+Locale::Maketext::Simple->import(Path => "$FPATH/locale", Style => 'gettext', Export => 'gettext');
 
 $TARGET_ANIM_SPEED = 20;        # number of milliseconds that should last between two animation frames
 $LAUNCHER_SPEED = 0.03;	        # speed of rotation of launchers
@@ -122,9 +123,9 @@ $KEYS->{misc}{$_} ||= $keys_orig->{misc}{$_} foreach keys %{$keys_orig->{misc}};
 eval(cat_($hiscorefiles{levels} = "$FBHOME/highscores"));
 eval(cat_($hiscorefiles{mptrain} = "$FBHOME/highscores-mptrain"));
 
-textdomain("frozen-bubble");
-$ENV{GETTEXT_DIRNAME} and bindtextdomain("frozen-bubble", $ENV{GETTEXT_DIRNAME});
-bind_textdomain_codeset("frozen-bubble", "UTF-8");  #- we're going to use SDL_Pango which uses UTF-8 input
+###passing language to Locale::Maketext::Simple
+my ($lang) = split(':', $ENV{LANGUAGE});
+gettext_lang($lang);
 our $is_rtl = $ENV{LANGUAGE} =~ /^fa/;
 
 print "        [[ Frozen-Bubble-$version ]]\n\n";

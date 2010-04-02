@@ -25,7 +25,15 @@ package Games::FrozenBubble::Stuff;
 
 use Games::FrozenBubble::CStuff;
 # use Games::FrozenBubble::Config;
-use Locale::gettext;
+use Locale::Maketext::Simple;
+use File::ShareDir qw(dist_dir);
+
+Locale::Maketext::Simple->import(Path => dist_dir('Games-FrozenBubble')."/locale", Style => 'gettext', Export => 'gettext');
+###passing language to Locale::Maketext::Simple
+my ($lang) = split(':', $ENV{LANGUAGE}); 
+print STDERR "lang=$lang";
+gettext_lang($lang);
+
 use vars qw(@ISA @EXPORT $FPATH $FLPATH $FBHOME $FBLEVELS $colourblind %POS_1P %POS_2P %POS_MP $BUBBLE_SIZE $ROW_SIZE
             $PI $version);
 @ISA = qw(Exporter);

@@ -69,7 +69,7 @@ My::Builder->new(
         'IO::File'        => 0,
         'IO::Select'      => 0,
         'IO::Socket'      => 0,
-        'Locale::gettext' => 0,
+        'Locale::Maketext::Simple' => 0,
         'Math::Trig'      => 0,
         parent            => 0,
         POSIX             => 0,
