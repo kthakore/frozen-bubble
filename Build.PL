@@ -18,7 +18,7 @@ sub chomped {
 my $prefix = Alien::SDL->config('prefix'); 
 my $devnull = File::Spec->devnull();
 my $iconv = '';
-$iconv = '-liconv' if $^O ~= /win/i;
+$iconv = '-liconv' if $^O =~ /win/i;
 check_lib_or_exit(header => 'iconv.h');
 check_lib_or_exit(header => 'math.h');
 die "Cannot find 'SDL.h'" unless Alien::SDL->check_header('SDL.h');
