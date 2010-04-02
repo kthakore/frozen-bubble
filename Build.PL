@@ -16,9 +16,17 @@ sub chomped {
 }
 
 my $prefix = Alien::SDL->config('prefix'); 
+my $cflags = Alien::SDL->config('cflags');
+   $cflags = '-I'.File::Spec->catfile($prefix, 'include');
 my $devnull = File::Spec->devnull();
-my $iconv = '';
+my $iconv;
 $iconv = '-liconv' if $^O =~ /win/i;
+
+my @linkers = (Alien::SDL->config('libs'), '-lSDL_mixer', '-lSDL_Pango');
+
+push @linkers, $iconv if $iconv;
+
+
 check_lib_or_exit(header => 'iconv.h');
 check_lib_or_exit(header => 'math.h');
 die "Cannot find 'SDL.h'" unless Alien::SDL->check_header('SDL.h');
@@ -43,13 +51,9 @@ My::Builder->new(
     dist_abstract        => 'Puzzle with Bubbles',    # taken from openSUSE rpm spec file
     dynamic_config       => 1,
     extra_compiler_flags => [
-        Alien::SDL->config('cflags'),
+    	$cflags
     ],
-    extra_linker_flags => [
-	Alien::SDL->config('libs'),
-	$iconv, 
-	'-lSDL_mixer', '-lSDL_Pango',
-    ],
+    extra_linker_flags => \@linkers,
     license    => 'gpl2',
     meta_merge => {
         resources => {
