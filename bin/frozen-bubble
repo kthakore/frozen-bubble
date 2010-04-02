@@ -3019,8 +3019,8 @@ sub display_highscores {
             }
 
             put_image($imgbin{hiscore_frame}, $high_posx - 7, $high_posy - 6);
-            my $tmp = SDL::Video::display_format(SDL::Surface->new($high_rect->w/4, $high_rect->h/4, 32, 0, 0, 0, 0));
-            Games::FrozenBubble::CStuff::shrink($tmp, SDL::Video::display_format($background), 0, 0, $high_rect, 4);
+	    my $tmp = SDL::Video::display_format(SDL::Surface->new($high_rect->w/4, $high_rect->h/4, 32, 0, 0, 0, 0));
+	    #Games::FrozenBubble::CStuff::shrink($tmp, SDL::Video::display_format($background), 0, 0, $high_rect, 4);
             SDL::Video::blit_surface($tmp, SDL::Rect->new(0,0,$tmp->w,$tmp->h), $app, SDL::Rect->new($high_posx, $high_posy, $tmp->w, $tmp->h));
             $centered_print->($high_posx - 15, $high_posy, $high->{name}, $new_entry == $high);
             $centered_print->($high_posx - 15, $high_posy + 20, $high->{level} eq 'WON' ? t("won!") : t("level %s", i18n_number($high->{level})), $new_entry == $high);
@@ -3763,7 +3763,7 @@ sub smg_choose_server(@) {
             push @potential_servers, $server;
         }
     }
-    my $discover = fb_net_discover->new(@potential_servers);
+    my $discover = Games::FrozenBubble::NetDiscover->new(@potential_servers);
     my $looped = 0;
     my $init = 0;
     while (1) {

@@ -17,9 +17,8 @@ sub chomped {
 
 my $prefix = Alien::SDL->config('prefix'); 
 my $devnull = File::Spec->devnull();
-my $pango_cflags = chomped(`pkg-config --cflags glib-2.0 pango gobject-2.0 gmodule-2.0 2>$devnull` || '');
-my $pango_libs = chomped(`pkg-config --libs glib-2.0 pango gobject-2.0 gmodule-2.0 2>$devnull` || '');
-
+my $iconv = '';
+$iconv = '-liconv' if $^O ~= /win/i;
 check_lib_or_exit(header => 'iconv.h');
 check_lib_or_exit(header => 'math.h');
 die "Cannot find 'SDL.h'" unless Alien::SDL->check_header('SDL.h');
@@ -45,12 +44,11 @@ My::Builder->new(
     dynamic_config       => 1,
     extra_compiler_flags => [
         Alien::SDL->config('cflags'),
-	$pango_cflags,
     ],
     extra_linker_flags => [
 	Alien::SDL->config('libs'),
-	$pango_libs,
-	'-liconv', '-lSDL_mixer', '-lSDL_Pango',
+	$iconv, 
+	'-lSDL_mixer', '-lSDL_Pango',
     ],
     license    => 'gpl2',
     meta_merge => {
