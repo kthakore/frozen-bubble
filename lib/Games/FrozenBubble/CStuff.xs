@@ -17,12 +17,15 @@
  *
  ******************************************************************************/
 
+/* for some reason sys/time.h has to be included before perl-core headers */
+/* otherwise Win32 users will experience troubles */
+#include <sys/time.h>
+
 #include "EXTERN.h"
 #include "perl.h"
 #include "XSUB.h"
 #include <iconv.h>
 #include <math.h>
-#include <sys/time.h>
 #include <unistd.h>
 
 
