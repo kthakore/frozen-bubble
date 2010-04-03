@@ -13,7 +13,7 @@ sub ACTION_symbols {
         my $out = IO::File->new('lib/Games/FrozenBubble/Symbols.pm', 'w');
         $out->print("package Games::FrozenBubble::Symbols;\n\@syms = qw(");
         {
-            my $in = IO::File->new('/usr/include/SDL/SDL_keysym.h', 'r');
+            my $in = IO::File->new(Alien::SDL->config('prefix').'/include/SDL/SDL_keysym.h', 'r');
             while (defined($_ = $in->getline)) {
                 $out->print("$1 ") if /SDLK_(\S+)/;
             }
