@@ -5582,16 +5582,19 @@ sub menu {
 		SDL::Video::blit_surface($cursor_save_bg{$m}, SDL::Rect->new(0,0,$cursor_save_bg{$m}->w,$cursor_save_bg{$m}->h), $app, $cursor_rect);
         if ($alpha) {
             if ($pixelize) {
-                if (!defined($cursor_tmp)) {
-                    $cursor_tmp = SDL::Surface->new( SDL_ANYFORMAT, $imgbin{menu_cursor}{$m}[0]->w,  $imgbin{menu_cursor}{$m}[0]->h, 32, 0,0,0,0);
-                }
-                Games::FrozenBubble::CStuff::pixelize($cursor_tmp, $imgbin{menu_cursor}{"${m}alpha"}[$pdata{cursor_img}{$m}]);
+				if (!defined($cursor_tmp)) {
+					$cursor_tmp = SDL::Surface->new( SDL_ANYFORMAT, $imgbin{menu_cursor}{$m}[0]->w,  $imgbin{menu_cursor}{$m}[0]->h, 32, 0,0,0,0);
+				}
+                #Games::FrozenBubble::CStuff::pixelize($cursor_tmp, $imgbin{menu_cursor}{"${m}alpha"}[$pdata{cursor_img}{$m}]);
+                Games::FrozenBubble::CStuff::pixelize($cursor_tmp, $imgbin{menu_cursor}{$m}[$pdata{cursor_img}{$m}]);
 				SDL::Video::blit_surface( $cursor_tmp, SDL::Rect->new(0,0,$cursor_tmp->w,$cursor_tmp->h), $app, $cursor_rect);
             } else {
-              	SDL::Video::blit_surface( $imgbin{menu_cursor}{"${m}alpha"}[$pdata{cursor_img}{$m}], SDL::Rect->new(0,0,$imgbin{menu_cursor}{"${m}alpha"}[$pdata{cursor_img}{$m}]->w,$imgbin{menu_cursor}{"${m}alpha"}[$pdata{cursor_img}{$m}]->h), $app, $cursor_rect);
+				# not animated menu item
+              	#SDL::Video::blit_surface( $imgbin{menu_cursor}{"${m}alpha"}[$pdata{cursor_img}{$m}], SDL::Rect->new(0,0,$imgbin{menu_cursor}{"${m}alpha"}[$pdata{cursor_img}{$m}]->w,$imgbin{menu_cursor}{"${m}alpha"}[$pdata{cursor_img}{$m}]->h), $app, $cursor_rect);
+				SDL::Video::blit_surface( $imgbin{menu_cursor}{$m}[$pdata{cursor_img}{$m}], SDL::Rect->new(0,0,$imgbin{menu_cursor}{$m}[$pdata{cursor_img}{$m}]->w,$imgbin{menu_cursor}{$m}[$pdata{cursor_img}{$m}]->h), $app, $cursor_rect);
             }
         } else {
-			#SDL::Video::set_alpha($imgbin{menu_cursor}{$m}[$pdata{cursor_img}{$m}], 0, 0);
+			# blits the animated icon for the selected menu item
 			SDL::Video::blit_surface( $imgbin{menu_cursor}{$m}[$pdata{cursor_img}{$m}], SDL::Rect->new(0,0,$imgbin{menu_cursor}{$m}[$pdata{cursor_img}{$m}]->w,$imgbin{menu_cursor}{$m}[$pdata{cursor_img}{$m}]->h), $app, $cursor_rect);
         }
         return $cursor_rect;
