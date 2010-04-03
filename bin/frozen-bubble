@@ -5451,8 +5451,8 @@ sub menu {
 
     my $launch_editor = sub {
         SDL::Mouse::show_cursor(1);
-        FBLE::init_setup('embedded', $app);
-        FBLE::handle_events();
+        Games::FrozenBubble::LevelEditor::init_setup('embedded', $app);
+        Games::FrozenBubble::LevelEditor::handle_events();
         SDL::Mouse::show_cursor(0);
 	$display_menu->();
         SDL::Video::update_rect($app, 0, 0, 0, 0);
@@ -5914,10 +5914,10 @@ sub choose_levelset() {
                 -f "$FBLEVELS/default-levelset" or cp_af("$FPATH/data/levels", "$FBLEVELS/default-levelset");
             }
             
-	    FBLE::init_app('embedded', $app);
-            FBLE::create_play_levelset_dialog($choose_level, $levels{current});
+	    Games::FrozenBubble::LevelEditor::init_app('embedded', $app);
+            Games::FrozenBubble::LevelEditor::create_play_levelset_dialog($choose_level, $levels{current});
 	    SDL::Mouse::show_cursor(1);
-            my @game_info = FBLE::handle_events();
+            my @game_info = Games::FrozenBubble::LevelEditor::handle_events();
             @game_info or return;
             load_levelset("$FBLEVELS/$game_info[0]");
             $levels{current} = $game_info[1];

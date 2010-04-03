@@ -27,8 +27,12 @@
 # *****************************************************************************
 
 use SDL::App;
+use File::ShareDir qw(dist_dir);
+use Games::FrozenBubble::Config;
 use Games::FrozenBubble::Stuff;
 use Games::FrozenBubble::LevelEditor;
+
+$FPATH =  dist_dir('Games-FrozenBubble'); 
 
 # command line options modified from frozen-bubble code
 local $_ = "@ARGV";

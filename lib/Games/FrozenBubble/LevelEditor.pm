@@ -36,10 +36,12 @@ use SDL;
 use SDL::App;
 use SDL::Video;
 use SDL::Surface;
+use SDL::Image;
 use SDL::Events;
 use SDL::Event;
 use SDL::Cursor;
-use SDL::Font;
+use SDL::TTF;
+use SDL::TTF::Font;
 use SDL::Mixer;
 
 use Games::FrozenBubble::Stuff;
@@ -125,14 +127,14 @@ sub draw_bubble {
     my ($bubble);
 
     $surface_tmp or $surface_tmp = $app;
-    $bubble = SDL::Surface->new(-name => "$FPATH/gfx/balls/bubble-".($colourblind && 'colourblind-')."$bubbleid.gif");
+    $bubble = SDL::Image::load( "$FPATH/gfx/balls/bubble-".($colourblind && 'colourblind-')."$bubbleid.gif");
 
-    $bubble_rects{$x}{$y} = SDL::Rect->new(-x => $x, '-y' => $y, -width => $bubble->width, -height => $bubble->height);
+    $bubble_rects{$x}{$y} = SDL::Rect->new($x,  $y, $bubble->w,  $bubble->h);
 
-    $alpha and $bubble->set_alpha(SDL_SRCALPHA, 0x66);
+    $alpha and SDL::Video::set_alpha($bubble, SDL_SRCALPHA, 0x66);
 
-    $bubble->blit(NULL, $surface_tmp, $bubble_rects{$x}{$y});
-    $ignore_update or $surface_tmp->update($bubble_rects{$x}{$y});
+    SDL::Video::blit_surface($bubble, NULL, $surface_tmp, $bubble_rects{$x}{$y});
+    $ignore_update or SDL::Video::update_rects($surface_tmp, $bubble_rects{$x}{$y});
 }
 
 # subroutine to erase bubble
@@ -149,7 +151,7 @@ sub erase_bubble {
 	    }
 	}
     }
-    $app->update($bubble_rects{$x}{$y});
+    SDL::Video::update_rects($app, $bubble_rects{$x}{$y});
 }
 
 # subroutine to place a bubble
@@ -1190,7 +1192,7 @@ sub SDL_TEXTWIDTH {
     if (defined(&SDL::App::SDL_TEXTWIDTH)) {
         SDL::App::SDL_TEXTWIDTH(@_);   # perl-sdl-1.x
     } else {
-        SDL::SFont::SDL_TEXTWIDTH(@_); # perl-sdl-2.x
+        SDL::TTF::Font::SDL_TEXTWIDTH(@_); # perl-sdl-2.x
     }
 }
 
@@ -1212,9 +1214,9 @@ sub show_selected_level {
     $surf_select_level_background->blit($rect{select_level_background_src}, $app, $rect{select_level_background_dest});
 
     #now write the selected level
-    $font = SDL::Font->new("$FPATH/gfx/font-hi.png");
+    $font = SDL::TTF::Font->new("$FPATH/gfx/font-hi.png");
     $app->print(427 - SDL_TEXTWIDTH($start_level), $rect{middle}->y + 190, $start_level);
-    $font = SDL::Font->new("$FPATH/gfx/font.png");
+    $font = SDL::TTF::Font->new("$FPATH/gfx/font.png");
 
     $app->update($rect{select_level_background_dest});
 
@@ -1252,7 +1254,7 @@ sub display_levelset_list_browser {
 
     $rect{middle} = get_dialog_rect();
 	#I want the font to be blue in the dialogs
-	$font = SDL::Font->new("$FPATH/gfx/font-hi.png");
+	$font = SDL::TTF::Font->new("$FPATH/gfx/font-hi.png");
     $surf_file_list_background = SDL::Surface->new(-name => "$FPATH/gfx/file_list_background.png");
 
     $rect{list_box_src} = SDL::Rect->new(-width => $surf_file_list_background->width,
@@ -1372,7 +1374,7 @@ sub display_levelset_list_browser {
     }
 
     #reset the font back to white
-    $font = SDL::Font->new("$FPATH/gfx/font.png");
+    $font = SDL::TTF::Font->new("$FPATH/gfx/font.png");
     $app->flip;
 }
 
@@ -2064,9 +2066,9 @@ sub add_bubble_options {
 
 # subroutine to add the erase option
 sub add_erase_option {
-    my $erase = SDL::Surface->new(-name => "$FPATH/gfx/balls/stick_effect_6.png");
-    $erase->blit(NULL, $app, $rect{erase});
-    $app->update($rect{erase});
+    my $erase = SDL::Image::load("$FPATH/gfx/balls/stick_effect_6.png");
+    SDL::Video::blit_surface( $erase, NULL, $app, $rect{erase});
+    SDL::Video::update_rects( $app, $rect{erase});
 }
 
 # subroutine to do the initial setup
@@ -2075,14 +2077,14 @@ sub init_setup {
 
     init_app($application_caller, $sdlapp);
 
-    $background->blit(NULL, $app, $rect{background});
-    $app->update($rect{background});
+    SDL::Video::blit_surface($background, NULL, $app, $rect{background});
+    SDL::Video::update_rects( $app, $rect{background});
 
     add_bubble_options();
     add_erase_option();
 
     # set font
-    $font = new SDL::Font("$FPATH/gfx/font.png");
+    $font = SDL::TTF::Font->new("$FPATH/gfx/font.png", 12);
 
     $app->print(5, $BUBBLE_WOOD_Y + 3, 'CHOOSE BUBBLE');
 
@@ -2153,13 +2155,13 @@ sub init_app {
         $curr_level = 1;
     }
 
-    $font = new SDL::Font("$FPATH/gfx/font.png");
+    $font = SDL::TTF::Font->new("$FPATH/gfx/font.png", 12);
 
     # background image
-    $background = SDL::Surface->new(-name => "$FPATH/gfx/level_editor.png");
+    $background = SDL::Image::load( "$FPATH/gfx/level_editor.png");
 
     my @allrects =
-     ({ name => 'background', width => $background->width, height => $background->height },
+     ({ name => 'background', width => $background->w, height => $background->h },
       # bubble wood rectangle (without heading part)
       { name => 'bubble_wood', x => $LEFT_WOOD_X, 'y' => $BUBBLE_WOOD_Y + $WOOD_PLANK_HEIGHT,
 	width => $WOOD_WIDTH, height => $WOOD_PLANK_HEIGHT * ($NUM_BUBBLES_AVAIL + 1)/$BUBBLES_PER_ROW },
@@ -2205,11 +2207,10 @@ sub init_app {
 	width => $WOOD_WIDTH, height => $WOOD_PLANK_HEIGHT }
       );
 
-    $rect{$_->{name}} = SDL::Rect->new(-width => $_->{width}, -height => $_->{height},
-				       -x => $_->{x}, '-y' => $_->{'y'}) foreach @allrects;
+    $rect{$_->{name}} = SDL::Rect->new( $_->{x}, $_->{'y'}, $_->{width}, $_->{height}) foreach @allrects;
 
-    $highlight = SDL::Surface->new(-name => "$FPATH/gfx/hover.gif");
-    $highlight->set_alpha(SDL_SRCALPHA, 0x44);
+    $highlight = SDL::Image::load("$FPATH/gfx/hover.gif");
+    SDL::Video::set_alpha($highlight, SDL_SRCALPHA, 0x44);
 }
 
 
