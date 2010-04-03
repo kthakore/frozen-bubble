@@ -949,9 +949,6 @@ struct point { double x; double y; double angle; };
 #define MIN(a,b) ( (a) < (b) ? (a) : (b) )
 #endif
 
-
-#define min(a,b) ( (a) < (b) ? (a) : (b) )
-
 void points_(SDL_Surface * dest, SDL_Surface * orig, SDL_Surface * mask)
 {
 	int Bpp = dest->format->BytesPerPixel;
