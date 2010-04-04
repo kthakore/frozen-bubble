@@ -635,7 +635,7 @@ sub handle_events {
                 } else {
                     choose_dialog_action($event->button_x, $event->button_y, 'motion');  #- ,, )
                 }
-                $app->flip;
+		SDL::Video::update_rect($app, 0 , 0, $app->w, $app->h);
 
             } elsif ($event->type == SDL_MOUSEBUTTONDOWN) {
                 $button_hold = 1;
@@ -644,7 +644,7 @@ sub handle_events {
                 } else {
                     choose_dialog_action($event->button_x, $event->button_y, 'button', $event);  #- ,, )
                 }
-                $app->flip;
+		SDL::Video::update_rect($app, 0 , 0, $app->w, $app->h);
 
             } elsif ($event->type == SDL_MOUSEBUTTONUP) {
                 $button_hold = 0;
@@ -812,14 +812,14 @@ sub handle_events {
                     }
                 }
 
-                $app->flip;
+		SDL::Video::update_rect($app, 0 , 0, $app->w, $app->h);
 
             } elsif ($event->type == SDL_QUIT) {
                 if ($displaying_dialog eq '') {
                     if ($modified_levelset == 1) {
                         $modified_levelset_action = '$modified_levelset_action = "return 1"';
                         create_save_changes_dialog();
-                        $app->flip;
+			SDL::Video::update_rect($app, 0 , 0, $app->w, $app->h);
                     } else {
                         return 1;
                     }
@@ -886,7 +886,7 @@ sub remove_dialog {
 				   '-y' => $background->height/2 - $surface_dialog->height/2,
 				   -width => $surface_dialog->width, -height => $surface_dialog->height);
 			   SDL::Video::blit_surface(    $background, $rect{middle}, $app, $rect{middle});
-    $app->flip;
+			   SDL::Video::update_rect($app, 0 , 0, $app->w, $app->h);
 
     # update the screen
     load_level();
@@ -1375,7 +1375,7 @@ sub display_levelset_list_browser {
 
     #reset the font back to white
     $font = SDL::TTF::Font->new("$FPATH/gfx/font.png");
-    $app->flip;
+    SDL::Video::update_rect($app, 0 , 0, $app->w, $app->h);
 }
 
 our $surfstyle;
@@ -1476,7 +1476,7 @@ sub load_level {
 	}
     };
 
-    $app->flip;
+    SDL::Video::update_rect($app, 0 , 0, $app->w, $app->h);
 }
 
 # subroutine to clear level off the screen
@@ -1901,7 +1901,7 @@ sub print_jump_to_level_value {
 					   -width => $surface_dialog->width,
 					   -height => $surface_dialog->height - 3*$WOOD_PLANK_HEIGHT);
 				   SDL::Video::blit_surface(        $surface_dialog, $rect{dialog_blank}, $app, $rect{dialog_new});
-        $app->flip;
+				   SDL::Video::update_rect($app, 0 , 0, $app->w, $app->h);
         if ($key == SDLK_BACKSPACE()) {
             chop $jump_to_level_value;
         } else {
@@ -1950,7 +1950,7 @@ sub print_new_ls_name {
 					   -width => $surface_dialog->width,
 					   -height => $surface_dialog->height - 3*$WOOD_PLANK_HEIGHT);
 				   SDL::Video::blit_surface(        $surface_dialog, $rect{dialog_blank}, $app, $rect{dialog_new});
-        $app->flip;
+				   SDL::Video::update_rect($app, 0 , 0, $app->w, $app->h);
         if ($key == SDLK_BACKSPACE()) {
             chop $new_ls_name_text;
         } elsif ($key == SDLK_MINUS() || $key == SDLK_KP_MINUS()) {
@@ -2126,7 +2126,7 @@ sub init_setup {
     SDL::WarpMouse(320, 240);
 
     print_levelset_name();
-    $app->flip;
+    SDL::Video::update_rect($app, 0 , 0, $app->w, $app->h);
 
     $button_hold = 0;
 }
