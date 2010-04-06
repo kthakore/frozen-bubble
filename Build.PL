@@ -37,6 +37,7 @@ My::Builder->new(
          'File::Basename'    => 0,
          'File::Spec::Functions' => 0,
           'IO::File'          => 0,
+          'Locale::Maketext::Extract' => 0,
           'Module::Build'     => '0.36',    # for share_dir
       },    },
     build_requires       => {
