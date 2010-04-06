@@ -12,7 +12,7 @@ use Locale::Maketext::Extract;
 
 sub ACTION_build {
     my ($self) = @_;
-    $self->depends_on('messages');
+    #$self->depends_on('messages'); #temporarily disabled by kmx, the new ACTION_messages() needs more testing
     $self->SUPER::ACTION_build;
     return;
 }
