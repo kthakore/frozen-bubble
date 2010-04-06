@@ -219,17 +219,17 @@ sub i18n_number {
     my ($number) = @_;
     my $out = '';
     foreach my $char (split //, $number) {
-           if ($char eq '0') { $out .= t("0"); }
-        elsif ($char eq '1') { $out .= t("1"); }
-        elsif ($char eq '2') { $out .= t("2"); }
-        elsif ($char eq '3') { $out .= t("3"); }
-        elsif ($char eq '4') { $out .= t("4"); }
-        elsif ($char eq '5') { $out .= t("5"); }
-        elsif ($char eq '6') { $out .= t("6"); }
-        elsif ($char eq '7') { $out .= t("7"); }
-        elsif ($char eq '8') { $out .= t("8"); }
-        elsif ($char eq '9') { $out .= t("9"); }
-        elsif ($char eq '.') { $out .= t("."); }
+           if ($char eq '0') { $out .= loc("0"); }
+        elsif ($char eq '1') { $out .= loc("1"); }
+        elsif ($char eq '2') { $out .= loc("2"); }
+        elsif ($char eq '3') { $out .= loc("3"); }
+        elsif ($char eq '4') { $out .= loc("4"); }
+        elsif ($char eq '5') { $out .= loc("5"); }
+        elsif ($char eq '6') { $out .= loc("6"); }
+        elsif ($char eq '7') { $out .= loc("7"); }
+        elsif ($char eq '8') { $out .= loc("8"); }
+        elsif ($char eq '9') { $out .= loc("9"); }
+        elsif ($char eq '.') { $out .= loc("."); }
         else { $out .= $char; }
     }
     return $out;
@@ -253,11 +253,11 @@ sub format_addiction {
         $m = i18n_number($m);
         $s = i18n_number($s);
         if ($h) {
-            return t("%sh %sm %ss", $h, $m, $s);
+            return loc("%sh %sm %ss", $h, $m, $s);
         } elsif ($m) {
-            return t("%sm %ss", $m, $s);
+            return loc("%sm %ss", $m, $s);
         } else {
-            return t("%ss", $s);
+            return loc("%ss", $s);
         }
     }
 }
@@ -986,7 +986,7 @@ sub mp_train_print_time {
     my $seconds = mp_train_time_left();
     my $m = int($seconds/60);
     my $s = int($seconds-$m*60); length($s) == 1 and $s = "0$s";
-    print_('ingame', $background, $mp_train_xpos, $mp_train_ypos, t("%s'%s\"", i18n_number($m), i18n_number($s)), $imgbin{void_mp_training}->w, 'center');
+    print_('ingame', $background, $mp_train_xpos, $mp_train_ypos, loc("%s'%s\"", i18n_number($m), i18n_number($s)), $imgbin{void_mp_training}->w, 'center');
 }
 
 sub handle_progress($) {
@@ -1112,7 +1112,7 @@ sub handle_graphics($) {
             if ($seconds == 0) {
                 put_image($imgbin{void_panel}, $MENUPOS{xpos_panel}, $MENUPOS{ypos_panel});
                 my $y = $MENUPOS{ypos_panel} + 30;
-                my @messages = ('', '', '', '', t("Your score after two minutes:"), '', $pdata{p1}{score}, '', t("Press any key."));
+                my @messages = ('', '', '', '', loc("Your score after two minutes:"), '', $pdata{p1}{score}, '', loc("Press any key."));
                 foreach (@messages) {
                     print_('menu', $app, $MENUPOS{xpos_panel}, $y, $_, $imgbin{void_panel}->w, 'center');
                     $y += $smg_lineheight;
@@ -1278,9 +1278,9 @@ sub mp_disconnect_with_reason {
 sub check_mp_connection {
     if (!Games::FrozenBubble::Net::isconnected()) {
         if ($pdata{gametype} eq 'lan') {
-            mp_disconnect_with_reason('', '', '', '', t("Lost connection to server!"), '', t("Hoster aborted the game."));
+            mp_disconnect_with_reason('', '', '', '', loc("Lost connection to server!"), '', loc("Hoster aborted the game."));
         } else {
-            mp_disconnect_with_reason('', '', '', '', t("Lost connection to server!"), '', t("Your lag is probably too high."));
+            mp_disconnect_with_reason('', '', '', '', loc("Lost connection to server!"), '', loc("Your lag is probably too high."));
         }
     }
 }
@@ -1829,9 +1829,9 @@ sub play {
 sub print_scores($) {
     my ($surface) = @_;  
     iter_players_ {  #- sometimes called from within a iter_players so...
-        my $score = @PLAYERS == 1 ? ($pdata{$::p_}{score} eq 'random' ? t("Random level")
-                                         : $levels{current} eq 'mp_train' ? t("Score: %s", i18n_number($pdata{$::p_}{score}))
-                                               : t("Level %s", i18n_number($pdata{$::p_}{score}))) : i18n_number($pdata{$::p_}{score});
+        my $score = @PLAYERS == 1 ? ($pdata{$::p_}{score} eq 'random' ? loc("Random level")
+                                         : $levels{current} eq 'mp_train' ? loc("Score: %s", i18n_number($pdata{$::p_}{score}))
+                                               : loc("Level %s", i18n_number($pdata{$::p_}{score}))) : i18n_number($pdata{$::p_}{score});
         is_mp_game() and $score = sprintf("%s: %s", $pdata{$::p_}{nick}, i18n_number($score));
         my $width = width(mini_graphics($::p_) ? 'ingame_small' : 'ingame', $score);
         my $xpos = $POS{$::p_}{scores}{x} - $width/2;
@@ -2011,7 +2011,7 @@ sub update_lost {
     my $still_sticked = sum(map { @{$sticked_bubbles{$_}} } @PLAYERS);
     if ($pdata{state} eq 'won ' && $still_sticked == 1) {
         put_image($imgbin{void_panel}, $MENUPOS{xpos_panel}, $MENUPOS{ypos_panel});
-        print_('menu', $app, $MENUPOS{xpos_panel}, $MENUPOS{ypos_panel} + 30, t("Draw game!"), $imgbin{void_panel}->w - 20, 'center');
+        print_('menu', $app, $MENUPOS{xpos_panel}, $MENUPOS{ypos_panel} + 30, loc("Draw game!"), $imgbin{void_panel}->w - 20, 'center');
         SDL::Video::update_rect($app, 0, 0, 0, 0);
     }
 }
@@ -2329,7 +2329,7 @@ sub update_game() {
                 #- timeout for receiving the winners. it could happen when a client is badly killed.
                 $timeout_counter++;
                 if ($timeout_counter > 10 * (1000/$TARGET_ANIM_SPEED) ) {  #- 10 seconds
-                    mp_disconnect_with_reason('', '', '', '', '', t("Lost synchronization %s!", 1));
+                    mp_disconnect_with_reason('', '', '', '', '', loc("Lost synchronization %s!", 1));
                 } else {
                     $pdata{state} = "finished $supposed_winner_player:$supposed_winner_nick $timeout_counter";
                 }
@@ -2396,7 +2396,7 @@ sub update_game() {
                         $frame % (1000/$TARGET_ANIM_SPEED) == 0 and Games::FrozenBubble::Net::gsend('p');
                         $timeout_counter++;
                         if ($timeout_counter > 10 * (1000/$TARGET_ANIM_SPEED) ) {  #- 10 seconds
-                            mp_disconnect_with_reason('', '', '', '', '', t("Lost synchronization %s!", 2));
+                            mp_disconnect_with_reason('', '', '', '', '', loc("Lost synchronization %s!", 2));
                         }
                     }
                 };
@@ -3025,10 +3025,10 @@ sub display_highscores {
 	    #Games::FrozenBubble::CStuff::shrink($tmp, SDL::Video::display_format($background), 0, 0, $high_rect, 4);
             SDL::Video::blit_surface($tmp, SDL::Rect->new(0,0,$tmp->w,$tmp->h), $app, SDL::Rect->new($high_posx, $high_posy, $tmp->w, $tmp->h));
             $centered_print->($high_posx - 15, $high_posy, $high->{name}, $new_entry == $high);
-            $centered_print->($high_posx - 15, $high_posy + 20, $high->{level} eq 'WON' ? t("won!") : t("level %s", i18n_number($high->{level})), $new_entry == $high);
+            $centered_print->($high_posx - 15, $high_posy + 20, $high->{level} eq 'WON' ? loc("won!") : loc("level %s", i18n_number($high->{level})), $new_entry == $high);
             my $min = int($high->{time}/60);
             my $sec = int($high->{time} - $min*60); length($sec) == 1 and $sec = "0$sec";
-            $centered_print->($high_posx - 15, $high_posy + 40, t("%s'%s\"", i18n_number($min), i18n_number($sec)), $new_entry == $high);
+            $centered_print->($high_posx - 15, $high_posy + 40, loc("%s'%s\"", i18n_number($min), i18n_number($sec)), $new_entry == $high);
             $high_posx += 98;
             $high_posx > 550 and $high_posx = $initial_high_posx, $high_posy += 175;
             $high_posy > 440 and last;
@@ -3045,7 +3045,7 @@ sub display_highscores {
         SDL::Video::blit_surface($imgbin{back_hiscores}, $apprects{main}, $app, $apprects{main});
         put_image($imgbin{hiscore_mptraining}, 640 - 10 - $imgbin{hiscore_mptraining}->w, 8);
 
-        print_('menu', $app, 0, 50, t("Regular"), 320, 'center');
+        print_('menu', $app, 0, 50, loc("Regular"), 320, 'center');
         my %parts = (rank => { xpos => 80, width => 40 },
                      name => { xpos => 120, width => 150 });
         if ($is_rtl) {
@@ -3063,7 +3063,7 @@ sub display_highscores {
             $lastvalue = $high->{score};
         }
 
-        print_('menu', $app, 320, 50, t("Chain-reaction enabled"), 320, 'center');
+        print_('menu', $app, 320, 50, loc("Chain-reaction enabled"), 320, 'center');
         %parts = (rank => { xpos => 420, width => 40 },
                   name => { xpos => 460, width => 150 });
         if ($is_rtl) {
@@ -3146,11 +3146,11 @@ sub ask_from($) {
 					$txt = $k;
 					if ($k =~ /^joystick\|axisvalue\|(\d+)\|(\d+)\|([-\d]+)/) {
 						my $num = @joysticks > 1 ? $1 + 1 : '';
-						$k = 'joy' . i18n_number($num) . '-' . (even($2) ? ($3 < 0 ? t("left") : t("right")) : ($3 < 0 ? t("up") : t("down")));
+						$k = 'joy' . i18n_number($num) . '-' . (even($2) ? ($3 < 0 ? loc("left") : loc("right")) : ($3 < 0 ? loc("up") : loc("down")));
 					} elsif ($k =~ /^joystick\|buttondown\|(\d+)\|(\d+)/) {
 						my $num = @joysticks > 1 ? $1 + 1 : '';
 						my $button = $2 + 1;
-						$k = 'joy' . i18n_number($num) . '-' . t("button") . i18n_number($2);
+						$k = 'joy' . i18n_number($num) . '-' . loc("button") . i18n_number($2);
 					} else {
 						$k = keysym_to_char($k);
 					}
@@ -3493,7 +3493,7 @@ sub choose_1p_game_mode() {
         put_image($img, $MENUPOS{xpos_panel}, $MENUPOS{ypos_panel});
 
         my $ypos = $MENUPOS{ypos_panel} + 16;
-        print_('menu', $app, $MENUPOS{xpos_panel}, $ypos, t("Start 1-player game menu"), $imgbin{'1p_panel'}->w, 'center');
+        print_('menu', $app, $MENUPOS{xpos_panel}, $ypos, loc("Start 1-player game menu"), $imgbin{'1p_panel'}->w, 'center');
 
         foreach (@ordered_names) {
             $_ ne $ordered_names[$active_menu] and $draw_element->($_, 'off');
@@ -3543,16 +3543,16 @@ sub choose_1p_game_mode() {
                     } elsif ($ordered_names[$active_menu] eq 'play_random_levels') {
                         $levels{current} = 'random';
                         my $answ;
-                        ask_from({ intro => [ t("Random level"), '', '', t("Enable chain-reaction?"), '' ],
-                                   entries => [ { 'q' => t("%s or %s?", 'Y', 'N'), 'a' => \$answ, f => 'ONE_CHAR' } ],
-                                   outro => t("Enjoy the game!") }) or return;
+                        ask_from({ intro => [ loc("Random level"), '', '', loc("Enable chain-reaction?"), '' ],
+                                   entries => [ { 'q' => loc("%s or %s?", 'Y', 'N'), 'a' => \$answ, f => 'ONE_CHAR' } ],
+                                   outro => loc("Enjoy the game!") }) or return;
                         $chainreaction = $answ == SDLK_y; #;;
                     } elsif ($ordered_names[$active_menu] eq 'mp_train') {
                         $levels{current} = 'mp_train';
                         my $answ;
-                        ask_from({ intro => [ t("Multiplayer training"), '', '', t("Enable chain-reaction?"), '' ],
-                                   entries => [ { 'q' => t("%s or %s?", 'Y', 'N'), 'a' => \$answ, f => 'ONE_CHAR' } ],
-                                   outro => t("Enjoy the game!") }) or return;
+                        ask_from({ intro => [ loc("Multiplayer training"), '', '', loc("Enable chain-reaction?"), '' ],
+                                   entries => [ { 'q' => loc("%s or %s?", 'Y', 'N'), 'a' => \$answ, f => 'ONE_CHAR' } ],
+                                   outro => loc("Enjoy the game!") }) or return;
                         $chainreaction = $answ == SDLK_y; #;;
                     }
                     $cancel or return 1;
@@ -3648,12 +3648,12 @@ sub sanitize_nick {
 sub smg_servers() {
 
     if ($pdata{gametype} eq 'lan') {
-        smg_add_status_msg(t("*** Please wait, probing for available servers on local network..."));
+        smg_add_status_msg(loc("*** Please wait, probing for available servers on local network..."));
         my $ret = Games::FrozenBubble::Net::discover_lan_servers();
         if ($ret->{failure}) {
-            smg_add_status_msg(t("*** Unable to probe for available servers on local network!"),
+            smg_add_status_msg(loc("*** Unable to probe for available servers on local network!"),
                                "*** " . $ret->{failure},
-                               t("*** Verify your network setup"));
+                               loc("*** Verify your network setup"));
             grab_key();
             return;
         } else {
@@ -3662,15 +3662,15 @@ sub smg_servers() {
                 my $fb_server = "$FLPATH/fb-server";
                 if (!-x $fb_server) {
                     print STDERR "$fb_server is missing or not executable!\n";
-                    smg_add_status_msg(t("*** No server found, and could not start server"),
-                                       t("*** Verify your installation or contact your vendor"));
+                    smg_add_status_msg(loc("*** No server found, and could not start server"),
+                                       loc("*** Verify your installation or contact your vendor"));
                     grab_key();
                     return;
                 } else {
                     if (my $pid = fork()) {
                         $pdata{autochooseserver} = 1;
                         $pdata{serverpid} = $pid;
-                        smg_add_status_msg(t("*** No server found, created server for local network game"));
+                        smg_add_status_msg(loc("*** No server found, created server for local network game"));
                         sleep 1;
                         return [ { host => 'localhost', port => 1511 } ];
                     } else {
@@ -3686,7 +3686,7 @@ sub smg_servers() {
         }
 
     } else {
-        smg_add_status_msg(t("*** Contacting master server..."));
+        smg_add_status_msg(loc("*** Contacting master server..."));
         my $serverlist = Games::FrozenBubble::Net::get_server_list();
         my @servers;
         if (defined $serverlist) {
@@ -3697,10 +3697,10 @@ sub smg_servers() {
                     print STDERR "Unrecognized line in serverlist:\n\t$line\n";
                 }
             }
-            smg_add_status_msg(t("*** Server list received properly"));
+            smg_add_status_msg(loc("*** Server list received properly"));
         } else {
-            smg_add_status_msg(t("*** Unable to download server list from master server!"),
-                               t("*** Verify your network setup or retry later"));
+            smg_add_status_msg(loc("*** Unable to download server list from master server!"),
+                               loc("*** Verify your network setup or retry later"));
             grab_key();
             return;
         }
@@ -3746,7 +3746,7 @@ sub smg_choose_server(@) {
             }
             exists $imgbin{flag}{$server->{language}} and put_image($imgbin{flag}{$server->{language}}, $parts{flag}{xpos}, $y);
             print_('netdialogs', $app, $parts{name}{xpos}, $y, $server->{name}, $parts{name}{width}, $is_rtl ? 'right' : 'left');  #- ASCII
-            my $details = t("Available players: %s (playing: %s) Ping: %sms", i18n_number($server->{free}), i18n_number($server->{playing}), i18n_number($server->{ping}));
+            my $details = loc("Available players: %s (playing: %s) Ping: %sms", i18n_number($server->{free}), i18n_number($server->{playing}), i18n_number($server->{ping}));
             print_('netdialogs', $app, $parts{details}{xpos}, $y, $details, $parts{details}{width});
             my $pingimg = $server->{ping} < 80 ? "ping_low" : $server->{ping} < 200 ? "ping_mid" : "ping_high";
             put_image($imgbin{$pingimg}, $is_rtl ? $parts{details}{xpos} + $parts{details}{width} - width('netdialogs', $details) - 17
@@ -3778,14 +3778,14 @@ sub smg_choose_server(@) {
             if ($looped >= 10 && @sorted_servers && !$init) {
                 $init = 1;
                 $sorted_servers[0]->{selected} = 1;
-                smg_add_status_msg(t("*** Please choose a server"));
+                smg_add_status_msg(loc("*** Please choose a server"));
                 $redraw->();
             }
         } elsif (!$init) {
             $init = 1;
             if (@sorted_servers) {
                 $sorted_servers[0]->{selected} = 1;
-                smg_add_status_msg(t("*** Please choose a server"));
+                smg_add_status_msg(loc("*** Please choose a server"));
                 $redraw->();
             } else {
                 #- no server discovered. empty servers list so that below code will properly report no servers found.
@@ -3846,8 +3846,8 @@ sub smg_choose_server(@) {
     }
 
     if (@servers == 0 || every { $_->{disabled} } @servers) {
-        smg_add_status_msg(t("*** No available game server"),
-                           t("*** Please retry later or try a local network game (lan game)"));
+        smg_add_status_msg(loc("*** No available game server"),
+                           loc("*** Please retry later or try a local network game (lan game)"));
         grab_key();
         return 0;
     }
@@ -3857,11 +3857,11 @@ sub smg_choose_server(@) {
         if ($server->{selected}) {
             Games::FrozenBubble::Net::connect($server);
             if (!Games::FrozenBubble::Net::isconnected()) {
-                smg_add_status_msg(t("*** Impossible to connect to specified server, going back to server list"));
+                smg_add_status_msg(loc("*** Impossible to connect to specified server, going back to server list"));
                 $server->{selected} = 0;
                 return smg_choose_server(@servers);
             }
-            smg_add_status_msg(t("*** Connected to server '%s'", $server->{name}));
+            smg_add_status_msg(loc("*** Connected to server '%s'", $server->{name}));
             print "Notice! next time you start Frozen-Bubble, you may add the commandline parameter\n".
                   "        -gs $server->{host}:$server->{port} to automatically select this game server\n".
                   "        and save time not listing all available servers\n";
@@ -3885,7 +3885,7 @@ sub smg_verify_command($;$) {
         $answer = Games::FrozenBubble::Net::send_and_receive($command, $rest);
     };
     if ($@) {
-        smg_add_status_msg(t("*** Sorry, your computer or the network is too slow, giving up - press any key"));
+        smg_add_status_msg(loc("*** Sorry, your computer or the network is too slow, giving up - press any key"));
         SDL::Video::update_rect($app, 0, 0, 0, 0);
         SDL::Events::pump_events() while SDL::Events::poll_event($event) != 0;
         grab_key();
@@ -4037,8 +4037,8 @@ sub is_only_ascii {
 }
 
 sub smg_choose_game() {
-    my @actions = ({ name => t("Chat"), action => 'CHAT', selected => 1 },
-                   { name => t("Create new game"), action => 'CREATE' });
+    my @actions = ({ name => loc("Chat"), action => 'CHAT', selected => 1 },
+                   { name => loc("Create new game"), action => 'CREATE' });
     my $max_actions = 18;
 
     my $curaction = sub {
@@ -4192,15 +4192,15 @@ sub smg_choose_game() {
         #- chat entry
         erase_line($smg_starty_chat, $imgbin{back_netgame});
         if ($curaction->() && $curaction->()->{action} eq 'CHAT') {
-            callback_entry('print', { xpos => $smg_startx, ypos => $smg_starty_chat, maxlen => 520, prefix => t("Say: "), font => 'netdialogs' });
+            callback_entry('print', { xpos => $smg_startx, ypos => $smg_starty_chat, maxlen => 520, prefix => loc("Say: "), font => 'netdialogs' });
         }
 
         #- available players in server, or list of players in game
         erase_line($smg_starty_players, $imgbin{back_netgame});
         if ($ingame) {
-            print_('netdialogs', $app, $smg_startx, $smg_starty_players, t("Players in game: %s", $players_in_game), 520);
+            print_('netdialogs', $app, $smg_startx, $smg_starty_players, loc("Players in game: %s", $players_in_game), 520);
         } else {
-            print_('netdialogs', $app, $smg_startx, $smg_starty_players, t("Available Players: %s", i18n_number($free_players)), 520);
+            print_('netdialogs', $app, $smg_startx, $smg_starty_players, loc("Available Players: %s", i18n_number($free_players)), 520);
         }
 
         #- status messages
@@ -4249,9 +4249,9 @@ sub smg_choose_game() {
             my @joined = difference2([ sort(difference2(\@wholist, \@old_wholist)) ], [ $mynick ]);
             my @left = difference2([ sort(difference2(\@old_wholist, \@wholist)) ], [ $myoldnick ]);
             if (@left == 1) {
-                smg_add_status_msg(t("*** %s has left the chat room", @left));
+                smg_add_status_msg(loc("*** %s has left the chat room", @left));
             } else {
-                my $send = t("*** Several players left this chat room: ");
+                my $send = loc("*** Several players left this chat room: ");
                 while (@left) {
                     $send .= shift @left;
                     if (!@left || width('netdialogs', $send) >= 520) {
@@ -4263,9 +4263,9 @@ sub smg_choose_game() {
                 }
             }
             if (@joined == 1) {
-                smg_add_status_msg(t("*** %s has joined the chat room", @joined));
+                smg_add_status_msg(loc("*** %s has joined the chat room", @joined));
             } else {
-                my $send = t("*** Several players joined this chat room: ");
+                my $send = loc("*** Several players joined this chat room: ");
                 while (@joined) {
                     $send .= shift @joined;
                     if (!@joined || width('netdialogs', $send) >= 520) {
@@ -4283,7 +4283,7 @@ sub smg_choose_game() {
       listgames:
         foreach my $players (@games) {
             if (@$players < 5 && $players->[0] ne $forget_because_kicked) {
-                my $name = t("Join game: %s", join(', ', @$players));
+                my $name = loc("Join game: %s", join(', ', @$players));
                 foreach my $line (@$join) {
                     if ($line->{name} eq $name) {
                         $line->{ok} = 1;
@@ -4303,7 +4303,7 @@ sub smg_choose_game() {
     my $list_players = sub {
         if (@wholist > 1) {
             my @list = sort @wholist;
-            my $send = t("*** Players listening: ");
+            my $send = loc("*** Players listening: ");
             while (@list) {
                 $send .= shift @list;
                 if (!@list || width('netdialogs', $send) >= 520) {
@@ -4314,14 +4314,14 @@ sub smg_choose_game() {
                 }
             }
         } else {
-            smg_add_status_msg(t("*** Notice: no one's listening here"));
+            smg_add_status_msg(loc("*** Notice: no one's listening here"));
         }
     };
 
     Games::FrozenBubble::Net::send_and_receive('NICK', $mynick);
 
     my $geolocate = sub {
-        smg_add_status_msg(t("*** Please wait, retrieving your geographical location from http://hostip.info/..."));
+        smg_add_status_msg(loc("*** Please wait, retrieving your geographical location from http://hostip.info/..."));
         eval {
             local $SIG{ALRM} = sub { die "alarm\n" };
             alarm 5;
@@ -4329,18 +4329,18 @@ sub smg_choose_game() {
             ($mylatitude) = $data =~ /Latitude: (-?\S{1,5})/;
             ($mylongitude) = $data =~ /Longitude: (-?\S{1,5})/;
             if (defined($mylatitude)) {
-                smg_add_status_msg(t("*** Done, you are positioned as the flashing red dot!"));
+                smg_add_status_msg(loc("*** Done, you are positioned as the flashing red dot!"));
             } else {
-                smg_add_status_msg(t("*** hostip.info doesn't know the geographical location of your IP address"));
-                smg_add_status_msg(t("*** If you want that your location appears on the map, fix your entry at http://hostip.info/"));
-                smg_add_status_msg(t("*** Then type /geolocate to see yourself on the map"));
+                smg_add_status_msg(loc("*** hostip.info doesn't know the geographical location of your IP address"));
+                smg_add_status_msg(loc("*** If you want that your location appears on the map, fix your entry at http://hostip.info/"));
+                smg_add_status_msg(loc("*** Then type /geolocate to see yourself on the map"));
                 $mylatitude = '';
             }
             alarm 0;
         };
         if ($@) {
             if ($@ =~ /^alarm/) {
-                smg_add_status_msg(t("*** hostip.info didn't reply within 5 seconds, giving up"));
+                smg_add_status_msg(loc("*** hostip.info didn't reply within 5 seconds, giving up"));
             }
             $mylatitude = '';
         }
@@ -4358,17 +4358,17 @@ sub smg_choose_game() {
             Games::FrozenBubble::Net::send_and_receive('GEOLOC', "$mylatitude:$mylongitude");
         }
     }
-    smg_add_status_msg(t("*** You may now create or join a game"));
+    smg_add_status_msg(loc("*** You may now create or join a game"));
     
     my $need4update;
     my $relist;
     my $can_start = 0;
     my $joined_leader;
-    my $chain_reaction_state = t("enabled");
-    my $continue_game_when_players_leave_state = t("enabled");
-    my $single_player_targetting_state = t("enabled");
+    my $chain_reaction_state = loc("enabled");
+    my $continue_game_when_players_leave_state = loc("enabled");
+    my $single_player_targetting_state = loc("enabled");
     my @victories_limits = ({ value => undef,
-                              text => t("none (unlimited)") },
+                              text => loc("none (unlimited)") },
                             map { { value => $_,
                                     text => i18n_number($_) } } (1..12, 15, 20, 30, 50, 100));
     my $victories_limit_index = 5;
@@ -4380,71 +4380,71 @@ sub smg_choose_game() {
     my $setoptions = sub {
         my $level = Games::FrozenBubble::Net::send_and_receive('PROTOCOL_LEVEL');
         if ($level < 2) {  #- continue game when players leave available from minor level 2 onwards
-            smg_verify_command('SETOPTIONS', 'CHAINREACTION:' . to_bool($chain_reaction_state eq t("enabled")) . ','
+            smg_verify_command('SETOPTIONS', 'CHAINREACTION:' . to_bool($chain_reaction_state eq loc("enabled")) . ','
                                            . "VICTORIESLIMIT:$victories_limits[$victories_limit_index]{value}");
         } else {
-            smg_verify_command('SETOPTIONS', 'CHAINREACTION:' . to_bool($chain_reaction_state eq t("enabled")) . ','
-                                           . 'CONTINUEGAMEWHENPLAYERSLEAVE:' . to_bool($continue_game_when_players_leave_state eq t("enabled")) . ','
-                                           . 'SINGLEPLAYERTARGETTING:' . to_bool($single_player_targetting_state eq t("enabled")) . ','
+            smg_verify_command('SETOPTIONS', 'CHAINREACTION:' . to_bool($chain_reaction_state eq loc("enabled")) . ','
+                                           . 'CONTINUEGAMEWHENPLAYERSLEAVE:' . to_bool($continue_game_when_players_leave_state eq loc("enabled")) . ','
+                                           . 'SINGLEPLAYERTARGETTING:' . to_bool($single_player_targetting_state eq loc("enabled")) . ','
                                            . "VICTORIESLIMIT:$victories_limits[$victories_limit_index]{value}");
         }
     };
 
     my $toggle_chain_reaction = sub {
-        if ($chain_reaction_state eq t("disabled")) {
+        if ($chain_reaction_state eq loc("disabled")) {
             my $level = Games::FrozenBubble::Net::send_and_receive('PROTOCOL_LEVEL');
             if ($level < 1) {  #- available from minor level 1 onwards
-                smg_add_status_msg(t("*** Cannot modify this option, as a player is using a too old version of Frozen-Bubble"));
+                smg_add_status_msg(loc("*** Cannot modify this option, as a player is using a too old version of Frozen-Bubble"));
                 play_sound('cancel');
             } else {
-                $chain_reaction_state = t("enabled");
-                $actions[1]{name} = t("Chain-reaction: %s", $chain_reaction_state);
+                $chain_reaction_state = loc("enabled");
+                $actions[1]{name} = loc("Chain-reaction: %s", $chain_reaction_state);
                 $redraw->();
                 $setoptions->();
             }
         } else {
-            $chain_reaction_state = t("disabled");
-            $actions[1]{name} = t("Chain-reaction: %s", $chain_reaction_state);
+            $chain_reaction_state = loc("disabled");
+            $actions[1]{name} = loc("Chain-reaction: %s", $chain_reaction_state);
             $redraw->();
             $setoptions->();
         }
     };
 
     my $toggle_continue_game_when_players_leave = sub {
-        if ($continue_game_when_players_leave_state eq t("disabled")) {
+        if ($continue_game_when_players_leave_state eq loc("disabled")) {
             my $level = Games::FrozenBubble::Net::send_and_receive('PROTOCOL_LEVEL');
             if ($level < 2) {  #- available from minor level 2 onwards
-                smg_add_status_msg(t("*** Cannot modify this option, as a player is using a too old version of Frozen-Bubble"));
+                smg_add_status_msg(loc("*** Cannot modify this option, as a player is using a too old version of Frozen-Bubble"));
                 play_sound('cancel');
             } else {
-                $continue_game_when_players_leave_state = t("enabled");
-                $actions[2]{name} = t("Continue game when players leave: %s", $continue_game_when_players_leave_state);
+                $continue_game_when_players_leave_state = loc("enabled");
+                $actions[2]{name} = loc("Continue game when players leave: %s", $continue_game_when_players_leave_state);
                 $redraw->();
                 $setoptions->();
             }
         } else {
-            $continue_game_when_players_leave_state = t("disabled");
-            $actions[2]{name} = t("Continue game when players leave: %s", $continue_game_when_players_leave_state);
+            $continue_game_when_players_leave_state = loc("disabled");
+            $actions[2]{name} = loc("Continue game when players leave: %s", $continue_game_when_players_leave_state);
             $redraw->();
             $setoptions->();
         }
     };
 
     my $toggle_single_player_targetting = sub {
-        if ($single_player_targetting_state eq t("enabled")) {
+        if ($single_player_targetting_state eq loc("enabled")) {
             my $level = Games::FrozenBubble::Net::send_and_receive('PROTOCOL_LEVEL');
             if ($level < 2) {  #- available from minor level 2 onwards
-                smg_add_status_msg(t("*** Cannot modify this option, as a player is using a too old version of Frozen-Bubble"));
+                smg_add_status_msg(loc("*** Cannot modify this option, as a player is using a too old version of Frozen-Bubble"));
                 play_sound('cancel');
             } else {
-                $single_player_targetting_state = t("disabled");
-                $actions[3]{name} = t("Single player targetting: %s", $single_player_targetting_state);
+                $single_player_targetting_state = loc("disabled");
+                $actions[3]{name} = loc("Single player targetting: %s", $single_player_targetting_state);
                 $redraw->();
                 $setoptions->();
             }
         } else {
-            $single_player_targetting_state = t("enabled");
-            $actions[3]{name} = t("Single player targetting: %s", $single_player_targetting_state);
+            $single_player_targetting_state = loc("enabled");
+            $actions[3]{name} = loc("Single player targetting: %s", $single_player_targetting_state);
             $redraw->();
             $setoptions->();
         }
@@ -4454,7 +4454,7 @@ sub smg_choose_game() {
         my ($action) = @_;
         my $level = Games::FrozenBubble::Net::send_and_receive('PROTOCOL_LEVEL');
         if ($level < 1) {  #- available from minor level 1 onwards
-            smg_add_status_msg(t("*** Cannot modify this option, as a player is using a too old version of Frozen-Bubble"));
+            smg_add_status_msg(loc("*** Cannot modify this option, as a player is using a too old version of Frozen-Bubble"));
             play_sound('cancel');
         } else {
             if ($action eq 'inc') {
@@ -4471,7 +4471,7 @@ sub smg_choose_game() {
                     }
                 }
             }
-            $actions[4]{name} = t("Victories limit: %s", $victories_limits[$victories_limit_index]{text});
+            $actions[4]{name} = loc("Victories limit: %s", $victories_limits[$victories_limit_index]{text});
             $redraw->();
             $setoptions->();
         }
@@ -4481,9 +4481,9 @@ sub smg_choose_game() {
         my ($kicked) = @_;
         my $answer = smg_verify_command('KICK', $kicked);
         if ($answer eq 'NO_SUCH_PLAYER') {
-            smg_add_status_msg(t("*** Can't kick %s: no such player in game", $kicked));
+            smg_add_status_msg(loc("*** Can't kick %s: no such player in game", $kicked));
         } elsif ($answer) {
-            smg_add_status_msg(t("*** Can't kick %s: '%s'", $kicked, $answer));
+            smg_add_status_msg(loc("*** Can't kick %s: '%s'", $kicked, $answer));
         }
     };
 
@@ -4515,7 +4515,7 @@ sub smg_choose_game() {
             if ($k) {
                 if ($k eq SDLK_ESCAPE()) {
                     if ($ingame) {
-                        smg_add_status_msg(t("*** Leaving game..."));
+                        smg_add_status_msg(loc("*** Leaving game..."));
                         Games::FrozenBubble::Net::reconnect();
                         return smg_choose_game();
                     } else {
@@ -4589,11 +4589,11 @@ sub smg_choose_game() {
                             my $save_mynick = $mynick;
                             $mynick = sanitize_nick($1);
                             if ($mynick) {
-                                smg_add_status_msg(t("*** You are now known as %s", $mynick));
+                                smg_add_status_msg(loc("*** You are now known as %s", $mynick));
                                 Games::FrozenBubble::Net::send_and_receive('NICK', $mynick);
                                 $myoldnick = $save_mynick;
                             } else {
-                                smg_add_status_msg(t("*** Erroneous nickname"));
+                                smg_add_status_msg(loc("*** Erroneous nickname"));
                                 $mynick = $save_mynick;
                             }
                             $text = undef;
@@ -4603,7 +4603,7 @@ sub smg_choose_game() {
                         } elsif ($text =~ m|^/server|) {
                             my $servername = Games::FrozenBubble::Net::current_server_name();
                             $servername or $servername = Games::FrozenBubble::Net::current_server_hostport();
-                            smg_add_status_msg(t("*** You're connected to server '%s'", $servername));
+                            smg_add_status_msg(loc("*** You're connected to server '%s'", $servername));
                             $text = undef;
                         } elsif ($text =~ m|^/fs|) {
                             $fullscreen = !$fullscreen;
@@ -4617,9 +4617,9 @@ sub smg_choose_game() {
                             $2 and Games::FrozenBubble::Net::send_("TALK $kicked <-- $2");
                             if ($kicked eq $mynick) {
                                 my $rand = int(rand(3));
-                                $rand == 0 and smg_add_status_msg(t("*** Sado-masochist, hmm?"));
-                                $rand == 1 and smg_add_status_msg(t("*** You like when it hurts, don't you?"));
-                                $rand == 2 and smg_add_status_msg(t("*** Your butt already hurts enough! Stop that!"));
+                                $rand == 0 and smg_add_status_msg(loc("*** Sado-masochist, hmm?"));
+                                $rand == 1 and smg_add_status_msg(loc("*** You like when it hurts, don't you?"));
+                                $rand == 2 and smg_add_status_msg(loc("*** Your butt already hurts enough! Stop that!"));
                             } else {
                                 $kick->($kicked);
                             }
@@ -4629,16 +4629,16 @@ sub smg_choose_game() {
                             my $message = $2;
                             if ($kicked eq $mynick) {
                                 my $rand = int(rand(3));
-                                $rand == 0 and smg_add_status_msg(t("*** Sado-masochist, hmm?"));
-                                $rand == 1 and smg_add_status_msg(t("*** You like when it hurts, don't you?"));
-                                $rand == 2 and smg_add_status_msg(t("*** Your butt already hurts enough! Stop that!"));
+                                $rand == 0 and smg_add_status_msg(loc("*** Sado-masochist, hmm?"));
+                                $rand == 1 and smg_add_status_msg(loc("*** You like when it hurts, don't you?"));
+                                $rand == 2 and smg_add_status_msg(loc("*** Your butt already hurts enough! Stop that!"));
                             } else {
                                 my $found = 0;
                                 if (!$message && exists $autokick{$kicked}) {
                                     delete($autokick{$kicked});
-                                    smg_add_status_msg(t("*** Removing %s from autokick list.", $kicked));
+                                    smg_add_status_msg(loc("*** Removing %s from autokick list.", $kicked));
                                 } else {
-                                    smg_add_status_msg(t("*** Adding %s to autokick list.", $kicked));
+                                    smg_add_status_msg(loc("*** Adding %s to autokick list.", $kicked));
                                     $autokick{$kicked} = $message;
                                     if ($can_start && any { $_ eq $kicked } @wholist) {
                                         $message and Games::FrozenBubble::Net::send_("TALK $kicked <-- $message");
@@ -4649,20 +4649,20 @@ sub smg_choose_game() {
                             $text = undef;
                         } elsif ($text =~ m|^/autokick$|) {
                             if (!%autokick) {
-                                smg_add_status_msg(t("*** Nobody in autokick list."));
+                                smg_add_status_msg(loc("*** Nobody in autokick list."));
                             } else {
-                                smg_add_status_msg(t("*** Autokick list members: %s", join(", ", sort keys %autokick)));
+                                smg_add_status_msg(loc("*** Autokick list members: %s", join(", ", sort keys %autokick)));
                             }
                             $text = undef;
                         } elsif ($text =~ m|^/help|) {
-                            smg_add_status_msg(t("*** Available commands: %s",
-                                                 join(', ', t("%s <action>", '/me'), t("%s <nick> [<text>]", '/autokick'), '/server')),
+                            smg_add_status_msg(loc("*** Available commands: %s",
+                                                 join(', ', loc("%s <action>", '/me'), loc("%s <nick> [<text>]", '/autokick'), '/server')),
                                                '*** ' . join(', ', '/fs', '/geolocate',
-                                                                   if_(!$ingame, t("%s <new_nick>", '/nick'), '/list'),
-                                                                   if_($can_start, t("%s <nick> [<text>]", '/kick'))));
+                                                                   if_(!$ingame, loc("%s <new_nick>", '/nick'), '/list'),
+                                                                   if_($can_start, loc("%s <nick> [<text>]", '/kick'))));
                             $text = undef;
                         } elsif ($text =~ m|^/|) {
-                            smg_add_status_msg(t("*** Unknown command. Try %s for help.", '/help'));
+                            smg_add_status_msg(loc("*** Unknown command. Try %s for help.", '/help'));
                             $text = undef;
                         } else {
                             #- for RTL language, force beginning on the right, but non RTL content will appear wrongly so at least don't do for pure ASCII
@@ -4674,7 +4674,7 @@ sub smg_choose_game() {
                         }
                         if ($text) {
                             Games::FrozenBubble::Net::send_("TALK $text");
-                            @wholist == 1 and smg_add_status_msg(t("*** Notice: no one's listening here"));
+                            @wholist == 1 and smg_add_status_msg(loc("*** Notice: no one's listening here"));
                         }
                         callback_entry('reset');
                     }
@@ -4699,23 +4699,23 @@ sub smg_choose_game() {
                                     $suffix = 1;
                                 }
                             } elsif ($answer eq 'ALREADY_MAX_OPEN_GAMES') {
-                                smg_add_status_msg(t("*** Open games already full. Join an existing game, or select a different server."));
+                                smg_add_status_msg(loc("*** Open games already full. Join an existing game, or select a different server."));
                                 goto not_in_game;
                             } elsif ($curaction->()->{action} eq 'JOIN' && $answer eq 'NO_SUCH_GAME') {
-                                smg_add_status_msg(t("*** Cannot join game, game was just started or aborted"));
+                                smg_add_status_msg(loc("*** Cannot join game, game was just started or aborted"));
                                 $list->();
                                 goto not_in_game;
                             } elsif ($answer) {
-                                smg_add_status_msg(t("*** Failure: '%s'", $answer));
+                                smg_add_status_msg(loc("*** Failure: '%s'", $answer));
                                 goto not_in_game;
                             } else {
                                 if ($curaction->()->{action} eq 'CREATE') {
                                     $can_start = 1;
                                     @wholist = $mynick;
-                                    smg_add_status_msg(t("*** Game created - now you need to wait for players to join"));
+                                    smg_add_status_msg(loc("*** Game created - now you need to wait for players to join"));
                                 } else {
                                     $joined_leader = $curaction->()->{join};
-                                    smg_add_status_msg(t("*** Joined game"));
+                                    smg_add_status_msg(loc("*** Joined game"));
                                 }
                                 $ingame = 1;
                                 last;
@@ -4745,51 +4745,51 @@ sub smg_choose_game() {
                     if ($curaction->()->{action} eq 'START') {
                         my $close = smg_verify_command('CLOSE');
                         if ($close) {
-                            smg_add_status_msg(t("*** Can't start game: '%s'", $close));
+                            smg_add_status_msg(loc("*** Can't start game: '%s'", $close));
                             Games::FrozenBubble::CStuff::fbdelay(2000);
                             return;
                         }
                         #- game is closed, need to check one last time if options are really possible
-                        if ($chain_reaction_state eq t("enabled")
+                        if ($chain_reaction_state eq loc("enabled")
                             || $victories_limit_index > 0
-                            || $continue_game_when_players_leave_state eq t("enabled")
-                            || $single_player_targetting_state eq t("disabled")) {
+                            || $continue_game_when_players_leave_state eq loc("enabled")
+                            || $single_player_targetting_state eq loc("disabled")) {
                             my $level = Games::FrozenBubble::Net::send_and_receive('PROTOCOL_LEVEL');
                             my $isdelay = 0;
                             if ($level < 1) {  #- chain reaction available from minor level 1 onwards
-                                if ($chain_reaction_state eq t("enabled")) {
-                                    smg_add_status_msg(t("*** Must disable chain-reaction, as a player is using a too old version of Frozen-Bubble"));
-                                    $chain_reaction_state = t("disabled");
+                                if ($chain_reaction_state eq loc("enabled")) {
+                                    smg_add_status_msg(loc("*** Must disable chain-reaction, as a player is using a too old version of Frozen-Bubble"));
+                                    $chain_reaction_state = loc("disabled");
                                     $isdelay = 1;
                                 }
                                 if ($victories_limit_index > 0) {
-                                    smg_add_status_msg(t("*** Must reset victories limit as a player is using a too old version of Frozen-Bubble"));
+                                    smg_add_status_msg(loc("*** Must reset victories limit as a player is using a too old version of Frozen-Bubble"));
                                     $victories_limit_index = 0;
                                     $isdelay = 1;
                                 }
                             }
                             if ($level < 2) {  #- continue game when players leave available from minor level 1 onwards
-                                if ($continue_game_when_players_leave_state eq t("enabled")) {
-                                    smg_add_status_msg(t("*** Cannot enable continue game when players leave, as a player is using an old version"));
-                                    $continue_game_when_players_leave_state = t("disabled");
+                                if ($continue_game_when_players_leave_state eq loc("enabled")) {
+                                    smg_add_status_msg(loc("*** Cannot enable continue game when players leave, as a player is using an old version"));
+                                    $continue_game_when_players_leave_state = loc("disabled");
                                     $isdelay = 1;
                                 }
-                                if ($single_player_targetting_state eq t("disabled")) {
-                                    smg_add_status_msg(t("*** Cannot disable single player targetting, as a player is using an old version"));
-                                    $single_player_targetting_state = t("enabled");
+                                if ($single_player_targetting_state eq loc("disabled")) {
+                                    smg_add_status_msg(loc("*** Cannot disable single player targetting, as a player is using an old version"));
+                                    $single_player_targetting_state = loc("enabled");
                                     $isdelay = 1;
                                 }
                             }
                             $isdelay and Games::FrozenBubble::CStuff::fbdelay(2000);
                         }
                         if ($setoptions->()) {
-                            smg_add_status_msg(t("*** Can't start game: '%s'", $setoptions));
+                            smg_add_status_msg(loc("*** Can't start game: '%s'", $setoptions));
                             Games::FrozenBubble::CStuff::fbdelay(2000);
                             return;
                         }
                         my $start = smg_verify_command('START');
                         if ($start) {
-                            smg_add_status_msg(t("*** Can't start game: '%s'", $start));
+                            smg_add_status_msg(loc("*** Can't start game: '%s'", $start));
                             Games::FrozenBubble::CStuff::fbdelay(2000);
                             return;
                         }
@@ -4889,7 +4889,7 @@ sub smg_choose_game() {
                     play_sound('typewriter');
                 } elsif ($message =~ /^JOINED: (.+)/) {
                     my $joined = $1;
-                    smg_add_status_msg(t("*** %s joined the game!", $joined));
+                    smg_add_status_msg(loc("*** %s joined the game!", $joined));
                     if ($can_start && exists $autokick{$joined}) {
                         $autokick{$joined} and Games::FrozenBubble::Net::send_("TALK $joined <-- $autokick{$joined}");
                         $kick->($joined);
@@ -4897,29 +4897,29 @@ sub smg_choose_game() {
                         push @wholist, $joined;
                         play_sound('newroot_solo');
                         if ($can_start
-                            && ($chain_reaction_state eq t("enabled")
+                            && ($chain_reaction_state eq loc("enabled")
                                 || $victories_limit_index > 0
-                                || $continue_game_when_players_leave_state eq t("enabled")
-                                || $single_player_targetting_state eq t("disabled"))) {
+                                || $continue_game_when_players_leave_state eq loc("enabled")
+                                || $single_player_targetting_state eq loc("disabled"))) {
                             my $level = Games::FrozenBubble::Net::send_and_receive('PROTOCOL_LEVEL');
                             if ($level < 1) {  #- available from minor level 1 onwards
-                                if ($chain_reaction_state eq t("enabled")) {
-                                    smg_add_status_msg(t("*** Chain-reaction disabled, %s is using a too old version of Frozen-Bubble", $joined));
-                                    $chain_reaction_state = t("disabled");
+                                if ($chain_reaction_state eq loc("enabled")) {
+                                    smg_add_status_msg(loc("*** Chain-reaction disabled, %s is using a too old version of Frozen-Bubble", $joined));
+                                    $chain_reaction_state = loc("disabled");
                                 }
                                 if ($victories_limit_index > 0) {
-                                    smg_add_status_msg(t("*** Victories limit reset, %s is using a too old version of Frozen-Bubble", $joined));
+                                    smg_add_status_msg(loc("*** Victories limit reset, %s is using a too old version of Frozen-Bubble", $joined));
                                     $victories_limit_index = 0;
                                 }
                             }
                             if ($level < 2) {  #- available from minor level 2 onwards
-                                if ($continue_game_when_players_leave_state eq t("enabled")) {
-                                    smg_add_status_msg(t("*** Continue game when players leave disabled, %s has a too old version", $joined));
-                                    $continue_game_when_players_leave_state = t("disabled");
+                                if ($continue_game_when_players_leave_state eq loc("enabled")) {
+                                    smg_add_status_msg(loc("*** Continue game when players leave disabled, %s has a too old version", $joined));
+                                    $continue_game_when_players_leave_state = loc("disabled");
                                 }
-                                if ($single_player_targetting_state eq t("disabled")) {
-                                    smg_add_status_msg(t("*** Single player targetting enabled, %s has a too old version", $joined));
-                                    $single_player_targetting_state = t("disabled");
+                                if ($single_player_targetting_state eq loc("disabled")) {
+                                    smg_add_status_msg(loc("*** Single player targetting enabled, %s has a too old version", $joined));
+                                    $single_player_targetting_state = loc("disabled");
                                 }
                             }
                         }
@@ -4927,27 +4927,27 @@ sub smg_choose_game() {
                     }
                 } elsif ($message =~ /^PARTED: (.+)/) {
                     if ($1 eq $joined_leader) {
-                        smg_add_status_msg(t("*** Game creator left the game..."));
+                        smg_add_status_msg(loc("*** Game creator left the game..."));
                         play_sound('cancel');
                         Games::FrozenBubble::Net::reconnect();
                         return smg_choose_game();
                     } else {
-                        smg_add_status_msg(t("*** %s left the game...", $1));
+                        smg_add_status_msg(loc("*** %s left the game...", $1));
                         @wholist = difference2(\@wholist, [ $1 ]);
                         play_sound('newroot_solo');
                     }
                 } elsif ($message =~ /^KICKED: (.+)/) {
-                    smg_add_status_msg(t("*** %s was kicked out of the game...", $1));
+                    smg_add_status_msg(loc("*** %s was kicked out of the game...", $1));
                     @wholist = difference2(\@wholist, [ $1 ]);
                     play_sound('newroot_solo');
                 } elsif ($message eq 'KICKED') {
                     $forget_because_kicked = $joined_leader;
-                    smg_add_status_msg(t("*** You were kicked out of the game..."));
+                    smg_add_status_msg(loc("*** You were kicked out of the game..."));
                     play_sound('cancel');
                     Games::FrozenBubble::Net::reconnect();
                     return smg_choose_game();
                 } elsif ($message eq 'NO_ACTIVITY_WITHIN_GRACETIME') {
-                    smg_add_status_msg(t("*** You were disconnected because of too long inactivity"));
+                    smg_add_status_msg(loc("*** You were disconnected because of too long inactivity"));
                     play_sound('cancel');
                     Games::FrozenBubble::Net::reconnect();
                     return smg_choose_game();
@@ -5016,7 +5016,7 @@ sub smg_choose_game() {
                             Games::FrozenBubble::Net::sleep_reasonably();
                             goto leader_check_game_start;
                         } elsif ($can_start) {
-                            smg_add_status_msg(t("*** Failure: '%s'", $can_start));
+                            smg_add_status_msg(loc("*** Failure: '%s'", $can_start));
                             play_sound('cancel');
                             Games::FrozenBubble::Net::reconnect();
                             return smg_choose_game();
@@ -5034,7 +5034,7 @@ sub smg_choose_game() {
         }
 
         if (!Games::FrozenBubble::Net::isconnected()) {
-            smg_add_status_msg(t("*** Lost connection to server, abandoning - press any key"));
+            smg_add_status_msg(loc("*** Lost connection to server, abandoning - press any key"));
             @actions = ();
             $redraw->();
             play_sound('cancel');
@@ -5061,20 +5061,20 @@ sub smg_choose_game() {
                 $players_in_game = join ', ', @wholist;
                 my $selected;
                 each_index { $actions[$::i]{selected} and $selected = $::i; } @actions;
-                @actions = { name => t("Chat"), action => 'CHAT' };
+                @actions = { name => loc("Chat"), action => 'CHAT' };
                 if ($can_start) {
                     #- creator
-                    push @actions, { name => t("Chain-reaction: %s", $chain_reaction_state), action => 'TOGGLE_CHAIN_REACTION' };
-                    push @actions, { name => t("Continue game when players leave: %s", $continue_game_when_players_leave_state), action => 'TOGGLE_CONTINUE_GAME_WHEN_PLAYERS_LEAVE' };
-                    push @actions, { name => t("Single player targetting: %s", $single_player_targetting_state), action => 'TOGGLE_SINGLE_PLAYER_TARGETTING' };
-                    push @actions, { name => t("Victories limit: %s", $victories_limits[$victories_limit_index]{text}), action => 'SWITCH_VICTORIES_LIMIT' };
-                    @wholist > 1 and push @actions, { name => t("Start game!"), action => 'START' };
+                    push @actions, { name => loc("Chain-reaction: %s", $chain_reaction_state), action => 'TOGGLE_CHAIN_REACTION' };
+                    push @actions, { name => loc("Continue game when players leave: %s", $continue_game_when_players_leave_state), action => 'TOGGLE_CONTINUE_GAME_WHEN_PLAYERS_LEAVE' };
+                    push @actions, { name => loc("Single player targetting: %s", $single_player_targetting_state), action => 'TOGGLE_SINGLE_PLAYER_TARGETTING' };
+                    push @actions, { name => loc("Victories limit: %s", $victories_limits[$victories_limit_index]{text}), action => 'SWITCH_VICTORIES_LIMIT' };
+                    @wholist > 1 and push @actions, { name => loc("Start game!"), action => 'START' };
                 } else {
                     #- joiner
-                    push @actions, { name => t("Chain-reaction: %s", $chainreaction ? t("enabled") : t("disabled")), readonly => 1};
-                    push @actions, { name => t("Continue game when players leave: %s", $continuegamewhenplayersleave ? t("enabled") : t("disabled")), readonly => 1 };
-                    push @actions, { name => t("Single player targetting: %s", $singleplayertargetting ? t("enabled") : t("disabled")), readonly => 1 };
-                    push @actions, { name => t("Victories limit: %s", $pdata{scorelimit} ? i18n_number($pdata{scorelimit}) : t("none (unlimited)")), readonly => 1 };
+                    push @actions, { name => loc("Chain-reaction: %s", $chainreaction ? loc("enabled") : loc("disabled")), readonly => 1};
+                    push @actions, { name => loc("Continue game when players leave: %s", $continuegamewhenplayersleave ? loc("enabled") : loc("disabled")), readonly => 1 };
+                    push @actions, { name => loc("Single player targetting: %s", $singleplayertargetting ? loc("enabled") : loc("disabled")), readonly => 1 };
+                    push @actions, { name => loc("Victories limit: %s", $pdata{scorelimit} ? i18n_number($pdata{scorelimit}) : loc("none (unlimited)")), readonly => 1 };
                 }
                 $selected-- while $selected > $#actions || $actions[$selected]{readonly};
                 $actions[$selected]{selected} = 1;
@@ -5089,22 +5089,22 @@ sub show_mp_scores() {
     SDL::Video::blit_surface($imgbin{back_netgame}, $apprects{main}, $app, $apprects{main});
 
     if ($pdata{inconsistency}) {
-        smg_add_status_msg(t("*** Game finished, because an inconsistency in game state was detected - sorry!"));
+        smg_add_status_msg(loc("*** Game finished, because an inconsistency in game state was detected - sorry!"));
     } elsif ($pdata{scorelimit} && any { $pdata{$_}{score} == $pdata{scorelimit} } @PLAYERS) {
-        smg_add_status_msg(t("*** Game finished, because victories limit of %s was reached.", i18n_number($pdata{scorelimit})));
+        smg_add_status_msg(loc("*** Game finished, because victories limit of %s was reached.", i18n_number($pdata{scorelimit})));
     } else {
         if (!$continuegamewhenplayersleave && any { $pdata{$_}{left} } @PLAYERS) {
-            smg_add_status_msg(t("*** Game finished, because the following player(s) left: %s", join(', ', map { if_($pdata{$_}{left}, $pdata{$_}{nick}) } @PLAYERS)));
+            smg_add_status_msg(loc("*** Game finished, because the following player(s) left: %s", join(', ', map { if_($pdata{$_}{left}, $pdata{$_}{nick}) } @PLAYERS)));
         }
     }
-    smg_add_status_msg(t("*** Addicted for: %s", format_addiction(($app->ticks - $time_netgame)/1000, 1)));
+    smg_add_status_msg(loc("*** Addicted for: %s", format_addiction(($app->ticks - $time_netgame)/1000, 1)));
     @PLAYERS = reverse ssort { $pdata{$_}{score} } @PLAYERS;
     if ($pdata{$PLAYERS[0]}{score} > $pdata{$PLAYERS[1]}{score}) {
-        smg_add_status_msg(t("*** Winner: %s", $pdata{$PLAYERS[0]}{nick}));
+        smg_add_status_msg(loc("*** Winner: %s", $pdata{$PLAYERS[0]}{nick}));
     } else {
-        smg_add_status_msg(t("*** Draw game!"));
+        smg_add_status_msg(loc("*** Draw game!"));
     }
-    smg_add_status_msg(t("*** Scores: %s", join(', ', map { sprintf("%s: %s", $pdata{$_}{nick}, i18n_number($pdata{$_}{score})) } @PLAYERS)));
+    smg_add_status_msg(loc("*** Scores: %s", join(', ', map { sprintf("%s: %s", $pdata{$_}{nick}, i18n_number($pdata{$_}{score})) } @PLAYERS)));
 }
 
 sub setup_mp_game() {
@@ -5122,7 +5122,7 @@ sub setup_mp_game() {
             }
             Games::FrozenBubble::Net::connect($host, $port);
             if (!Games::FrozenBubble::Net::isconnected()) {
-                smg_add_status_msg(t("*** Cannot connect to specified gameserver, fallbacking to contacting master server"));
+                smg_add_status_msg(loc("*** Cannot connect to specified gameserver, fallbacking to contacting master server"));
 		print STDERR "Cannot connect to specified gameserver, fallbacking to contacting master server\n";
                 goto choose_server;
             }
@@ -5162,9 +5162,9 @@ sub new_game_once {
         }
         if (is_2p_game() && $graphics_level > 1) {
             my $answ;
-            ask_from({ intro => [ t("2-player game"), '', '', t("Enable chain-reaction?"), '' ],
-                       entries => [ { 'q' => t("%s or %s?", 'Y', 'N'), 'a' => \$answ, f => 'ONE_CHAR' } ],
-                       outro => t("Enjoy the game!") }) or return;
+            ask_from({ intro => [ loc("2-player game"), '', '', loc("Enable chain-reaction?"), '' ],
+                       entries => [ { 'q' => loc("%s or %s?", 'Y', 'N'), 'a' => \$answ, f => 'ONE_CHAR' } ],
+                       outro => loc("Enjoy the game!") }) or return;
             $chainreaction = $answ == SDLK_y; #;;
         }
     }
@@ -5211,9 +5211,9 @@ sub handle_new_hiscores() {
         $new_entry{level} = $levels{current};
         $new_entry{time} = $total_seconds;
         $new_entry{piclevel} = count_highscorehistory_levels();
-        ask_from({ intro => [ t("Congratulations!"), t("You have a highscore!"), '' ],
-                   entries => [ { 'q' => t("Your name?"), 'a' => \$new_entry{name} } ],
-                   outro => t("Great game!"),
+        ask_from({ intro => [ loc("Congratulations!"), loc("You have a highscore!"), '' ],
+                   entries => [ { 'q' => loc("Your name?"), 'a' => \$new_entry{name} } ],
+                   outro => loc("Great game!"),
                    erase_background => $background,
                  });
         return if $new_entry{name} eq '';
@@ -5244,9 +5244,9 @@ sub handle_new_hiscores() {
 
         my %new_entry;
         $new_entry{score} = $pdata{p1}{score};
-        ask_from({ intro => [ t("Congratulations!"), t("You have a highscore!"), '' ],
-                   entries => [ { 'q' => t("Your name?"), 'a' => \$new_entry{name} } ],
-                   outro => t("Great game!"),
+        ask_from({ intro => [ loc("Congratulations!"), loc("You have a highscore!"), '' ],
+                   entries => [ { 'q' => loc("Your name?"), 'a' => \$new_entry{name} } ],
+                   outro => loc("Great game!"),
                    erase_background => $background,
                  });
         return if $new_entry{name} eq '';
@@ -5426,22 +5426,22 @@ sub menu {
     };
 
     my $change_keys = sub {
-	ask_from({ intro => [ t("Please enter new keys:") ],
+	ask_from({ intro => [ loc("Please enter new keys:") ],
 		   entries => [
-			       { 'q' => t("Player 1; turn left?"),  'a' => \$KEYS->{p1}{left},  f => 'ONE_CHAR' },
-			       { 'q' => t("Player 1; turn right?"), 'a' => \$KEYS->{p1}{right}, f => 'ONE_CHAR' },
-			       { 'q' => t("Player 1; fire?"),  'a' => \$KEYS->{p1}{fire},  f => 'ONE_CHAR' },
-			       { 'q' => t("Player 1; center?"),  'a' => \$KEYS->{p1}{center},  f => 'ONE_CHAR' },
+			       { 'q' => loc("Player 1; turn left?"),  'a' => \$KEYS->{p1}{left},  f => 'ONE_CHAR' },
+			       { 'q' => loc("Player 1; turn right?"), 'a' => \$KEYS->{p1}{right}, f => 'ONE_CHAR' },
+			       { 'q' => loc("Player 1; fire?"),  'a' => \$KEYS->{p1}{fire},  f => 'ONE_CHAR' },
+			       { 'q' => loc("Player 1; center?"),  'a' => \$KEYS->{p1}{center},  f => 'ONE_CHAR' },
                                { f => 'SPACE' },
-			       { 'q' => t("Player 2; turn left?"),  'a' => \$KEYS->{p2}{left},  f => 'ONE_CHAR' },
-			       { 'q' => t("Player 2; turn right?"), 'a' => \$KEYS->{p2}{right}, f => 'ONE_CHAR' },
-			       { 'q' => t("Player 2; fire?"),  'a' => \$KEYS->{p2}{fire},  f => 'ONE_CHAR' },
-			       { 'q' => t("Player 2; center?"),  'a' => \$KEYS->{p2}{center},  f => 'ONE_CHAR' },
+			       { 'q' => loc("Player 2; turn left?"),  'a' => \$KEYS->{p2}{left},  f => 'ONE_CHAR' },
+			       { 'q' => loc("Player 2; turn right?"), 'a' => \$KEYS->{p2}{right}, f => 'ONE_CHAR' },
+			       { 'q' => loc("Player 2; fire?"),  'a' => \$KEYS->{p2}{fire},  f => 'ONE_CHAR' },
+			       { 'q' => loc("Player 2; center?"),  'a' => \$KEYS->{p2}{center},  f => 'ONE_CHAR' },
                                { f => 'SPACE' },
-			       { 'q' => t("Toggle fullscreen?"), 'a' => \$KEYS->{misc}{fs}, f => 'ONE_CHAR' },
-			       { 'q' => t("Chat (net/lan game)?"), 'a' => \$KEYS->{misc}{chat}, f => 'ONE_CHAR' },
+			       { 'q' => loc("Toggle fullscreen?"), 'a' => \$KEYS->{misc}{fs}, f => 'ONE_CHAR' },
+			       { 'q' => loc("Chat (net/lan game)?"), 'a' => \$KEYS->{misc}{chat}, f => 'ONE_CHAR' },
 			      ],
-		   outro => t("Thanks!"),
+		   outro => loc("Thanks!"),
 		   erase_background => $back_start
 		 });
 	$invalidate_all->();
