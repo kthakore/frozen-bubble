@@ -28,13 +28,17 @@ My::Builder->new(
         'lib/Games/FrozenBubble/CStuff.o',
     ],
     configure_requires => {
-        perl                => '5.008',
-        'Alien::SDL'        => '1.1',
-        Config              => 0,
-        'ExtUtils::ParseXS' => '2.16',
-        'IO::File'          => 0,
-        'Module::Build'     => '0.36',    # for share_dir
-    },
+          configure_requires => {
+          perl                => '5.008',
+         autodie             => 0,
+          'Alien::SDL'        => '1.1',
+          Config              => 0,
+          'ExtUtils::ParseXS' => '2.16',
+         'File::Basename'    => 0,
+         'File::Spec::Functions' => 0,
+          'IO::File'          => 0,
+          'Module::Build'     => '0.36',    # for share_dir
+      },    },
     build_requires       => {
     },
     dist_abstract        => 'Puzzle with Bubbles',    # taken from openSUSE rpm spec file
