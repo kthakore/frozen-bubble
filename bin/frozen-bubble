@@ -2708,7 +2708,7 @@ sub init_game() {
         $canon{data}{$number} = Games::FrozenBubble::CStuff::autopseudocrop($canon{img}{$number});
         #- now crop (and use native RGBA ordering)
         my $replace = SDL::Surface->new( SDL_ANYFORMAT, $canon{data}{$number}[2],  $canon{data}{$number}[3], 32, 0, 0, 0, 0);
-	SDL::Video::set_alpha($canon{img}{$number}, 0, 0);
+	SDL::Video::set_alpha($canon{img}{$number}, SDL_SRCALPHA, SDL_ALPHA_OPAQUE);
 	SDL::Video::blit_surface( $canon{img}{$number}, SDL::Rect->new( $canon{data}{$number}[0],  $canon{data}{$number}[1],
                                                                     $canon{data}{$number}[2],  $canon{data}{$number}[3]), 
 							  $replace, SDL::Rect->new(0, 0, $canon{img}{$number}->w, $canon{img}{$number}->h));
@@ -2720,7 +2720,7 @@ sub init_game() {
         $canon{data_mini}{$number} = Games::FrozenBubble::CStuff::autopseudocrop($canon{img_mini}{$number});
         #- now crop (and use native RGBA ordering)
         my $replace = SDL::Surface->new( SDL_ANYFORMAT, $canon{data_mini}{$number}[2], $canon{data_mini}{$number}[3], 32, 0, 0, 0, 0);
-	SDL::Video::set_alpha($canon{img_mini}{$number}, 0, 0);
+	SDL::Video::set_alpha($canon{img_mini}{$number}, SDL_SRCALPHA, SDL_ALPHA_OPAQUE);
 	SDL::Video::blit_surface( $canon{img_mini}{$number}, SDL::Rect->new( $canon{data_mini}{$number}[0], $canon{data_mini}{$number}[1],
                                                         $canon{data_mini}{$number}[2], $canon{data_mini}{$number}[3]), $replace, 
 														SDL::Rect->new(0,0,$canon{img_mini}{$number}->w,$canon{img_mini}{$number}->h));
@@ -2782,27 +2782,27 @@ sub init_game() {
     $imgbin{ping_low} = add_image('menu/ping-low.png');
     $imgbin{ping_mid} = add_image('menu/ping-mid.png');
     $imgbin{ping_high} = add_image('menu/ping-high.png');
-    $imgbin{menu_cursor}{'1pgame'} = [ map { add_image("menu/anims/1pgame_00$_.png") } ('01'..'30') ];
-    $imgbin{menu_cursor}{'2pgame'} = [ map { add_image("menu/anims/p1p2_00$_.png") } ('01'..'30') ];
-    $imgbin{menu_cursor}{langame} = [ map { add_image("menu/anims/langame_00$_.png") } ('01'..'70') ];
-    $imgbin{menu_cursor}{netgame} = [ map { add_image("menu/anims/netgame_00$_.png") } ('01'..'89') ];
-    $imgbin{menu_cursor}{editor} = [ map { add_image("menu/anims/editor_00$_.png") } ('01'..'67') ];
-    $imgbin{menu_cursor}{graphics3} = [ map { add_image("menu/anims/gfx-l1_00$_.png") } ('01'..'30') ];
-    $imgbin{menu_cursor}{graphics2} = [ map { add_image("menu/anims/gfx-l2_00$_.png") } ('01'..'30') ];
-    $imgbin{menu_cursor}{graphics1} = [ add_image("menu/anims/gfx-l3_0001.png") ];
-    $imgbin{menu_cursor}{keys} = [ map { add_image("menu/anims/keys_00$_.png") } ('01'..'80') ];
+    $imgbin{menu_cursor}{'1pgame'}   = [ map { add_image("menu/anims/1pgame_00$_.png") }    ('01'..'30') ];
+    $imgbin{menu_cursor}{'2pgame'}   = [ map { add_image("menu/anims/p1p2_00$_.png") }      ('01'..'30') ];
+    $imgbin{menu_cursor}{langame}    = [ map { add_image("menu/anims/langame_00$_.png") }   ('01'..'70') ];
+    $imgbin{menu_cursor}{netgame}    = [ map { add_image("menu/anims/netgame_00$_.png") }   ('01'..'89') ];
+    $imgbin{menu_cursor}{editor}     = [ map { add_image("menu/anims/editor_00$_.png") }    ('01'..'67') ];
+    $imgbin{menu_cursor}{graphics3}  = [ map { add_image("menu/anims/gfx-l1_00$_.png") }    ('01'..'30') ];
+    $imgbin{menu_cursor}{graphics2}  = [ map { add_image("menu/anims/gfx-l2_00$_.png") }    ('01'..'30') ];
+    $imgbin{menu_cursor}{graphics1}  = [       add_image("menu/anims/gfx-l3_0001.png")                   ];
+    $imgbin{menu_cursor}{keys}       = [ map { add_image("menu/anims/keys_00$_.png") }      ('01'..'80') ];
     $imgbin{menu_cursor}{highscores} = [ map { add_image("menu/anims/highscore_00$_.png") } ('01'..'89') ];
     foreach my $cursortype (keys %{$imgbin{menu_cursor}}) {
         foreach my $img (@{$imgbin{menu_cursor}{$cursortype}}) {
-            my $alpha = SDL::Surface->new( SDL_ANYFORMAT,  $img->w,  $img->h,  32, 0,0,0,0);
-            SDL::Video::set_alpha($img, 0, 0);  #- for RGBA->RGBA blits, SDL_SRCALPHA must be removed or destination alpha is preserved
-            SDL::Video::blit_surface($img, SDL::Rect->new(0,0,$img->w,$img->h), $alpha, SDL::Rect->new(0,0,$img->w,$img->h));
-            Games::FrozenBubble::CStuff::alphaize($alpha);
-            push @{$imgbin{menu_cursor}{"${cursortype}alpha"}}, $alpha;
-            SDL::Video::set_alpha($img, SDL_SRCALPHA, 0);  
+            #my $alpha = SDL::Surface->new( SDL_ANYFORMAT,  $img->w,  $img->h,  32, 0,0,0,0);
+            #SDL::Video::set_alpha($img, 0, SDL_ALPHA_OPAQUE);  #- for RGBA->RGBA blits, SDL_SRCALPHA must be removed or destination alpha is preserved
+            #SDL::Video::blit_surface($img, SDL::Rect->new(0,0,$img->w,$img->h), $alpha, SDL::Rect->new(0,0,$img->w,$img->h));
+            #Games::FrozenBubble::CStuff::alphaize($alpha);
+            push @{$imgbin{menu_cursor}{"${cursortype}alpha"}}, $img; #$alpha;
+            #SDL::Video::set_alpha($img, SDL_SRCALPHA, SDL_ALPHA_OPAQUE);  
         }
     }
-    $imgbin{left_rp1} = add_image('left-rp1.png');
+    $imgbin{left_rp1}         = add_image('left-rp1.png');
     $imgbin{"left_${_}_mini"} = add_image("left-${_}-mini.png") foreach qw(rp1 rp2 rp3 rp4);
     $imgbin{highlight_server} = add_image('menu/highlight-server.png');
 
@@ -2860,19 +2860,19 @@ sub init_game() {
         }
         $pdata{$::p}{score} = 0;
         my $p = $::p;
-        $pinguin{$::p}{normal} = [ add_image("pinguins/anime-shooter_${p}_0020.png") ];
-        $pinguin{$::p}{action} = [ map { add_image("pinguins/anime-shooter_${p}_00$_.png") } (21..50) ];
-        $pinguin{$::p}{left_to} = [ map { add_image("pinguins/anime-shooter_${p}_00$_.png") } reverse ('02'..'19') ];
-        $pinguin{$::p}{left} = [ add_image("pinguins/anime-shooter_${p}_0001.png") ];
-        $pinguin{$::p}{left_from} = [ map { add_image("pinguins/anime-shooter_${p}_00$_.png") } ('02'..'19') ];
-        $pinguin{$::p}{right_to} = [ map { add_image("pinguins/anime-shooter_${p}_00$_.png") } (51..70) ];
-        $pinguin{$::p}{right} = [ add_image("pinguins/anime-shooter_${p}_0071.png") ];
-        $pinguin{$::p}{right_from} = [ map { add_image("pinguins/anime-shooter_${p}_00$_.png") } reverse (51..71) ];
-        $pinguin{$::p}{wait_to} = [ map { add_image("pinguins/wait_${p}_00$_.png") } ('01'..'74') ];
-        $pinguin{$::p}{wait} = [ map { add_image("pinguins/wait_${p}_00$_.png") } (75..97) ];
-        $pinguin{$::p}{win} = [ map { add_image("pinguins/win_${p}_00$_.png") } ('01'..'68') ];
-        $pinguin{$::p}{lose_to} = [ map { add_image("pinguins/loose_${p}_00$_.png") } ('01'..'64') ];
-        $pinguin{$::p}{lose} = [ map { add_image("pinguins/loose_${p}_0$_.png") } ('065'..'158') ];
+        $pinguin{$::p}{normal}     = [       add_image("pinguins/anime-shooter_${p}_0020.png")                          ];
+        $pinguin{$::p}{action}     = [ map { add_image("pinguins/anime-shooter_${p}_00$_.png") }         (21..50)       ];
+        $pinguin{$::p}{left_to}    = [ map { add_image("pinguins/anime-shooter_${p}_00$_.png") } reverse ('02'..'19')   ];
+        $pinguin{$::p}{left}       = [       add_image("pinguins/anime-shooter_${p}_0001.png")                          ];
+        $pinguin{$::p}{left_from}  = [ map { add_image("pinguins/anime-shooter_${p}_00$_.png") }         ('02'..'19')   ];
+        $pinguin{$::p}{right_to}   = [ map { add_image("pinguins/anime-shooter_${p}_00$_.png") }         (51..70)       ];
+        $pinguin{$::p}{right}      = [       add_image("pinguins/anime-shooter_${p}_0071.png")                          ];
+        $pinguin{$::p}{right_from} = [ map { add_image("pinguins/anime-shooter_${p}_00$_.png") } reverse (51..71)       ];
+        $pinguin{$::p}{wait_to}    = [ map { add_image("pinguins/wait_${p}_00$_.png") }                  ('01'..'74')   ];
+        $pinguin{$::p}{wait}       = [ map { add_image("pinguins/wait_${p}_00$_.png") }                  (75..97)       ];
+        $pinguin{$::p}{win}        = [ map { add_image("pinguins/win_${p}_00$_.png") }                   ('01'..'68')   ];
+        $pinguin{$::p}{lose_to}    = [ map { add_image("pinguins/loose_${p}_00$_.png") }                 ('01'..'64')   ];
+        $pinguin{$::p}{lose}       = [ map { add_image("pinguins/loose_${p}_0$_.png") }                  ('065'..'158') ];
     };
 
     print_step('] '); 
@@ -2885,11 +2885,11 @@ sub init_game() {
     }
 
     #- the RGBA effects algorithms assume little endian RGBA surfaces
-    my $replace = SDL::Surface->new( SDL_ANYFORMAT, $imgbin{menu_logo}->w,  $imgbin{menu_logo}->h, 32, 0, 0, 0, 0);
-    SDL::Video::set_alpha($imgbin{menu_logo}, 0, 0);  #- for RGBA->RGBA blits, SDL_SRCALPHA must be removed or destination alpha is preserved
-    SDL::Video::blit_surface($imgbin{menu_logo}, SDL::Rect->new(0,0,$imgbin{menu_logo}->w,$imgbin{menu_logo}->h), $replace, SDL::Rect->new(0,0,$imgbin{menu_logo}->w,$imgbin{menu_logo}->h));
-    $imgbin{menu_logo} = $replace;
-    add_default_rect($replace);
+    #my $replace = SDL::Surface->new( SDL_ANYFORMAT, $imgbin{menu_logo}->w,  $imgbin{menu_logo}->h, 32, 0, 0, 0, 0);
+    #SDL::Video::set_alpha($imgbin{menu_logo}, 0, SDL_ALPHA_OPAQUE);  #- for RGBA->RGBA blits, SDL_SRCALPHA must be removed or destination alpha is preserved
+    #SDL::Video::blit_surface($imgbin{menu_logo}, SDL::Rect->new(0,0,$imgbin{menu_logo}->w,$imgbin{menu_logo}->h), $replace, SDL::Rect->new(0,0,$imgbin{menu_logo}->w,$imgbin{menu_logo}->h));
+    $imgbin{menu_logo} = $imgbin{menu_logo}; #$replace;
+    #add_default_rect($replace);
 
     $lev_number = 0;
     load_levelset("$FPATH/data/levels");
@@ -4011,8 +4011,8 @@ sub save_back_spot {
     my ($x, $y) = get_spot_location($latitude, $longitude);
     $x -= $surface->w/2;
     $y -= $surface->h/2;
-    $$back = SDL::Surface->new(20, 20, 32, 0, 0, 0, 0);
-    SDL::Video::blit_surface($app, SDL::Rect->new($x, $y, 20, 20), $$back, SDL::Rect->new(0,0,$$back->w,$$back->h));
+    $back = SDL::Surface->new(20, 20, 32, 0, 0, 0, 0);
+    SDL::Video::blit_surface($app, SDL::Rect->new($x, $y, 20, 20), $back, SDL::Rect->new(0,0,$back->w,$back->h));
     add_default_rect($back);
 }
 sub print_spot {
@@ -5471,7 +5471,7 @@ sub menu {
         if ($logo_candy_method == 3) {
             #- stretch needs a bit more room
             my $newlogosurface = SDL::Surface->new(SDL_ANYFORMAT, $imgbin{menu_logo}->w * 1.1,  $imgbin{menu_logo}->h * 1.1,  32, 0, 0, 0 ,0);
-			SDL::Video::set_alpha($imgbin{menu_logo}, 0, 0); #- for RGBA->RGBA blits, SDL_SRCALPHA must be removed or destination alpha is preserved
+			SDL::Video::set_alpha($imgbin{menu_logo}, SDL_SRCALPHA, SDL_ALPHA_OPAQUE); #- for RGBA->RGBA blits, SDL_SRCALPHA must be removed or destination alpha is preserved
             SDL::Video::blit_surface($imgbin{menu_logo}, SDL::Rect->new(0,0,$imgbin{menu_logo}->w,$imgbin{menu_logo}->h), $newlogosurface, SDL::Rect->new( $imgbin{menu_logo}->w * 0.05, $imgbin{menu_logo}->h * 0.05, $imgbin{menu_logo}->w, $imgbin{menu_logo}->h));
             $logox -= $imgbin{menu_logo}->w * 0.05;
             $logoy -= $imgbin{menu_logo}->h * 0.05;
@@ -5482,7 +5482,7 @@ sub menu {
         if ($logo_candy_method == 4) {
             #- tilt needs a bit more horizontal room
             my $newlogosurface = SDL::Surface->new(SDL_ANYFORMAT, $imgbin{menu_logo}->w * 1.1,  $imgbin{menu_logo}->h * 1.05,  32, 0, 0, 0 ,0);
-			SDL::Video::set_alpha($imgbin{menu_logo}, 0, 0); #- for RGBA->RGBA blits, SDL_SRCALPHA must be removed or destination alpha is preserved
+			SDL::Video::set_alpha($imgbin{menu_logo}, SDL_SRCALPHA, SDL_ALPHA_OPAQUE); #- for RGBA->RGBA blits, SDL_SRCALPHA must be removed or destination alpha is preserved
             SDL::Video::blit_surface($imgbin{menu_logo}, SDL::Rect->new(0,0,$imgbin{menu_logo}->w,$imgbin{menu_logo}->h), $newlogosurface, SDL::Rect->new( $imgbin{menu_logo}->w * 0.05, $imgbin{menu_logo}->h * 0.025, $imgbin{menu_logo}->w, $imgbin{menu_logo}->h));
             $logox -= $imgbin{menu_logo}->w * 0.05;
             $logoy -= $imgbin{menu_logo}->h * 0.025;
@@ -5493,7 +5493,7 @@ sub menu {
         if ($logo_candy_method == 8) {
             #- snow needs to extend top, and a little more wideness
             my $newlogosurface = SDL::Surface->new( SDL_ANYFORMAT, $imgbin{menu_logo}->w * 1.1,  $imgbin{menu_logo}->h + $logoy, 32, 0, 0,0,0);
-			SDL::Video::set_alpha( $imgbin{menu_logo}, 0, 0); #- for RGBA->RGBA blits, SDL_SRCALPHA must be removed or destination alpha is preserved
+			SDL::Video::set_alpha( $imgbin{menu_logo}, SDL_SRCALPHA, SDL_ALPHA_OPAQUE); #- for RGBA->RGBA blits, SDL_SRCALPHA must be removed or destination alpha is preserved
             SDL::Video::blit_surface( $imgbin{menu_logo}, SDL::Rect->new(0,0,$imgbin{menu_logo}->w,$imgbin{menu_logo}->h), $newlogosurface, SDL::Rect->new($imgbin{menu_logo}->w * 0.05, $logoy, $imgbin{menu_logo}->w, $imgbin{menu_logo}->h));
             $logox -= $imgbin{menu_logo}->w * 0.05;
             $logoy = 0;
@@ -5510,16 +5510,17 @@ sub menu {
         erase_image_from($imgbin{menu_logo}, $logox, $logoy, $back_start);
         if ($graphics_level < 3 || !$speed_ok) {
             put_image($imgbin{menu_logo}, $logox, $logoy);
-        } else {
+        }
+		else {
 			#printf("[DEBUG] logo_candy_method = $logo_candy_method (line %d)\n", __LINE__);
-            $logo_candy_method == 0 and Games::FrozenBubble::CStuff::rotate_bilinear($candy, $imgbin{menu_logo}, sin($logo_candy_index/40)/20);
-            $logo_candy_method == 1 and Games::FrozenBubble::CStuff::flipflop($candy, $imgbin{menu_logo}, $logo_candy_index);
-            $logo_candy_method == 2 and Games::FrozenBubble::CStuff::enlighten($candy, $imgbin{menu_logo}, $logo_candy_index);
+            $logo_candy_method == 0   and Games::FrozenBubble::CStuff::rotate_bilinear($candy, $imgbin{menu_logo}, sin($logo_candy_index/40)/20);
+            $logo_candy_method == 1   and Games::FrozenBubble::CStuff::flipflop($candy, $imgbin{menu_logo}, $logo_candy_index);
+            $logo_candy_method == 2   and Games::FrozenBubble::CStuff::enlighten($candy, $imgbin{menu_logo}, $logo_candy_index);
             $logo_candy_method == 3.1 and Games::FrozenBubble::CStuff::stretch($candy, $imgbin{menu_logo}, $logo_candy_index);
             $logo_candy_method == 4.1 and Games::FrozenBubble::CStuff::tilt($candy, $imgbin{menu_logo}, $logo_candy_index);
-            $logo_candy_method == 5 and Games::FrozenBubble::CStuff::points($candy, $imgbin{menu_logo}, $imgbin{menu_logo_mask});
-            $logo_candy_method == 6 and Games::FrozenBubble::CStuff::waterize($candy, $imgbin{menu_logo}, $logo_candy_index);
-            $logo_candy_method == 7 and Games::FrozenBubble::CStuff::brokentv($candy, $imgbin{menu_logo}, $logo_candy_index);
+            $logo_candy_method == 5   and Games::FrozenBubble::CStuff::points($candy, $imgbin{menu_logo}, $imgbin{menu_logo_mask});
+            $logo_candy_method == 6   and Games::FrozenBubble::CStuff::waterize($candy, $imgbin{menu_logo}, $logo_candy_index);
+            $logo_candy_method == 7   and Games::FrozenBubble::CStuff::brokentv($candy, $imgbin{menu_logo}, $logo_candy_index);
             $logo_candy_method == 8.1 and Games::FrozenBubble::CStuff::snow($candy, $imgbin{menu_logo});
             
 			SDL::Video::blit_surface($candy, SDL::Rect->new(0,0,$candy->w,$candy->h), $app, my $rect = SDL::Rect->new($logox, $logoy, $candy->w, $candy->h));
@@ -5585,13 +5586,13 @@ sub menu {
 				if (!defined($cursor_tmp)) {
 					$cursor_tmp = SDL::Surface->new( SDL_ANYFORMAT, $imgbin{menu_cursor}{$m}[0]->w,  $imgbin{menu_cursor}{$m}[0]->h, 32, 0,0,0,0);
 				}
-                #Games::FrozenBubble::CStuff::pixelize($cursor_tmp, $imgbin{menu_cursor}{"${m}alpha"}[$pdata{cursor_img}{$m}]);
-                Games::FrozenBubble::CStuff::pixelize($cursor_tmp, $imgbin{menu_cursor}{$m}[$pdata{cursor_img}{$m}]);
+                Games::FrozenBubble::CStuff::pixelize($cursor_tmp, $imgbin{menu_cursor}{"${m}alpha"}[$pdata{cursor_img}{$m}]);
+                #Games::FrozenBubble::CStuff::pixelize($cursor_tmp, $imgbin{menu_cursor}{$m}[$pdata{cursor_img}{$m}]);
 				SDL::Video::blit_surface( $cursor_tmp, SDL::Rect->new(0,0,$cursor_tmp->w,$cursor_tmp->h), $app, $cursor_rect);
             } else {
 				# not animated menu item
-              	#SDL::Video::blit_surface( $imgbin{menu_cursor}{"${m}alpha"}[$pdata{cursor_img}{$m}], SDL::Rect->new(0,0,$imgbin{menu_cursor}{"${m}alpha"}[$pdata{cursor_img}{$m}]->w,$imgbin{menu_cursor}{"${m}alpha"}[$pdata{cursor_img}{$m}]->h), $app, $cursor_rect);
-				SDL::Video::blit_surface( $imgbin{menu_cursor}{$m}[$pdata{cursor_img}{$m}], SDL::Rect->new(0,0,$imgbin{menu_cursor}{$m}[$pdata{cursor_img}{$m}]->w,$imgbin{menu_cursor}{$m}[$pdata{cursor_img}{$m}]->h), $app, $cursor_rect);
+              	SDL::Video::blit_surface( $imgbin{menu_cursor}{"${m}alpha"}[$pdata{cursor_img}{$m}], SDL::Rect->new(0,0,$imgbin{menu_cursor}{"${m}alpha"}[$pdata{cursor_img}{$m}]->w,$imgbin{menu_cursor}{"${m}alpha"}[$pdata{cursor_img}{$m}]->h), $app, $cursor_rect);
+				#SDL::Video::blit_surface( $imgbin{menu_cursor}{$m}[$pdata{cursor_img}{$m}], SDL::Rect->new(0,0,$imgbin{menu_cursor}{$m}[$pdata{cursor_img}{$m}]->w,$imgbin{menu_cursor}{$m}[$pdata{cursor_img}{$m}]->h), $app, $cursor_rect);
             }
         } else {
 			# blits the animated icon for the selected menu item
