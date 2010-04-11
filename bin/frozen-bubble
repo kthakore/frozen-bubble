@@ -2713,28 +2713,30 @@ sub init_game() {
     foreach my $number (-$CANON_ROTATIONS_NB..$CANON_ROTATIONS_NB) {
         my $angle = $number*($PI/2)/$CANON_ROTATIONS_NB;
 
-        $canon{img}{$number} = SDL::Surface->new( SDL_ANYFORMAT, $shooter->w, $shooter->h, 32, 0, 0, 0, 0);
+		# rendering all high-quality canons
+        $canon{img}{$number} = SDL::Surface->new( SDL_SWSURFACE, $shooter->w, $shooter->h, 32, 0xFF000000, 0xFF0000, 0xFF00, 0xFF);
         Games::FrozenBubble::CStuff::rotate_bicubic($canon{img}{$number}, $shooter, $angle);
         $canon{data}{$number} = Games::FrozenBubble::CStuff::autopseudocrop($canon{img}{$number});
         #- now crop (and use native RGBA ordering)
-        my $replace = SDL::Surface->new( SDL_ANYFORMAT, $canon{data}{$number}[2],  $canon{data}{$number}[3], 32, 0, 0, 0, 0);
-	SDL::Video::set_alpha($canon{img}{$number}, SDL_SRCALPHA, SDL_ALPHA_OPAQUE);
-	SDL::Video::blit_surface( $canon{img}{$number}, SDL::Rect->new( $canon{data}{$number}[0],  $canon{data}{$number}[1],
+        my $replace = SDL::Surface->new( SDL_SWSURFACE, $canon{data}{$number}[2],  $canon{data}{$number}[3], 32, 0xFF000000, 0xFF0000, 0xFF00, 0xFF);
+		SDL::Video::set_alpha($canon{img}{$number}, 0, 0);
+		SDL::Video::blit_surface( $canon{img}{$number}, SDL::Rect->new( $canon{data}{$number}[0],  $canon{data}{$number}[1],
                                                                     $canon{data}{$number}[2],  $canon{data}{$number}[3]), 
 							  $replace, SDL::Rect->new(0, 0, $canon{img}{$number}->w, $canon{img}{$number}->h));
         $canon{img}{$number} = $replace;
         add_default_rect($canon{img}{$number});
 
-        $canon{img_mini}{$number} = SDL::Surface->new( SDL_ANYFORMAT,  $shooter_mini->w,  $shooter_mini->h, 32, 0, 0, 0, 0);
+		# rendering all mid-quality canons
+        $canon{img_mini}{$number} = SDL::Surface->new( SDL_SWSURFACE,  $shooter_mini->w,  $shooter_mini->h, 32, 0xFF000000, 0xFF0000, 0xFF00, 0xFF);
         Games::FrozenBubble::CStuff::rotate_bicubic($canon{img_mini}{$number}, $shooter_mini, $angle);
         $canon{data_mini}{$number} = Games::FrozenBubble::CStuff::autopseudocrop($canon{img_mini}{$number});
         #- now crop (and use native RGBA ordering)
-        my $replace = SDL::Surface->new( SDL_ANYFORMAT, $canon{data_mini}{$number}[2], $canon{data_mini}{$number}[3], 32, 0, 0, 0, 0);
-	SDL::Video::set_alpha($canon{img_mini}{$number}, SDL_SRCALPHA, SDL_ALPHA_OPAQUE);
-	SDL::Video::blit_surface( $canon{img_mini}{$number}, SDL::Rect->new( $canon{data_mini}{$number}[0], $canon{data_mini}{$number}[1],
-                                                        $canon{data_mini}{$number}[2], $canon{data_mini}{$number}[3]), $replace, 
+        my $replace2 = SDL::Surface->new( SDL_SWSURFACE, $canon{data_mini}{$number}[2], $canon{data_mini}{$number}[3], 32, 0xFF000000, 0xFF0000, 0xFF00, 0xFF);
+		SDL::Video::set_alpha($canon{img_mini}{$number}, 0, 0);
+		SDL::Video::blit_surface( $canon{img_mini}{$number}, SDL::Rect->new( $canon{data_mini}{$number}[0], $canon{data_mini}{$number}[1],
+                                                        $canon{data_mini}{$number}[2], $canon{data_mini}{$number}[3]), $replace2, 
 														SDL::Rect->new(0,0,$canon{img_mini}{$number}->w,$canon{img_mini}{$number}->h));
-        $canon{img_mini}{$number} = $replace;
+        $canon{img_mini}{$number} = $replace2;
         add_default_rect($canon{img_mini}{$number});
 
         $number eq -$CANON_ROTATIONS_NB/2 and print_step('.'); 
@@ -5480,11 +5482,13 @@ sub menu {
 #            $candy = undef;
 #            $imgbin{menu_logo} = add_image('menu/fblogo.png');
 #        }
+
+		$logo_candy_method = 3 if $logo_candy_method != 3.1;
         ($logox, $logoy) = (400, 15);
         if ($logo_candy_method == 3) {
             #- stretch needs a bit more room
-            my $newlogosurface = SDL::Surface->new(SDL_ANYFORMAT, $imgbin{menu_logo}->w * 1.1,  $imgbin{menu_logo}->h * 1.1,  32, 0, 0, 0 ,0);
-#			SDL::Video::set_alpha($imgbin{menu_logo}, 0, SDL_ALPHA_OPAQUE); #- for RGBA->RGBA blits, SDL_SRCALPHA must be removed or destination alpha is preserved
+            my $newlogosurface = SDL::Surface->new(SDL_SWSURFACE, $imgbin{menu_logo}->w * 1.1,  $imgbin{menu_logo}->h * 1.1,  32, 0xFF000000, 0xFF0000, 0xFF00, 0xFF);
+			SDL::Video::set_alpha($imgbin{menu_logo}, 0, 0); #- for RGBA->RGBA blits, SDL_SRCALPHA must be removed or destination alpha is preserved
             SDL::Video::blit_surface($imgbin{menu_logo}, SDL::Rect->new(0,0,$imgbin{menu_logo}->w,$imgbin{menu_logo}->h), $newlogosurface, SDL::Rect->new( $imgbin{menu_logo}->w * 0.05, $imgbin{menu_logo}->h * 0.05, $imgbin{menu_logo}->w, $imgbin{menu_logo}->h));
             $logox -= $imgbin{menu_logo}->w * 0.05;
             $logoy -= $imgbin{menu_logo}->h * 0.05;
@@ -5494,8 +5498,8 @@ sub menu {
         }
         if ($logo_candy_method == 4) {
             #- tilt needs a bit more horizontal room
-            my $newlogosurface = SDL::Surface->new(SDL_ANYFORMAT, $imgbin{menu_logo}->w * 1.1,  $imgbin{menu_logo}->h * 1.05,  32, 0, 0, 0 ,0);
-#			SDL::Video::set_alpha($imgbin{menu_logo}, 0, SDL_ALPHA_OPAQUE); #- for RGBA->RGBA blits, SDL_SRCALPHA must be removed or destination alpha is preserved
+            my $newlogosurface = SDL::Surface->new(SDL_ANYFORMAT, $imgbin{menu_logo}->w * 1.1,  $imgbin{menu_logo}->h * 1.05,  32, 0xFF000000, 0xFF0000, 0xFF00, 0xFF);
+			SDL::Video::set_alpha($imgbin{menu_logo}, 0, 0); #- for RGBA->RGBA blits, SDL_SRCALPHA must be removed or destination alpha is preserved
             SDL::Video::blit_surface($imgbin{menu_logo}, SDL::Rect->new(0,0,$imgbin{menu_logo}->w,$imgbin{menu_logo}->h), $newlogosurface, SDL::Rect->new( $imgbin{menu_logo}->w * 0.05, $imgbin{menu_logo}->h * 0.025, $imgbin{menu_logo}->w, $imgbin{menu_logo}->h));
             $logox -= $imgbin{menu_logo}->w * 0.05;
             $logoy -= $imgbin{menu_logo}->h * 0.025;
@@ -5505,8 +5509,8 @@ sub menu {
         }
         if ($logo_candy_method == 8) {
             #- snow needs to extend top, and a little more wideness
-            my $newlogosurface = SDL::Surface->new( SDL_ANYFORMAT, $imgbin{menu_logo}->w * 1.1,  $imgbin{menu_logo}->h + $logoy, 32, 0, 0,0,0);
-#			SDL::Video::set_alpha( $imgbin{menu_logo}, 0, SDL_ALPHA_OPAQUE); #- for RGBA->RGBA blits, SDL_SRCALPHA must be removed or destination alpha is preserved
+            my $newlogosurface = SDL::Surface->new( SDL_ANYFORMAT, $imgbin{menu_logo}->w * 1.1,  $imgbin{menu_logo}->h + $logoy, 32, 0xFF000000, 0xFF0000, 0xFF00, 0xFF);
+			SDL::Video::set_alpha( $imgbin{menu_logo}, 0, 0); #- for RGBA->RGBA blits, SDL_SRCALPHA must be removed or destination alpha is preserved
             SDL::Video::blit_surface( $imgbin{menu_logo}, SDL::Rect->new(0,0,$imgbin{menu_logo}->w,$imgbin{menu_logo}->h), $newlogosurface, SDL::Rect->new($imgbin{menu_logo}->w * 0.05, $logoy, $imgbin{menu_logo}->w, $imgbin{menu_logo}->h));
             $logox -= $imgbin{menu_logo}->w * 0.05;
             $logoy = 0;
@@ -5529,8 +5533,8 @@ sub menu {
         }
 		else { # logo animation
 			# switching the animation every 100 ticks, just for tests
-			my @candy_methods = (1, 2, 3.1, 4.1);#(0, 1, 2, 3.1, 4.1, 5, 6, 7, 8.1);
-			$logo_candy_method = $candy_methods[rand @candy_methods] unless $logo_candy_index % 150;
+			#my @candy_methods = (1, 2, 3.1, 4.1);#(0, 1, 2, 3.1, 4.1, 5, 6, 7, 8.1);
+			#$logo_candy_method = $candy_methods[rand @candy_methods] unless $logo_candy_index % 150;
 			# logo effects (snow, water, ...)
             Games::FrozenBubble::CStuff::rotate_bilinear($candy, $imgbin{menu_logo}, sin($logo_candy_index/40)/20) if $logo_candy_method == 0;
             Games::FrozenBubble::CStuff::flipflop($candy, $imgbin{menu_logo}, $logo_candy_index)                   if $logo_candy_method == 1;

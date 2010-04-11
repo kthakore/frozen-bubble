@@ -644,7 +644,7 @@ transform_cubic(double dx, int jm1, int j, int jp1, int jp2)
 void rotate_bicubic_(SDL_Surface * dest, SDL_Surface * orig, double angle)
 {
 	int Bpp = dest->format->BytesPerPixel;
-        Uint8 *ptr;
+        Uint8 r, g, b, a;
         int x_, y_;
         double cosval = cos(angle);
         double sinval = sin(angle);
@@ -664,13 +664,13 @@ void rotate_bicubic_(SDL_Surface * dest, SDL_Surface * orig, double angle)
         for (y = 0; y < dest->h; y++) {
                 double x__ = - dest->w/2*cosval - (y - dest->h/2)*sinval + dest->w/2 - 1;
                 double y__ = (y - dest->h/2)*cosval - dest->w/2*sinval + dest->h/2 - 1;
-                ptr = dest->pixels + y*dest->pitch;
+                //ptr = dest->pixels + y*dest->pitch;
                 for (x = 0; x < dest->w; x++) {
                         x_ = floor(x__);
                         y_ = floor(y__);
-                        if (x_ < 0 || x_ > orig->w - 4 || y_ < 0 || y_ > orig->h - 4) {
-                                * ( (Uint32*) ptr ) = 0;
-
+                        if (x_ < 0 || x_ > orig->w - 4 || y_ < 0 || y_ > orig->h - 4)
+						{
+                                set_pixel(dest, x, y, 0, 0, 0, 0);
                         } else {
                                 Uint8* origptr = orig->pixels + x_*Bpp + y_*orig->pitch;
 
@@ -685,27 +685,35 @@ void rotate_bicubic_(SDL_Surface * dest, SDL_Surface * orig, double angle)
                                                         CUBIC_ROW(dx, origptr + 3 + dest->pitch * 3));
                                 if (a_val <= 0.0) {
                                         a_recip = 0.0;
-                                        *(ptr+3) = 0;
+                                        a       = 0;
                                 } else if (a_val > 255.0) {
                                         a_recip = 1.0 / a_val;
-                                        *(ptr+3) = 255;
+                                        a       = 255;
                                 } else {
                                         a_recip = 1.0 / a_val;
-                                        *(ptr+3) = (int) a_val;
+                                        a       = (int) a_val;
                                 }
+								
                                 /* for RGB, result = bicubic (c * alpha) / bicubic (alpha) */
-                                for (i = 0; i < 3; i++) {
-                                        int newval = a_recip * transform_cubic(dy,
-                                                                               CUBIC_SCALED_ROW (dx, origptr + i,                   origptr + 3),
-                                                                               CUBIC_SCALED_ROW (dx, origptr + i + dest->pitch,     origptr + 3 + dest->pitch),
-                                                                               CUBIC_SCALED_ROW (dx, origptr + i + dest->pitch * 2, origptr + 3 + dest->pitch * 2),
-                                                                               CUBIC_SCALED_ROW (dx, origptr + i + dest->pitch * 3, origptr + 3 + dest->pitch * 3));
-                                        *(ptr+i) = CLAMP(newval, 0, 255);
-                                }
+								r = CLAMP(a_recip * transform_cubic(dy,
+								   CUBIC_SCALED_ROW (dx, origptr + 0,                   origptr + 3),
+								   CUBIC_SCALED_ROW (dx, origptr + 0 + dest->pitch,     origptr + 3 + dest->pitch),
+								   CUBIC_SCALED_ROW (dx, origptr + 0 + dest->pitch * 2, origptr + 3 + dest->pitch * 2),
+								   CUBIC_SCALED_ROW (dx, origptr + 0 + dest->pitch * 3, origptr + 3 + dest->pitch * 3)), 0, 255);
+								g = CLAMP(a_recip * transform_cubic(dy,
+								   CUBIC_SCALED_ROW (dx, origptr + 1,                   origptr + 3),
+								   CUBIC_SCALED_ROW (dx, origptr + 1 + dest->pitch,     origptr + 3 + dest->pitch),
+								   CUBIC_SCALED_ROW (dx, origptr + 1 + dest->pitch * 2, origptr + 3 + dest->pitch * 2),
+								   CUBIC_SCALED_ROW (dx, origptr + 1 + dest->pitch * 3, origptr + 3 + dest->pitch * 3)), 0, 255);
+								b = CLAMP(a_recip * transform_cubic(dy,
+								   CUBIC_SCALED_ROW (dx, origptr + 2,                   origptr + 3),
+								   CUBIC_SCALED_ROW (dx, origptr + 2 + dest->pitch,     origptr + 3 + dest->pitch),
+								   CUBIC_SCALED_ROW (dx, origptr + 2 + dest->pitch * 2, origptr + 3 + dest->pitch * 2),
+								   CUBIC_SCALED_ROW (dx, origptr + 2 + dest->pitch * 3, origptr + 3 + dest->pitch * 3)), 0, 255);
                         }
+						set_pixel(dest, x, y, r, g, b, a);
                         x__ += cosval;
                         y__ += sinval;
-                        ptr += 4;
 		}
 	}
 	myUnlockSurface(orig);
@@ -838,8 +846,9 @@ void stretch_(SDL_Surface * dest, SDL_Surface * orig, int offset)
 	int Bpp = dest->format->BytesPerPixel;
 	int x_, y_;
 	int r, g, b;
+	Uint8 Ar, Ag, Ab, Aa, Br, Bg, Bb, Ba, Cr, Cg, Cb, Ca, Dr, Dg, Db, Da;
 	double a, dx, dy;
-	double sinval = sin(offset/50.0)/10 + 1;
+	double sinval = sin(offset / 50.0) / 10 + 1;
 	
 	if (orig->format->BytesPerPixel == 1)
 	{
@@ -861,7 +870,7 @@ void stretch_(SDL_Surface * dest, SDL_Surface * orig, int offset)
 		double cosfory = - sin(offset/50.0) * cos(M_PI*(x - dest->w/2)/dest->w) / sinval / 8 + 1;
 		for (y = 0; y < dest->h; y++)
 		{
-			Uint32 *A, *B, *C, *D;
+			//Uint32 *A, *B, *C, *D;
 			double y__ = (y - dest->h/2) * cosfory + dest->h/2;
 			x_ = floor(x__);
 			y_ = floor(y__);
@@ -874,11 +883,12 @@ void stretch_(SDL_Surface * dest, SDL_Surface * orig, int offset)
 			{
 				dx = x__ - x_;
 				dy = y__ - y_;
-				A  = orig->pixels + x_*Bpp     + y_*orig->pitch;
-				B  = orig->pixels + (x_+1)*Bpp + y_*orig->pitch;
-				C  = orig->pixels + x_*Bpp     + (y_+1)*orig->pitch;
-				D  = orig->pixels + (x_+1)*Bpp + (y_+1)*orig->pitch;
-				a  = (geta(A) * ( 1 - dx ) + geta(B) * dx) * ( 1 - dy ) + (geta(C) * ( 1 - dx ) + geta(D) * dx) * dy;
+				SDL_GetRGBA(((Uint32 *)orig->pixels)[x_     +  y_      * dest->w], orig->format, &Ar, &Ag, &Ab, &Aa);
+				SDL_GetRGBA(((Uint32 *)orig->pixels)[x_ + 1 +  y_      * dest->w], orig->format, &Br, &Bg, &Bb, &Ba);
+				SDL_GetRGBA(((Uint32 *)orig->pixels)[x_     + (y_ + 1) * dest->w], orig->format, &Cr, &Cg, &Cb, &Ca);
+				SDL_GetRGBA(((Uint32 *)orig->pixels)[x_ + 1 + (y_ + 1) * dest->w], orig->format, &Dr, &Dg, &Db, &Da);
+				
+				a  = (Aa * ( 1 - dx ) + Ba * dx) * ( 1 - dy ) + (Ca * ( 1 - dx ) + Da * dx) * dy;
 				if (a == 0)
 				{
 					// fully transparent, no use working
@@ -887,16 +897,16 @@ void stretch_(SDL_Surface * dest, SDL_Surface * orig, int offset)
 				else if (a == 255)
 				{
 					// fully opaque, optimized
-					r = (getr(A) * ( 1 - dx ) + getr(B) * dx) * ( 1 - dy ) + (getr(C) * ( 1 - dx ) + getr(D) * dx) * dy;
-					g = (getg(A) * ( 1 - dx ) + getg(B) * dx) * ( 1 - dy ) + (getg(C) * ( 1 - dx ) + getg(D) * dx) * dy;
-					b = (getb(A) * ( 1 - dx ) + getb(B) * dx) * ( 1 - dy ) + (getb(C) * ( 1 - dx ) + getb(D) * dx) * dy;
+					r = (Ar * ( 1 - dx ) + Br * dx) * ( 1 - dy ) + (Cr * ( 1 - dx ) + Dr * dx) * dy;
+					g = (Ag * ( 1 - dx ) + Bg * dx) * ( 1 - dy ) + (Cg * ( 1 - dx ) + Dg * dx) * dy;
+					b = (Ab * ( 1 - dx ) + Bb * dx) * ( 1 - dy ) + (Cb * ( 1 - dx ) + Db * dx) * dy;
 				}
 				else
 				{
 					// not fully opaque, means A B C or D was not fully opaque, need to weight channels with
-					r = ( (getr(A) * geta(A) * ( 1 - dx ) + getr(B) * geta(B) * dx) * ( 1 - dy ) + (getr(C) * geta(C) * ( 1 - dx ) + getr(D) * geta(D) * dx) * dy ) / a;
-					g = ( (getg(A) * geta(A) * ( 1 - dx ) + getg(B) * geta(B) * dx) * ( 1 - dy ) + (getg(C) * geta(C) * ( 1 - dx ) + getg(D) * geta(D) * dx) * dy ) / a;
-					b = ( (getb(A) * geta(A) * ( 1 - dx ) + getb(B) * geta(B) * dx) * ( 1 - dy ) + (getb(C) * geta(C) * ( 1 - dx ) + getb(D) * geta(D) * dx) * dy ) / a;
+					r = ( (Ar * Aa * ( 1 - dx ) + Br * Ba * dx) * ( 1 - dy ) + (Cr * Ca * ( 1 - dx ) + Dr * Da * dx) * dy ) / a;
+					g = ( (Ag * Aa * ( 1 - dx ) + Bg * Ba * dx) * ( 1 - dy ) + (Cg * Ca * ( 1 - dx ) + Dg * Da * dx) * dy ) / a;
+					b = ( (Ab * Aa * ( 1 - dx ) + Bb * Ba * dx) * ( 1 - dy ) + (Cb * Ca * ( 1 - dx ) + Db * Da * dx) * dy ) / a;
 				}
 				set_pixel(dest, x, y, r, g, b, a);
 			}
