@@ -715,56 +715,64 @@ void rotate_bicubic_(SDL_Surface * dest, SDL_Surface * orig, double angle)
 void flipflop_(SDL_Surface * dest, SDL_Surface * orig, int offset)
 {
 	int Bpp = dest->format->BytesPerPixel;
-        Uint8 *ptr;
-        int r, g, b;
-        double a, dx;
-	if (orig->format->BytesPerPixel != 4) {
-                fprintf(stderr, "flipflop: orig surface must be 32bpp\n");
-                abort();
-        }
-	if (dest->format->BytesPerPixel != 4) {
-                fprintf(stderr, "flipflop: dest surface must be 32bpp\n");
-                abort();
-        }
+	int r, g, b;
+	double a, dx;
+	
+	if (orig->format->BytesPerPixel == 1)
+	{
+		fprintf(stderr, "flipflop: orig surface must not have a palette\n");
+		abort();
+	}
+
+	if (dest->format->BytesPerPixel == 1)
+	{
+		fprintf(stderr, "flipflop: orig surface must not have a palette\n");
+		abort();
+	}
+	
 	myLockSurface(orig);
 	myLockSurface(dest);
-        for (x = 0; x < dest->w; x++) {
-                double sinval = sin((2*x+offset)/50.0)*5;
-                double shading = 1.1 + cos((2*x+offset)/50.0) / 10;  // based on sinval derivative
-                double x__ = x + sinval;
-                int x_ = floor(x__);
-                ptr = dest->pixels + x*Bpp;
-                for (y = 0; y < dest->h; y++) {
-                        Uint32 *A, *B;
-                        if (x_ < 0 || x_ > orig->w - 2) {
-                                // out of band
-                                * ( (Uint32*) ptr ) = 0;
-
-                        } else {
-                                dx = x__ - x_;  // (mono)linear filtering
-                                A = orig->pixels + x_*Bpp     + y*orig->pitch;
-                                B = orig->pixels + (x_+1)*Bpp + y*orig->pitch;
-                                a = geta(A) * ( 1 - dx ) + geta(B) * dx;
-                                if (a == 0) {
-                                        // fully transparent, no use working
-                                        r = g = b = 0;
-                                } else if (a == 255) {
-                                        // fully opaque, optimized
-                                        r = getr(A) * ( 1 - dx ) + getr(B) * dx;
-                                        g = getg(A) * ( 1 - dx ) + getg(B) * dx;
-                                        b = getb(A) * ( 1 - dx ) + getb(B) * dx;
-                                } else {
-                                        // not fully opaque, means A B C or D was not fully opaque, need to weight channels with
-                                        r = (getr(A) * geta(A) * ( 1 - dx ) + getr(B) * geta(B) * dx) / a;
-                                        g = (getg(A) * geta(A) * ( 1 - dx ) + getg(B) * geta(B) * dx) / a;
-                                        b = (getb(A) * geta(A) * ( 1 - dx ) + getb(B) * geta(B) * dx) / a;
-                                }
-                                * ( ptr + Rdec ) = CLAMP(r*shading, 0, 255);  // it is slightly faster to not recompose the 32-bit pixel - at least on my p4
-                                * ( ptr + Gdec ) = CLAMP(g*shading, 0, 255);
-                                * ( ptr + Bdec ) = CLAMP(b*shading, 0, 255);
-                                * ( ptr + Adec ) = a;
-                        }
-                        ptr += dest->pitch;
+	for (x = 0; x < dest->w; x++)
+	{
+		double sinval  = sin((2*x+offset)/50.0)*5;
+		double shading = 1.1 + cos((2*x+offset)/50.0) / 10;  // based on sinval derivative
+		double x__     = x + sinval;
+		int x_         = floor(x__);
+		for (y = 0; y < dest->h; y++)
+		{
+			Uint32 *A, *B;
+			if (x_ < 0 || x_ > orig->w - 2)
+			{
+				// out of band
+				set_pixel(dest, x, y, 0, 0, 0, 0);
+			}
+			else
+			{
+				dx = x__ - x_;  // (mono)linear filtering
+				A  = orig->pixels + x_*Bpp     + y*orig->pitch;
+				B  = orig->pixels + (x_+1)*Bpp + y*orig->pitch;
+				a  = geta(A) * ( 1 - dx ) + geta(B) * dx;
+				if (a == 0)
+				{
+					// fully transparent, no use working
+					r = g = b = 0;
+				}
+				else if (a == 255)
+				{
+					// fully opaque, optimized
+					r = getr(A) * ( 1 - dx ) + getr(B) * dx;
+					g = getg(A) * ( 1 - dx ) + getg(B) * dx;
+					b = getb(A) * ( 1 - dx ) + getb(B) * dx;
+				}
+				else
+				{
+					// not fully opaque, means A B C or D was not fully opaque, need to weight channels with
+					r = (getr(A) * geta(A) * ( 1 - dx ) + getr(B) * geta(B) * dx) / a;
+					g = (getg(A) * geta(A) * ( 1 - dx ) + getg(B) * geta(B) * dx) / a;
+					b = (getb(A) * geta(A) * ( 1 - dx ) + getb(B) * geta(B) * dx) / a;
+				}
+				set_pixel(dest, x, y, CLAMP(r * shading, 0, 255), CLAMP(g * shading, 0, 255), CLAMP(b * shading, 0, 255), a);
+			}
 		}
 	}
 	myUnlockSurface(orig);

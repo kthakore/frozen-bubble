@@ -5529,7 +5529,7 @@ sub menu {
         }
 		else { # logo animation
 			# switching the animation every 100 ticks, just for tests
-			my @candy_methods = (2, 3.1, 4.1);#(0, 1, 2, 3.1, 4.1, 5, 6, 7, 8.1);
+			my @candy_methods = (1, 2, 3.1, 4.1);#(0, 1, 2, 3.1, 4.1, 5, 6, 7, 8.1);
 			$logo_candy_method = $candy_methods[rand @candy_methods] unless $logo_candy_index % 150;
 			# logo effects (snow, water, ...)
             Games::FrozenBubble::CStuff::rotate_bilinear($candy, $imgbin{menu_logo}, sin($logo_candy_index/40)/20) if $logo_candy_method == 0;
