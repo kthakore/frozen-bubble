@@ -773,12 +773,25 @@ void flipflop_(SDL_Surface * dest, SDL_Surface * orig, int offset)
 
 float sqr(float a) { return a*a; }
 
+// moves an highlighted spot over the surface (shape of ellypse, depending on width and hight)
 void enlighten_(SDL_Surface * dest, SDL_Surface * orig, int offset)
 {
 	Uint8 r, g, b, a;
 	int lightx, lighty;
 	double sqdistbase, sqdist, shading;
 	
+	if (orig->format->BytesPerPixel == 1)
+	{
+		fprintf(stderr, "enlighten: orig surface must not have a palette\n");
+		abort();
+	}
+	
+	if (dest->format->BytesPerPixel == 1)
+	{
+		fprintf(stderr, "enlighten: dest surface must not have a palette\n");
+		abort();
+	}
+
 	myLockSurface(orig);
 	myLockSurface(dest);
 	lightx = dest->w / (2.5 + 0.3 * sin((double)offset / 500)) * sin((double)offset / 100) + dest->w / 2;
@@ -815,62 +828,70 @@ void enlighten_(SDL_Surface * dest, SDL_Surface * orig, int offset)
 void stretch_(SDL_Surface * dest, SDL_Surface * orig, int offset)
 {
 	int Bpp = dest->format->BytesPerPixel;
-        Uint8 *ptr;
-        int x_, y_;
-        int r, g, b;
-        double a, dx, dy;
-        double sinval = sin(offset/50.0)/10 + 1;
-	if (orig->format->BytesPerPixel != 4) {
-                fprintf(stderr, "stretch: orig surface must be 32bpp\n");
-                abort();
-        }
-	if (dest->format->BytesPerPixel != 4) {
-                fprintf(stderr, "stretch: dest surface must be 32bpp\n");
-                abort();
-        }
+	int x_, y_;
+	int r, g, b;
+	double a, dx, dy;
+	double sinval = sin(offset/50.0)/10 + 1;
+	
+	if (orig->format->BytesPerPixel == 1)
+	{
+		fprintf(stderr, "stretch: orig surface must not have a palette\n");
+		abort();
+	}
+	
+	if (dest->format->BytesPerPixel == 1)
+	{
+		fprintf(stderr, "stretch: dest surface must not have a palette\n");
+		abort();
+	}
+	
 	myLockSurface(orig);
 	myLockSurface(dest);
-        for (x = 0; x < dest->w; x++) {
-                double x__ = (x - dest->w/2) * sinval + dest->w/2;
-                double cosfory = - sin(offset/50.0) * cos(M_PI*(x - dest->w/2)/dest->w) / sinval / 8 + 1;
-                ptr = dest->pixels + x*Bpp;
-                for (y = 0; y < dest->h; y++) {
-                        Uint32 *A, *B, *C, *D;
-                        double y__ = (y - dest->h/2) * cosfory + dest->h/2;
-                        x_ = floor(x__);
-                        y_ = floor(y__);
-                        if (x_ < 0 || x_ > orig->w - 2 || y_ < 0 || y_ > orig->h - 2) {
-                                // out of band
-                                * ( (Uint32*) ptr ) = 0;
-
-                        } else {
-                                dx = x__ - x_;
-                                dy = y__ - y_;
-                                A = orig->pixels + x_*Bpp     + y_*orig->pitch;
-                                B = orig->pixels + (x_+1)*Bpp + y_*orig->pitch;
-                                C = orig->pixels + x_*Bpp     + (y_+1)*orig->pitch;
-                                D = orig->pixels + (x_+1)*Bpp + (y_+1)*orig->pitch;
-                                a = (geta(A) * ( 1 - dx ) + geta(B) * dx) * ( 1 - dy ) + (geta(C) * ( 1 - dx ) + geta(D) * dx) * dy;
-                                if (a == 0) {
-                                        // fully transparent, no use working
-                                        r = g = b = 0;
-                                } else if (a == 255) {
-                                        // fully opaque, optimized
-                                        r = (getr(A) * ( 1 - dx ) + getr(B) * dx) * ( 1 - dy ) + (getr(C) * ( 1 - dx ) + getr(D) * dx) * dy;
-                                        g = (getg(A) * ( 1 - dx ) + getg(B) * dx) * ( 1 - dy ) + (getg(C) * ( 1 - dx ) + getg(D) * dx) * dy;
-                                        b = (getb(A) * ( 1 - dx ) + getb(B) * dx) * ( 1 - dy ) + (getb(C) * ( 1 - dx ) + getb(D) * dx) * dy;
-                                } else {
-                                        // not fully opaque, means A B C or D was not fully opaque, need to weight channels with
-                                        r = ( (getr(A) * geta(A) * ( 1 - dx ) + getr(B) * geta(B) * dx) * ( 1 - dy ) + (getr(C) * geta(C) * ( 1 - dx ) + getr(D) * geta(D) * dx) * dy ) / a;
-                                        g = ( (getg(A) * geta(A) * ( 1 - dx ) + getg(B) * geta(B) * dx) * ( 1 - dy ) + (getg(C) * geta(C) * ( 1 - dx ) + getg(D) * geta(D) * dx) * dy ) / a;
-                                        b = ( (getb(A) * geta(A) * ( 1 - dx ) + getb(B) * geta(B) * dx) * ( 1 - dy ) + (getb(C) * geta(C) * ( 1 - dx ) + getb(D) * geta(D) * dx) * dy ) / a;
-                                }
-                                * ( (Uint8*) ptr + Rdec ) = r;  // it is slightly faster to not recompose the 32-bit pixel - at least on my p4
-                                * ( (Uint8*) ptr + Gdec ) = g;
-                                * ( (Uint8*) ptr + Bdec ) = b;
-                                * ( (Uint8*) ptr + Adec ) = a;
-                        }
-                        ptr += dest->pitch;
+	for (x = 0; x < dest->w; x++)
+	{
+		double x__ = (x - dest->w/2) * sinval + dest->w/2;
+		double cosfory = - sin(offset/50.0) * cos(M_PI*(x - dest->w/2)/dest->w) / sinval / 8 + 1;
+		for (y = 0; y < dest->h; y++)
+		{
+			Uint32 *A, *B, *C, *D;
+			double y__ = (y - dest->h/2) * cosfory + dest->h/2;
+			x_ = floor(x__);
+			y_ = floor(y__);
+			if (x_ < 0 || x_ > orig->w - 2 || y_ < 0 || y_ > orig->h - 2)
+			{
+				// out of band
+				set_pixel(dest, x, y, 0, 0, 0, 0);
+			}
+			else
+			{
+				dx = x__ - x_;
+				dy = y__ - y_;
+				A  = orig->pixels + x_*Bpp     + y_*orig->pitch;
+				B  = orig->pixels + (x_+1)*Bpp + y_*orig->pitch;
+				C  = orig->pixels + x_*Bpp     + (y_+1)*orig->pitch;
+				D  = orig->pixels + (x_+1)*Bpp + (y_+1)*orig->pitch;
+				a  = (geta(A) * ( 1 - dx ) + geta(B) * dx) * ( 1 - dy ) + (geta(C) * ( 1 - dx ) + geta(D) * dx) * dy;
+				if (a == 0)
+				{
+					// fully transparent, no use working
+					r = g = b = 0;
+				}
+				else if (a == 255)
+				{
+					// fully opaque, optimized
+					r = (getr(A) * ( 1 - dx ) + getr(B) * dx) * ( 1 - dy ) + (getr(C) * ( 1 - dx ) + getr(D) * dx) * dy;
+					g = (getg(A) * ( 1 - dx ) + getg(B) * dx) * ( 1 - dy ) + (getg(C) * ( 1 - dx ) + getg(D) * dx) * dy;
+					b = (getb(A) * ( 1 - dx ) + getb(B) * dx) * ( 1 - dy ) + (getb(C) * ( 1 - dx ) + getb(D) * dx) * dy;
+				}
+				else
+				{
+					// not fully opaque, means A B C or D was not fully opaque, need to weight channels with
+					r = ( (getr(A) * geta(A) * ( 1 - dx ) + getr(B) * geta(B) * dx) * ( 1 - dy ) + (getr(C) * geta(C) * ( 1 - dx ) + getr(D) * geta(D) * dx) * dy ) / a;
+					g = ( (getg(A) * geta(A) * ( 1 - dx ) + getg(B) * geta(B) * dx) * ( 1 - dy ) + (getg(C) * geta(C) * ( 1 - dx ) + getg(D) * geta(D) * dx) * dy ) / a;
+					b = ( (getb(A) * geta(A) * ( 1 - dx ) + getb(B) * geta(B) * dx) * ( 1 - dy ) + (getb(C) * geta(C) * ( 1 - dx ) + getb(D) * geta(D) * dx) * dy ) / a;
+				}
+				set_pixel(dest, x, y, r, g, b, a);
+			}
 		}
 	}
 	myUnlockSurface(orig);
@@ -880,63 +901,70 @@ void stretch_(SDL_Surface * dest, SDL_Surface * orig, int offset)
 void tilt_(SDL_Surface * dest, SDL_Surface * orig, int offset)
 {
 	int Bpp = dest->format->BytesPerPixel;
-        Uint8 *ptr;
-        int x_, y_;
-        int r, g, b;
-        double a, dx, dy;
-        double shading;
-	if (orig->format->BytesPerPixel != 4) {
-                fprintf(stderr, "tilt: orig surface must be 32bpp\n");
-                abort();
-        }
-	if (dest->format->BytesPerPixel != 4) {
-                fprintf(stderr, "tilt: dest surface must be 32bpp\n");
-                abort();
-        }
+	int x_, y_;
+	int r, g, b;
+	double a, dx, dy;
+	double shading;
+	if (orig->format->BytesPerPixel == 1)
+	{
+		fprintf(stderr, "tilt: orig surface must not have a palette\n");
+		abort();
+	}
+	
+	if (dest->format->BytesPerPixel == 1)
+	{
+		fprintf(stderr, "tilt: orig surface must not have a palette\n");
+		abort();
+	}
+	
 	myLockSurface(orig);
 	myLockSurface(dest);
-        shading = 1 - sin(offset/40.0)/10;  // shade as if a lightsource was on the left
-        for (x = 0; x < dest->w; x++) {
-                double zoomfact = 1 + (x - dest->w/2) * sin(offset/40.0) / dest->w / 5;
-                double x__ = (x - dest->w/2) * zoomfact + dest->w/2;
-                ptr = dest->pixels + x*Bpp;
-                for (y = 0; y < dest->h; y++) {
-                        Uint32 *A, *B, *C, *D;
-                        double y__ = (y - dest->h/2) * zoomfact + dest->h/2;
-                        x_ = floor(x__);
-                        y_ = floor(y__);
-                        if (x_ < 0 || x_ > orig->w - 2 || y_ < 0 || y_ > orig->h - 2) {
-                                // out of band
-                                * ( (Uint32*) ptr ) = 0;
-
-                        } else {
-                                dx = x__ - x_;
-                                dy = y__ - y_;
-                                A = orig->pixels + x_*Bpp     + y_*orig->pitch;
-                                B = orig->pixels + (x_+1)*Bpp + y_*orig->pitch;
-                                C = orig->pixels + x_*Bpp     + (y_+1)*orig->pitch;
-                                D = orig->pixels + (x_+1)*Bpp + (y_+1)*orig->pitch;
-                                a = (geta(A) * ( 1 - dx ) + geta(B) * dx) * ( 1 - dy ) + (geta(C) * ( 1 - dx ) + geta(D) * dx) * dy;
-                                if (a == 0) {
-                                        // fully transparent, no use working
-                                        r = g = b = 0;
-                                } else if (a == 255) {
-                                        // fully opaque, optimized
-                                        r = (getr(A) * ( 1 - dx ) + getr(B) * dx) * ( 1 - dy ) + (getr(C) * ( 1 - dx ) + getr(D) * dx) * dy;
-                                        g = (getg(A) * ( 1 - dx ) + getg(B) * dx) * ( 1 - dy ) + (getg(C) * ( 1 - dx ) + getg(D) * dx) * dy;
-                                        b = (getb(A) * ( 1 - dx ) + getb(B) * dx) * ( 1 - dy ) + (getb(C) * ( 1 - dx ) + getb(D) * dx) * dy;
-                                } else {
-                                        // not fully opaque, means A B C or D was not fully opaque, need to weight channels with
-                                        r = ( (getr(A) * geta(A) * ( 1 - dx ) + getr(B) * geta(B) * dx) * ( 1 - dy ) + (getr(C) * geta(C) * ( 1 - dx ) + getr(D) * geta(D) * dx) * dy ) / a;
-                                        g = ( (getg(A) * geta(A) * ( 1 - dx ) + getg(B) * geta(B) * dx) * ( 1 - dy ) + (getg(C) * geta(C) * ( 1 - dx ) + getg(D) * geta(D) * dx) * dy ) / a;
-                                        b = ( (getb(A) * geta(A) * ( 1 - dx ) + getb(B) * geta(B) * dx) * ( 1 - dy ) + (getb(C) * geta(C) * ( 1 - dx ) + getb(D) * geta(D) * dx) * dy ) / a;
-                                }
-                                * ( (Uint8*) ptr + Rdec ) = CLAMP(r*shading, 0, 255);  // it is slightly faster to not recompose the 32-bit pixel - at least on my p4
-                                * ( (Uint8*) ptr + Gdec ) = CLAMP(g*shading, 0, 255);
-                                * ( (Uint8*) ptr + Bdec ) = CLAMP(b*shading, 0, 255);
-                                * ( (Uint8*) ptr + Adec ) = a;
-                        }
-                        ptr += dest->pitch;
+	shading = 1 - sin(offset/40.0)/10;  // shade as if a lightsource was on the left
+	for (x = 0; x < dest->w; x++)
+	{
+		double zoomfact = 1 + (x - dest->w/2) * sin(offset/40.0) / dest->w / 5;
+		double x__ = (x - dest->w/2) * zoomfact + dest->w/2;
+		for (y = 0; y < dest->h; y++)
+		{
+			Uint32 *A, *B, *C, *D;
+			double y__ = (y - dest->h/2) * zoomfact + dest->h/2;
+			x_ = floor(x__);
+			y_ = floor(y__);
+			if (x_ < 0 || x_ > orig->w - 2 || y_ < 0 || y_ > orig->h - 2)
+			{
+				// out of band
+				set_pixel(dest, x, y, 0, 0, 0, 0);
+			}
+			else
+			{
+				dx = x__ - x_;
+				dy = y__ - y_;
+				A = orig->pixels + x_*Bpp     + y_*orig->pitch;
+				B = orig->pixels + (x_+1)*Bpp + y_*orig->pitch;
+				C = orig->pixels + x_*Bpp     + (y_+1)*orig->pitch;
+				D = orig->pixels + (x_+1)*Bpp + (y_+1)*orig->pitch;
+				a = (geta(A) * ( 1 - dx ) + geta(B) * dx) * ( 1 - dy ) + (geta(C) * ( 1 - dx ) + geta(D) * dx) * dy;
+				if (a == 0)
+				{
+					// fully transparent, no use working
+					r = g = b = 0;
+				}
+				else if (a == 255)
+				{
+					// fully opaque, optimized
+					r = (getr(A) * ( 1 - dx ) + getr(B) * dx) * ( 1 - dy ) + (getr(C) * ( 1 - dx ) + getr(D) * dx) * dy;
+					g = (getg(A) * ( 1 - dx ) + getg(B) * dx) * ( 1 - dy ) + (getg(C) * ( 1 - dx ) + getg(D) * dx) * dy;
+					b = (getb(A) * ( 1 - dx ) + getb(B) * dx) * ( 1 - dy ) + (getb(C) * ( 1 - dx ) + getb(D) * dx) * dy;
+				}
+				else
+				{
+					// not fully opaque, means A B C or D was not fully opaque, need to weight channels with
+					r = ( (getr(A) * geta(A) * ( 1 - dx ) + getr(B) * geta(B) * dx) * ( 1 - dy ) + (getr(C) * geta(C) * ( 1 - dx ) + getr(D) * geta(D) * dx) * dy ) / a;
+					g = ( (getg(A) * geta(A) * ( 1 - dx ) + getg(B) * geta(B) * dx) * ( 1 - dy ) + (getg(C) * geta(C) * ( 1 - dx ) + getg(D) * geta(D) * dx) * dy ) / a;
+					b = ( (getb(A) * geta(A) * ( 1 - dx ) + getb(B) * geta(B) * dx) * ( 1 - dy ) + (getb(C) * geta(C) * ( 1 - dx ) + getb(D) * geta(D) * dx) * dy ) / a;
+				}
+				set_pixel(dest, x, y, CLAMP(r*shading, 0, 255), CLAMP(g*shading, 0, 255), CLAMP(b*shading, 0, 255), a);
+			}
 		}
 	}
 	myUnlockSurface(orig);
