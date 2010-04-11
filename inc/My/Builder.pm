@@ -10,6 +10,27 @@ use Module::Build '0.36' => qw();
 use parent 'Module::Build';
 use Locale::Maketext::Extract;
 
+sub ACTION_run {
+    my ($self) = @_;
+    $self->depends_on('code');
+    my $bd = $self->{properties}->{base_dir};
+
+    # prepare INC
+    local @INC = @INC;
+    unshift @INC, (File::Spec->catdir($bd, $self->blib, 'lib'), File::Spec->catdir($bd, $self->blib, 'arch'));
+
+    if (scalar @{$self->args->{ARGV}}) {
+      # scenario: ./Build run bin/scriptname param1 param2
+      $self->do_system($^X, @{$self->args->{ARGV}});
+    }
+    else {    
+      # scenario: ./Build run
+      my ($first_script) = ( glob('bin/*'), glob('script/*')); # take the first script in bin or script subdir
+      print STDERR "No params given to run action - gonna start: '$first_script'\n";
+      $self->do_system($^X, $first_script);
+    }
+}
+
 sub ACTION_build {
     my ($self) = @_;
     #$self->depends_on('messages'); #temporarily disabled by kmx, the new ACTION_messages() needs more testing
