@@ -5483,7 +5483,6 @@ sub menu {
 #            $imgbin{menu_logo} = add_image('menu/fblogo.png');
 #        }
 
-		$logo_candy_method = 3 if $logo_candy_method != 3.1;
         ($logox, $logoy) = (400, 15);
         if ($logo_candy_method == 3) {
             #- stretch needs a bit more room
@@ -5532,10 +5531,12 @@ sub menu {
             put_image($imgbin{menu_logo}, $logox, $logoy);
         }
 		else { # logo animation
-			# switching the animation every 100 ticks, just for tests
-			#my @candy_methods = (1, 2, 3.1, 4.1);#(0, 1, 2, 3.1, 4.1, 5, 6, 7, 8.1);
-			#$logo_candy_method = $candy_methods[rand @candy_methods] unless $logo_candy_index % 150;
 			# logo effects (snow, water, ...)
+			
+			# switching the animation every 100 ticks, just for tests
+			my @candy_methods = (1, 2, 3.1, 4.1, 6); #(0, 1, 2, 3.1, 4.1, 5, 6, 7, 8.1);
+			$logo_candy_method = $candy_methods[rand @candy_methods] unless $logo_candy_index % 150;
+			
             Games::FrozenBubble::CStuff::rotate_bilinear($candy, $imgbin{menu_logo}, sin($logo_candy_index/40)/20) if $logo_candy_method == 0;
             Games::FrozenBubble::CStuff::flipflop($candy, $imgbin{menu_logo}, $logo_candy_index)                   if $logo_candy_method == 1;
             Games::FrozenBubble::CStuff::enlighten($candy, $imgbin{menu_logo}, $logo_candy_index)                  if $logo_candy_method == 2;

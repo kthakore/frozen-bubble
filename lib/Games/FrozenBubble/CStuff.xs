@@ -888,7 +888,7 @@ void stretch_(SDL_Surface * dest, SDL_Surface * orig, int offset)
 				SDL_GetRGBA(((Uint32 *)orig->pixels)[x_     + (y_ + 1) * dest->w], orig->format, &Cr, &Cg, &Cb, &Ca);
 				SDL_GetRGBA(((Uint32 *)orig->pixels)[x_ + 1 + (y_ + 1) * dest->w], orig->format, &Dr, &Dg, &Db, &Da);
 				
-				a  = (Aa * ( 1 - dx ) + Ba * dx) * ( 1 - dy ) + (Ca * ( 1 - dx ) + Da * dx) * dy;
+				a = (Aa * ( 1 - dx ) + Ba * dx) * ( 1 - dy ) + (Ca * ( 1 - dx ) + Da * dx) * dy;
 				if (a == 0)
 				{
 					// fully transparent, no use working
@@ -921,6 +921,7 @@ void tilt_(SDL_Surface * dest, SDL_Surface * orig, int offset)
 	int Bpp = dest->format->BytesPerPixel;
 	int x_, y_;
 	int r, g, b;
+	Uint8 Ar, Ag, Ab, Aa, Br, Bg, Bb, Ba, Cr, Cg, Cb, Ca, Dr, Dg, Db, Da;
 	double a, dx, dy;
 	double shading;
 	if (orig->format->BytesPerPixel == 1)
@@ -944,7 +945,6 @@ void tilt_(SDL_Surface * dest, SDL_Surface * orig, int offset)
 		double x__ = (x - dest->w/2) * zoomfact + dest->w/2;
 		for (y = 0; y < dest->h; y++)
 		{
-			Uint32 *A, *B, *C, *D;
 			double y__ = (y - dest->h/2) * zoomfact + dest->h/2;
 			x_ = floor(x__);
 			y_ = floor(y__);
@@ -957,11 +957,12 @@ void tilt_(SDL_Surface * dest, SDL_Surface * orig, int offset)
 			{
 				dx = x__ - x_;
 				dy = y__ - y_;
-				A = orig->pixels + x_*Bpp     + y_*orig->pitch;
-				B = orig->pixels + (x_+1)*Bpp + y_*orig->pitch;
-				C = orig->pixels + x_*Bpp     + (y_+1)*orig->pitch;
-				D = orig->pixels + (x_+1)*Bpp + (y_+1)*orig->pitch;
-				a = (geta(A) * ( 1 - dx ) + geta(B) * dx) * ( 1 - dy ) + (geta(C) * ( 1 - dx ) + geta(D) * dx) * dy;
+				SDL_GetRGBA(((Uint32 *)orig->pixels)[x_     +  y_      * dest->w], orig->format, &Ar, &Ag, &Ab, &Aa);
+				SDL_GetRGBA(((Uint32 *)orig->pixels)[x_ + 1 +  y_      * dest->w], orig->format, &Br, &Bg, &Bb, &Ba);
+				SDL_GetRGBA(((Uint32 *)orig->pixels)[x_     + (y_ + 1) * dest->w], orig->format, &Cr, &Cg, &Cb, &Ca);
+				SDL_GetRGBA(((Uint32 *)orig->pixels)[x_ + 1 + (y_ + 1) * dest->w], orig->format, &Dr, &Dg, &Db, &Da);
+
+				a = (Aa * ( 1 - dx ) + Ba * dx) * ( 1 - dy ) + (Ca * ( 1 - dx ) + Da * dx) * dy;
 				if (a == 0)
 				{
 					// fully transparent, no use working
@@ -970,16 +971,16 @@ void tilt_(SDL_Surface * dest, SDL_Surface * orig, int offset)
 				else if (a == 255)
 				{
 					// fully opaque, optimized
-					r = (getr(A) * ( 1 - dx ) + getr(B) * dx) * ( 1 - dy ) + (getr(C) * ( 1 - dx ) + getr(D) * dx) * dy;
-					g = (getg(A) * ( 1 - dx ) + getg(B) * dx) * ( 1 - dy ) + (getg(C) * ( 1 - dx ) + getg(D) * dx) * dy;
-					b = (getb(A) * ( 1 - dx ) + getb(B) * dx) * ( 1 - dy ) + (getb(C) * ( 1 - dx ) + getb(D) * dx) * dy;
+					r = (Ar * ( 1 - dx ) + Br * dx) * ( 1 - dy ) + (Cr * ( 1 - dx ) + Dr * dx) * dy;
+					g = (Ag * ( 1 - dx ) + Bg * dx) * ( 1 - dy ) + (Cg * ( 1 - dx ) + Dg * dx) * dy;
+					b = (Ab * ( 1 - dx ) + Bb * dx) * ( 1 - dy ) + (Cb * ( 1 - dx ) + Db * dx) * dy;
 				}
 				else
 				{
 					// not fully opaque, means A B C or D was not fully opaque, need to weight channels with
-					r = ( (getr(A) * geta(A) * ( 1 - dx ) + getr(B) * geta(B) * dx) * ( 1 - dy ) + (getr(C) * geta(C) * ( 1 - dx ) + getr(D) * geta(D) * dx) * dy ) / a;
-					g = ( (getg(A) * geta(A) * ( 1 - dx ) + getg(B) * geta(B) * dx) * ( 1 - dy ) + (getg(C) * geta(C) * ( 1 - dx ) + getg(D) * geta(D) * dx) * dy ) / a;
-					b = ( (getb(A) * geta(A) * ( 1 - dx ) + getb(B) * geta(B) * dx) * ( 1 - dy ) + (getb(C) * geta(C) * ( 1 - dx ) + getb(D) * geta(D) * dx) * dy ) / a;
+					r = ( (Ar * Aa * ( 1 - dx ) + Br * Ba * dx) * ( 1 - dy ) + (Cr * Ca * ( 1 - dx ) + Dr * Da * dx) * dy ) / a;
+					g = ( (Ag * Aa * ( 1 - dx ) + Bg * Ba * dx) * ( 1 - dy ) + (Cg * Ca * ( 1 - dx ) + Dg * Da * dx) * dy ) / a;
+					b = ( (Ab * Aa * ( 1 - dx ) + Bb * Ba * dx) * ( 1 - dy ) + (Cb * Ca * ( 1 - dx ) + Db * Da * dx) * dy ) / a;
 				}
 				set_pixel(dest, x, y, CLAMP(r*shading, 0, 255), CLAMP(g*shading, 0, 255), CLAMP(b*shading, 0, 255), a);
 			}
@@ -1077,8 +1078,8 @@ void points_(SDL_Surface * dest, SDL_Surface * orig, SDL_Surface * mask)
 void waterize_(SDL_Surface * dest, SDL_Surface * orig, int offset)
 {
 	int Bpp = dest->format->BytesPerPixel;
-	Uint8 *ptr;
 	int x_, y_;
+	Uint8 Ar, Ag, Ab, Aa, Br, Bg, Bb, Ba, Cr, Cg, Cb, Ca, Dr, Dg, Db, Da;
 	int r, g, b;
 	double a, dx, dy;
 	static double * precalc_cos = NULL, * precalc_sin = NULL;
@@ -1112,11 +1113,8 @@ void waterize_(SDL_Surface * dest, SDL_Surface * orig, int offset)
 
 	for (x = 0; x < dest->w; x++)
 	{
-		ptr = dest->pixels + x*Bpp;
-
 		for (y = 0; y < dest->h; y++)
 		{
-			Uint32 *A, *B, *C, *D;
 			double x__ = x + precalc_cos[(x + y + offset ) % 200];
 			double y__ = y + precalc_sin[(x + y + offset ) % 150];
 			x_ = floor(x__);
@@ -1125,18 +1123,18 @@ void waterize_(SDL_Surface * dest, SDL_Surface * orig, int offset)
 			if (x_ < 0 || x_ > orig->w - 2 || y_ < 0 || y_ > orig->h - 2)
 			{
 				// out of band
-				* ( (Uint32*) ptr ) = 0;
+				set_pixel(dest, x, y, 0, 0, 0, 0);
 			}
 			else
 			{
 				dx = x__ - x_;
 				dy = y__ - y_;
-				A = orig->pixels + x_*Bpp     + y_*orig->pitch;
-				B = orig->pixels + (x_+1)*Bpp + y_*orig->pitch;
-				C = orig->pixels + x_*Bpp     + (y_+1)*orig->pitch;
-				D = orig->pixels + (x_+1)*Bpp + (y_+1)*orig->pitch;
-				a = (geta(A) * ( 1 - dx ) + geta(B) * dx) * ( 1 - dy ) + (geta(C) * ( 1 - dx ) + geta(D) * dx) * dy;
+				SDL_GetRGBA(((Uint32 *)orig->pixels)[x_     +  y_      * dest->w], orig->format, &Ar, &Ag, &Ab, &Aa);
+				SDL_GetRGBA(((Uint32 *)orig->pixels)[x_ + 1 +  y_      * dest->w], orig->format, &Br, &Bg, &Bb, &Ba);
+				SDL_GetRGBA(((Uint32 *)orig->pixels)[x_     + (y_ + 1) * dest->w], orig->format, &Cr, &Cg, &Cb, &Ca);
+				SDL_GetRGBA(((Uint32 *)orig->pixels)[x_ + 1 + (y_ + 1) * dest->w], orig->format, &Dr, &Dg, &Db, &Da);
 
+				a = (Aa * ( 1 - dx ) + Ba * dx) * ( 1 - dy ) + (Ca * ( 1 - dx ) + Da * dx) * dy;
 				if (a == 0)
 				{
 					// fully transparent, no use working
@@ -1145,23 +1143,19 @@ void waterize_(SDL_Surface * dest, SDL_Surface * orig, int offset)
 				else if (a == 255)
 				{
 					// fully opaque, optimized
-					r = (getr(A) * ( 1 - dx ) + getr(B) * dx) * ( 1 - dy ) + (getr(C) * ( 1 - dx ) + getr(D) * dx) * dy;
-					g = (getg(A) * ( 1 - dx ) + getg(B) * dx) * ( 1 - dy ) + (getg(C) * ( 1 - dx ) + getg(D) * dx) * dy;
-					b = (getb(A) * ( 1 - dx ) + getb(B) * dx) * ( 1 - dy ) + (getb(C) * ( 1 - dx ) + getb(D) * dx) * dy;
+					r = (Ar * ( 1 - dx ) + Br * dx) * ( 1 - dy ) + (Cr * ( 1 - dx ) + Dr * dx) * dy;
+					g = (Ag * ( 1 - dx ) + Bg * dx) * ( 1 - dy ) + (Cg * ( 1 - dx ) + Dg * dx) * dy;
+					b = (Ab * ( 1 - dx ) + Bb * dx) * ( 1 - dy ) + (Cb * ( 1 - dx ) + Db * dx) * dy;
 				}
 				else
 				{
 					// not fully opaque, means A B C or D was not fully opaque, need to weight channels with
-					r = ( (getr(A) * geta(A) * ( 1 - dx ) + getr(B) * geta(B) * dx) * ( 1 - dy ) + (getr(C) * geta(C) * ( 1 - dx ) + getr(D) * geta(D) * dx) * dy ) / a;
-					g = ( (getg(A) * geta(A) * ( 1 - dx ) + getg(B) * geta(B) * dx) * ( 1 - dy ) + (getg(C) * geta(C) * ( 1 - dx ) + getg(D) * geta(D) * dx) * dy ) / a;
-					b = ( (getb(A) * geta(A) * ( 1 - dx ) + getb(B) * geta(B) * dx) * ( 1 - dy ) + (getb(C) * geta(C) * ( 1 - dx ) + getb(D) * geta(D) * dx) * dy ) / a;
+					r = ( (Ar * Aa * ( 1 - dx ) + Br * Ba * dx) * ( 1 - dy ) + (Cr * Ca * ( 1 - dx ) + Dr * Da * dx) * dy ) / a;
+					g = ( (Ag * Aa * ( 1 - dx ) + Bg * Ba * dx) * ( 1 - dy ) + (Cg * Ca * ( 1 - dx ) + Dg * Da * dx) * dy ) / a;
+					b = ( (Ab * Aa * ( 1 - dx ) + Bb * Ba * dx) * ( 1 - dy ) + (Cb * Ca * ( 1 - dx ) + Db * Da * dx) * dy ) / a;
 				}
-				* ( (Uint8*) ptr + Rdec ) = r;  // it is slightly faster to not recompose the 32-bit pixel - at least on my p4
-				* ( (Uint8*) ptr + Gdec ) = g;
-				* ( (Uint8*) ptr + Bdec ) = b;
-				* ( (Uint8*) ptr + Adec ) = a;
+				set_pixel(dest, x, y, r, g, b, a);
 			}
-			ptr += dest->pitch;
 		}
 	}
 	myUnlockSurface(orig);
