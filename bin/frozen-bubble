@@ -281,10 +281,10 @@ sub play_music($) {
     $current_theoretical_music = $name;
     $mixer_enabled && $mixer && !$music_disabled or return;
     @playlist && SDL::Mixer::Music::playing_music and return;
-    $app->delay(10) while SDL::Mixer::Music::fading_music;   #- mikmod will deadlock if we try to fade_out while still fading in
+    SDL::delay(10) while SDL::Mixer::Music::fading_music;   #- mikmod will deadlock if we try to fade_out while still fading in
     SDL::Mixer::Music::playing_music and SDL::Mixer::Music::fade_out_music(500);
-    $app->delay(400);
-    $app->delay(10) while SDL::Mixer::Music::playing_music;  #- mikmod will segfault if we try to load a music while old one is still fading out
+    SDL::delay(400);
+    SDL::delay(10) while SDL::Mixer::Music::playing_music;  #- mikmod will segfault if we try to load a music while old one is still fading out
     my %musics = (intro => '/snd/introzik.ogg', main1p => '/snd/frozen-mainzik-1p.ogg', main2p => '/snd/frozen-mainzik-2p.xm');
     my $mus if 0;                                 #- I need to keep a reference on the music or it will be collected at the end of this function, thus I manually collect previous music
     if (@playlist) {
@@ -299,7 +299,7 @@ sub play_music($) {
 		SDL::Mixer::Music::play_music($mus, 0);
 		return 1;
 	    } else { 
-		print STDERR "Warning, could not create new music from '$elem' (reason: ", $app->error, ").\n";
+		print STDERR "Warning, could not create new music from '$elem' (reason: ", SDL::get_error(), ").\n";
 		return 0;
 	    }
 	};
@@ -310,7 +310,7 @@ sub play_music($) {
 		SDL::Mixer::Music::play_music($mus, -1);
             $music{current} = $name;
         } else {
-            print STDERR "Warning, could not create new music from '$FPATH$musics{$name}' (reason: ", $app->error, ").\n";
+            print STDERR "Warning, could not create new music from '$FPATH$musics{$name}' (reason: ", SDL::get_error(), ").\n";
         }
     }
 }
@@ -540,9 +540,9 @@ sub is_distant_player($) {
 
 sub mp_ping_if_needed {
     my ($ticks) = @_;
-    if ($app->ticks - $ticks > 1000) {
+    if (SDL::get_ticks() - $ticks > 1000) {
         Games::FrozenBubble::Net::gsend('p');
-        $ticks = $app->ticks;
+        $ticks = SDL::get_ticks();
     }
 }
 
@@ -1483,7 +1483,7 @@ sub handle_whenever_events {
 
     if ($keypressed eq $KEYS->{misc}{fs}) {
         $fullscreen = !$fullscreen;
-        $app->fullscreen;
+        SDL::Video::wm_toggle_fullscreen($app);
     }
     if ($keypressed eq $KEYS->{misc}{toggle_sound}) {
 	if (!$mixer_enabled) {
@@ -1493,9 +1493,9 @@ sub handle_whenever_events {
             }
         } else {
             if ($mixer_enabled && $mixer && SDL::Mixer::Music::playing_music) {
-                $app->delay(10) while $mixer->fading_music;   #- mikmod will deadlock if we try to fade_out while still fading in
+                SDL::delay(10) while $mixer->fading_music;   #- mikmod will deadlock if we try to fade_out while still fading in
                 SDL::Mixer::Music::playing_music and $mixer->halt_music;
-                $app->delay(10) while SDL::Mixer::Music::playing_music;  #- mikmod will segfault if we try to load a music while old one is still fading out
+                SDL::delay(10) while SDL::Mixer::Music::playing_music;  #- mikmod will segfault if we try to load a music while old one is still fading out
             }
             $mixer_enabled = 0;
         }
@@ -1546,7 +1546,7 @@ sub handle_game_events() {
                 die 'quit';
             }
             if ($keypressed eq SDLK_PAUSE) {
-                my $time_pause = $app->ticks;
+                my $time_pause = SDL::get_ticks();
                 SDL::Events::pump_events() while SDL::Events::poll_event($event) != 0;
               pause_playdata:
                 while (1) {
@@ -1556,7 +1556,7 @@ sub handle_game_events() {
                         }
                         my $keypressed = extended_keypress($event);
                         if ($keypressed) {
-                            $start_time += $app->ticks - $time_pause;
+                            $start_time += SDL::get_ticks() - $time_pause;
                             return;
                         }
                     }
@@ -1608,19 +1608,19 @@ sub handle_game_events() {
                 }
 
                 if ($keypressed eq SDLK_PAUSE && !is_mp_game()) {
-                    my $time_pause = $app->ticks;
+                    my $time_pause = SDL::get_ticks();
                     play_sound('pause');
                     $mixer_enabled && $mixer and $mixer->pause_music;
                     my $back_saved = switch_image_on_background($imgbin{back_paused}, 0, 0, 1);
                     my $index;
                   pause_label:
                     while (1) {
-                        my $ticks = $app->ticks;
+                        my $ticks = SDL::get_ticks();
                         erase_image(${$imgbin{paused}}[$index], 320-${$imgbin{paused}}[$index]->w/2-5, 240-${$imgbin{paused}}[$index]->h/2-4);
                         put_image(${$imgbin{paused}}[$index], 320-${$imgbin{paused}}[$index]->w/2-5, 240-${$imgbin{paused}}[$index]->h/2-4);
                         SDL::Video::update_rects($app, @update_rects);
                         @update_rects = ();
-                        $app->delay(20);
+                        SDL::delay(20);
                         SDL::Events::pump_events();
                         while (SDL::Events::poll_event($event) != 0) {
                             if ($event->type == SDL_QUIT) {
@@ -1637,7 +1637,7 @@ sub handle_game_events() {
                         if (++$index == @{$imgbin{paused}}) {
                             $index = 11;
                         }
-                        my $to_wait = $TARGET_ANIM_SPEED - ($app->ticks - $ticks);
+                        my $to_wait = $TARGET_ANIM_SPEED - (SDL::get_ticks() - $ticks);
                         $to_wait > 0 and Games::FrozenBubble::CStuff::fbdelay($to_wait);
                     }
                     switch_image_on_background($back_saved, 0, 0);
@@ -1645,8 +1645,8 @@ sub handle_game_events() {
                     $mixer_enabled && $mixer and $mixer->resume_music;
                     SDL::Events::pump_events() while SDL::Events::poll_event($event) != 0;
                     SDL::Video::update_rect($app, 0, 0, 0, 0);
-                    $start_time += $app->ticks - $time_pause;
-                    is_1p_game() and $time_1pgame += $app->ticks - $time_pause;
+                    $start_time += SDL::get_ticks() - $time_pause;
+                    is_1p_game() and $time_1pgame += SDL::get_ticks() - $time_pause;
                     return;
                 }
 
@@ -2643,8 +2643,18 @@ sub init_game() {
 			    foreach qw(gfx snd data);
 
     print '[SDL Init] ';
-    $app = SDL::App->new(-icon => "$FPATH/gfx/pinguins/window_icon_penguin.png", -flags => $sdl_flags | ($fullscreen ? SDL_FULLSCREEN : 0), -title => 'Frozen-Bubble 2', -width => 640, -height => 480);
+#    $app = SDL::App->new(
+#		-icon       => "$FPATH/gfx/pinguins/window_icon_penguin.png",
+#		-flags      => $sdl_flags | ($fullscreen ? SDL_FULLSCREEN : 0),
+#		-title      => 'Frozen-Bubble 2',
+#		-width      => 640,
+#		-height     => 480
+#	);
 
+	$app = SDL::Video::set_video_mode(640, 480, 24, $sdl_flags | ($fullscreen ? SDL_FULLSCREEN : 0));
+	SDL::Video::wm_set_icon(SDL::Video::load_BMP("$FPATH/gfx/pinguins/window_icon_penguin.png"));
+	SDL::Video::wm_set_caption('Frozen-Bubble 2', 'Frozen-Bubble 2');
+		
     my $joys = SDL::Joystick::num_joysticks();
     $joysticksinfo and print "\nfound $joys joystick(s)\n";
     for (my $i = 0; $i < $joys; $i++) {
@@ -2888,7 +2898,7 @@ sub init_game() {
     #my $replace = SDL::Surface->new( SDL_ANYFORMAT, $imgbin{menu_logo}->w,  $imgbin{menu_logo}->h, 32, 0, 0, 0, 0);
     #SDL::Video::set_alpha($imgbin{menu_logo}, 0, SDL_ALPHA_OPAQUE);  #- for RGBA->RGBA blits, SDL_SRCALPHA must be removed or destination alpha is preserved
     #SDL::Video::blit_surface($imgbin{menu_logo}, SDL::Rect->new(0,0,$imgbin{menu_logo}->w,$imgbin{menu_logo}->h), $replace, SDL::Rect->new(0,0,$imgbin{menu_logo}->w,$imgbin{menu_logo}->h));
-    $imgbin{menu_logo} = $imgbin{menu_logo}; #$replace;
+    #$imgbin{menu_logo} = $imgbin{menu_logo}; #$replace;
     #add_default_rect($replace);
 
     $lev_number = 0;
@@ -3210,7 +3220,7 @@ sub ask_from($) {
 
 sub new_game() {
 
-    my $ticks = $app->ticks;
+    my $ticks = SDL::get_ticks();
     $display_on_app_disabled = 1;
 
     $TIME_APPEARS_NEW_ROOT = 11;
@@ -3309,7 +3319,7 @@ sub new_game() {
 
     if (!$playdata) {
         %recorddata = ();
-        my $srand = $app->ticks;
+        my $srand = SDL::get_ticks();
         srand $srand;
         push @{$recorddata{data}}, { srand => $srand };  #- the first record entry is used for pdatas (more keys added later)
     }
@@ -3452,7 +3462,7 @@ sub new_game() {
         $saveframesbase = gettimeofday();
     }
 
-    $start_time = $app->ticks;
+    $start_time = SDL::get_ticks();
     return 1;
 }
 
@@ -3523,7 +3533,7 @@ sub choose_1p_game_mode() {
     $redraw->();
 
     while (1) {
-		my $synchro_ticks = $app->ticks;
+		my $synchro_ticks = SDL::get_ticks();
 # commented out because otherwise we see only a white box instead of highlighted background image
 #        if ($graphics_level > 1) {
 #            $draw_overlook->();
@@ -3577,7 +3587,7 @@ sub choose_1p_game_mode() {
                 $redraw->();
             }
         }
-        my $to_wait = $TARGET_ANIM_SPEED - ($app->ticks - $synchro_ticks);
+        my $to_wait = $TARGET_ANIM_SPEED - (SDL::get_ticks() - $synchro_ticks);
         $to_wait > 0 and Games::FrozenBubble::CStuff::fbdelay($to_wait);
     }
 }
@@ -4607,7 +4617,7 @@ sub smg_choose_game() {
                             $text = undef;
                         } elsif ($text =~ m|^/fs|) {
                             $fullscreen = !$fullscreen;
-                            $app->fullscreen;
+							SDL::Video::wm_toggle_fullscreen($app);
                             $text = undef;
                         } elsif ($text =~ m|^/geolocate|) {
                             $geolocate->();
@@ -5097,7 +5107,7 @@ sub show_mp_scores() {
             smg_add_status_msg(loc("*** Game finished, because the following player(s) left: %s", join(', ', map { if_($pdata{$_}{left}, $pdata{$_}{nick}) } @PLAYERS)));
         }
     }
-    smg_add_status_msg(loc("*** Addicted for: %s", format_addiction(($app->ticks - $time_netgame)/1000, 1)));
+    smg_add_status_msg(loc("*** Addicted for: %s", format_addiction((SDL::get_ticks() - $time_netgame)/1000, 1)));
     @PLAYERS = reverse ssort { $pdata{$_}{score} } @PLAYERS;
     if ($pdata{$PLAYERS[0]}{score} > $pdata{$PLAYERS[1]}{score}) {
         smg_add_status_msg(loc("*** Winner: %s", $pdata{$PLAYERS[0]}{nick}));
@@ -5146,7 +5156,7 @@ sub setup_mp_game() {
 
     save_config();
 
-    $time_netgame = $app->ticks;
+    $time_netgame = SDL::get_ticks();
     return 1;
 }
 
@@ -5199,7 +5209,7 @@ sub handle_new_hiscores() {
         #- levels hiscores
         my @ordered = ordered_highscores();
         my $worst = pop @ordered;
-        my $total_seconds = ($app->ticks - $time_1pgame)/1000;
+        my $total_seconds = (SDL::get_ticks() - $time_1pgame)/1000;
         if (@$HISCORES == 10 && (lvl_cmp($levels{current}, $worst->{level}) == -1
                                  || lvl_cmp($levels{current}, $worst->{level}) == 0 && $total_seconds > $worst->{time})) {
             return;
@@ -5314,7 +5324,7 @@ sub save_frame() {
 #- ----------- mainloop ---------------------------------------------------
 
 sub maingame() {
-    my $synchro_ticks = $app->ticks;
+    my $synchro_ticks = SDL::get_ticks();
 
     handle_graphics(\&erase_image);
     update_game();
@@ -5326,7 +5336,7 @@ sub maingame() {
     SDL::Video::update_rects($app, @update_rects);
     @update_rects = ();
 
-    my $to_wait = $TARGET_ANIM_SPEED - ($app->ticks - $synchro_ticks);
+    my $to_wait = $TARGET_ANIM_SPEED - (SDL::get_ticks() - $synchro_ticks);
 #    print "$to_wait\n";
     $to_wait > 0 and Games::FrozenBubble::CStuff::fbdelay($to_wait);
     $saveframes and save_frame();
@@ -5409,6 +5419,8 @@ sub menu {
     my $back_start   = $imgbin{back_menu};;
     my $display_menu = sub {
 		SDL::Video::blit_surface($back_start, $apprects{main}, $app, $apprects{main});
+		
+		# stamp is the "frozen bubble since 2002"-logo underneath the (animated) logo
 		SDL::Video::blit_surface($imgbin{stamp},SDL::Rect->new(0,0,$imgbin{stamp}->w,$imgbin{stamp}->h), $app, SDL::Rect->new( 490,  142, $imgbin{stamp}->w, $imgbin{stamp}->h));
     };
 
@@ -5463,16 +5475,16 @@ sub menu {
 
     my $candy_init = sub {
 		# calulating positions and creating new surfaces for logo animations
-        if (defined($candy)) {
-            erase_image_from($imgbin{menu_logo}, $logox, $logoy, $back_start);
-            $candy = undef;
-            $imgbin{menu_logo} = add_image('menu/fblogo.png');
-        }
+#        if (defined($candy)) {
+#            erase_image_from($imgbin{menu_logo}, $logox, $logoy, $back_start);
+#            $candy = undef;
+#            $imgbin{menu_logo} = add_image('menu/fblogo.png');
+#        }
         ($logox, $logoy) = (400, 15);
         if ($logo_candy_method == 3) {
             #- stretch needs a bit more room
             my $newlogosurface = SDL::Surface->new(SDL_ANYFORMAT, $imgbin{menu_logo}->w * 1.1,  $imgbin{menu_logo}->h * 1.1,  32, 0, 0, 0 ,0);
-			SDL::Video::set_alpha($imgbin{menu_logo}, 0, SDL_ALPHA_OPAQUE); #- for RGBA->RGBA blits, SDL_SRCALPHA must be removed or destination alpha is preserved
+#			SDL::Video::set_alpha($imgbin{menu_logo}, 0, SDL_ALPHA_OPAQUE); #- for RGBA->RGBA blits, SDL_SRCALPHA must be removed or destination alpha is preserved
             SDL::Video::blit_surface($imgbin{menu_logo}, SDL::Rect->new(0,0,$imgbin{menu_logo}->w,$imgbin{menu_logo}->h), $newlogosurface, SDL::Rect->new( $imgbin{menu_logo}->w * 0.05, $imgbin{menu_logo}->h * 0.05, $imgbin{menu_logo}->w, $imgbin{menu_logo}->h));
             $logox -= $imgbin{menu_logo}->w * 0.05;
             $logoy -= $imgbin{menu_logo}->h * 0.05;
@@ -5483,7 +5495,7 @@ sub menu {
         if ($logo_candy_method == 4) {
             #- tilt needs a bit more horizontal room
             my $newlogosurface = SDL::Surface->new(SDL_ANYFORMAT, $imgbin{menu_logo}->w * 1.1,  $imgbin{menu_logo}->h * 1.05,  32, 0, 0, 0 ,0);
-			SDL::Video::set_alpha($imgbin{menu_logo}, 0, SDL_ALPHA_OPAQUE); #- for RGBA->RGBA blits, SDL_SRCALPHA must be removed or destination alpha is preserved
+#			SDL::Video::set_alpha($imgbin{menu_logo}, 0, SDL_ALPHA_OPAQUE); #- for RGBA->RGBA blits, SDL_SRCALPHA must be removed or destination alpha is preserved
             SDL::Video::blit_surface($imgbin{menu_logo}, SDL::Rect->new(0,0,$imgbin{menu_logo}->w,$imgbin{menu_logo}->h), $newlogosurface, SDL::Rect->new( $imgbin{menu_logo}->w * 0.05, $imgbin{menu_logo}->h * 0.025, $imgbin{menu_logo}->w, $imgbin{menu_logo}->h));
             $logox -= $imgbin{menu_logo}->w * 0.05;
             $logoy -= $imgbin{menu_logo}->h * 0.025;
@@ -5494,7 +5506,7 @@ sub menu {
         if ($logo_candy_method == 8) {
             #- snow needs to extend top, and a little more wideness
             my $newlogosurface = SDL::Surface->new( SDL_ANYFORMAT, $imgbin{menu_logo}->w * 1.1,  $imgbin{menu_logo}->h + $logoy, 32, 0, 0,0,0);
-			SDL::Video::set_alpha( $imgbin{menu_logo}, 0, SDL_ALPHA_OPAQUE); #- for RGBA->RGBA blits, SDL_SRCALPHA must be removed or destination alpha is preserved
+#			SDL::Video::set_alpha( $imgbin{menu_logo}, 0, SDL_ALPHA_OPAQUE); #- for RGBA->RGBA blits, SDL_SRCALPHA must be removed or destination alpha is preserved
             SDL::Video::blit_surface( $imgbin{menu_logo}, SDL::Rect->new(0,0,$imgbin{menu_logo}->w,$imgbin{menu_logo}->h), $newlogosurface, SDL::Rect->new($imgbin{menu_logo}->w * 0.05, $logoy, $imgbin{menu_logo}->w, $imgbin{menu_logo}->h));
             $logox -= $imgbin{menu_logo}->w * 0.05;
             $logoy = 0;
@@ -5502,9 +5514,9 @@ sub menu {
             add_default_rect($imgbin{menu_logo});
             $logo_candy_method = 8.1; #- avoid doing it again at next menu run
         }
-        $candy = SDL::Surface->new( SDL_ANYFORMAT, $imgbin{menu_logo}->w,  $imgbin{menu_logo}->h, 32, 0, 0,0,0);
+        $candy = SDL::Surface->new(SDL_SWSURFACE, $imgbin{menu_logo}->w,  $imgbin{menu_logo}->h, 32, 0xFF000000, 0xFF0000, 0xFF00, 0xFF);
     };
-    defined($candy) or $candy_init->();
+    $candy_init->() unless defined $candy;
 
     my $draw_logo = sub {
         my ($no_update) = @_;
@@ -5518,8 +5530,7 @@ sub menu {
 		else { # logo animation
 			# switching the animation every 100 ticks, just for tests
 			my @candy_methods = (0, 1, 2, 3.1, 4.1, 5, 6, 7, 8.1);
-			$logo_candy_method = $candy_methods[rand @candy_methods] unless $logo_candy_index % 100;
-			
+			$logo_candy_method = $candy_methods[rand @candy_methods] unless $logo_candy_index % 150;
 			# logo effects (snow, water, ...)
             Games::FrozenBubble::CStuff::rotate_bilinear($candy, $imgbin{menu_logo}, sin($logo_candy_index/40)/20) if $logo_candy_method == 0;
             Games::FrozenBubble::CStuff::flipflop($candy, $imgbin{menu_logo}, $logo_candy_index)                   if $logo_candy_method == 1;
@@ -5530,7 +5541,7 @@ sub menu {
             Games::FrozenBubble::CStuff::waterize($candy, $imgbin{menu_logo}, $logo_candy_index)                   if $logo_candy_method == 6;
             Games::FrozenBubble::CStuff::brokentv($candy, $imgbin{menu_logo}, $logo_candy_index)                   if $logo_candy_method == 7;
             Games::FrozenBubble::CStuff::snow($candy, $imgbin{menu_logo})                                          if $logo_candy_method == 8.1;
-            
+			
 			SDL::Video::blit_surface($candy, SDL::Rect->new(0,0,$candy->w,$candy->h), $app, SDL::Rect->new($logox, $logoy, $candy->w, $candy->h));
             
 			# next step for the animation
@@ -5563,7 +5574,7 @@ sub menu {
 		'1pgame' => {
 			pos  => 1,
 			type => 'rungame',
-			run  => sub { @PLAYERS = ('p1'); $levels{current} = 1; $time_1pgame = $app->ticks } 
+			run  => sub { @PLAYERS = ('p1'); $levels{current} = 1; $time_1pgame = SDL::get_ticks() } 
 		},
 		'2pgame' => {
 			pos  => 2,
@@ -5683,7 +5694,7 @@ sub menu {
     my $time_counter;
 
     while (!$start_game) {
-	my $synchro_ticks = $app->ticks;
+	my $synchro_ticks = SDL::get_ticks();
 
 	$graphics_level > 1 and SDL::Video::blit_surface($back_start, $banner_rect, $app, $banner_rect);
 
@@ -5692,7 +5703,7 @@ sub menu {
             my $keypressed = extended_keypress($event);
             if ($keypressed) {
                 if ($keypressed eq SDLK_PAUSE) {
-                    my $time_pause = $app->ticks;
+                    my $time_pause = SDL::get_ticks();
 		    SDL::Events::pump_events() while SDL::Events::poll_event($event);
                   pause_menu:
                     while (1) {
@@ -5702,7 +5713,7 @@ sub menu {
                         }
                         my $keypressed = extended_keypress($event);
                         if ($keypressed) {
-                            $start_time += $app->ticks - $time_pause;
+                            $start_time += SDL::get_ticks() - $time_pause;
                             last pause_menu;
                         }
                     }
@@ -5758,7 +5769,7 @@ sub menu {
                 if ($keypressed eq SDLK_ESCAPE) {
                     cleanup_and_exit();
 		}
-                $synchro_ticks = $app->ticks;  #- avoid stopping candy
+                $synchro_ticks = SDL::get_ticks();  #- avoid stopping candy
                 $time_counter = 0;  #- reset counter for demos
 	    }
             if ($event->type == SDL_QUIT) {
@@ -5878,7 +5889,7 @@ sub menu {
             $draw_logo->();
         }
 
-	my $to_wait = $TARGET_ANIM_SPEED - ($app->ticks - $synchro_ticks);
+	my $to_wait = $TARGET_ANIM_SPEED - (SDL::get_ticks() - $synchro_ticks);
 #        print "$to_wait\n";
 	if ($to_wait > 0) {
             Games::FrozenBubble::CStuff::fbdelay($to_wait);
@@ -5902,10 +5913,10 @@ sub menu {
             $pdata{demo} = 0;
           blacken:
             foreach my $step (1..35) {
-                my $ticks = $app->ticks;
+                my $ticks = SDL::get_ticks();
                 Games::FrozenBubble::CStuff::blacken($app, $step);
                 SDL::Video::update_rect($app, 0, 0, 0, 0);
-                my $to_wait = $TARGET_ANIM_SPEED - ($app->ticks - $ticks);
+                my $to_wait = $TARGET_ANIM_SPEED - (SDL::get_ticks() - $ticks);
                 $to_wait > 0 and Games::FrozenBubble::CStuff::fbdelay($to_wait);
 
                 SDL::Events::pump_events();
@@ -6008,7 +6019,7 @@ sub replay {
     }
     my $b = before_leaving {
         $playdata = undef;
-        srand $app->ticks;
+        srand SDL::get_ticks();
     };
     %recorddata = ();
     $playdata = [];
@@ -6120,7 +6131,7 @@ while (1) {
         my $died = $@;
         my $recorded = save_record_if_needed();
         if ($start_time != 0) {
-            $addicted_time += $app->ticks - $start_time;
+            $addicted_time += SDL::get_ticks() - $start_time;
             $start_time = 0;
         }
 
