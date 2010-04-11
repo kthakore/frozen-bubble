@@ -5406,47 +5406,47 @@ sub menu {
     play_music('intro');
     clean_server();
 
-    my $back_start;
+    my $back_start   = $imgbin{back_menu};;
     my $display_menu = sub {
-	SDL::Video::blit_surface($back_start,$apprects{main}, $app, $apprects{main});
-	SDL::Video::blit_surface($imgbin{stamp},SDL::Rect->new(0,0,$imgbin{stamp}->w,$imgbin{stamp}->h), $app, SDL::Rect->new( 490,  142, $imgbin{stamp}->w, $imgbin{stamp}->h));
+		SDL::Video::blit_surface($back_start, $apprects{main}, $app, $apprects{main});
+		SDL::Video::blit_surface($imgbin{stamp},SDL::Rect->new(0,0,$imgbin{stamp}->w,$imgbin{stamp}->h), $app, SDL::Rect->new( 490,  142, $imgbin{stamp}->w, $imgbin{stamp}->h));
     };
 
-    $back_start = $imgbin{back_menu};
     $display_menu->();
 
     my $invalidate_all;
 
-    my $menu_display_highscores = sub {
-	display_highscores();
+	my $menu_display_highscores = sub {
+		display_highscores();
+		$display_menu->();
+		SDL::Video::update_rect($app, 0, 0, 0, 0);
+		$invalidate_all->();
+	};
 
-	$display_menu->();
-	SDL::Video::update_rect($app, 0, 0, 0, 0);
-	$invalidate_all->();
-    };
-
-    my $change_keys = sub {
-	ask_from({ intro => [ loc("Please enter new keys:") ],
-		   entries => [
-			       { 'q' => loc("Player 1; turn left?"),  'a' => \$KEYS->{p1}{left},  f => 'ONE_CHAR' },
-			       { 'q' => loc("Player 1; turn right?"), 'a' => \$KEYS->{p1}{right}, f => 'ONE_CHAR' },
-			       { 'q' => loc("Player 1; fire?"),  'a' => \$KEYS->{p1}{fire},  f => 'ONE_CHAR' },
-			       { 'q' => loc("Player 1; center?"),  'a' => \$KEYS->{p1}{center},  f => 'ONE_CHAR' },
-                               { f => 'SPACE' },
-			       { 'q' => loc("Player 2; turn left?"),  'a' => \$KEYS->{p2}{left},  f => 'ONE_CHAR' },
-			       { 'q' => loc("Player 2; turn right?"), 'a' => \$KEYS->{p2}{right}, f => 'ONE_CHAR' },
-			       { 'q' => loc("Player 2; fire?"),  'a' => \$KEYS->{p2}{fire},  f => 'ONE_CHAR' },
-			       { 'q' => loc("Player 2; center?"),  'a' => \$KEYS->{p2}{center},  f => 'ONE_CHAR' },
-                               { f => 'SPACE' },
-			       { 'q' => loc("Toggle fullscreen?"), 'a' => \$KEYS->{misc}{fs}, f => 'ONE_CHAR' },
-			       { 'q' => loc("Chat (net/lan game)?"), 'a' => \$KEYS->{misc}{chat}, f => 'ONE_CHAR' },
-			      ],
-		   outro => loc("Thanks!"),
-		   erase_background => $back_start
-		 });
-	$invalidate_all->();
-#        print Data::Dumper->Dump([$KEYS], [qw(KEYS)]), "\n";
-#        die;
+	# Q&A for changing keys
+	my $change_keys = sub {
+		ask_from({
+			intro => [ loc("Please enter new keys:") ],
+			entries => [
+				{ 'q' => loc("Player 1; turn left?"),  'a' => \$KEYS->{p1}{left},   f => 'ONE_CHAR' },
+				{ 'q' => loc("Player 1; turn right?"), 'a' => \$KEYS->{p1}{right},  f => 'ONE_CHAR' },
+				{ 'q' => loc("Player 1; fire?"),       'a' => \$KEYS->{p1}{fire},   f => 'ONE_CHAR' },
+				{ 'q' => loc("Player 1; center?"),     'a' => \$KEYS->{p1}{center}, f => 'ONE_CHAR' },
+				{ f => 'SPACE' },
+				{ 'q' => loc("Player 2; turn left?"),  'a' => \$KEYS->{p2}{left},   f => 'ONE_CHAR' },
+				{ 'q' => loc("Player 2; turn right?"), 'a' => \$KEYS->{p2}{right},  f => 'ONE_CHAR' },
+				{ 'q' => loc("Player 2; fire?"),       'a' => \$KEYS->{p2}{fire},   f => 'ONE_CHAR' },
+				{ 'q' => loc("Player 2; center?"),     'a' => \$KEYS->{p2}{center}, f => 'ONE_CHAR' },
+				{ f => 'SPACE' },
+				{ 'q' => loc("Toggle fullscreen?"),    'a' => \$KEYS->{misc}{fs},   f => 'ONE_CHAR' },
+				{ 'q' => loc("Chat (net/lan game)?"),  'a' => \$KEYS->{misc}{chat}, f => 'ONE_CHAR' },
+			],
+			outro => loc("Thanks!"),
+			erase_background => $back_start
+		});
+		$invalidate_all->();
+#		print Data::Dumper->Dump([$KEYS], [qw(KEYS)]), "\n";
+#		die;
     };
 
     my $launch_editor = sub {
@@ -5454,7 +5454,7 @@ sub menu {
         Games::FrozenBubble::LevelEditor::init_setup('embedded', $app);
         Games::FrozenBubble::LevelEditor::handle_events();
         SDL::Mouse::show_cursor(0);
-	$display_menu->();
+		$display_menu->();
         SDL::Video::update_rect($app, 0, 0, 0, 0);
         $invalidate_all->();
     };
@@ -5462,6 +5462,7 @@ sub menu {
     my $speed_ok = 4;
 
     my $candy_init = sub {
+		# calulating positions and creating new surfaces for logo animations
         if (defined($candy)) {
             erase_image_from($imgbin{menu_logo}, $logox, $logoy, $back_start);
             $candy = undef;
@@ -5471,7 +5472,7 @@ sub menu {
         if ($logo_candy_method == 3) {
             #- stretch needs a bit more room
             my $newlogosurface = SDL::Surface->new(SDL_ANYFORMAT, $imgbin{menu_logo}->w * 1.1,  $imgbin{menu_logo}->h * 1.1,  32, 0, 0, 0 ,0);
-			SDL::Video::set_alpha($imgbin{menu_logo}, SDL_SRCALPHA, SDL_ALPHA_OPAQUE); #- for RGBA->RGBA blits, SDL_SRCALPHA must be removed or destination alpha is preserved
+			SDL::Video::set_alpha($imgbin{menu_logo}, 0, SDL_ALPHA_OPAQUE); #- for RGBA->RGBA blits, SDL_SRCALPHA must be removed or destination alpha is preserved
             SDL::Video::blit_surface($imgbin{menu_logo}, SDL::Rect->new(0,0,$imgbin{menu_logo}->w,$imgbin{menu_logo}->h), $newlogosurface, SDL::Rect->new( $imgbin{menu_logo}->w * 0.05, $imgbin{menu_logo}->h * 0.05, $imgbin{menu_logo}->w, $imgbin{menu_logo}->h));
             $logox -= $imgbin{menu_logo}->w * 0.05;
             $logoy -= $imgbin{menu_logo}->h * 0.05;
@@ -5482,7 +5483,7 @@ sub menu {
         if ($logo_candy_method == 4) {
             #- tilt needs a bit more horizontal room
             my $newlogosurface = SDL::Surface->new(SDL_ANYFORMAT, $imgbin{menu_logo}->w * 1.1,  $imgbin{menu_logo}->h * 1.05,  32, 0, 0, 0 ,0);
-			SDL::Video::set_alpha($imgbin{menu_logo}, SDL_SRCALPHA, SDL_ALPHA_OPAQUE); #- for RGBA->RGBA blits, SDL_SRCALPHA must be removed or destination alpha is preserved
+			SDL::Video::set_alpha($imgbin{menu_logo}, 0, SDL_ALPHA_OPAQUE); #- for RGBA->RGBA blits, SDL_SRCALPHA must be removed or destination alpha is preserved
             SDL::Video::blit_surface($imgbin{menu_logo}, SDL::Rect->new(0,0,$imgbin{menu_logo}->w,$imgbin{menu_logo}->h), $newlogosurface, SDL::Rect->new( $imgbin{menu_logo}->w * 0.05, $imgbin{menu_logo}->h * 0.025, $imgbin{menu_logo}->w, $imgbin{menu_logo}->h));
             $logox -= $imgbin{menu_logo}->w * 0.05;
             $logoy -= $imgbin{menu_logo}->h * 0.025;
@@ -5493,7 +5494,7 @@ sub menu {
         if ($logo_candy_method == 8) {
             #- snow needs to extend top, and a little more wideness
             my $newlogosurface = SDL::Surface->new( SDL_ANYFORMAT, $imgbin{menu_logo}->w * 1.1,  $imgbin{menu_logo}->h + $logoy, 32, 0, 0,0,0);
-			SDL::Video::set_alpha( $imgbin{menu_logo}, SDL_SRCALPHA, SDL_ALPHA_OPAQUE); #- for RGBA->RGBA blits, SDL_SRCALPHA must be removed or destination alpha is preserved
+			SDL::Video::set_alpha( $imgbin{menu_logo}, 0, SDL_ALPHA_OPAQUE); #- for RGBA->RGBA blits, SDL_SRCALPHA must be removed or destination alpha is preserved
             SDL::Video::blit_surface( $imgbin{menu_logo}, SDL::Rect->new(0,0,$imgbin{menu_logo}->w,$imgbin{menu_logo}->h), $newlogosurface, SDL::Rect->new($imgbin{menu_logo}->w * 0.05, $logoy, $imgbin{menu_logo}->w, $imgbin{menu_logo}->h));
             $logox -= $imgbin{menu_logo}->w * 0.05;
             $logoy = 0;
@@ -5508,68 +5509,110 @@ sub menu {
     my $draw_logo = sub {
         my ($no_update) = @_;
         erase_image_from($imgbin{menu_logo}, $logox, $logoy, $back_start);
-        if ($graphics_level < 3 || !$speed_ok) {
+		
+        if ($graphics_level < 3 || !$speed_ok)
+		{
+			# logo is blittet as it is, without animations
             put_image($imgbin{menu_logo}, $logox, $logoy);
         }
-		else {
-			#printf("[DEBUG] logo_candy_method = $logo_candy_method (line %d)\n", __LINE__);
-            $logo_candy_method == 0   and Games::FrozenBubble::CStuff::rotate_bilinear($candy, $imgbin{menu_logo}, sin($logo_candy_index/40)/20);
-            $logo_candy_method == 1   and Games::FrozenBubble::CStuff::flipflop($candy, $imgbin{menu_logo}, $logo_candy_index);
-            $logo_candy_method == 2   and Games::FrozenBubble::CStuff::enlighten($candy, $imgbin{menu_logo}, $logo_candy_index);
-            $logo_candy_method == 3.1 and Games::FrozenBubble::CStuff::stretch($candy, $imgbin{menu_logo}, $logo_candy_index);
-            $logo_candy_method == 4.1 and Games::FrozenBubble::CStuff::tilt($candy, $imgbin{menu_logo}, $logo_candy_index);
-            $logo_candy_method == 5   and Games::FrozenBubble::CStuff::points($candy, $imgbin{menu_logo}, $imgbin{menu_logo_mask});
-            $logo_candy_method == 6   and Games::FrozenBubble::CStuff::waterize($candy, $imgbin{menu_logo}, $logo_candy_index);
-            $logo_candy_method == 7   and Games::FrozenBubble::CStuff::brokentv($candy, $imgbin{menu_logo}, $logo_candy_index);
-            $logo_candy_method == 8.1 and Games::FrozenBubble::CStuff::snow($candy, $imgbin{menu_logo});
+		else { # logo animation
+			# switching the animation every 100 ticks, just for tests
+			my @candy_methods = (0, 1, 2, 3.1, 4.1, 5, 6, 7, 8.1);
+			$logo_candy_method = $candy_methods[rand @candy_methods] unless $logo_candy_index % 100;
+			
+			# logo effects (snow, water, ...)
+            Games::FrozenBubble::CStuff::rotate_bilinear($candy, $imgbin{menu_logo}, sin($logo_candy_index/40)/20) if $logo_candy_method == 0;
+            Games::FrozenBubble::CStuff::flipflop($candy, $imgbin{menu_logo}, $logo_candy_index)                   if $logo_candy_method == 1;
+            Games::FrozenBubble::CStuff::enlighten($candy, $imgbin{menu_logo}, $logo_candy_index)                  if $logo_candy_method == 2;
+            Games::FrozenBubble::CStuff::stretch($candy, $imgbin{menu_logo}, $logo_candy_index)                    if $logo_candy_method == 3.1;
+            Games::FrozenBubble::CStuff::tilt($candy, $imgbin{menu_logo}, $logo_candy_index)                       if $logo_candy_method == 4.1;
+            Games::FrozenBubble::CStuff::points($candy, $imgbin{menu_logo}, $imgbin{menu_logo_mask})               if $logo_candy_method == 5;
+            Games::FrozenBubble::CStuff::waterize($candy, $imgbin{menu_logo}, $logo_candy_index)                   if $logo_candy_method == 6;
+            Games::FrozenBubble::CStuff::brokentv($candy, $imgbin{menu_logo}, $logo_candy_index)                   if $logo_candy_method == 7;
+            Games::FrozenBubble::CStuff::snow($candy, $imgbin{menu_logo})                                          if $logo_candy_method == 8.1;
             
-			SDL::Video::blit_surface($candy, SDL::Rect->new(0,0,$candy->w,$candy->h), $app, my $rect = SDL::Rect->new($logox, $logoy, $candy->w, $candy->h));
-            $logo_candy_index++;
+			SDL::Video::blit_surface($candy, SDL::Rect->new(0,0,$candy->w,$candy->h), $app, SDL::Rect->new($logox, $logoy, $candy->w, $candy->h));
+            
+			# next step for the animation
+			$logo_candy_index++;
         }
+		
         if (!$no_update) {
 			SDL::Video::update_rects($app, @update_rects);
             @update_rects = ();
         }
     };
 
-    $imgbin{menu_cursor}{graphics} = $imgbin{menu_cursor}{"graphics$graphics_level"};
-    $imgbin{menu_cursor}{graphicsalpha} = $imgbin{menu_cursor}{"graphics${graphics_level}alpha"};
+    $imgbin{menu_cursor}{graphics}          = $imgbin{menu_cursor}{"graphics$graphics_level"};
+    $imgbin{menu_cursor}{graphicsalpha}     = $imgbin{menu_cursor}{"graphics${graphics_level}alpha"};
     my ($MENU_XPOS, $MENU_FIRSTY, $SPACING) = (89, 14, 56);
-    my %menu_ypos = ( '1pgame' =>      $MENU_FIRSTY,
-		      '2pgame' =>      $MENU_FIRSTY +     $SPACING,
-		      'langame'=>      $MENU_FIRSTY + 2 * $SPACING,
-		      'netgame'=>      $MENU_FIRSTY + 3 * $SPACING,
-		      'editor' =>      $MENU_FIRSTY + 4 * $SPACING,
-		      'graphics' =>    $MENU_FIRSTY + 5 * $SPACING,
-		      'keys' =>        $MENU_FIRSTY + 6 * $SPACING,
-		      'highscores' =>  $MENU_FIRSTY + 7 * $SPACING,
-		  );
-    my %menu_entries = ( '1pgame' => { pos => 1, type => 'rungame',
-				       run => sub { @PLAYERS = ('p1'); $levels{current} = 1; $time_1pgame = $app->ticks } },
-			 '2pgame' => { pos => 2, type => 'rungame',
-				       run => sub { @PLAYERS = qw(p1 p2); $levels{current} = undef; } },
-			 'langame'=> { pos => 3, type => 'rungame',
-				       run => sub { @PLAYERS = qw(p1 rp1); $pdata{gametype} = 'lan'; $levels{current} = undef; } },
-			 'netgame'=> { pos => 4, type => 'rungame',
-				       run => sub { @PLAYERS = qw(p1 rp1); $pdata{gametype} = 'net';  $levels{current} = undef; } },
-			 'editor' => { pos => 5, type => 'run', run => sub { $launch_editor->(); } },
-			 'graphics' => { pos => 6, type => 'range', valuemin => 1, valuemax => 3,
-					 change => sub {
-                                             $graphics_level = $_[0];
-                                             if ($graphics_level < 3) { $draw_logo->() } else { $speed_ok = 4; }
-                                             $imgbin{menu_cursor}{graphics} = $imgbin{menu_cursor}{"graphics$graphics_level"};
-                                             $imgbin{menu_cursor}{graphicsalpha} = $imgbin{menu_cursor}{"graphics${graphics_level}alpha"};
-                                             $pdata{cursor_img}{graphics} >= @{$imgbin{menu_cursor}{graphics}} and $pdata{cursor_img}{graphics} = 0;
-                                         },
-                                         value => $graphics_level },
-			 'keys' => { pos => 7, type => 'run',
-				     run => sub { $change_keys->() } },
-			 'highscores' => { pos => 8, type => 'run',
-					   run => sub { $menu_display_highscores->() } },
-		       );
-    my $current_pos if 0; $current_pos ||= 1;
-    my @menu_invalids;
-    $invalidate_all = sub { push @menu_invalids, $menu_entries{$_}->{pos} foreach keys %menu_entries };
+	# screen y-position of main menu elements
+    my %menu_ypos = (
+		'1pgame'     => $MENU_FIRSTY,
+		'2pgame'     => $MENU_FIRSTY +     $SPACING,
+		'langame'    => $MENU_FIRSTY + 2 * $SPACING,
+		'netgame'    => $MENU_FIRSTY + 3 * $SPACING,
+		'editor'     => $MENU_FIRSTY + 4 * $SPACING,
+		'graphics'   => $MENU_FIRSTY + 5 * $SPACING,
+		'keys'       => $MENU_FIRSTY + 6 * $SPACING,
+		'highscores' => $MENU_FIRSTY + 7 * $SPACING,
+	);
+	
+	# menu indexes, and functions that are called before the function behind 'type' is called
+	my %menu_entries = (
+		'1pgame' => {
+			pos  => 1,
+			type => 'rungame',
+			run  => sub { @PLAYERS = ('p1'); $levels{current} = 1; $time_1pgame = $app->ticks } 
+		},
+		'2pgame' => {
+			pos  => 2,
+			type => 'rungame',
+			run  => sub { @PLAYERS = qw(p1 p2); $levels{current} = undef; } 
+		},
+		'langame'=> {
+			pos  => 3,
+			type => 'rungame',
+			run  => sub { @PLAYERS = qw(p1 rp1); $pdata{gametype} = 'lan'; $levels{current} = undef; } 
+		},
+		'netgame'=> {
+			pos  => 4,
+			type => 'rungame',
+			run  => sub { @PLAYERS = qw(p1 rp1); $pdata{gametype} = 'net'; $levels{current} = undef; } 
+		},
+		'editor' => {
+			pos => 5,
+			type => 'run',
+			run => sub { $launch_editor->(); }
+		},
+		'graphics' => {
+			pos      => 6,
+			type     => 'range',
+			valuemin => 1,
+			valuemax => 3,
+			change   => sub {
+				$graphics_level = $_[0];
+				if ($graphics_level < 3) { $draw_logo->() } else { $speed_ok = 4; }
+				$imgbin{menu_cursor}{graphics}      = $imgbin{menu_cursor}{"graphics$graphics_level"};
+				$imgbin{menu_cursor}{graphicsalpha} = $imgbin{menu_cursor}{"graphics${graphics_level}alpha"};
+				$pdata{cursor_img}{graphics}        = 0 if $pdata{cursor_img}{graphics} >= @{$imgbin{menu_cursor}{graphics}};
+			},
+			value => $graphics_level
+		},
+		'keys' => {
+			pos  => 7,
+			type => 'run',
+			run  => sub { $change_keys->() }
+		},
+		'highscores' => {
+			pos  => 8,
+			type => 'run',
+			run  => sub { $menu_display_highscores->() }
+		},
+	);
+    my $current_pos   = 1;  # selected menu entry (1..8)
+    my @menu_invalids = (); # list of menu item's positions
+    $invalidate_all   = sub { push @menu_invalids, $menu_entries{$_}->{pos} foreach keys %menu_entries };
 
     my $display_cursor = sub {
         my ($m, $alpha, $pixelize) = @_;
@@ -5589,12 +5632,14 @@ sub menu {
                 Games::FrozenBubble::CStuff::pixelize($cursor_tmp, $imgbin{menu_cursor}{"${m}alpha"}[$pdata{cursor_img}{$m}]);
                 #Games::FrozenBubble::CStuff::pixelize($cursor_tmp, $imgbin{menu_cursor}{$m}[$pdata{cursor_img}{$m}]);
 				SDL::Video::blit_surface( $cursor_tmp, SDL::Rect->new(0,0,$cursor_tmp->w,$cursor_tmp->h), $app, $cursor_rect);
-            } else {
+            }
+			else {
 				# not animated menu item
               	SDL::Video::blit_surface( $imgbin{menu_cursor}{"${m}alpha"}[$pdata{cursor_img}{$m}], SDL::Rect->new(0,0,$imgbin{menu_cursor}{"${m}alpha"}[$pdata{cursor_img}{$m}]->w,$imgbin{menu_cursor}{"${m}alpha"}[$pdata{cursor_img}{$m}]->h), $app, $cursor_rect);
 				#SDL::Video::blit_surface( $imgbin{menu_cursor}{$m}[$pdata{cursor_img}{$m}], SDL::Rect->new(0,0,$imgbin{menu_cursor}{$m}[$pdata{cursor_img}{$m}]->w,$imgbin{menu_cursor}{$m}[$pdata{cursor_img}{$m}]->h), $app, $cursor_rect);
             }
-        } else {
+        }
+		else {
 			# blits the animated icon for the selected menu item
 			SDL::Video::blit_surface( $imgbin{menu_cursor}{$m}[$pdata{cursor_img}{$m}], SDL::Rect->new(0,0,$imgbin{menu_cursor}{$m}[$pdata{cursor_img}{$m}]->w,$imgbin{menu_cursor}{$m}[$pdata{cursor_img}{$m}]->h), $app, $cursor_rect);
         }
@@ -5694,18 +5739,17 @@ sub menu {
 		    play_sound('menu_selected');
 		    push @menu_invalids, $current_pos;
 		    foreach my $m (keys %menu_entries) {
-			if ($menu_entries{$m}->{pos} == $current_pos) {
-			    if ($menu_entries{$m}->{type} =~ /^run/) {
-				$menu_entries{$m}->{run}->();
-				$menu_entries{$m}->{type} eq 'rungame' and $start_game = 1;
-			    }
-			    if ($menu_entries{$m}->{type} eq 'range') {
-				$menu_entries{$m}->{value}++;
-				$menu_entries{$m}->{value} > $menu_entries{$m}->{valuemax}
-				  and $menu_entries{$m}->{value} = $menu_entries{$m}->{valuemin};
-				$menu_entries{$m}->{change}->($menu_entries{$m}->{value});
-			    }
-			}
+				if ($menu_entries{$m}->{pos} == $current_pos) {
+					if ($menu_entries{$m}->{type} =~ /^run/) {
+						$menu_entries{$m}->{run}->();
+						$menu_entries{$m}->{type} eq 'rungame' and $start_game = 1;
+					}
+					if ($menu_entries{$m}->{type} eq 'range') {
+						$menu_entries{$m}->{value}++;
+						$menu_entries{$m}->{value} = $menu_entries{$m}->{valuemin} if $menu_entries{$m}->{value} > $menu_entries{$m}->{valuemax};
+						$menu_entries{$m}->{change}->($menu_entries{$m}->{value});
+					}
+				}
 		    }
                     $menu_update->();
 		}
