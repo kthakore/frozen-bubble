@@ -39,7 +39,7 @@ use vars qw(@ISA @EXPORT $FPATH $FLPATH $FBHOME $FBLEVELS $colourblind %POS_1P %
 @EXPORT = qw($version $FPATH $FLPATH $colourblind $FBHOME $FBLEVELS %POS_1P %POS_2P %POS_MP $BUBBLE_SIZE $ROW_SIZE
              $PI cat_ member difference2 any every even odd sqr to_bool to_int if_ chomp_
              fold_left output append_to_file min max backtrace basename cp_af all partition ssort
-             sum put_in_hash mapn mapn_ before_leaving fastuniq deep_copy stringchars t dbgnet);
+             sum put_in_hash mapn mapn_ before_leaving fastuniq deep_copy stringchars loc dbgnet);
 
 $version = '2.2.0';
 
@@ -339,7 +339,7 @@ sub stringchars {
     return split //, $_[0];
 }
 
-sub t {
+sub loc {
     my ($fmt, @args) = @_;
     return sprintf(gettext($fmt), @args);
 }
