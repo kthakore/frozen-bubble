@@ -106,17 +106,17 @@ int rand_(double val) { return 1+(int) (val*rand()/(RAND_MAX+1.0)); }
  */
 
 /* -------------- Double Store ------------------ */
-
-void store_effect(SDL_Surface * s, SDL_Surface * img)
-{
-	void copy_line(int l) {
+	void copy_line(int l, SDL_Surface * s, SDL_Surface * img) {
 		memcpy(s->pixels + l*img->pitch, img->pixels + l*img->pitch, img->pitch);
 	}
-	void copy_column(int c) {
+	void copy_column(int c, SDL_Surface *s, SDL_Surface * img) {
 		int bpp = img->format->BytesPerPixel;
 		for (y=0; y<YRES; y++)
 			memcpy(s->pixels + y*img->pitch + c*bpp, img->pixels + y*img->pitch + c*bpp, bpp);
 	}
+
+void store_effect(SDL_Surface * s, SDL_Surface * img)
+{
 
 	int step = 0;
 	int store_thickness = 15;
@@ -129,8 +129,8 @@ void store_effect(SDL_Surface * s, SDL_Surface * img)
 			for (i=0; i<=YRES/2/store_thickness; i++) {
 				int v = step - i;
 				if (v >= 0 && v < store_thickness) {
-					copy_line(i*store_thickness + v);
-					copy_line(YRES - 1 - (i*store_thickness + v));
+					copy_line(i*store_thickness + v, s, img);
+					copy_line(YRES - 1 - (i*store_thickness + v), s, img);
 				}
 			}
 			step++;
@@ -146,8 +146,8 @@ void store_effect(SDL_Surface * s, SDL_Surface * img)
 			for (i=0; i<=XRES/2/store_thickness; i++) {
 				int v = step - i;
 				if (v >= 0 && v < store_thickness) {
-					copy_column(i*store_thickness + v);
-					copy_column(XRES - 1 - (i*store_thickness + v));
+					copy_column(i*store_thickness + v, s, img );
+					copy_column(XRES - 1 - (i*store_thickness + v), s, img);
 				}
 			}
 			step++;
@@ -188,13 +188,7 @@ void bars_effect(SDL_Surface * s, SDL_Surface * img)
 
 
 /* -------------- Squares ------------------ */
-
-void squares_effect(SDL_Surface * s, SDL_Surface * img)
-{
-	int bpp = img->format->BytesPerPixel;
-	const int squares_size = 32;
-
-	int fillrect(int i, int j) {
+	int fillrect(int i, int j, SDL_Surface * s, SDL_Surface * img)) {
 		int c, v;
 		if (i >= XRES/squares_size || j >= YRES/squares_size)
 			return 0;
@@ -203,6 +197,12 @@ void squares_effect(SDL_Surface * s, SDL_Surface * img)
 			memcpy(s->pixels + v + c*img->pitch, img->pixels + v + c*img->pitch, squares_size*bpp);
 		return 1;
 	}
+
+
+void squares_effect(SDL_Surface * s, SDL_Surface * img)
+{
+	int bpp = img->format->BytesPerPixel;
+	const int squares_size = 32;
 
 	int still_moving = 1;
 
@@ -213,7 +213,7 @@ void squares_effect(SDL_Surface * s, SDL_Surface * img)
 
 		still_moving = 0;
 		for (j=i; j>=0; j--) {
-			if (fillrect(j, k))
+			if (fillrect(j, k, s ,img))
 				still_moving = 1;
 			k++;
 		}
@@ -227,9 +227,10 @@ void squares_effect(SDL_Surface * s, SDL_Surface * img)
 
 int * circle_steps;
 const int circle_max_steps = 40;
+int sqr(int v) { return v*v; }
+
 void circle_init(void)
 {
-	int sqr(int v) { return v*v; }
 
 	circle_steps = malloc(XRES * YRES * sizeof(int));
 	if (!circle_steps)
