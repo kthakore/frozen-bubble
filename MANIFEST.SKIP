@@ -59,3 +59,7 @@
 
 lib/Games/FrozenBubble/CStuff.c
 lib/Games/FrozenBubble/CStuff.o
+
+share
+server
+
