@@ -5643,7 +5643,7 @@ sub menu {
         if ($alpha) {
             if ($pixelize) {
 				if (!defined($cursor_tmp)) {
-					$cursor_tmp = SDL::Surface->new( SDL_ANYFORMAT, $imgbin{menu_cursor}{$m}[0]->w,  $imgbin{menu_cursor}{$m}[0]->h, 32, 0,0,0,0);
+					$cursor_tmp = SDL::Surface->new( SDL_SWSURFACE, $imgbin{menu_cursor}{$m}[0]->w,  $imgbin{menu_cursor}{$m}[0]->h, 32, 0xFF000000,0xFF0000,0xFF00,0xFF);
 				}
                 Games::FrozenBubble::CStuff::pixelize($cursor_tmp, $imgbin{menu_cursor}{"${m}alpha"}[$pdata{cursor_img}{$m}]);
                 #Games::FrozenBubble::CStuff::pixelize($cursor_tmp, $imgbin{menu_cursor}{$m}[$pdata{cursor_img}{$m}]);
@@ -5905,7 +5905,7 @@ sub menu {
             if ($speed_ok) {
                 $speed_ok--;
                 if (!$speed_ok) {
-                    print "Eye-candy animation is too slow, disabling.\n";
+                    print "Eye-candy animation is too slow, disabling ($logo_candy_method).\n";
                     $draw_logo->();
                 }
             }

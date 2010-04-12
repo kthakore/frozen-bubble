@@ -1266,28 +1266,28 @@ void alphaize_(SDL_Surface * surf)
 
 void pixelize_(SDL_Surface * dest, SDL_Surface * orig)
 {
-	int Bpp = dest->format->BytesPerPixel;
-        Uint8 *ptrdest, *ptrorig;
-	if (orig->format->BytesPerPixel != 4) {
-                fprintf(stderr, "pixelize: orig surface must be 32bpp\n");
-                abort();
-        }
-	if (dest->format->BytesPerPixel != 4) {
-                fprintf(stderr, "pixelize: dest surface must be 32bpp\n");
-                abort();
-        }
+	Uint8 r, g, b, a;
+	
+	if (orig->format->BytesPerPixel == 1)
+	{
+		fprintf(stderr, "pixelize: orig surface must not have a palette\n");
+		abort();
+	}
+	
+	if (dest->format->BytesPerPixel == 1)
+	{
+		fprintf(stderr, "pixelize: orig surface must not have a palette\n");
+		abort();
+	}
+	
 	myLockSurface(orig);
 	myLockSurface(dest);
-        for (y = 0; y < dest->h; y++) {
-                ptrdest = dest->pixels + y*dest->pitch;
-                ptrorig = orig->pixels + y*orig->pitch;
-                for (x = 0; x < dest->w; x++) {
-                        * ( ptrdest + Rdec ) = *( ptrorig + Rdec );
-                        * ( ptrdest + Gdec ) = *( ptrorig + Gdec );
-                        * ( ptrdest + Bdec ) = *( ptrorig + Bdec );
-                        * ( ptrdest + Adec ) = *( ptrorig + Adec ) * ( 0.2 + rand_(100)/100.0 );
-                        ptrdest += Bpp;
-                        ptrorig += Bpp;
+	for (y = 0; y < dest->h; y++)
+	{
+		for (x = 0; x < dest->w; x++)
+		{
+			SDL_GetRGBA(((Uint32 *)orig->pixels)[x + y * orig->w], orig->format, &r, &g, &b, &a);
+			set_pixel(dest, x, y, r, g, b, a * ( 0.2 + rand_(100)/100.0 ));
 		}
 	}
 	myUnlockSurface(orig);
