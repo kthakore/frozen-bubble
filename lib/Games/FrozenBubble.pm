@@ -21,9 +21,16 @@ Strawberry perl windows users need not worry!
 
 =head2 Alien::SDL
 
+=head3 Unix/Linux/Macs
+
+You may need the following packages
+
+ libpng-dev libvorbis-dev x11proto-xext-dev libxft-dev 
+
+Then B<CRITICAL> select pango support!
+
  cpan Alien::SDL
 
-<b>THIS IS CRITICAL<b> select pango support!
 
 =head2 SDL and Games::FrozenBubble
 
