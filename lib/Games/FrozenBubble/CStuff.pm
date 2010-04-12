@@ -1,16 +1,16 @@
 package Games::FrozenBubble::CStuff;
 
 use strict;
-use vars qw($VERSION @ISA);
+use vars qw(@ISA);
+use Games::FrozenBubble;
 use SDL::Pango;
 use SDL::Pango::Context;
 
 require DynaLoader;
 
 @ISA = qw(DynaLoader);
-$VERSION = '2.20';
 
-bootstrap Games::FrozenBubble::CStuff $VERSION;
+bootstrap Games::FrozenBubble::CStuff $Games::FrozenBubble::VERSION;
 
 sub sdlpango_init{ SDL::Pango::init(); }
 sub sdlpango_createcontext{

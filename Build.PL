@@ -39,12 +39,14 @@ My::Builder->new(
         'IO::File'                  => 0,
         'Locale::Maketext::Extract' => 0,
         'Module::Build'             => '0.36',    # for share_dir
+	'SDL'			    => '2.4'
     },
     build_requires => {
         'IO::File'                  => 0,
         'Locale::Maketext::Extract' => 0,
         autodie                     => 0,
-        'IPC::System::Simple'       => 0
+        'IPC::System::Simple'       => 0,
+	'SDL'			    => '2.4'
     },
     dist_abstract  => 'Puzzle with Bubbles', # taken from openSUSE rpm spec file
     dynamic_config => 1,
