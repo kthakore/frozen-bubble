@@ -643,77 +643,96 @@ transform_cubic(double dx, int jm1, int j, int jp1, int jp2)
 
 void rotate_bicubic_(SDL_Surface * dest, SDL_Surface * orig, double angle)
 {
-	int Bpp = dest->format->BytesPerPixel;
-        Uint8 r, g, b, a;
-        int x_, y_;
-        double cosval = cos(angle);
-        double sinval = sin(angle);
-        double a_val, a_recip;
-        int   i;
-        double dx, dy;
-	if (orig->format->BytesPerPixel != 4) {
-                fprintf(stderr, "rotate_bicubic: orig surface must be 32bpp (bytes per pixel = %d)\n", orig->format->BytesPerPixel);
-                abort();
-        }
-	if (dest->format->BytesPerPixel != 4) {
-                fprintf(stderr, "rotate_bicubic: dest surface must be 32bpp\n");
-                abort();
-        }
+	Uint8 r, g, b, a;
+	Uint8 r_ [15], g_ [15], b_ [15], a_ [15];
+	int x_, y_;
+	double cosval = cos(angle);
+	double sinval = sin(angle);
+	double a_val, a_recip;
+	double dx, dy;
+	if (orig->format->BytesPerPixel == 1)
+	{
+		fprintf(stderr, "rotate_bicubic: orig surface must not have a palette\n");
+		abort();
+	}
+	if (dest->format->BytesPerPixel == 1)
+	{
+		fprintf(stderr, "rotate_bicubic: orig surface must not have a palette\n");
+		abort();
+	}
 	myLockSurface(orig);
 	myLockSurface(dest);
-        for (y = 0; y < dest->h; y++) {
-                double x__ = - dest->w/2*cosval - (y - dest->h/2)*sinval + dest->w/2 - 1;
-                double y__ = (y - dest->h/2)*cosval - dest->w/2*sinval + dest->h/2 - 1;
-                //ptr = dest->pixels + y*dest->pitch;
-                for (x = 0; x < dest->w; x++) {
-                        x_ = floor(x__);
-                        y_ = floor(y__);
-                        if (x_ < 0 || x_ > orig->w - 4 || y_ < 0 || y_ > orig->h - 4)
-						{
-                                set_pixel(dest, x, y, 0, 0, 0, 0);
-                        } else {
-                                Uint8* origptr = orig->pixels + x_*Bpp + y_*orig->pitch;
+	for (y = 0; y < dest->h; y++)
+	{
+		double x__ = - dest->w/2*cosval - (y - dest->h/2)*sinval + dest->w/2 - 1;
+		double y__ = (y - dest->h/2)*cosval - dest->w/2*sinval + dest->h/2 - 1;
+		for (x = 0; x < dest->w; x++)
+		{
+			x_ = floor(x__);
+			y_ = floor(y__);
+			if (x_ < 0 || x_ > orig->w - 4 || y_ < 0 || y_ > orig->h - 4)
+			{
+				set_pixel(dest, x, y, 0, 0, 0, 0);
+			}
+			else
+			{
+				/* matrix of 4 * 4 pixels
+				   00 01 02 03
+				   04 05 06 07
+				   08 09 10 11
+				   12 13 14 15
+				*/
+				int x___, y___, i = 0;
+				for(y___ = y_; y___ < y_ + 4; y___++)
+				{
+					for(x___ = x_; x___ < x_ + 4; x___++)
+					{
+						SDL_GetRGBA(((Uint32 *)orig->pixels)[CLAMP(x___,  0, dest->w) +  CLAMP(y___, 0, dest->h) * dest->w], 
+						            orig->format, &(r_[i]), &(g_[i]), &(b_[i]), &(a_[i]));
+						i++;
+					}
+				}
 
-                                /* the fractional error */
-                                dx = x__ - x_;
-                                dy = y__ - y_;
-                                /* calculate alpha of result */
-                                a_val = transform_cubic(dy,
-                                                        CUBIC_ROW(dx, origptr + 3),
-                                                        CUBIC_ROW(dx, origptr + 3 + dest->pitch),
-                                                        CUBIC_ROW(dx, origptr + 3 + dest->pitch * 2),
-                                                        CUBIC_ROW(dx, origptr + 3 + dest->pitch * 3));
-                                if (a_val <= 0.0) {
-                                        a_recip = 0.0;
-                                        a       = 0;
-                                } else if (a_val > 255.0) {
-                                        a_recip = 1.0 / a_val;
-                                        a       = 255;
-                                } else {
-                                        a_recip = 1.0 / a_val;
-                                        a       = (int) a_val;
-                                }
-								
-                                /* for RGB, result = bicubic (c * alpha) / bicubic (alpha) */
-								r = CLAMP(a_recip * transform_cubic(dy,
-								   CUBIC_SCALED_ROW (dx, origptr + 0,                   origptr + 3),
-								   CUBIC_SCALED_ROW (dx, origptr + 0 + dest->pitch,     origptr + 3 + dest->pitch),
-								   CUBIC_SCALED_ROW (dx, origptr + 0 + dest->pitch * 2, origptr + 3 + dest->pitch * 2),
-								   CUBIC_SCALED_ROW (dx, origptr + 0 + dest->pitch * 3, origptr + 3 + dest->pitch * 3)), 0, 255);
-								g = CLAMP(a_recip * transform_cubic(dy,
-								   CUBIC_SCALED_ROW (dx, origptr + 1,                   origptr + 3),
-								   CUBIC_SCALED_ROW (dx, origptr + 1 + dest->pitch,     origptr + 3 + dest->pitch),
-								   CUBIC_SCALED_ROW (dx, origptr + 1 + dest->pitch * 2, origptr + 3 + dest->pitch * 2),
-								   CUBIC_SCALED_ROW (dx, origptr + 1 + dest->pitch * 3, origptr + 3 + dest->pitch * 3)), 0, 255);
-								b = CLAMP(a_recip * transform_cubic(dy,
-								   CUBIC_SCALED_ROW (dx, origptr + 2,                   origptr + 3),
-								   CUBIC_SCALED_ROW (dx, origptr + 2 + dest->pitch,     origptr + 3 + dest->pitch),
-								   CUBIC_SCALED_ROW (dx, origptr + 2 + dest->pitch * 2, origptr + 3 + dest->pitch * 2),
-								   CUBIC_SCALED_ROW (dx, origptr + 2 + dest->pitch * 3, origptr + 3 + dest->pitch * 3)), 0, 255);
-                        }
-						set_pixel(dest, x, y, r, g, b, a);
-                        x__ += cosval;
-                        y__ += sinval;
+				/* the fractional error */
+				dx = x__ - x_;
+				dy = y__ - y_;
+				/* calculate alpha of result */
+				a_val = transform_cubic(dy,
+										transform_cubic(dx, a_[ 0], a_[ 1], a_[ 2], a_[ 3]),
+										transform_cubic(dx, a_[ 4], a_[ 5], a_[ 6], a_[ 7]),
+										transform_cubic(dx, a_[ 8], a_[ 9], a_[10], a_[11]),
+										transform_cubic(dx, a_[12], a_[13], a_[14], a_[15]));
+				if (a_val <= 0.0) {
+					a_recip = 0.0;
+					a       = 0;
+				} else if (a_val > 255.0) {
+					a_recip = 1.0 / a_val;
+					a       = 255;
+				} else {
+					a_recip = 1.0 / a_val;
+					a       = (int) a_val;
+				}
+				
+				/* for RGB, result = bicubic (c * alpha) / bicubic (alpha) */
+				r = CLAMP(a_recip * transform_cubic(dy,
+										transform_cubic(dx, r_[ 0] * a_[ 0], r_[ 1] * a_[ 1], r_[ 2] * a_[ 2], r_[ 3] * a_[ 3]),
+										transform_cubic(dx, r_[ 4] * a_[ 4], r_[ 5] * a_[ 5], r_[ 6] * a_[ 6], r_[ 7] * a_[ 7]),
+										transform_cubic(dx, r_[ 8] * a_[ 8], r_[ 9] * a_[ 9], r_[10] * a_[10], r_[11] * a_[11]),
+										transform_cubic(dx, r_[12] * a_[12], r_[13] * a_[13], r_[14] * a_[14], r_[15] * a_[15])), 0, 255);
+				g = CLAMP(a_recip * transform_cubic(dy,
+										transform_cubic(dx, g_[ 0] * a_[ 0], g_[ 1] * a_[ 1], g_[ 2] * a_[ 2], g_[ 3] * a_[ 3]),
+										transform_cubic(dx, g_[ 4] * a_[ 4], g_[ 5] * a_[ 5], g_[ 6] * a_[ 6], g_[ 7] * a_[ 7]),
+										transform_cubic(dx, g_[ 8] * a_[ 8], g_[ 9] * a_[ 9], g_[10] * a_[10], g_[11] * a_[11]),
+										transform_cubic(dx, g_[12] * a_[12], g_[13] * a_[13], g_[14] * a_[14], g_[15] * a_[15])), 0, 255);
+				b = CLAMP(a_recip * transform_cubic(dy,
+										transform_cubic(dx, b_[ 0] * a_[ 0], b_[ 1] * a_[ 1], b_[ 2] * a_[ 2], b_[ 3] * a_[ 3]),
+										transform_cubic(dx, b_[ 4] * a_[ 4], b_[ 5] * a_[ 5], b_[ 6] * a_[ 6], b_[ 7] * a_[ 7]),
+										transform_cubic(dx, b_[ 8] * a_[ 8], b_[ 9] * a_[ 9], b_[10] * a_[10], b_[11] * a_[11]),
+										transform_cubic(dx, b_[12] * a_[12], b_[13] * a_[13], b_[14] * a_[14], b_[15] * a_[15])), 0, 255);
+				set_pixel(dest, x, y, r, g, b, a);
+			}
+			x__ += cosval;
+			y__ += sinval;
 		}
 	}
 	myUnlockSurface(orig);
