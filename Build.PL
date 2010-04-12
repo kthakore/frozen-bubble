@@ -12,7 +12,9 @@ my $prefix = Alien::SDL->config('prefix');
 my $cflags = Alien::SDL->config('cflags');
 $cflags = '-I'
   . File::Spec->catfile( $prefix, 'include' )
-  ;    ###!!! this looks strange, you perhaps meant "$cflags .= ..."
+  ;
+$cflags .= ' -fnested-functions' if $^O =~ /darwin/;
+###!!! this looks strange, you perhaps meant "$cflags .= ..."
 ###!!! I intended Alien::SDL to add -I$prefix/include automatically, please tell me when it does not work (kmx)
 my $devnull = File::Spec->devnull();
 
