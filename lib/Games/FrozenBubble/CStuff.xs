@@ -216,7 +216,7 @@ void squares_effect(SDL_Surface * s, SDL_Surface * img)
 
 		still_moving = 0;
 		for (j=i; j>=0; j--) {
-			if (fillrect(j, k, s ,img))
+			if (fillrect(j, k, s ,img, squares_size, bpp))
 				still_moving = 1;
 			k++;
 		}
@@ -809,8 +809,7 @@ void flipflop_(SDL_Surface * dest, SDL_Surface * orig, int offset)
 	myUnlockSurface(orig);
 	myUnlockSurface(dest);
 }
-
-//float sqr(float a) { return a*a; }
+float sqr_fb(float a) { return a*a; }
 
 // moves an highlighted spot over the surface (shape of ellypse, depending on width and hight)
 void enlighten_(SDL_Surface * dest, SDL_Surface * orig, int offset)
@@ -838,13 +837,13 @@ void enlighten_(SDL_Surface * dest, SDL_Surface * orig, int offset)
 	
 	for (y = 0; y < dest->h; y++)
 	{
-		sqdistbase = sqr(y - lighty) - 3;
+		sqdistbase = sqr_fb(y - lighty) - 3;
 		
 		if (y == lighty) sqdistbase -= 4;
 		
 		for (x = 0; x < dest->w; x++)
 		{
-			sqdist = sqdistbase + sqr(x - lightx);
+			sqdist = sqdistbase + sqr_fb(x - lightx);
 			
 			if (x == lightx) sqdist -= 2;
 			
