@@ -188,10 +188,8 @@ void bars_effect(SDL_Surface * s, SDL_Surface * img)
 
 
 /* -------------- Squares ------------------ */
-	int fillrect(int i, int j, SDL_Surface * s, SDL_Surface * img)
+	int fillrect(int i, int j, SDL_Surface * s, SDL_Surface * img,int bpp, const int squares_size)
 	{
-		int bpp = img->format->BytesPerPixel;
-		const int squares_size = 32;
 		int c, v;
 		if (i >= XRES/squares_size || j >= YRES/squares_size)
 			return 0;
