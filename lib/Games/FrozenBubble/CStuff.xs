@@ -1183,40 +1183,42 @@ void waterize_(SDL_Surface * dest, SDL_Surface * orig, int offset)
 
 void brokentv_(SDL_Surface * dest, SDL_Surface * orig, int offset)
 {
-	int Bpp = dest->format->BytesPerPixel;
-        Uint8 *ptrdest, *ptrorig;
-        double throughness, throughness_base = 0.9 + cos(offset/50.0)*0.1;
-        static int pixelize = 0;
-        if (pixelize == 0) {
-                if (rand_(100) == 1) {
-                        pixelize = 15 + 5*cos(offset);
-                }
-        } else {
-                pixelize--;
-        }
-	if (orig->format->BytesPerPixel != 4) {
-                fprintf(stderr, "brokentv: orig surface must be 32bpp\n");
-                abort();
-        }
-	if (dest->format->BytesPerPixel != 4) {
-                fprintf(stderr, "brokentv: dest surface must be 32bpp\n");
-                abort();
-        }
+	Uint8 r, g, b, a;
+	double throughness, throughness_base = 0.9 + cos(offset/50.0)*0.1;
+	static int pixelize = 0;
+	
+	if (pixelize == 0)
+	{	
+		if (rand_(100) == 1)
+			pixelize = 15 + 5*cos(offset);
+	}
+	else
+	{
+		pixelize--;
+	}
+	
+	if (orig->format->palette) {
+		fprintf(stderr, "brokentv: orig surface must not have a palette\n");
+		abort();
+	}
+	
+	if (dest->format->palette) {
+		fprintf(stderr, "brokentv: dest surface must not have a palette\n");
+		abort();
+	}
+	
 	myLockSurface(orig);
 	myLockSurface(dest);
-        for (y = 0; y < dest->h; y++) {
-                ptrdest = dest->pixels + y*dest->pitch;
-                ptrorig = orig->pixels + y*orig->pitch;
-                throughness = CLAMP(sin(y/(12.0+2*sin(offset/50.0))+offset/10.0+sin(offset/100.0)*5) > 0 ? throughness_base : throughness_base + cos(offset/30.0)*0.2, 0, 1);
-                for (x = 0; x < dest->w; x++) {
-                        if (pixelize)
-                                throughness = 0.2 + rand_(100)/100.0;
-                        * ( ptrdest + Rdec ) = *( ptrorig + Rdec );
-                        * ( ptrdest + Gdec ) = *( ptrorig + Gdec );
-                        * ( ptrdest + Bdec ) = *( ptrorig + Bdec );
-                        * ( ptrdest + Adec ) = *( ptrorig + Adec ) * throughness;
-                        ptrdest += Bpp;
-                        ptrorig += Bpp;
+	for (y = 0; y < dest->h; y++)
+	{
+		throughness = CLAMP(sin(y/(12.0+2*sin(offset/50.0))+offset/10.0+sin(offset/100.0)*5) > 0 ? throughness_base : throughness_base + cos(offset/30.0)*0.2, 0, 1);
+		for (x = 0; x < dest->w; x++)
+		{
+			SDL_GetRGBA(((Uint32 *)orig->pixels)[x + y * orig->w], orig->format, &r, &g, &b, &a);
+
+			if (pixelize)
+				throughness = 0.2 + rand_(100)/100.0;
+			set_pixel(dest, x, y, r, g, b, a * throughness);
 		}
 	}
 	myUnlockSurface(orig);
@@ -1268,13 +1270,13 @@ void pixelize_(SDL_Surface * dest, SDL_Surface * orig)
 {
 	Uint8 r, g, b, a;
 	
-	if (orig->format->BytesPerPixel == 1)
+	if (orig->format->palette)
 	{
 		fprintf(stderr, "pixelize: orig surface must not have a palette\n");
 		abort();
 	}
 	
-	if (dest->format->BytesPerPixel == 1)
+	if (dest->format->palette)
 	{
 		fprintf(stderr, "pixelize: orig surface must not have a palette\n");
 		abort();
@@ -1296,34 +1298,45 @@ void pixelize_(SDL_Surface * dest, SDL_Surface * orig)
 
 void blacken_(SDL_Surface * surf, int step)
 {
-        Uint32 pixelvalue; /* this should also be okay for 16-bit and 24-bit formats */
-        int r, g, b;
-        if (surf->format->palette) {
-                /* there is a palette... I don't care of the bloody oldskoolers who still use
-                   8-bit displays & al, they can suffer and die ;p */
-                return;
-        }
+	Uint32 pixelvalue; /* this should also be okay for 16-bit and 24-bit formats */
+	//Uint8 r, g, b, a;
+	int r, g, b;
+	if (surf->format->palette) {
+			/* there is a palette... I don't care of the bloody oldskoolers who still use
+			   8-bit displays & al, they can suffer and die ;p */
+			return;
+	}
 	myLockSurface(surf);
-        for (y=(step-1)*YRES/70; y<step*YRES/70; y++) {
-                bzero(surf->pixels + y*surf->pitch, surf->format->BytesPerPixel * XRES);
-                bzero(surf->pixels + (YRES-1-y)*surf->pitch, surf->format->BytesPerPixel * XRES);
-        }
-        for (y=step*YRES/70; y<(step+8)*YRES/70 && y<YRES; y++)
-                for (x=0; x<XRES; x++) {
-                        memcpy(&pixelvalue, surf->pixels + y*surf->pitch + x*surf->format->BytesPerPixel, surf->format->BytesPerPixel);
-                        r = ( ((pixelvalue & surf->format->Rmask) >> surf->format->Rshift))*3/4;
-                        g = ( ((pixelvalue & surf->format->Gmask) >> surf->format->Gshift))*3/4;
-                        b = ( ((pixelvalue & surf->format->Bmask) >> surf->format->Bshift))*3/4;
-                        pixelvalue = (r << surf->format->Rshift) + (g << surf->format->Gshift) + (b << surf->format->Bshift);
-                        memcpy(surf->pixels + y*surf->pitch + x*surf->format->BytesPerPixel, &pixelvalue, surf->format->BytesPerPixel);
+	for (y=(step-1)*surf->h/70; y<step*surf->h/70; y++) {
+			bzero(surf->pixels + y*surf->pitch, surf->format->BytesPerPixel * XRES);
+			bzero(surf->pixels + (YRES-1-y)*surf->pitch, surf->format->BytesPerPixel * XRES);
+			//set_pixel(surf, x, y,           0, 0, 0, 0);
+			//set_pixel(surf, x, surf->h - y, 0, 0, 0, 0);
+	}
+	for (y=step*surf->h/70; y<(step+8)*surf->h/70 && y<surf->h; y++)
+	for (x=0; x<surf->w; x++)
+	{
+	
+		//SDL_GetRGBA(((Uint32 *)surf->pixels)[x + y * surf->w], surf->format, &r, &g, &b, &a);
+		//set_pixel(surf, x, y, r*3/4, g*3/4, b*3/4, a);
 
-                        memcpy(&pixelvalue, surf->pixels + (YRES-1-y)*surf->pitch + x*surf->format->BytesPerPixel, surf->format->BytesPerPixel);
-                        r = ( ((pixelvalue & surf->format->Rmask) >> surf->format->Rshift))*3/4;
-                        g = ( ((pixelvalue & surf->format->Gmask) >> surf->format->Gshift))*3/4;
-                        b = ( ((pixelvalue & surf->format->Bmask) >> surf->format->Bshift))*3/4;
-                        pixelvalue = (r << surf->format->Rshift) + (g << surf->format->Gshift) + (b << surf->format->Bshift);
-                        memcpy(surf->pixels + (YRES-1-y)*surf->pitch + x*surf->format->BytesPerPixel, &pixelvalue, surf->format->BytesPerPixel);
-                }
+		//SDL_GetRGBA(((Uint32 *)surf->pixels)[x + (surf->h-y-1) * surf->w], surf->format, &r, &g, &b, &a);
+		//set_pixel(surf, x, (surf->h-y-1), r*3/4, g*3/4, b*3/4, a);
+
+		memcpy(&pixelvalue, surf->pixels + y*surf->pitch + x*surf->format->BytesPerPixel, surf->format->BytesPerPixel);
+		r = ( ((pixelvalue & surf->format->Rmask) >> surf->format->Rshift))*3/4;
+		g = ( ((pixelvalue & surf->format->Gmask) >> surf->format->Gshift))*3/4;
+		b = ( ((pixelvalue & surf->format->Bmask) >> surf->format->Bshift))*3/4;
+		pixelvalue = (r << surf->format->Rshift) + (g << surf->format->Gshift) + (b << surf->format->Bshift);
+		memcpy(surf->pixels + y*surf->pitch + x*surf->format->BytesPerPixel, &pixelvalue, surf->format->BytesPerPixel);
+
+		memcpy(&pixelvalue, surf->pixels + (YRES-1-y)*surf->pitch + x*surf->format->BytesPerPixel, surf->format->BytesPerPixel);
+		r = ( ((pixelvalue & surf->format->Rmask) >> surf->format->Rshift))*3/4;
+		g = ( ((pixelvalue & surf->format->Gmask) >> surf->format->Gshift))*3/4;
+		b = ( ((pixelvalue & surf->format->Bmask) >> surf->format->Bshift))*3/4;
+		pixelvalue = (r << surf->format->Rshift) + (g << surf->format->Gshift) + (b << surf->format->Bshift);
+		memcpy(surf->pixels + (YRES-1-y)*surf->pitch + x*surf->format->BytesPerPixel, &pixelvalue, surf->format->BytesPerPixel);
+	}
 	myUnlockSurface(surf);
 }
 

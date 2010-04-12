@@ -5534,7 +5534,7 @@ sub menu {
 			# logo effects (snow, water, ...)
 			
 			# switching the animation every 100 ticks, just for tests
-			my @candy_methods = (1, 2, 3.1, 4.1, 6); #(0, 1, 2, 3.1, 4.1, 5, 6, 7, 8.1);
+			my @candy_methods = (1, 2, 3.1, 4.1, 6, 7); #(0, 1, 2, 3.1, 4.1, 5, 6, 7, 8.1);
 			$logo_candy_method = $candy_methods[rand @candy_methods] unless $logo_candy_index % 150;
 			
             Games::FrozenBubble::CStuff::rotate_bilinear($candy, $imgbin{menu_logo}, sin($logo_candy_index/40)/20) if $logo_candy_method == 0;
@@ -5645,14 +5645,13 @@ sub menu {
 				if (!defined($cursor_tmp)) {
 					$cursor_tmp = SDL::Surface->new( SDL_SWSURFACE, $imgbin{menu_cursor}{$m}[0]->w,  $imgbin{menu_cursor}{$m}[0]->h, 32, 0xFF000000,0xFF0000,0xFF00,0xFF);
 				}
+				# this effect appears randomly on not selected (animated) menu elements
                 Games::FrozenBubble::CStuff::pixelize($cursor_tmp, $imgbin{menu_cursor}{"${m}alpha"}[$pdata{cursor_img}{$m}]);
-                #Games::FrozenBubble::CStuff::pixelize($cursor_tmp, $imgbin{menu_cursor}{$m}[$pdata{cursor_img}{$m}]);
 				SDL::Video::blit_surface( $cursor_tmp, SDL::Rect->new(0,0,$cursor_tmp->w,$cursor_tmp->h), $app, $cursor_rect);
             }
 			else {
 				# not animated menu item
               	SDL::Video::blit_surface( $imgbin{menu_cursor}{"${m}alpha"}[$pdata{cursor_img}{$m}], SDL::Rect->new(0,0,$imgbin{menu_cursor}{"${m}alpha"}[$pdata{cursor_img}{$m}]->w,$imgbin{menu_cursor}{"${m}alpha"}[$pdata{cursor_img}{$m}]->h), $app, $cursor_rect);
-				#SDL::Video::blit_surface( $imgbin{menu_cursor}{$m}[$pdata{cursor_img}{$m}], SDL::Rect->new(0,0,$imgbin{menu_cursor}{$m}[$pdata{cursor_img}{$m}]->w,$imgbin{menu_cursor}{$m}[$pdata{cursor_img}{$m}]->h), $app, $cursor_rect);
             }
         }
 		else {
