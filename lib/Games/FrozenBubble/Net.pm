@@ -348,12 +348,14 @@ sub connect {
         $ping = sprintf("%.1f", sum(@pings)/@pings);
     }
 
+    #TODO: Need to make and alternative for windows
     my $flags = $sock->fcntl(F_GETFL, 0);
     if (!$flags) {
         disconnect();
         return { failure => 'Server is mad' };
     }
 
+    #TODO: Need to make and alternative for windows
     $flags = $sock->fcntl(F_SETFL, $flags|O_NONBLOCK);
     if (!$flags) {
         disconnect();
