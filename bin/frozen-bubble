@@ -132,7 +132,7 @@ print "        [[ Frozen-Bubble-$version ]]\n\n";
 print '  http://www.frozen-bubble.org/
 
   Copyright (c) 2000-2008 The Frozen-Bubble Team.
- 
+
     Artwork: Alexis Younes
              Amaury Amblard-Ladurantie
     Soundtrack: Matthias Le Bidan
@@ -298,7 +298,7 @@ sub play_music($) {
 		print STDERR "[Playlist] playing `$elem'\n";
 		SDL::Mixer::Music::play_music($mus, 0);
 		return 1;
-	    } else { 
+	    } else {
 		print STDERR "Warning, could not create new music from '$elem' (reason: ", SDL::get_error(), ").\n";
 		return 0;
 	    }
@@ -316,7 +316,7 @@ sub play_music($) {
 }
 
 sub init_sound() {
-    eval { 
+    eval {
 	     SDL::Mixer::open_audio( 22050, AUDIO_S16SYS, 2,1024);
       		 };
     if ($@) {
@@ -616,7 +616,7 @@ sub is_collision($$$) {
     my ($bub, $x, $y) = @_;
     my $DISTANCE_COLLISION_SQRED = sqr($BUBBLE_SIZE * 0.82);
     my $xs = sqr($bub->{x} - $x);
-    ($xs > $DISTANCE_COLLISION_SQRED) and return 0; 
+    ($xs > $DISTANCE_COLLISION_SQRED) and return 0;
     return ($xs + sqr($bub->{'y'} - $y)) < $DISTANCE_COLLISION_SQRED;
 }
 
@@ -812,7 +812,7 @@ sub stick_bubble($$$$$) {
 				    ($falling->{chaindestx}, $falling->{chaindesty}) = calc_real_pos_given_arraypos($npos->[0], $npos->[1], $player);
 				    push @{$chains{$player}{falling_chained}}, $falling;
 				    push @occupied_positions, $npos->[1]*8 + $npos->[0];
-				    
+
 				    #- next lines will allow not to chain-react on the same group from two different positions,
 				    #- and even to not chain-react on a group that will itself fall from a chain-reaction
 				    @{$falling->{neighbours}} = grep { bubble_next_to($_->{cx}, $_->{cy}, $npos->[0], $npos->[1], $player) } @{$sticked_bubbles{$player}};
@@ -1434,7 +1434,7 @@ sub handle_mp_messages {
                     }
                 }
                 die "could not find malus bubble to malusstick!\n";
-              ok_malusstick:                    
+              ok_malusstick:
             }
         } elsif ($command eq 'F') {
             #- this is coming too soon. it needs to be collected in the algo to restart a game.
@@ -1475,7 +1475,7 @@ sub handle_mp_messages {
             $angle{$player} += $difference / 2;
         }
     }
-            
+
 }
 
 sub handle_whenever_events {
@@ -1599,7 +1599,7 @@ sub handle_game_events() {
                         }
                     }
                 };
-                
+
                 if ($keypressed eq $KEYS->{misc}{chat} && is_mp_game()) {
                     callback_entry('reset');
                     $pdata{p1}{chatting} = 1;
@@ -1827,7 +1827,7 @@ sub play {
 }
 
 sub print_scores($) {
-    my ($surface) = @_;  
+    my ($surface) = @_;
     iter_players_ {  #- sometimes called from within a iter_players so...
         my $score = @PLAYERS == 1 ? ($pdata{$::p_}{score} eq 'random' ? loc("Random level")
                                          : $levels{current} eq 'mp_train' ? loc("Score: %s", i18n_number($pdata{$::p_}{score}))
@@ -1888,7 +1888,7 @@ sub lose {
         print_next_bubble($bubbles_anim{lose}, $player, 1);
     }
     cleanup_player_bubbles($player);
-    
+
     if (is_mp_game()) {
         $pdata{$player}{state} = 'lost';
         my @living = living_players();
@@ -1979,7 +1979,7 @@ sub update_lost {
     if (@{$sticked_bubbles{$player}}) {
         my $b = shift @{$sticked_bubbles{$player}};
         put_image_to_background($bubbles_anim{lose}, --$b->{'x'}, --$b->{'y'});
-        
+
         if (@{$sticked_bubbles{$player}} == 0) {
             if ($graphics_level == 1 && $pdata{state} =~ /^lost (.*)/ && !is_1p_game()) {
                 put_image_to_background($imgbin{win}{$player eq 'p1' ? 'p2' : 'p1'}, $POS{centerpanel}{x}, $POS{centerpanel}{'y'});
@@ -2179,7 +2179,7 @@ sub update_game() {
                                     is_mp_game() and Games::FrozenBubble::Net::gsend("s$cx:$cy:$col:@{$pdata{$::p}{nextcolors}}");
                                     stick_bubble($launched_bubble{$::p}, $cx, $cy, $::p, 1);
                                     $launched_bubble{$::p} = undef;
-                                    
+
                                     #- malus generation
                                     if (!any { $_->{chaindestx} } @{$falling_bubble{$::p}}) {
                                         my $malusfreezeframes = 20;
@@ -2214,7 +2214,7 @@ sub update_game() {
                                             Games::FrozenBubble::Net::gsend("m$_->{num}:$_->{cx}:$_->{cy}:$_->{stick_y}") foreach @{$malus_bubble{$::p}};
                                         }
                                     }
-                                    
+
                                 } else {
                                     $pdata{$::p}{freezelaunchedbubble} = 1;
                                 }
@@ -2282,7 +2282,7 @@ sub update_game() {
         my $loser = $1;
         update_lost($loser);
         is_2p_game() and update_won($loser eq 'p1' ? 'p2' : 'p1');
-        
+
     } elsif ($pdata{state} =~ /^finished (\S+):(\S+) (\S+)/) {
         my $supposed_winner_player = $1;
         my $supposed_winner_nick = $2;
@@ -2323,7 +2323,7 @@ sub update_game() {
                     #- delay other players already asking for a new game (we're waiting for agreement on winner from others)
                     Games::FrozenBubble::Net::gdelay_messages($msg);
                 }
-                
+
             } else {
                 check_mp_connection();
                 #- timeout for receiving the winners. it could happen when a client is badly killed.
@@ -2654,7 +2654,7 @@ sub init_game() {
 	$app = SDL::Video::set_video_mode(640, 480, 24, $sdl_flags | ($fullscreen ? SDL_FULLSCREEN : 0));
 	SDL::Video::wm_set_icon(SDL::Video::load_BMP("$FPATH/gfx/pinguins/window_icon_penguin.png"));
 	SDL::Video::wm_set_caption('Frozen-Bubble 2', 'Frozen-Bubble 2');
-		
+
     my $joys = SDL::Joystick::num_joysticks();
     $joysticksinfo and print "\nfound $joys joystick(s)\n";
     for (my $i = 0; $i < $joys; $i++) {
@@ -2672,7 +2672,7 @@ sub init_game() {
 	SDL::Video::update_rect($app, 0, 0, 0, 0);
     $imgbin{loading_step} = add_image('loading_step.png');
     $imgbin{loading_step_initial} = add_image('loading_step_initial.png');
- 
+
     print_step('[Graphics');
     $imgbin{back_2p} = SDL::Image::load("$FPATH/gfx/backgrnd.png");
     $imgbin{back_1p} = SDL::Image::load("$FPATH/gfx/back_one_player.png");
@@ -2721,7 +2721,7 @@ sub init_game() {
         my $replace = SDL::Surface->new( SDL_SWSURFACE, $canon{data}{$number}[2],  $canon{data}{$number}[3], 32, 0xFF000000, 0xFF0000, 0xFF00, 0xFF);
 		SDL::Video::set_alpha($canon{img}{$number}, 0, 0);
 		SDL::Video::blit_surface( $canon{img}{$number}, SDL::Rect->new( $canon{data}{$number}[0],  $canon{data}{$number}[1],
-                                                                    $canon{data}{$number}[2],  $canon{data}{$number}[3]), 
+                                                                    $canon{data}{$number}[2],  $canon{data}{$number}[3]),
 							  $replace, SDL::Rect->new(0, 0, $canon{img}{$number}->w, $canon{img}{$number}->h));
         $canon{img}{$number} = $replace;
         add_default_rect($canon{img}{$number});
@@ -2734,17 +2734,17 @@ sub init_game() {
         my $replace2 = SDL::Surface->new( SDL_SWSURFACE, $canon{data_mini}{$number}[2], $canon{data_mini}{$number}[3], 32, 0xFF000000, 0xFF0000, 0xFF00, 0xFF);
 		SDL::Video::set_alpha($canon{img_mini}{$number}, 0, 0);
 		SDL::Video::blit_surface( $canon{img_mini}{$number}, SDL::Rect->new( $canon{data_mini}{$number}[0], $canon{data_mini}{$number}[1],
-                                                        $canon{data_mini}{$number}[2], $canon{data_mini}{$number}[3]), $replace2, 
+                                                        $canon{data_mini}{$number}[2], $canon{data_mini}{$number}[3]), $replace2,
 														SDL::Rect->new(0,0,$canon{img_mini}{$number}->w,$canon{img_mini}{$number}->h));
         $canon{img_mini}{$number} = $replace2;
         add_default_rect($canon{img_mini}{$number});
 
-        $number eq -$CANON_ROTATIONS_NB/2 and print_step('.'); 
-        $number eq 0 and print_step('.'); 
-        $number eq $CANON_ROTATIONS_NB/2 and print_step('.'); 
+        $number eq -$CANON_ROTATIONS_NB/2 and print_step('.');
+        $number eq 0 and print_step('.');
+        $number eq $CANON_ROTATIONS_NB/2 and print_step('.');
     }
 
-    print_step('.'); 
+    print_step('.');
     $malus_gfx{banane} = add_image('banane.png');
     $img_mini{$malus_gfx{banane}} = add_image('banane-mini.png');
     $malus_gfx{tomate} = add_image('tomate.png');
@@ -2811,7 +2811,7 @@ sub init_game() {
             #SDL::Video::blit_surface($img, SDL::Rect->new(0,0,$img->w,$img->h), $alpha, SDL::Rect->new(0,0,$img->w,$img->h));
             #Games::FrozenBubble::CStuff::alphaize($alpha);
             push @{$imgbin{menu_cursor}{"${cursortype}alpha"}}, $img; #$alpha;
-            #SDL::Video::set_alpha($img, SDL_SRCALPHA, SDL_ALPHA_OPAQUE);  
+            #SDL::Video::set_alpha($img, SDL_SRCALPHA, SDL_ALPHA_OPAQUE);
         }
     }
     $imgbin{left_rp1}         = add_image('left-rp1.png');
@@ -2859,10 +2859,10 @@ sub init_game() {
     $imgbin{hiscore_frame} = add_image('hiscore_frame.png');
     $imgbin{hiscore_levelset} = add_image('hiscore-levelset.png');
     $imgbin{hiscore_mptraining} = add_image('hiscore-mptraining.png');
-    
+
     local @PLAYERS = @ALL_PLAYERS;  #- load all images even if -so commandline option was passed
     iter_players {
-        print_step('.'); 
+        print_step('.');
         $imgbin{hurry}{$::p} = add_image("hurry_$::p.png");
         $imgbin{win}{$::p} = add_image("win_panel_$::p.png");
         $::p ne 'p2' and $imgbin{net_lose}{$::p} = add_image("net_lose_$::p.png");
@@ -2887,7 +2887,7 @@ sub init_game() {
         $pinguin{$::p}{lose}       = [ map { add_image("pinguins/loose_${p}_0$_.png") }                  ('065'..'158') ];
     };
 
-    print_step('] '); 
+    print_step('] ');
 
     if ($mixer eq 'SOUND_DISABLED') {
         $mixer_enabled = 0;
@@ -2935,7 +2935,7 @@ sub translate_joystick_tokey($) {
         my $value = Games::FrozenBubble::CStuff::JoyAxisEventValue($event);
         if ($value <= -10000) {  #- should work properly with analog joysticks
             return "joystick|axisvalue|$which|$axis|-10000";
-        } elsif ($value >= 10000) {  
+        } elsif ($value >= 10000) {
             return "joystick|axisvalue|$which|$axis|10000";
         } else {
             return "joystick|axisvalue|$which|$axis|0";
@@ -3002,9 +3002,9 @@ sub display_highscores {
             my ($x, $y, $txt, $bold) = @_;
             print_($bold ? 'bold_menu' : 'menu', $app, $x, $y + $imgbin{hiscore_frame}->h - 8, $txt, $imgbin{hiscore_frame}->w + 12, 'center');
         };
-        
+
         my $old_levelset = $loaded_levelset;
-        
+
         foreach my $high (ordered_highscores()) {
             @{$sticked_bubbles{p1}} = ();
             @{$root_bubbles{p1}} = ();
@@ -3016,7 +3016,7 @@ sub display_highscores {
             # last level in the default levelset
             if (!$high->{piclevel}) {
                 $loaded_levelset ne "$FPATH/data/levels" and load_levelset("$FPATH/data/levels");
-                
+
                 # handle the case where the user has edited/created a levelset with more levels
                 # than the default levelset and then got a high score
                 if ($high->{level} > $lev_number) {
@@ -3045,10 +3045,10 @@ sub display_highscores {
             $high_posx > 550 and $high_posx = $initial_high_posx, $high_posy += 175;
             $high_posy > 440 and last;
         }
-        load_levelset($old_levelset);    
+        load_levelset($old_levelset);
 
         SDL::Video::update_rect($app, 0, 0, 0, 0);
-        
+
         SDL::Events::pump_events() while SDL::Events::poll_event($event) != 0;
         grab_key() eq SDLK_ESCAPE() and return;
     }
@@ -3094,7 +3094,7 @@ sub display_highscores {
         }
 
         SDL::Video::update_rect($app, 0, 0, 0, 0);
-        
+
         SDL::Events::pump_events() while SDL::Events::poll_event($event) != 0;
         grab_key() eq SDLK_ESCAPE() and die "quit";
     }
@@ -3123,7 +3123,7 @@ sub ask_from($) {
     my $lineheight = 18;
     my %xpos = ( questions => $is_rtl ? $MENUPOS{xpos_panel} + $imgbin{void_panel}->w*1/3 + 10 : $MENUPOS{xpos_panel},
                  echo => $is_rtl ? $MENUPOS{xpos_panel} + $imgbin{void_panel}->w*1/3 - 100 : $MENUPOS{xpos_panel} + $imgbin{void_panel}->w*2/3 );
- 
+
     foreach my $i (@{$w->{intro}}) {
 		print_('menu', $app, $MENUPOS{xpos_panel}, $ypos, $i, $imgbin{void_panel}->w, 'center') if $i;
 		$ypos += $lineheight;
@@ -3410,7 +3410,7 @@ sub new_game() {
         iter_distant_players {
             $pdata{$::p}{barrier4newgame} = 0;
         };
-        
+
         #- at this point, we can receive first commands of quickies instead of synchro
         my @keep_messages;
         while (1) {
@@ -3438,7 +3438,7 @@ sub new_game() {
         #- 2. now that we're all ready to synchronize, let a unique synchro message be sent, the leader and others will all wait on
         is_leader() and Games::FrozenBubble::Net::gsend('!');
         check_mp_connection();
-        
+
         while (1) {
             my $m;
             eval { $m = Games::FrozenBubble::Net::grecv_get1msg(); }; #- blocking
@@ -3453,7 +3453,7 @@ sub new_game() {
                 push @keep_messages, $m;
             }
         }
-        
+
         Games::FrozenBubble::Net::gdelay_messages(@keep_messages);
 
         @{$pdata{attackingme}} = ();
@@ -3473,7 +3473,7 @@ sub choose_1p_game_mode() {
     my @ordered_names = qw(play_all_levels pick_start_level play_random_levels mp_train);
     my $active_menu = 0;
 
-    my $menu_xpos = $MENUPOS{xpos_panel} + ($imgbin{'1p_panel'}->w - $imgbin{txt_1pmenu_over}->w)/2; 
+    my $menu_xpos = $MENUPOS{xpos_panel} + ($imgbin{'1p_panel'}->w - $imgbin{txt_1pmenu_over}->w)/2;
     my $menu_ypos = $MENUPOS{ypos_panel} + 90;
     my $menu_ypos_spacer = $imgbin{txt_1pmenu_over}->h + 4;
     my %name2ypos = (play_all_levels    => $menu_ypos,
@@ -3482,14 +3482,14 @@ sub choose_1p_game_mode() {
                      mp_train           => $menu_ypos + 3 * $menu_ypos_spacer);
 
     my $overlook_index = 0;
-    my $overlook = SDL::Surface->new(SDL_SWSURFACE, $imgbin{txt_1pmenu_pick_start_level_text}->w, 
+    my $overlook = SDL::Surface->new(SDL_SWSURFACE, $imgbin{txt_1pmenu_pick_start_level_text}->w,
 	                                                $imgbin{txt_1pmenu_pick_start_level_text}->h, 32, 0, 0, 0, 0);
     my $redraw = sub {
         my $draw_element = sub {
             my ($name, $mode) = @_;
             put_image($imgbin{"txt_1pmenu_$mode"}, $menu_xpos, $name2ypos{$name});
-            SDL::Video::blit_surface($imgbin{"txt_1pmenu_${name}_outlined_text"}, SDL::Rect->new(0,0,$imgbin{"txt_1pmenu_${name}_outlined_text"}->w,$imgbin{"txt_1pmenu_${name}_outlined_text"}->h), 
-			                         $app, SDL::Rect->new($menu_xpos, $name2ypos{$name}, $imgbin{"txt_1pmenu_${name}_outlined_text"}->w, 
+            SDL::Video::blit_surface($imgbin{"txt_1pmenu_${name}_outlined_text"}, SDL::Rect->new(0,0,$imgbin{"txt_1pmenu_${name}_outlined_text"}->w,$imgbin{"txt_1pmenu_${name}_outlined_text"}->h),
+			                         $app, SDL::Rect->new($menu_xpos, $name2ypos{$name}, $imgbin{"txt_1pmenu_${name}_outlined_text"}->w,
 									                                                     $imgbin{"txt_1pmenu_${name}_outlined_text"}->h));
         };
 
@@ -3763,7 +3763,7 @@ sub smg_choose_server(@) {
             my $pingimg = $server->{ping} < 80 ? "ping_low" : $server->{ping} < 200 ? "ping_mid" : "ping_high";
             put_image($imgbin{$pingimg}, $is_rtl ? $parts{details}{xpos} + $parts{details}{width} - width('netdialogs', $details) - 17
                                                  : $parts{details}{xpos} + width('netdialogs', $details), $y);
-                                                     
+
             $y += $smg_lineheight + 2;
         }
         SDL::Video::update_rect($app, 0, 0, 0, 0);
@@ -4229,7 +4229,7 @@ sub smg_choose_game() {
             }
         }
     };
-    
+
     my $myoldnick;
     my $list = sub {
         my ($firsttime) = @_;
@@ -4289,7 +4289,7 @@ sub smg_choose_game() {
                 }
             }
         }
-        
+
         my ($join, $rest) = partition { $_->{action} eq 'JOIN' } @actions;
         $_->{ok} = 0 foreach @$join;
       listgames:
@@ -4371,7 +4371,7 @@ sub smg_choose_game() {
         }
     }
     smg_add_status_msg(loc("*** You may now create or join a game"));
-    
+
     my $need4update;
     my $relist;
     my $can_start = 0;
@@ -4737,7 +4737,7 @@ sub smg_choose_game() {
                         $need4update = 1;
                     }
                   not_in_game:
-                            
+
                     if ($curaction->()->{action} eq 'TOGGLE_CHAIN_REACTION') {
                         $toggle_chain_reaction->();
                     }
@@ -4806,7 +4806,7 @@ sub smg_choose_game() {
                             return;
                         }
                     }
-                    
+
 
                 } elsif ($k eq SDLK_RIGHT() && $curaction->()->{action} ne 'CHAT') {
                     if ($curaction->()->{action} eq 'TOGGLE_CHAIN_REACTION') {
@@ -4871,7 +4871,7 @@ sub smg_choose_game() {
                                                                }
                                                            }
                                                        } });
-                    
+
                     } else {
                         if ($curaction->()->{action} eq 'SWITCH_VICTORIES_LIMIT') {
                             my $utf8char = Games::FrozenBubble::CStuff::utf8key($event);
@@ -5120,7 +5120,7 @@ sub show_mp_scores() {
 }
 
 sub setup_mp_game() {
-    
+
     SDL::Video::blit_surface($imgbin{back_netgame}, $apprects{main}, $app, $apprects{main});
 
     if (!Games::FrozenBubble::Net::isconnected()) {
@@ -5143,11 +5143,11 @@ sub setup_mp_game() {
             #- 1. get list of servers
             my $servers = smg_servers();
             defined $servers or return;
-            
+
             #- 2. let user choose server
             smg_choose_server(@$servers) or return;
         }
-            
+
     } else {
         show_mp_scores();
     }
@@ -5292,7 +5292,7 @@ sub append_highscore_level() {
 	    if ($row_numb) {
 		$lvl++;
 		$row_numb = 0;
-            } 
+            }
         } else {
             $row_numb++;
             $lvl == ($levels{current} eq 'WON' ? (keys %levels)-1 : $levels{current})
@@ -5311,13 +5311,13 @@ sub count_highscorehistory_levels() {
 	    if ($row_numb) {
 		$cnt++;
 		$row_numb = 0;
-            } 
+            }
         } else {
             $row_numb++;
         }
     }
     return $cnt;
-} 
+}
 
 sub save_frame() {
     $replayparam and $app->save_bmp(sprintf("$saveframes/frame_\%d_%08d.bmp", $saveframesbase, $saveframescounter++));
@@ -5421,7 +5421,7 @@ sub menu {
     my $back_start   = $imgbin{back_menu};;
     my $display_menu = sub {
 		SDL::Video::blit_surface($back_start, $apprects{main}, $app, $apprects{main});
-		
+
 		# stamp is the "frozen bubble since 2002"-logo underneath the (animated) logo
 		SDL::Video::blit_surface($imgbin{stamp},SDL::Rect->new(0,0,$imgbin{stamp}->w,$imgbin{stamp}->h), $app, SDL::Rect->new( 490,  142, $imgbin{stamp}->w, $imgbin{stamp}->h));
     };
@@ -5524,7 +5524,7 @@ sub menu {
     my $draw_logo = sub {
         my ($no_update) = @_;
         erase_image_from($imgbin{menu_logo}, $logox, $logoy, $back_start);
-		
+
         if ($graphics_level < 3 || !$speed_ok)
 		{
 			# logo is blittet as it is, without animations
@@ -5532,11 +5532,11 @@ sub menu {
         }
 		else { # logo animation
 			# logo effects (snow, water, ...)
-			
+
 			# switching the animation every 100 ticks, just for tests
 			my @candy_methods = (1, 2, 3.1, 4.1, 6, 7); #(0, 1, 2, 3.1, 4.1, 5, 6, 7, 8.1);
 			$logo_candy_method = $candy_methods[rand @candy_methods] unless $logo_candy_index % 150;
-			
+
             Games::FrozenBubble::CStuff::rotate_bilinear($candy, $imgbin{menu_logo}, sin($logo_candy_index/40)/20) if $logo_candy_method == 0;
             Games::FrozenBubble::CStuff::flipflop($candy, $imgbin{menu_logo}, $logo_candy_index)                   if $logo_candy_method == 1;
             Games::FrozenBubble::CStuff::enlighten($candy, $imgbin{menu_logo}, $logo_candy_index)                  if $logo_candy_method == 2;
@@ -5546,13 +5546,13 @@ sub menu {
             Games::FrozenBubble::CStuff::waterize($candy, $imgbin{menu_logo}, $logo_candy_index)                   if $logo_candy_method == 6;
             Games::FrozenBubble::CStuff::brokentv($candy, $imgbin{menu_logo}, $logo_candy_index)                   if $logo_candy_method == 7;
             Games::FrozenBubble::CStuff::snow($candy, $imgbin{menu_logo})                                          if $logo_candy_method == 8.1;
-			
+
 			SDL::Video::blit_surface($candy, SDL::Rect->new(0,0,$candy->w,$candy->h), $app, SDL::Rect->new($logox, $logoy, $candy->w, $candy->h));
-            
+
 			# next step for the animation
 			$logo_candy_index++;
         }
-		
+
         if (!$no_update) {
 			SDL::Video::update_rects($app, @update_rects);
             @update_rects = ();
@@ -5573,28 +5573,28 @@ sub menu {
 		'keys'       => $MENU_FIRSTY + 6 * $SPACING,
 		'highscores' => $MENU_FIRSTY + 7 * $SPACING,
 	);
-	
+
 	# menu indexes, and functions that are called before the function behind 'type' is called
 	my %menu_entries = (
 		'1pgame' => {
 			pos  => 1,
 			type => 'rungame',
-			run  => sub { @PLAYERS = ('p1'); $levels{current} = 1; $time_1pgame = SDL::get_ticks() } 
+			run  => sub { @PLAYERS = ('p1'); $levels{current} = 1; $time_1pgame = SDL::get_ticks() }
 		},
 		'2pgame' => {
 			pos  => 2,
 			type => 'rungame',
-			run  => sub { @PLAYERS = qw(p1 p2); $levels{current} = undef; } 
+			run  => sub { @PLAYERS = qw(p1 p2); $levels{current} = undef; }
 		},
 		'langame'=> {
 			pos  => 3,
 			type => 'rungame',
-			run  => sub { @PLAYERS = qw(p1 rp1); $pdata{gametype} = 'lan'; $levels{current} = undef; } 
+			run  => sub { @PLAYERS = qw(p1 rp1); $pdata{gametype} = 'lan'; $levels{current} = undef; }
 		},
 		'netgame'=> {
 			pos  => 4,
 			type => 'rungame',
-			run  => sub { @PLAYERS = qw(p1 rp1); $pdata{gametype} = 'net'; $levels{current} = undef; } 
+			run  => sub { @PLAYERS = qw(p1 rp1); $pdata{gametype} = 'net'; $levels{current} = undef; }
 		},
 		'editor' => {
 			pos => 5,
@@ -5660,7 +5660,7 @@ sub menu {
         }
         return $cursor_rect;
     };
-	
+
     my $menu_update = sub {
 		@update_rects = ();
 		foreach my $m (keys %menu_entries) {
@@ -5677,7 +5677,7 @@ sub menu {
 		SDL::Video::update_rects($app, @update_rects);
 		@update_rects = ();
     };
-    
+
     $invalidate_all->();
     $menu_update->();
     SDL::Video::update_rect($app, 0, 0, 0, 0);
@@ -5806,7 +5806,7 @@ sub menu {
                     $pdata{cursor_img}{$m}++;
                     $pdata{cursor_img}{$m} >= @{$imgbin{menu_cursor}{$m}} and $pdata{cursor_img}{$m} = 0;
 		    SDL::Video::update_rects($app, $display_cursor->($m, 0));
-                    
+
                 } else {
                     if ($broken_cursors{$m}) {
                         $broken_cursors{$m}--;
@@ -5820,7 +5820,7 @@ sub menu {
                     }
                 }
             }
-            
+
             #- blinking handling follows
             my $blink_green_left = [ 411, 385 ];
             my $blink_green_right = [ 434, 378 ];
@@ -5886,7 +5886,7 @@ sub menu {
                     SDL::Video::update_rects( $app,$purple_left, $purple_right);
                 }
             }
-            
+
 	}
 
 	if ($graphics_level > 2 && $speed_ok) {
@@ -5962,7 +5962,7 @@ sub choose_levelset() {
         # game continue (means that the level editor has never been opened)
 
     } else {
-	
+
 	if (@levelsets <= 1 && !$choose_level) {
 	    load_levelset($levelsets[0]);
 	} else {
@@ -5973,7 +5973,7 @@ sub choose_levelset() {
                 -d $FBLEVELS or die "Can't create $FBLEVELS directory.\n";
                 -f "$FBLEVELS/default-levelset" or cp_af("$FPATH/data/levels", "$FBLEVELS/default-levelset");
             }
-            
+
 	    Games::FrozenBubble::LevelEditor::init_app('embedded', $app);
             Games::FrozenBubble::LevelEditor::create_play_levelset_dialog($choose_level, $levels{current});
 	    SDL::Mouse::show_cursor(1);
@@ -6178,3 +6178,231 @@ while (1) {
 	}
     }
 }
+
+__END__
+
+=encoding UTF-8
+
+=head1 NAME
+
+frozen-bubble - arcade/reflex game
+
+=head1 SYNOPSIS
+
+    frozen-bubble [OPTION]...
+
+=head1 DESCRIPTION
+
+The B<Frozen-Bubble> game is a free software implementation of
+a popular arcade/reflex game. The game mainly consists of firing
+randomly chosen bubbles across the board. If the shoot ends up
+having a clump of at least 3 bubbles of the same color, they all
+pop. If some bubbles were sticked only on the popping clump, they
+fall. In 1-player mode, the goal is to pop all the bubbles on the
+board as quickly as possible. In 2-players or network mode, you
+have to get your opponent to "die" before you.
+
+=head1 CONTROL
+
+The default controlling mechanism is through the keyboard, but
+you can play with a joystick or a joypad if it is supported by
+the system (use the commandline option B<-ji> to make sure
+frozen-bubble detected your joysticks). A key (or a joystick
+direction or button) is needed for moving the aim to the left,
+moving the aim to the right, center, and fire.
+
+=head1 1-PLAYER GAME
+
+In single player mode, as a beginner the best training is to
+choose B<Play Default Levelset>, which lets you run through
+100 levels of an increasing difficulty. Pop all the bubbles of
+each level to advance to the next level.
+
+If you want to train for multiplayer, choose B<Multiplayer
+Training> which reproduces the conditions of 2-player or
+network mode; the only difference is that created malus bubbles
+are counted in your score, and you must get the highest score you
+can in 2 minutes.
+
+=head1 2-PLAYERS GAME
+
+In 2-players mode, you can play against a friend (or a foe,
+actually) on the same computer. The board is populated with
+random bubbles, and your goal is to make big clumps to send malus
+bubbles to your opponent.
+
+=head1 NETWORK GAME
+
+If your computer has networking, you can choose LAN GAME to play
+games against others on your local network (up to 5 players).
+Frozen-Bubble will look for a game server on the local network
+with a UDP broadcast, connect to it if found, or start a new game
+server if not found.
+
+If your computer is connected to Internet, you can choose NET
+GAME to play against others on Earth (or beyond?). Frozen-Bubble
+will retrieve the server list from the master server and propose
+you to choose between available servers. The flag in front of a
+server indicates the preferred language for chatting with others
+before the game is started. The ping is the roundtrip when
+talking with the server, choose a low ping when possible.
+
+=head1 OPTIONS
+
+=over
+
+=item B<--help>
+
+show command-line options summary
+
+=item B<--fullscreen>
+
+start the game in fullscreen mode
+
+=item B<--no-fullscreen>
+
+don't start the game in fullscreen mode
+
+=item B<--no-sound>
+
+disable music and sound effects
+
+=item B<--no-music>
+
+disable music (but not sound effects)
+
+=item B<--no-sfx>
+
+disable sound effects (but not music)
+
+=item B<--playlist> I<directory>
+
+use all files of the given directory as music files and play them
+
+=item B<--playlist> I<file>
+
+use all files listed in the given file as music files and play them
+
+=item B<--slow-machine>
+
+use this option if B<frozen-bubble>
+runs too slowly on your machine (disables a few animations)
+
+=item B<--very-slow-machine>
+
+same as before, if it is not enough (disables all that can be disabled)
+
+=item B<--solo>
+
+directly start solo (1p) game, with random levels
+
+=item B<--direct>
+
+directly start 2p game (don't display menu)
+
+=item B<--gameserver> I<host[:port]>
+
+directly start NET/LAN game connecting to this game server (if
+port is omitted, default port is used)
+
+=item B<--chain-reaction>
+
+enable chain-reaction
+
+=item B<--level> I<number>
+
+start directly the game, at level I<number>
+
+=item B<--colour-blind>
+
+use special bubbles for colourblind people
+
+=item B<--no-time-limit>
+
+disable time limit for shooting (e.g. kids mode)
+
+=item B<--player-malus> I<number>
+
+add I<number> malus to the left player (can be negative -
+doesn't work in network mode)
+
+=item B<--mp-training-difficulty> I<number>
+
+set the average duration between receiving malus bubbles in 1
+player multiplayer training (default 30 (= every 30 seconds on
+average), the lower the harder)
+
+=item B<--joysticks-info>
+
+print information about detected joystick(s) on startup (if
+Frozen-Bubble doesn't see your joysticks/joypads, try loading
+the joydev module with B<modprobe joydev> as root, then
+retry)
+
+=item B<--no-echo>
+
+when sound is enabled, disable echoing each typed character with
+a typewriter sound (it may get on your nerves)
+
+=item B<--my-nick> I<nick>
+
+for NET/LAN games, use this nick instead of username (max 10
+chars, ASCII alphanumeric plus dash and underscore only) - notice
+that the /nick command is also available when connected to a
+server to set your nick
+
+=item B<--private>
+
+after connecting to a server for a NET game, don't use
+http://hostip.info/ to retrieve your geographical position to
+send it to other players
+
+=item B<--record> I<directory>
+
+specify the recording directory (normally, records are saved in
+the directory '.frozen-bubble/records' down your home directory)
+
+=item B<--auto-record>
+
+automatically record all applicable games (normally, a record is
+triggered by hitting the Print Screen key during a game)
+
+=item B<--comment> I<'...'>
+
+add the comment enclosed between simple quotes to records (must
+not contain anything else than ASCII), it will be shown on
+console when playing back the record later
+
+=item B<--replay> I<record_file|URL>
+
+playback the specified record file
+
+=item B<--save-frames> I<directory>
+
+specify a directory where all (game) frames will be recorded; as the
+game is slowed down, can only be used with --replay; warning, output
+is huge as 50 frames of each 900 KB are saved per second (e.g. 43 MB
+per second); a typical use case is then to build a video out of the
+frames with e.g. this kind of command:
+
+    mencoder mf:///tmp/fbframes/frame* -mf fps=50 -o /tmp/output.avi -ovc lavc -lavcopts vcodec=mpeg4
+
+=back
+
+=head1 AUTHOR
+
+Written by Guillaume Cottenceau.
+This manual page was originally written by Josselin Mouette <josselin.mouette at ens-lyon.org>.
+
+Visit official homepage: L<http://www.frozen-bubble.org/>
+
+=head1 SEE ALSO
+
+frozen-bubble-editor
+
+=head1 COPYRIGHT
+
+Copyright © 2000-2008 The Frozen-Bubble Team.
+
+This is Free Software; this software is licensed under the GPL version 2, as published by the Free Software Foundation.
+There is NO warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
