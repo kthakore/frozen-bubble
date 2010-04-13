@@ -1,8 +1,8 @@
 package My::Builder;
 use 5.008;
 use strict;
-use warnings FATAL => 'all';
-use autodie qw(:all);
+#use warnings FATAL => 'all';
+#use autodie qw(:all);
 use File::Basename qw(fileparse);
 use File::Spec::Functions qw(catdir catfile rootdir);
 use IO::File qw();
@@ -17,17 +17,19 @@ sub ACTION_run {
 
     # prepare INC
     local @INC = @INC;
+    local @ARGV = @{$self->args->{ARGV}};
+    my $script = shift @ARGV;
     unshift @INC, (File::Spec->catdir($bd, $self->blib, 'lib'), File::Spec->catdir($bd, $self->blib, 'arch'));
 
-    if (scalar @{$self->args->{ARGV}}) {
+    if ($script) {
       # scenario: ./Build run bin/scriptname param1 param2
-      $self->do_system($^X, @{$self->args->{ARGV}});
+      do($script);
     }
     else {    
       # scenario: ./Build run
       my ($first_script) = ( glob('bin/*'), glob('script/*')); # take the first script in bin or script subdir
       print STDERR "No params given to run action - gonna start: '$first_script'\n";
-      $self->do_system($^X, $first_script);
+      do($first_script);
     }
 }
 
