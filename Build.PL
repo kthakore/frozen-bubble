@@ -58,7 +58,7 @@ My::Builder->new(
     meta_merge           => {
         resources => {
             repository => 'http://github.com/kthakore/frozen-bubble',
-            bugtracker => 'http://github.com/kthakore/frozen-bubble/issues',
+            bugtracker => 'http://sdlperl.ath.cx/projects/SDLPerl/query?component=FrozenBubble',
         },
     },
     module_name => 'Games::FrozenBubble',
