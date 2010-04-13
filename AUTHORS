@@ -1,62 +1,193 @@
-Copyright (c) 2000-2008 The Frozen-Bubble Team.
+=encoding UTF-8
+
+=head1 NAME
+
+AUTHORS
+
+Copyright © 2000-2008 The Frozen-Bubble Team.
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
 version 2, as published by the Free Software Foundation.
 
 
-Design & Programming:
-	Guillaume Cottenceau <gc zarb.org>
+=head2 Design & Programming
 
-Artwork:
-	Alexis Younes <73lab free.fr>
-	Amaury Amblard-Ladurantie <amaury linuxfr.org>
+=over
 
-Soundtrack:
-	Matthias Le Bidan <matthias.le_bidan caramail.com>
+=item Guillaume Cottenceau <gc zarb.org>
 
-Level Editor:
-	Kim and David Joham <[k|d]joham yahoo.com>
+=back
 
-Additional network programming:
-        Mark Glines <mark glines.org>
 
-Bugfixes and improvements:
-        Dirk Stoecker <fb dstoecker.de>
-        Anton Moll <anton.moll access.uzh.ch>
+=head2 Artwork
 
-Helps and bugfixes:
-        Seth W. Klein <sk sethwklein.net>
-        Jonas Petersson <jonas.petersson xms.se>
+=over
 
-Translations:
-        afrikaans: Buchan Milne <bgmilne gmail.com>
-        brazilian portuguese: Helio Chissini de Castro <helio mandriva.com>
-        breton: Thierry Vignaud <tvignaud mandriva.com>
-        bulgarian: Svetoslav Stefanov <lfu.project gmail.com>
-        catalan: Benny Beat <bennybeat gmail.com>
-        chinese: holywen <shaohua.wen gmail.com>
-        czech: Vitezslav Smid <me ze.phyr.us>
-        danish: Swoop <swoopdk gmail.com>
-        esperanto: Stephane Fillod <f8cfe free.fr>
-        farsi: Mostafa Hajizadeh <mostafa hajizadeh.info>
-        finnish: Anssi Hannula <anssi.hannula gmail.com>
-        french: Guillaume Cottenceau <gc zarb.org>
-        galician: Adrian Chaves Fernandez <adriyetichaves gmail.com>
-        german: Steffen Pankratz <kratz00 gmx.de>
-                and Dirk Stoecker <openstreetmap dstoecker.de>
-        greek: Gerasimos Vaiou <gvaiou csd.auth.gr>
-        italian: Dario Pilori <dapilori yahoo.it>
-        lithuanian: Julius Vitkauskas <zolookas gmail.com>
-        nepali: Ankur Sharma <yowlanku gmail.com>
-        norwegian: Karl Ove Hufthammer <karl huftis.org>        
-        polish: Marcin Woloszczuk <zdebel gmail.com>
-        portuguese: Nelson do Nascimento <nelsonfnascimento gmail.com>
-        russian: Andrey 'Dragon' Vlasov <dragon1020 gmail.com>
-        slovak: Peter Mann <Peter.Mann tuke.sk>
-                and Ivan Masar <helix84 centrum.sk>
-        slovenian: Marko Burjek <email4marko gmail.com>
-        spanish: javier martinez <villacampa gmail.com>
-        swedish: Oden Eriksson <oeriksson mandriva.com>
-                 and Jonas Petersson <catellie gmail.com>
-        turkish: Ugur Cetin <ugur.jnmbk gmail.com>
+=item Alexis Younes <73lab free.fr>
+
+=item Amaury Amblard-Ladurantie <amaury linuxfr.org>
+
+=back
+
+
+=head2 Soundtrack
+
+=over
+
+=item Matthias Le Bidan <matthias.le_bidan caramail.com>
+
+=back
+
+
+=head2 Level Editor
+
+=over
+
+=item Kim and David Joham <[k|d]joham yahoo.com>
+
+=back
+
+
+=head2 Additional network programming
+
+=over
+
+=item Mark Glines <mark glines.org>
+
+=back
+
+=head2 Bugfixes and improvements
+
+=over
+
+=item Dirk Stoecker <fb dstoecker.de>
+
+=item Anton Moll <anton.moll access.uzh.ch>
+
+=back
+
+
+=head2 Helps and bugfixes
+
+=over
+
+=item Seth W. Klein <sk sethwklein.net>
+
+=item Jonas Petersson <jonas.petersson xms.se>
+
+=back
+
+=head2 Translations
+
+=over
+
+=item afrikaans
+
+Buchan Milne <bgmilne gmail.com>
+
+=item brazilian portuguese
+
+Helio Chissini de Castro <helio mandriva.com>
+
+=item breton
+
+Thierry Vignaud <tvignaud mandriva.com>
+
+=item bulgarian
+
+Svetoslav Stefanov <lfu.project gmail.com>
+
+=item catalan
+
+Benny Beat <bennybeat gmail.com>
+
+=item chinese
+
+holywen <shaohua.wen gmail.com>
+
+=item czech
+
+Vitezslav Smid <me ze.phyr.us>
+
+=item danish
+
+Swoop <swoopdk gmail.com>
+
+=item esperanto
+
+Stephane Fillod <f8cfe free.fr>
+
+=item farsi
+
+Mostafa Hajizadeh <mostafa hajizadeh.info>
+
+=item finnish
+
+Anssi Hannula <anssi.hannula gmail.com>
+
+=item french
+
+Guillaume Cottenceau <gc zarb.org>
+
+=item galician
+
+Adrian Chaves Fernandez <adriyetichaves gmail.com>
+
+=item german
+
+Steffen Pankratz <kratz00 gmx.de> and Dirk Stoecker <openstreetmap dstoecker.de>
+
+=item greek
+
+Gerasimos Vaiou <gvaiou csd.auth.gr>
+
+=item italian
+
+Dario Pilori <dapilori yahoo.it>
+
+=item lithuanian
+
+Julius Vitkauskas <zolookas gmail.com>
+
+=item nepali
+
+Ankur Sharma <yowlanku gmail.com>
+
+=item norwegian
+
+Karl Ove Hufthammer <karl huftis.org>
+
+=item polish
+
+Marcin Woloszczuk <zdebel gmail.com>
+
+=item portuguese
+
+Nelson do Nascimento <nelsonfnascimento gmail.com>
+
+=item russian
+
+Andrey 'Dragon' Vlasov <dragon1020 gmail.com>
+
+=item slovak
+
+Peter Mann <Peter.Mann tuke.sk> and Ivan Masar <helix84 centrum.sk>
+
+=item slovenian
+
+Marko Burjek <email4marko gmail.com>
+
+=item spanish
+
+javier martinez <villacampa gmail.com>
+
+=item swedish
+
+Oden Eriksson <oeriksson mandriva.com> and Jonas Petersson <catellie gmail.com>
+
+=item turkish
+
+Ugur Cetin <ugur.jnmbk gmail.com>
+
+=back
