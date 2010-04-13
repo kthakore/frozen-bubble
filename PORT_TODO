@@ -1,9 +1,0 @@
-- Level %s in game
-- $app->print useage in frozen bubble editor needs to be changed
-- Color of launcher
-- High score images
-- Add build action for server
-- Windows cannot use Fcntl macro
-	Your vendor has not defined Fcntl macro F_GETFL, used at
-	C:/strawberry/perl/site/lib/Games/FrozenBubble/Net.pm line 351.
-

@@ -1,22 +1,4 @@
 package Games::FrozenBubble::MDKCommon;
-
-# -=-=---=-=---=-=---=-=---=-=---=-=---=-=---=-=---=-=---=-=---=-=---=-=---=-=---=-=---=-=--
-# This is extracted from MDK::Common, a helper library that
-# extends perl capabilities for very common use when programming
-# perl, especially with functional style programming (but what
-# other style one could decently adopt? ;p).
-#
-# This extract is provided here because only Mandrake distro
-# includes the whole MDK::Common, so you're not obliged to
-# install it.
-#
-# That said, if you're a perl programmer, I strongly advice you
-# to have a look at this library and use it, it would
-# dramatically increase the efficiency and readability of your
-# perl programs.
-#
-# Go to google and type in "perl-MDK-Common" if interested.
-
 use 5.006;
 use strict;
 use warnings;
@@ -166,3 +148,25 @@ sub all {
 }
 
 1;
+
+__END__
+
+=encoding UTF-8
+
+=head1 DESCRIPTION
+
+This is extracted from MDK::Common, a helper library that
+extends perl capabilities for very common use when programming
+perl, especially with functional style programming (but what
+other style one could decently adopt? ;p).
+
+This extract is provided here because only Mandrake distro
+includes the whole MDK::Common, so you're not obliged to
+install it.
+
+That said, if you're a perl programmer, I strongly advice you
+to have a look at this library and use it, it would
+dramatically increase the efficiency and readability of your
+perl programs.
+
+Go to google and type in "perl-MDK-Common" if interested.

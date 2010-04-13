@@ -32,7 +32,7 @@ use Games::FrozenBubble::Config;
 use Games::FrozenBubble::Stuff;
 use Games::FrozenBubble::LevelEditor;
 
-$FPATH =  dist_dir('Games-FrozenBubble'); 
+$FPATH =  dist_dir('Games-FrozenBubble');
 
 # command line options modified from frozen-bubble code
 local $_ = "@ARGV";
@@ -57,3 +57,140 @@ my $app = SDL::App->new(-icon => "$FPATH/gfx/pinguins/window_icon_penguin.png",
 
 Games::FrozenBubble::LevelEditor::init_setup('stand-alone', $app);
 Games::FrozenBubble::LevelEditor::handle_events();
+
+__END__
+
+=encoding UTF-8
+
+=head1 NAME
+
+frozen-bubble-editor - a level editor for Frozen Bubble
+
+=head1 SYNOPSIS
+
+    frozen-bubble-editor [OPTION]...
+
+=head1 DESCRIPTION
+
+This editor lets you manipulate level-sets, in which you can add, remove
+and modify levels thanks to a mouse-oriented interface (there are also
+many interesting keyboard shortcuts). The interface is very
+straightforward: click on the written planches on the left an right parts
+of the screen to perform the relevant actions, and on the level area to
+change the bubble color; use the "void" bubble (or right-click) to
+remove a bubble.
+
+=head1 OPTIONS
+
+=over
+
+=item B<-h>, B<--help>
+
+show command-line options summary
+
+=item B<-fs>, B<--fullscreen>
+
+start in fullscreen mode
+
+=item B<-ls> I<FILENAME>, B<--levelset> I<FILENAME>
+
+directly start with the specified levelset name
+
+=item B<-l> I<NUMB>, B<--level> I<NUMB>
+
+directly start the level number I<NUMB>
+
+=item B<-cb>, B<--colourblind>
+
+use special bubbles for colourblind people
+
+=back
+
+=head1 KEY SHORTCUTS
+
+The following key shortcuts are available during level edition:
+
+=over
+
+=item B<F1>
+
+displays the help dialog
+
+=item B<p>, B<h>, B<left>
+
+previous level
+
+=item B<n>, B<l> , B<right>
+
+next level
+
+=item B<up>
+
+first level
+
+=item B<down>
+
+last level
+
+=item B<a>
+
+append level
+
+=item B<i>
+
+insert level
+
+=item B<d>
+
+delete level
+
+=item B<]>
+
+move level right
+
+=item B<[>
+
+move level left
+
+=item B<j>
+
+jump to level (after B<j>, enter level number, then B<Return>)
+
+=item B<o>
+
+open levelset
+
+=item B<s>
+
+save levelset
+
+=item B<f>
+
+toggle fullscreen
+
+=item B<q>, B<Escape>
+
+quit
+
+=back
+
+During dialogs, you may use B<Return> to accept and B<Escape> to cancel.
+
+=head1 AUTHOR
+
+Written by Kim Joham and David Joham <[k|d]joham at yahoo.com>.
+Integration work by Guillaume Cottenceau <guillaume.cottenceau at free.fr>.
+This manual page was written by Guillaume Cottenceau.
+
+Visit official homepage: L<http://www.frozen-bubble.org/>
+
+=head1 SEE ALSO
+
+frozen-bubble
+
+=head1 COPYRIGHT
+
+Copyright © 2002, 2003 Kim Joham and David Joham <[k|d]joham at yahoo.com>.
+
+This is Free Software; this software is licensed under the GPL version 2, as published by the Free Software Foundation.
+There is NO warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.

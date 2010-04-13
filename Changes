@@ -1,9 +1,83 @@
+=encoding UTF-8
 
-* 0.001_1|2.20 
+=head1 NAME
 
-	- Migrated to new SDL bindings (kthakore, FROGGS)
-	- Made Makefile and Build system cpan friendly (daxim++, kmx++)
-	- Fixed bugs dude to change in typemap (FROGGS++)
-	
+Changes - Revision history for Games-FrozenBubble
 
+=head2 0.001_1|2.20
 
+=over
+
+=item Migrated to new SDL bindings (kthakore, FROGGS)
+
+=item Made Makefile and Build system cpan friendly (daxim++, kmx++)
+
+=item Fixed bugs dude to change in typemap (FROGGS++)
+
+=back
+
+=head2 version 2
+
+=over
+
+=item
+
+new 1-player game mode: multiplayer training; uses
+identical game rules as multiplayer, generated malus
+bubbles are counted as points
+
+=item
+
+network (Internet) game: up to 5 players in a game (net
+game system has logic able to transparently handle
+players behind a NAT)
+
+=item
+
+LAN game: similar to network game except that no
+connection to Internet is made, substituted by polling
+the local network
+
+=item
+
+fully revamped graphics, including now 3d-based smooth
+penguin eyecandy
+
+=item
+
+revamped intro and 1p music into fully digital productions
+
+=item
+
+full joystick support: just move your joystick(s) or
+push buttons in the "change keys" dialog (analog
+joysticks handled as digital for fair play)
+
+when trying to used your joystick in Frozen-Bubble, if
+nothing comes up, most probably your joystick isn't
+configured correctly (or supported in Linux), use -ji
+commandline switch to verify your joystick is detected
+properly; if it is not, try to load the proper kernel modules
+etc - for example, "joydev" is needed, but it is sometimes
+not automatically loaded when plugging in a joystick (even in
+modern distros and with USB joysticks)
+
+=item
+
+recording and playback of all games with non-predefined
+levels (1-player in random and multiplayer training,
+local 2-player, and network/LAN game with 2 to 5
+players) - trigger a record by hitting the Print Screen
+key during a game, or record all games by starting with
+--auto-record
+
+=item
+
+realtime graphical effects in the menu screen (if your
+computer is fast enough)
+
+=item
+
+anti-aliased+shaded+localized messages
+
+=over

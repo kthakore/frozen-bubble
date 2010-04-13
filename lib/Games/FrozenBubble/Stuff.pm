@@ -1,26 +1,3 @@
-#*****************************************************************************
-#
-#                          Frozen-Bubble
-#
-# Copyright (c) 2000 - 2008 The Frozen-Bubble Team
-#
-# Originally sponsored by Mandriva <http://www.mandriva.com/>
-#
-# This program is free software; you can redistribute it and/or modify
-# it under the terms of the GNU General Public License version 2, as
-# published by the Free Software Foundation.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program; if not, write to the Free Software
-# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
-#
-#******************************************************************************
-
 package Games::FrozenBubble::Stuff;
 
 use Games::FrozenBubble::CStuff;
@@ -30,7 +7,7 @@ use File::ShareDir qw(dist_dir);
 
 Locale::Maketext::Simple->import(Path => dist_dir('Games-FrozenBubble')."/locale", Style => 'gettext', Export => 'gettext');
 ###passing language to Locale::Maketext::Simple
-my ($lang) = split(':', $ENV{LANGUAGE}); 
+my ($lang) = split(':', $ENV{LANGUAGE});
 gettext_lang($lang);
 
 use vars qw(@ISA @EXPORT $FPATH $FLPATH $FBHOME $FBLEVELS $colourblind %POS_1P %POS_2P %POS_MP $BUBBLE_SIZE $ROW_SIZE
@@ -367,3 +344,26 @@ sub migrate_resource_files {
 }
 
 1;
+
+__END__
+
+=encoding UTF-8
+
+=head1 Frozen-Bubble
+
+Copyright © 2000 - 2008 The Frozen-Bubble Team
+
+Originally sponsored by Mandriva <http://www.mandriva.com/>
+
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License version 2, as
+published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
