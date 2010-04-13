@@ -5,10 +5,25 @@ use vars qw(@ISA);
 use Games::FrozenBubble;
 use SDL::Pango;
 use SDL::Pango::Context;
+use Alien::SDL;
 
 require DynaLoader;
 
 @ISA = qw(DynaLoader);
+
+# Dynaloader dark magic implemented by kmx, this is needed as we are
+# using Alien::SDL and required dynamic libraries are saved in Alien::SDL's
+# distribution share dir - therefore we need to load them explicitely 
+# for more details see SDL::Internal::Loader (code stolen from there)
+my $shlib_map = Alien::SDL->config('ld_shlib_map');
+if($shlib_map) {
+  foreach my $n (qw(SDL SDL_mixer)) {
+    my $file = $shlib_map->{$n};
+    next unless $file;
+    my $libref = DynaLoader::dl_load_file($file, 0);
+    push(@DynaLoader::dl_librefs, $libref) if $libref;
+  }
+}
 
 bootstrap Games::FrozenBubble::CStuff $Games::FrozenBubble::VERSION;
 
