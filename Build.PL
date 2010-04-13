@@ -45,6 +45,7 @@ My::Builder->new(
     },
     build_requires => {
         'IO::File'                  => 0,
+        'IO::Socket'               => '1.24',
         'Locale::Maketext::Extract' => 0,
         autodie                     => 0,
         'IPC::System::Simple'       => 0,
@@ -72,7 +73,7 @@ My::Builder->new(
         'Getopt::Long'             => 0,
         'IO::File'                 => 0,
         'IO::Select'               => 0,
-        'IO::Socket'               => 0,
+        'IO::Socket'               => '1.24',
         'Locale::Maketext::Simple' => 0,
         'Math::Trig'               => 0,
         parent                     => 0,

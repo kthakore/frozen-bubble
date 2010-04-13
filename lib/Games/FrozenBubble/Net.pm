@@ -326,13 +326,8 @@ sub connect {
         $ping = sprintf("%.1f", sum(@pings)/@pings);
     }
 
-    #TODO: Need to make and alternative for windows
-    my $failure;
-    ($sock, $failure) = _NonBlocking($sock);
-    if (!$failure) {
-        disconnect();
-        return { failure => $failure };
-    }
+    #BEWARE non-blocking sockets work on Win32 only with IO-1.24 or higher
+    $sock->blocking(0);
 
     $current_host = $host;
     $current_port = $port;
@@ -547,52 +542,6 @@ sub grecv_get1msg {
     } else {
         return shift @messages;
     }
-}
-
-# Stolen from 
-# http://github.com/apocalypse/perl-poe-sslify/raw/master/lib/POE/Component/SSLify.pm
-
-#CREDITS: Apocalypse and Dngor
-
-# Helper sub to set nonblocking on a handle
-sub _NonBlocking {
-	my $socket = shift;
-	my $failure;
-	# ActiveState Perl 5.8.0 dislikes the Win32-specific code to make
-	# a socket blocking, so we use IO::Handle's blocking(0) method.
-	# Perl 5.005_03 doesn't like blocking(), so we only use it in
-	# 5.8.0 and beyond.
-	if ( $] >= 5.008 and $^O eq 'MSWin32' ) {
-		# From IO::Handle POD
-		# If an error occurs blocking will return undef and $! will be set.
-		if ( ! $socket->blocking( 0 ) ) {
-			$failure =  "Unable to set nonblocking mode on socket: $!";
-		}
-	} else {
-		# Make the handle nonblocking, the POSIX way.
-		if ( $^O ne 'MSWin32' ) {
-			# Get the old flags
-			my $flags = fcntl( $socket, F_GETFL, 0 ) or $failure = "fcntl( $socket, F_GETFL, 0 ) fails: $!";
-
-			# Okay, we patiently wait until the socket turns nonblocking mode
-			until( fcntl( $socket, F_SETFL, $flags | O_NONBLOCK ) ) {
-				# What was the error?
-				if ( ! ( $! == EAGAIN or $! == EWOULDBLOCK ) ) {
-					# Fatal error...
-					$failure = "fcntl( $socket, FSETFL, etc ) fails: $!";
-				}
-			}
-		} else {
-			# Darned MSWin32 way...
-			# Do some ioctl magic here
-			# 126 is FIONBIO ( some docs say 0x7F << 16 )
-			my $flag = "1";
-			ioctl( $socket, 0x80000000 | ( 4 << 16 ) | ( ord( 'f' ) << 8 ) | 126, $flag ) or die "ioctl( $socket, FIONBIO, $flag ) fails: $!";
-		}
-	}
-
-	# All done!
-	return ( $socket, $failure );
 }
 
 1;
