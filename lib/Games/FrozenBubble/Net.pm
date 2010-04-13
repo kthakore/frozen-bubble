@@ -328,6 +328,8 @@ sub connect {
 
     #BEWARE non-blocking sockets work on Win32 only with IO-1.24 or higher
     $sock->blocking(0);
+    return { failure => 'Cannot set unblocking '.$! } if $!;
+     
 
     $current_host = $host;
     $current_port = $port;
