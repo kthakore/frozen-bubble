@@ -13,6 +13,7 @@ use Locale::Maketext::Extract;
 sub ACTION_run {
     my ($self) = @_;
     $self->depends_on('code');
+    $self->depends_on('installdeps');
     my $bd = $self->{properties}->{base_dir};
 
     # prepare INC
