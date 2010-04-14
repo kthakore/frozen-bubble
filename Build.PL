@@ -18,7 +18,7 @@ $cflags .= ' -fnested-functions' if $^O =~ /darwin/;
 ###!!! I intended Alien::SDL to add -I$prefix/include automatically, please tell me when it does not work (kmx)
 my $devnull = File::Spec->devnull();
 
-my @linkers = ( Alien::SDL->config('libs'), '-lSDL_mixer', '-lSDL_Pango' );
+my @linkers = ( Alien::SDL->config('libs', '-lSDL_mixer', '-lSDL_Pango') );
 push @linkers, '-liconv'
   if $^O =~ /win/i;    ###!!! really only Win needs this? ; BEWARE this matches also 'darwin', 'cygwin'!!!!
 
