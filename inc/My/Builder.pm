@@ -1,8 +1,8 @@
 package My::Builder;
 use 5.008;
 use strict;
-#use warnings FATAL => 'all';
-#use autodie qw(:all);
+use warnings FATAL => 'all';
+use autodie qw(:all);
 use File::Basename qw(fileparse);
 use File::Spec::Functions qw(catdir catfile rootdir);
 use IO::File qw();
