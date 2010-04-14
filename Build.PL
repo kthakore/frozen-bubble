@@ -82,5 +82,6 @@ My::Builder->new(
         'Time::HiRes'              => 0,
     },
     share_dir => 'share',
+    no_index  => { directory => [ 'server' ] }, # tell PAUSE to not index 'server' subdirectory
 )->create_build_script;
 
