@@ -20,7 +20,7 @@ my $devnull = File::Spec->devnull();
 
 my @linkers = ( Alien::SDL->config('libs'), '-lSDL_mixer', '-lSDL_Pango' );
 push @linkers, '-liconv'
-  if $^O =~ /win/i;    ###!!! really only Win needs this? (kmx)
+  if $^O =~ /win/i;    ###!!! really only Win needs this? ; BEWARE this matches also 'darwin', 'cygwin'!!!!
 
 die "Cannot find 'iconv.h'"     unless Alien::SDL->check_header('iconv.h');
 die "Cannot find 'math.h'"      unless Alien::SDL->check_header('math.h');
