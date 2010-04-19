@@ -28,8 +28,16 @@ die "Cannot find 'SDL.h'"       unless Alien::SDL->check_header('SDL.h');
 die "Cannot find 'SDL_mixer.h'" unless Alien::SDL->check_header('SDL_mixer.h');
 
 My::Builder->new(
-    add_to_cleanup =>
-      [ 'lib/Games/FrozenBubble/CStuff.c', 'lib/Games/FrozenBubble/CStuff.o', ],
+    add_to_cleanup => [
+        'lib/Games/FrozenBubble/CStuff.c',
+        'lib/Games/FrozenBubble/CStuff.o',
+        'server/fb-server.o',
+        'server/game.o',
+        'server/log.o',
+        'server/net.o',
+        'server/tools.o',
+        'bin/fb-server',
+    ],
     dist_abstract  => 'Puzzle with Bubbles', # taken from openSUSE rpm spec file
     dynamic_config => 1,
     extra_compiler_flags => [ $cflags ],
@@ -52,7 +60,7 @@ My::Builder->new(
         'IO::Socket'                => '1.24', # part od IO distribution
         'Math::Trig'                => 0,
         'parent'                    => 0,
-        'Alien::SDL'                => '1.2', 
+        'Alien::SDL'                => '1.2',
         'SDL'                       => '2.4',
         'Time::HiRes'               => 0,
         'Locale::Maketext::Simple'  => 0,
@@ -62,6 +70,9 @@ My::Builder->new(
         'ExtUtils::ParseXS'         => '2.16',
         'File::Basename'            => 0,
         'File::Spec::Functions'     => 0,
+        'ExtUtils::CBuilder'        => 0,
+        'File::Copy'                => 0,
+        'File::Slurp'               => 0,
     },
     build_requires => { #need to have for running: ./Build (install|test), basically should be a superset of 'requires' as we run testsuite
         'perl'                      => '5.008',
@@ -71,7 +82,7 @@ My::Builder->new(
         'IO::Socket'                => '1.24', # part od IO distribution
         'Math::Trig'                => 0,
         'parent'                    => 0,
-        'Alien::SDL'                => '1.2', 
+        'Alien::SDL'                => '1.2',
         'SDL'                       => '2.4',
         'Time::HiRes'               => 0,
         'Locale::Maketext::Simple'  => 0,
@@ -81,6 +92,9 @@ My::Builder->new(
         'ExtUtils::ParseXS'         => '2.16',
         'File::Basename'            => 0,
         'File::Spec::Functions'     => 0,
+        'ExtUtils::CBuilder'        => 0,
+        'File::Copy'                => 0,
+        'File::Slurp'               => 0,
     },
     requires    => {
         'perl'                      => '5.008',
@@ -95,7 +109,7 @@ My::Builder->new(
         'IO::Socket'                => '1.24', # part od IO distribution
         'Math::Trig'                => 0,
         'parent'                    => 0,
-        'Alien::SDL'                => '1.2', 
+        'Alien::SDL'                => '1.2',
         'SDL'                       => '2.4',
         'Time::HiRes'               => 0,
         'Locale::Maketext::Simple'  => 0,
