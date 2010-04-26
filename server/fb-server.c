@@ -24,7 +24,7 @@
 
 int main(int argc, char **argv)
 {
-        printf("Frozen-Bubble server version " VERSION " (protocol version %d.%d)\n", proto_major, proto_minor);
+        printf("Frozen-Bubble server version 0.001_1 (protocol version %d.%d)\n", proto_major, proto_minor);
         printf("\n");
         printf("Copyright (c) 2004-2008 Guillaume Cottenceau.\n");
         printf("This is free software; see the source for copying conditions.  There is NO\n");
