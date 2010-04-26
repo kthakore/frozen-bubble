@@ -11,6 +11,7 @@ use SDL::Event;
 use SDL::Cursor;
 use SDL::TTF;
 use SDL::TTF::Font;
+use SDLx::TTF;
 use SDL::Mixer;
 
 use Games::FrozenBubble::Stuff;
@@ -838,7 +839,8 @@ sub create_dialog_base {
 
     SDL::Video::blit_surface(    $surface_dialog, $rect{dialog}, $app, $rect{middle});
 
-    $app->print($rect{middle}->x + $rect{middle}->width/2 - 12 * length($title_text)/2, $rect{middle}->y + 5, uc($title_text));
+    SDLx::TTF::print_text(   $app,$rect{middle}->x + $rect{middle}->width/2 - 12 * length($title_text)/2, $rect{middle}->y + 5, uc($title_text));
+
 }
 
 # sub to create a blank dialog on the screen
@@ -868,10 +870,14 @@ sub create_deleted_current_levelset_dialog {
     $deleted_current_levelset = 1;
     create_dialog('DELETED CURRENT LEVELSET');
     $rect{middle} = get_dialog_rect();
-    $app->print($rect{middle}->x + 25, $rect{middle}->y + 15 + $WOOD_PLANK_HEIGHT, "PRESS \"OK\" TO CHOOSE");
-    $app->print($rect{middle}->x + 25, $rect{middle}->y + 35 + $WOOD_PLANK_HEIGHT, "ANOTHER LEVELSET TO OPEN");
-    $app->print($rect{middle}->x + 25, $rect{middle}->y + 3 * $WOOD_PLANK_HEIGHT, "PRESS \"CANCEL\" TO OPEN");
-    $app->print($rect{middle}->x + 25, $rect{middle}->y + 25 + 3* $WOOD_PLANK_HEIGHT, "THE DEFAULT LEVELSET");
+    SDLx::TTF::print_text(   $app,$rect{middle}->x + 25, $rect{middle}->y + 15 + $WOOD_PLANK_HEIGHT, "PRESS \"OK\" TO CHOOSE");
+
+    SDLx::TTF::print_text(   $app,$rect{middle}->x + 25, $rect{middle}->y + 35 + $WOOD_PLANK_HEIGHT, "ANOTHER LEVELSET TO OPEN");
+
+    SDLx::TTF::print_text(   $app,$rect{middle}->x + 25, $rect{middle}->y + 3 * $WOOD_PLANK_HEIGHT, "PRESS \"CANCEL\" TO OPEN");
+
+    SDLx::TTF::print_text(   $app,$rect{middle}->x + 25, $rect{middle}->y + 25 + 3* $WOOD_PLANK_HEIGHT, "THE DEFAULT LEVELSET");
+
 
 }
 
@@ -887,9 +893,12 @@ sub create_delete_levelset_dialog {
         $displaying_dialog = 'ls_nothing_to_delete';
         create_ok_dialog('NO LEVELSET TO DELETE');
         $rect{middle} = get_dialog_rect();
-        $app->print($rect{middle}->x + 50, $rect{middle}->y + 30 + $WOOD_PLANK_HEIGHT, "THERE ARE NO CUSTOM");
-        $app->print($rect{middle}->x + 50, $rect{middle}->y + 55 + $WOOD_PLANK_HEIGHT, "LEVELSETS TO DELETE.");
-        $app->print($rect{middle}->x + 40, $rect{middle}->y + 125 + $WOOD_PLANK_HEIGHT, "PRESS \"OK\" TO CONTINUE");
+	SDLx::TTF::print_text(       $app,$rect{middle}->x + 50, $rect{middle}->y + 30 + $WOOD_PLANK_HEIGHT, "THERE ARE NO CUSTOM");
+
+	SDLx::TTF::print_text(       $app,$rect{middle}->x + 50, $rect{middle}->y + 55 + $WOOD_PLANK_HEIGHT, "LEVELSETS TO DELETE.");
+
+	SDLx::TTF::print_text(       $app,$rect{middle}->x + 40, $rect{middle}->y + 125 + $WOOD_PLANK_HEIGHT, "PRESS \"OK\" TO CONTINUE");
+
     }
 }
 
@@ -1024,17 +1033,23 @@ sub create_save_changes_dialog {
     $rect{middle} = get_dialog_rect();
 
     # write out the instructions
-    $app->print($rect{middle}->x + 25, $rect{middle}->y + $WOOD_PLANK_HEIGHT, 'THERE ARE UNSAVED CHANGES');
-    $app->print($rect{middle}->x + 22, $rect{middle}->y + 35 + $WOOD_PLANK_HEIGHT, "PRESS \"OK\" TO SAVE");
-    $app->print($rect{middle}->x + 22, $rect{middle}->y + 55 + $WOOD_PLANK_HEIGHT, "CHANGES AND CONTINUE");
-    $app->print($rect{middle}->x + 22, $rect{middle}->y + 95 + $WOOD_PLANK_HEIGHT, "PRESS \"CANCEL\" TO CONTINUE");
-    $app->print($rect{middle}->x + 22, $rect{middle}->y + 115 + $WOOD_PLANK_HEIGHT, "WITHOUT SAVING");
+    SDLx::TTF::print_text(   $app,$rect{middle}->x + 25, $rect{middle}->y + $WOOD_PLANK_HEIGHT, 'THERE ARE UNSAVED CHANGES');
+
+    SDLx::TTF::print_text(   $app,$rect{middle}->x + 22, $rect{middle}->y + 35 + $WOOD_PLANK_HEIGHT, "PRESS \"OK\" TO SAVE");
+
+    SDLx::TTF::print_text(   $app,$rect{middle}->x + 22, $rect{middle}->y + 55 + $WOOD_PLANK_HEIGHT, "CHANGES AND CONTINUE");
+
+    SDLx::TTF::print_text(   $app,$rect{middle}->x + 22, $rect{middle}->y + 95 + $WOOD_PLANK_HEIGHT, "PRESS \"CANCEL\" TO CONTINUE");
+
+    SDLx::TTF::print_text(   $app,$rect{middle}->x + 22, $rect{middle}->y + 115 + $WOOD_PLANK_HEIGHT, "WITHOUT SAVING");
+
 }
 
 sub display_level_selector {
 
     $rect{middle} = get_dialog_rect();
-    $app->print($rect{middle}->x + 15, $rect{middle}->y + 190, "START LEVEL:");
+    SDLx::TTF::print_text(   $app,$rect{middle}->x + 15, $rect{middle}->y + 190, "START LEVEL:");
+
     SDL::Video::update_rects($app,$rect{middle});
 
     show_selected_level();
@@ -1184,7 +1199,8 @@ sub show_selected_level {
 
     #now write the selected level
     $font = SDL::TTF::Font->new("$FPATH/gfx/font-hi.png");
-    $app->print(427 - SDL_TEXTWIDTH($start_level), $rect{middle}->y + 190, $start_level);
+    SDLx::TTF::print_text(   $app,427 - SDL_TEXTWIDTH($start_level), $rect{middle}->y + 190, $start_level);
+
     $font = SDL::TTF::Font->new("$FPATH/gfx/font.png");
 
     SDL::Video::update_rects($app,$rect{select_level_background_dest});
@@ -1276,7 +1292,8 @@ sub display_levelset_list_browser {
 			   SDL::Video::blit_surface(                $surf_purple_highlight, $rect{purple_highlight_src}, $app, $rect{purple_highlight_dest});
 			   SDL::Video::update_rects($app,$rect{purple_highlight_dest});
             }
-            $app->print($rect{middle}->x + 19, $rect{dialog_file_list}->y + 8 + 25 * ($cnt - $file_start_offset),
+	    SDLx::TTF::print_text(           $app,$rect{middle}->x + 19, $rect{dialog_file_list}->y + 8 + 25 * ($cnt - $file_start_offset),
+
 			uc($levelsets[$cnt]));
         }
     } else {
@@ -1298,7 +1315,8 @@ sub display_levelset_list_browser {
 	    SDL::Video::blit_surface(            $surf_file_list_background, $rect{erase_highlight}, $app, $rect{old_highlight});
 	    SDL::Video::update_rects($app,$rect{old_highlight});
             # draw the text of the old highligted dude
-            $app->print($rect{middle}->x + 19,
+	    SDLx::TTF::print_text(           $app,$rect{middle}->x + 19,
+
 			$rect{dialog_file_list}->y + 8 + 25 * ($list_browser_highlight_offset - $list_browser_file_start_offset),
 			uc($levelsets[$list_browser_highlight_offset]));
         }
@@ -1311,7 +1329,8 @@ sub display_levelset_list_browser {
             $surf_purple_highlight->height);
     SDL::Video::blit_surface(        $surf_purple_highlight, $rect{purple_highlight_src}, $app, $rect{purple_highlight_dest});
     SDL::Video::update_rects($app,$rect{purple_highlight_dest});
-		$app->print($rect{middle}->x + 19,
+    SDLx::TTF::print_text( $app,$rect{middle}->x + 19,
+
 		    $rect{dialog_file_list}->y + 8 + 25 * ($file_highlight_offset - $file_start_offset),
 		    uc($levelsets[$file_highlight_offset]));
 
@@ -1633,7 +1652,8 @@ sub print_cancel_text {
 			       SDL::Video::blit_surface(        $surface_dialog, $rect{cancel_src}, $app, $rect{cancel});
 			       SDL::Video::update_rects($app,$rect{cancel});
 
-        $app->print($rect{middle}->x + $rect{middle}->width - 120, $rect{middle}->y + 6 * $WOOD_PLANK_HEIGHT, 'CANCEL');
+			       SDLx::TTF::print_text(       $app,$rect{middle}->x + $rect{middle}->width - 120, $rect{middle}->y + 6 * $WOOD_PLANK_HEIGHT, 'CANCEL');
+
         if ($do_highlight) {
 		SDL::Video::blit_surface(            $highlight, $rect{option_highlight}, $app, $rect{cancel});
 		SDL::Video::update_rects($app,$rect{cancel});
@@ -1736,7 +1756,8 @@ sub print_dialog_list_arrow_up {
 sub print_levelset_name {
     $rect{ls_name_erase} = SDL::Rect->new(-x => 195, '-y' => 0, -width => 445-195, -height => 35);
     SDL::Video::blit_surface(    $background, $rect{ls_name_erase}, $app, $rect{ls_name_erase});
-     $app->print(($background->width - SDL_TEXTWIDTH(uc($levelset_name)))/2 - 6, 7, uc($levelset_name));
+    SDLx::TTF::print_text(    $app,($background->width - SDL_TEXTWIDTH(uc($levelset_name)))/2 - 6, 7, uc($levelset_name));
+
     SDL::Video::update_rects($app, 0,0,$app->w, $app->h);
 }
 
@@ -1746,7 +1767,8 @@ sub print_text_generic {
     SDL::Video::blit_surface($background, $rect{$name}, $app, $rect{$name});
     SDL::Video::update_rects($app,$rect{$name});
 
-   $app->print($xpos, $ypos, $text || uc($name));
+    SDLx::TTF::print_text(  $app,$xpos, $ypos, $text || uc($name));
+
     if ($do_highlight) {
 	    SDL::Video::blit_surface(        $highlight, $rect{option_highlight}, $app, $rect{$name});
 	    SDL::Video::update_rects($app,$rect{$name});
@@ -1882,7 +1904,8 @@ sub print_jump_to_level_value {
             }
         }
 
-#        $app->print($rect{dialog_new}->x + $rect{dialog_new}->width/2 - 12 * length($jump_to_level_value)/2, 210, $jump_to_level_value);
+	SDLx::TTF::print_text(     $app,$rect{dialog_new}->x + $rect{dialog_new}->width/2 - 12 * length($jump_to_level_value)/2, 210, $jump_to_level_value);
+
     }
 }
 
@@ -1930,7 +1953,8 @@ sub print_new_ls_name {
         } else {
             $new_ls_name_text .= keysym_to_char($key);
         }
-        $app->print($rect{dialog_new}->x + $rect{dialog_new}->width/2 - 12 * length($new_ls_name_text)/2, 210, $new_ls_name_text);
+	SDLx::TTF::print_text(       $app,$rect{dialog_new}->x + $rect{dialog_new}->width/2 - 12 * length($new_ls_name_text)/2, 210, $new_ls_name_text);
+
     }
 
     # if the filename is bad, unhighlight any option that is highlighted since
@@ -1958,7 +1982,8 @@ sub print_ok_right_text {
 			       SDL::Video::blit_surface(        $surface_dialog, $rect{cancel_src}, $app, $rect{cancel});
 			       SDL::Video::update_rects($app,$rect{cancel});
 
-        $app->print($rect{middle}->x + $rect{middle}->w - 80, $rect{middle}->y + 6 * $WOOD_PLANK_HEIGHT, 'OK');
+			       SDLx::TTF::print_text(       $app,$rect{middle}->x + $rect{middle}->w - 80, $rect{middle}->y + 6 * $WOOD_PLANK_HEIGHT, 'OK');
+
         if ($do_highlight) {
 		SDL::Video::blit_surface(            $highlight, $rect{option_highlight}, $app, $rect{cancel});
 		SDL::Video::update_rects($app,$rect{cancel});
@@ -1984,7 +2009,8 @@ sub print_ok_text {
 			   SDL::Video::blit_surface(        $surface_dialog, $rect{ok_src}, $app, $rect{ok});
 			   SDL::Video::update_rects($app,$rect{ok});
 
-        $app->print($rect{middle}->x + 60, $rect{middle}->y + 6 * $WOOD_PLANK_HEIGHT, 'OK');
+			   SDLx::TTF::print_text(       $app,$rect{middle}->x + 60, $rect{middle}->y + 6 * $WOOD_PLANK_HEIGHT, 'OK');
+
         if ($do_highlight) {
 		SDL::Video::blit_surface(            $highlight, $rect{option_highlight}, $app, $rect{ok});
 		SDL::Video::update_rects($app,$rect{ok});
@@ -1998,7 +2024,8 @@ sub print_level_nb {
     my $level_sign_rect = SDL::Rect->new($posx - 50,  $posy,  100,  25);
     SDL::Video::blit_surface(    $background, $level_sign_rect, $app, $level_sign_rect);
     my $text = "$curr_level/" . keys %bubble_hash;
-    $app->print($posx - 12 * length($text)/2, $posy, $text);
+    SDLx::TTF::print_text(   $app,$posx - 12 * length($text)/2, $posy, $text);
+
     SDL::Video::update_rects($app,$level_sign_rect);
 }
 
@@ -2054,24 +2081,28 @@ sub init_setup {
     # set font
     $font = SDL::TTF::Font->new("$FPATH/gfx/font.png", 12);
 
-    $app->print(5, $BUBBLE_WOOD_Y + 3, 'CHOOSE BUBBLE');
+    SDLx::TTF::print_text(   $app,5, $BUBBLE_WOOD_Y + 3, 'CHOOSE BUBBLE');
+
 
     # add navigation words
-    $app->print(20, $NAV_WOOD_Y + 8,'NAVIGATION');
+    SDLx::TTF::print_text(   $app,20, $NAV_WOOD_Y + 8,'NAVIGATION');
+
     print_prev_text(0);
     print_next_text(0);
     print_first_text(0);
     print_last_text(0);
 
     # add levelset words
-    $app->print($RIGHT_WOOD_X + 30, $LEVELSET_WOOD_Y + 8, 'LEVELSET');
+    SDLx::TTF::print_text(   $app,$RIGHT_WOOD_X + 30, $LEVELSET_WOOD_Y + 8, 'LEVELSET');
+
     print_ls_new_text(0);
     print_ls_open_text(0);
     print_ls_save_text(0);
     print_ls_delete_text(0);
 
     # add level words
-    $app->print($RIGHT_WOOD_X + 45, $LEVEL_WOOD_Y + 8, 'LEVEL');
+    SDLx::TTF::print_text(   $app,$RIGHT_WOOD_X + 45, $LEVEL_WOOD_Y + 8, 'LEVEL');
+
     print_lvl_insert_text(0);
     print_lvl_append_text(0);
     print_lvl_delete_text(0);

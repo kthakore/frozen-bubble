@@ -113,5 +113,6 @@ My::Builder->new(
         'SDL'                       => '2.4',
         'Time::HiRes'               => 0,
         'Locale::Maketext::Simple'  => 0,
+	'SDLx::TTF'		    => 0,
     },
 )->create_build_script;
