@@ -7,6 +7,7 @@ use Alien::SDL qw();
 use File::Spec;
 use Config qw(%Config);
 use My::Builder;
+use ExtUtils::CBuilder qw();
 
 my $prefix = Alien::SDL->config('prefix');
 my $cflags = Alien::SDL->config('cflags');
@@ -18,7 +19,7 @@ $cflags .= ' -fnested-functions' if $^O =~ /darwin/;
 ###!!! I intended Alien::SDL to add -I$prefix/include automatically, please tell me when it does not work (kmx)
 my $devnull = File::Spec->devnull();
 
-my @linkers = ( Alien::SDL->config('libs', '-lSDL_mixer', '-lSDL_Pango') );
+my @linkers = ( ExtUtils::CBuilder->new->split_like_shell( Alien::SDL->config('libs', '-lSDL_mixer', '-lSDL_Pango') ) );
 push @linkers, '-liconv'
   if $^O =~ /win/i;    ###!!! really only Win needs this? ; BEWARE this matches also 'darwin', 'cygwin'!!!!
 
@@ -62,6 +63,7 @@ My::Builder->new(
         'parent'                    => 0,
         'Alien::SDL'                => '1.2',
         'SDL'                       => '2.4',
+	'ExtUtils::CBuilder'	    => 0,
         'Time::HiRes'               => 0,
         'Locale::Maketext::Simple'  => 0,
         'Module::Build'             => '0.36', # for share_dir
