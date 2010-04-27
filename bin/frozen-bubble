@@ -432,7 +432,8 @@ sub switch_image_on_background($$$;$) {
     my ($image, $x, $y, $save) = @_;
     my $drect = SDL::Rect->new( $x, $y,  $image->w,  $image->h);
     if ($save) {
-	$save = SDL::Surface->new( SDL_ANYFORMAT, $image->w, $image->h, 32, 0 , 0, 0, 0);  #- grrr... this piece of shit of Amask made the surfaces slightly modify along the print/erase of "Hurry" and "Pause".... took me so much time to debug and find that the problem came from a bug when Amask is set to 0xFF000000 (while it's -supposed- to be set to 0xFF000000 with 32-bit graphics!!)
+	$save = SDL::Surface->new( SDL_ANYFORMAT, $image->w, $image->h, 32, 0 , 0, 0, 0);  
+        #- grrr... this piece of shit of Amask made the surfaces slightly modify along the print/erase of "Hurry" and "Pause".... took me so much time to debug and find that the problem came from a bug when Amask is set to 0xFF000000 (while it's -supposed- to be set to 0xFF000000 with 32-bit graphics!!)
 	SDL::Video::blit_surface($background, $drect, $save, $rects{$image});
     }
     SDL::Video::blit_surface($image, $rects{$image} || SDL::Rect->new(0, 0, $image->w, $image->h), $background, $drect);

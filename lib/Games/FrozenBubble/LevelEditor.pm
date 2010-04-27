@@ -1422,12 +1422,12 @@ sub display_levelset_screenshot {
             next if $nb < 1 || exists $shrinks{$name}{$nb};
             my %ls = %{$file_browser_levelsets{$name}};
             last if !exists $ls{$nb};
-            my $s = SDL::Surface->new(-width => $s_save->width, -height => $s_save->height, -depth => 32, -Amask => "0 but true");
+            my $s = SDL::Surface->new(SDL_ANYFORMAT,  $s_save->width,  $s_save->height,  32, 0,0,0,0);
             my $rect = SDL::Rect->new(0,0 , $app->width, $app->height);
 	    SDL::Video::blit_surface(            $s_save, $rect, $s, $rect);
             load_level($s, $nb, %ls);
-            my $dest = SDL::Surface->new(-width => $rect{screenshot}->width / 4, -height => $rect{screenshot}->height / 4,
-                                         -depth => 32, -Amask => "0 but true");
+            my $dest = SDL::Surface->new(SDL_ANYFORMAT, $rect{screenshot}->width / 4, $rect{screenshot}->height / 4,
+                                          32, 0,0,0,0);
             Games::FrozenBubble::CStuff::shrink(surf($dest), surf($s), 0, 0, rect($rect{screenshot}), 4);
             $shrinks{$name}{$nb} = $dest;
         }
