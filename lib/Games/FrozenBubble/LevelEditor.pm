@@ -8,6 +8,7 @@ use SDL::Surface;
 use SDL::Image;
 use SDL::Events;
 use SDL::Event;
+use SDL::Mouse;
 use SDL::Cursor;
 use SDL::TTF;
 use SDL::TTF::Font;
@@ -105,6 +106,7 @@ sub draw_bubble {
 
     SDL::Video::blit_surface($bubble, NULL, $surface_tmp, $bubble_rects{$x}{$y});
     $ignore_update or SDL::Video::update_rects($surface_tmp, $bubble_rects{$x}{$y});
+    
 }
 
 # subroutine to erase bubble
@@ -305,7 +307,7 @@ sub choose_action {
         }
 
     # check if over navigation options
-    } elsif ($LEFT_WOOD_X <= $x && $x <= $WOOD_WIDTH && $rect{prev}->y <= $y && $y <= $rect{last}->y + $rect{last}->height) {
+    } elsif ($LEFT_WOOD_X <= $x && $x <= $WOOD_WIDTH && $rect{prev}->y <= $y && $y <= $rect{last}->y + $rect{last}->h) {
 	my @nav_options = ({ name => 'prev',
 			     unhighlight => $curr_level == 1,
 			     action => sub { if ($curr_level != 1) {
@@ -333,7 +335,7 @@ sub choose_action {
 		       );
 
 	foreach (@nav_options) {
-	    if ($rect{$_->{name}}->y <= $y && $y <= $rect{$_->{name}}->y + $rect{$_->{name}}->height) {
+	    if ($rect{$_->{name}}->y <= $y && $y <= $rect{$_->{name}}->y + $rect{$_->{name}}->h) {
 		if ($_->{unhighlight}) {
 		    unhighlight_option();
 		} else {
@@ -345,13 +347,13 @@ sub choose_action {
 
     # check if over levelset options
     } elsif ($RIGHT_WOOD_X <= $x && $x <= $RIGHT_WOOD_X + $WOOD_WIDTH
-	     && $y >= $rect{ls_new}->y && $y <= $rect{ls_delete}->y + $rect{ls_delete}->height) {
+	     && $y >= $rect{ls_new}->y && $y <= $rect{ls_delete}->y + $rect{ls_delete}->h) {
 	my @ls_options = ({ name => 'ls_new',    action => sub { create_new_levelset_dialog() } },
 			  { name => 'ls_open',   action => sub { create_open_levelset_dialog() } },
 			  { name => 'ls_save',   action => sub { save_file() } },
 			  { name => 'ls_delete', action => sub { create_delete_levelset_dialog() } });
 	foreach (@ls_options) {
-	    if ($y >= $rect{$_->{name}}->y && $y <= $rect{$_->{name}}->y + $rect{$_->{name}}->height) {
+	    if ($y >= $rect{$_->{name}}->y && $y <= $rect{$_->{name}}->y + $rect{$_->{name}}->h) {
 		highlight_option($_->{name});
 		$caller eq 'button' and $_->{action}->();
 	    }
@@ -359,12 +361,12 @@ sub choose_action {
 
     # check if over level options
     } elsif ($RIGHT_WOOD_X <= $x && $x <= $RIGHT_WOOD_X + $WOOD_WIDTH
-	     && $y >= $rect{lvl_insert}->y && $y <= $rect{lvl_delete}->y + $rect{lvl_delete}->height) {
+	     && $y >= $rect{lvl_insert}->y && $y <= $rect{lvl_delete}->y + $rect{lvl_delete}->h) {
 	my @lvl_options = ({ name => 'lvl_insert', action => sub { insert_level() } },
 			   { name => 'lvl_append', action => sub { append_level() } },
 			   { name => 'lvl_delete', action => sub { delete_level(); load_level() } });
 	foreach (@lvl_options) {
-	    if ($y >= $rect{$_->{name}}->y && $y <= $rect{$_->{name}}->y + $rect{$_->{name}}->height) {
+	    if ($y >= $rect{$_->{name}}->y && $y <= $rect{$_->{name}}->y + $rect{$_->{name}}->h) {
 		highlight_option($_->{name});
 		$caller eq 'button' and $_->{action}->();
 	    }
@@ -372,7 +374,7 @@ sub choose_action {
 
     # check if over help
     } elsif ($RIGHT_WOOD_X <= $x && $x <= $RIGHT_WOOD_X + $WOOD_WIDTH
-             && $y >= $rect{help}->y && $y <= $rect{help}->y + $rect{help}->height) {
+             && $y >= $rect{help}->y && $y <= $rect{help}->y + $rect{help}->h) {
 
         if ($caller eq 'button') {
             create_help_dialog();
@@ -411,8 +413,8 @@ sub choose_dialog_action {
 
     $rect{middle} = get_dialog_rect();
     # over left button
-    if (betw($x, $rect{middle}->x, $rect{middle}->x + $rect{middle}->width/2)
-	&& betw($y, $rect{middle}->y + 6 * $WOOD_PLANK_HEIGHT, $rect{middle}->y + $rect{middle}->height)) {
+    if (betw($x, $rect{middle}->x, $rect{middle}->x + $rect{middle}->w/2)
+	&& betw($y, $rect{middle}->y + 6 * $WOOD_PLANK_HEIGHT, $rect{middle}->y + $rect{middle}->h)) {
 	if (member($displaying_dialog, qw(help ls_play ls_play_choose_level ls_nothing_to_delete ls_open_ok_only ls_new_ok_only))) {
 	    # this dialog does not have a left button. return
 	    unhighlight_option();
@@ -461,8 +463,8 @@ sub choose_dialog_action {
 	}
 
 	# over right button
-    } elsif (betw($x, $rect{middle}->x + $rect{middle}->width/2, $rect{middle}->x + $rect{middle}->width)
-	     && betw($y, $rect{middle}->y + 6 * $WOOD_PLANK_HEIGHT, $rect{middle}->y + $rect{middle}->height)) {
+    } elsif (betw($x, $rect{middle}->x + $rect{middle}->w/2, $rect{middle}->x + $rect{middle}->w)
+	     && betw($y, $rect{middle}->y + 6 * $WOOD_PLANK_HEIGHT, $rect{middle}->y + $rect{middle}->h)) {
 	if (member($displaying_dialog, qw(help ls_play ls_play_choose_level ls_nothing_to_delete ls_open_ok_only ls_new_ok_only))) {
             if ($displaying_dialog eq 'ls_new_ok_only' && is_ok_filename() == 1) {
                 highlight_option('ok_right');
@@ -530,22 +532,22 @@ sub choose_dialog_action {
 	}
 
     } elsif (member($displaying_dialog, qw(ls_open_ok_only ls_open ls_delete ls_play ls_play_choose_level))) {
-	if (betw($x, $rect{middle}->x + 4 * $rect{middle}->width/6, $rect{middle}->x + 4 * $rect{middle}->width/6 + $surface_tmp->width)) {
+	if (betw($x, $rect{middle}->x + 4 * $rect{middle}->w/6, $rect{middle}->x + 4 * $rect{middle}->w/6 + $surface_tmp->w)) {
 	    my @arrows = ($rect{dialog_file_list}->y + 2,
-			  $rect{dialog_file_list}->y + $rect{dialog_file_list}->height - $surface_tmp->height - 2);
-	    if (betw($y, $arrows[0], $arrows[0] + $surface_tmp->height)) {
+			  $rect{dialog_file_list}->y + $rect{dialog_file_list}->h - $surface_tmp->h - 2);
+	    if (betw($y, $arrows[0], $arrows[0] + $surface_tmp->h)) {
 		$caller eq 'button' and display_levelset_list_browser($list_browser_file_start_offset - 1, $list_browser_highlight_offset);
 		highlight_option('list_arrow_up');
 
-	    } elsif (betw($y, $arrows[1], $arrows[1] + $surface_tmp->height)) {
+	    } elsif (betw($y, $arrows[1], $arrows[1] + $surface_tmp->h)) {
 		$caller eq 'button' and display_levelset_list_browser($list_browser_file_start_offset + 1, $list_browser_highlight_offset);
 		highlight_option('list_arrow_down');
 
 	    } else {
 		unhighlight_option();
 	    }
-	} elsif (betw($x, $rect{dialog_file_list}->x, $rect{dialog_file_list}->x + $rect{dialog_file_list}->width)
-		 && betw($y, $rect{dialog_file_list}->y, $rect{dialog_file_list}->y + $rect{dialog_file_list}->height)) {
+	} elsif (betw($x, $rect{dialog_file_list}->x, $rect{dialog_file_list}->x + $rect{dialog_file_list}->w)
+		 && betw($y, $rect{dialog_file_list}->y, $rect{dialog_file_list}->y + $rect{dialog_file_list}->h)) {
 	    if ($caller eq 'button') {
 		if ($y < $rect{dialog_file_list}->y + 25) {
 		    display_levelset_list_browser($list_browser_file_start_offset, $list_browser_file_start_offset);
@@ -820,9 +822,9 @@ sub handle_events {
 
 # subroutine to get the rect where the promt will go
 sub get_dialog_rect {
-    SDL::Rect->new( $background->width/2 - $surface_dialog->width/2,
-		    $background->height/2 - $surface_dialog->height/2,
-		    $surface_dialog->width,  $surface_dialog->height);
+    SDL::Rect->new( $background->w/2 - $surface_dialog->w/2,
+		    $background->h/2 - $surface_dialog->h/2,
+		    $surface_dialog->w,  $surface_dialog->h);
 }
 
 sub create_dialog_base {
@@ -834,12 +836,12 @@ sub create_dialog_base {
     } else {
         $surface_dialog = SDL::Image::load( "$FPATH/gfx/menu/void_panel.png");
     }
-    $rect{dialog} = SDL::Rect->new(0, 0, $surface_dialog->width,  $surface_dialog->height);
+    $rect{dialog} = SDL::Rect->new(0, 0, $surface_dialog->w,  $surface_dialog->h);
     $rect{middle} = get_dialog_rect();
 
     SDL::Video::blit_surface(    $surface_dialog, $rect{dialog}, $app, $rect{middle});
 
-    SDLx::TTF::print_text(   $app,$rect{middle}->x + $rect{middle}->width/2 - 12 * length($title_text)/2, $rect{middle}->y + 5, uc($title_text));
+    SDLx::TTF::print_text(   $app,$rect{middle}->x + $rect{middle}->w/2 - 12 * length($title_text)/2, $rect{middle}->y + 5, uc($title_text));
 
 }
 
@@ -853,9 +855,9 @@ sub create_dialog {
 }
 
 sub remove_dialog {
-    $rect{middle} = SDL::Rect->new( $background->width/2 - $surface_dialog->width/2,
-				    $background->height/2 - $surface_dialog->height/2,
-				    $surface_dialog->width, $surface_dialog->height);
+    $rect{middle} = SDL::Rect->new( $background->w/2 - $surface_dialog->w/2,
+				    $background->h/2 - $surface_dialog->h/2,
+				    $surface_dialog->w, $surface_dialog->h);
 			   SDL::Video::blit_surface(    $background, $rect{middle}, $app, $rect{middle});
 			   SDL::Video::update_rect($app, 0 , 0, $app->w, $app->h);
 
@@ -1176,7 +1178,7 @@ sub SDL_TEXTWIDTH {
     if (defined(&SDL::App::SDL_TEXTWIDTH)) {
         SDL::App::SDL_TEXTWIDTH(@_);   # perl-sdl-1.x
     } else {
-        SDL::TTF::Font::SDL_TEXTWIDTH(@_); # perl-sdl-2.x
+        SDLx::TTF::SDL_TEXTWIDTH(@_); # perl-sdl-2.x
     }
 }
 
@@ -1186,14 +1188,14 @@ sub show_selected_level {
       = SDL::Image::load( "$FPATH/gfx/select_level_background.png");
 
     $rect{select_level_background_src}
-      = SDL::Rect->new(0, 0, $surf_select_level_background->width,
-                      $surf_select_level_background->height);
+      = SDL::Rect->new(0, 0, $surf_select_level_background->w,
+                      $surf_select_level_background->h);
 
     $rect{select_level_background_dest}
       = SDL::Rect->new( 305,
                        $rect{middle}->y + 190,  #==
-                        $rect{select_level_background_src}->width,
-                        $rect{select_level_background_src}->height);
+                        $rect{select_level_background_src}->w,
+                        $rect{select_level_background_src}->h);
 
 	       SDL::Video::blit_surface(    $surf_select_level_background, $rect{select_level_background_src}, $app, $rect{select_level_background_dest});
 
@@ -1242,7 +1244,7 @@ sub display_levelset_list_browser {
 	$font = SDL::TTF::Font->new("$FPATH/gfx/font-hi.png");
     $surf_file_list_background = SDL::Image::load( "$FPATH/gfx/file_list_background.png");
 
-    $rect{list_box_src} = SDL::Rect->new(0,0, $surf_file_list_background->width,
+    $rect{list_box_src} = SDL::Rect->new(0,0, $surf_file_list_background->w,
 					 3 * $WOOD_PLANK_HEIGHT);
 
     # if the user is choosing the start level, we need to move things up a little bit to make
@@ -1252,12 +1254,12 @@ sub display_levelset_list_browser {
         $widgetMove = -25;
     }
     $rect{dialog_file_list} = SDL::Rect->new($rect{middle}->x + 9,  $rect{middle}->y + $WOOD_PLANK_HEIGHT + 37 + $widgetMove,
-					      $rect{list_box_src}->width,  $rect{list_box_src}->height);
+					      $rect{list_box_src}->w,  $rect{list_box_src}->h);
 
     $surf_purple_highlight = SDL::Image::load( "$FPATH/gfx/purple_hover.gif");
 
-    $rect{purple_highlight_src} = SDL::Rect->new(0,0, $surf_purple_highlight->width,
-						$surf_purple_highlight->height);
+    $rect{purple_highlight_src} = SDL::Rect->new(0,0, $surf_purple_highlight->w,
+						$surf_purple_highlight->h);
 
     # we only want to draw the arrows and background here once, when we first get launched
     if ($list_browser_highlight_offset == -1) {
@@ -1287,7 +1289,7 @@ sub display_levelset_list_browser {
                 $rect{purple_highlight_dest}
                   = SDL::Rect->new( $rect{middle}->x + 12,
                                     $rect{dialog_file_list}->y + 10 + 25 * ($cnt - $file_start_offset),
-                                    $surf_purple_highlight->width,  $surf_purple_highlight->height);
+                                    $surf_purple_highlight->w,  $surf_purple_highlight->h);
 
 			   SDL::Video::blit_surface(                $surf_purple_highlight, $rect{purple_highlight_src}, $app, $rect{purple_highlight_dest});
 			   SDL::Video::update_rects($app,$rect{purple_highlight_dest});
@@ -1325,8 +1327,8 @@ sub display_levelset_list_browser {
         $rect{purple_highlight_dest} = SDL::Rect->new(
             $rect{middle}->x + 12,
              $rect{dialog_file_list}->y + 10 + 25 * ($file_highlight_offset - $file_start_offset),
-             $surf_purple_highlight->width,
-            $surf_purple_highlight->height);
+             $surf_purple_highlight->w,
+            $surf_purple_highlight->h);
     SDL::Video::blit_surface(        $surf_purple_highlight, $rect{purple_highlight_src}, $app, $rect{purple_highlight_dest});
     SDL::Video::update_rects($app,$rect{purple_highlight_dest});
     SDLx::TTF::print_text( $app,$rect{middle}->x + 19,
@@ -1394,19 +1396,19 @@ sub display_levelset_screenshot {
         $widgetMove = -25;
     }
 
-    my ($x, $y) = ($rect{middle}->x + $rect{middle}->width - $rect{screenshot}->width/4 - 12,
-                   $rect{middle}->y + $rect{middle}->height/2 - $rect{screenshot}->height/8 - 3 + $widgetMove);
+    my ($x, $y) = ($rect{middle}->x + $rect{middle}->w - $rect{screenshot}->w/4 - 12,
+                   $rect{middle}->y + $rect{middle}->h/2 - $rect{screenshot}->h/8 - 3 + $widgetMove);
 
 
     my %shrinks if 0;
     my $current_nb = $start_level || 1;
     if (!exists $shrinks{$name}{$current_nb}) {
         my $surf = SDL::Image::load( "$FPATH/gfx/menu/please_wait.png");
-	SDL::Video::blit_surface(        $surf, SDL::Rect->new(0,0, $surf->width,  $surf->height),
+	SDL::Video::blit_surface(        $surf, SDL::Rect->new(0,0, $surf->w,  $surf->h),
                     $app,
-                    SDL::Rect->new( $rect{scroll_list_background_dest}->x + $rect{scroll_list_background_dest}->width + 7,
+                    SDL::Rect->new( $rect{scroll_list_background_dest}->x + $rect{scroll_list_background_dest}->w + 7,
                                      $rect{scroll_list_background_dest}->y + 20,
-                                    $surf->width,  $surf->width));
+                                    $surf->w,  $surf->w));
 		   SDL::Video::update_rects($app,$rect{middle});
 
         #- sorta "read ahead": will compute next 10 levels screenshots as well
@@ -1422,11 +1424,11 @@ sub display_levelset_screenshot {
             next if $nb < 1 || exists $shrinks{$name}{$nb};
             my %ls = %{$file_browser_levelsets{$name}};
             last if !exists $ls{$nb};
-            my $s = SDL::Surface->new(SDL_ANYFORMAT,  $s_save->width,  $s_save->height,  32, 0,0,0,0);
-            my $rect = SDL::Rect->new(0,0 , $app->width, $app->height);
+            my $s = SDL::Surface->new(SDL_ANYFORMAT,  $s_save->w,  $s_save->h,  32, 0,0,0,0);
+            my $rect = SDL::Rect->new(0,0 , $app->w, $app->h);
 	    SDL::Video::blit_surface(            $s_save, $rect, $s, $rect);
             load_level($s, $nb, %ls);
-            my $dest = SDL::Surface->new(SDL_ANYFORMAT, $rect{screenshot}->width / 4, $rect{screenshot}->height / 4,
+            my $dest = SDL::Surface->new(SDL_ANYFORMAT, $rect{screenshot}->w / 4, $rect{screenshot}->h / 4,
                                           32, 0,0,0,0);
             Games::FrozenBubble::CStuff::shrink(surf($dest), surf($s), 0, 0, rect($rect{screenshot}), 4);
             $shrinks{$name}{$nb} = $dest;
@@ -1434,8 +1436,8 @@ sub display_levelset_screenshot {
     }
 
     my $image = $shrinks{$name}{$current_nb};
-    my $rect = SDL::Rect->new($x, $y,  $image->width,  $image->height);
-    SDL::Video::blit_surface(    $image, SDL::Rect->new(0, 0, $image->width, $image->height), $app, $rect);
+    my $rect = SDL::Rect->new($x, $y,  $image->w,  $image->h);
+    SDL::Video::blit_surface(    $image, SDL::Rect->new(0, 0, $image->w, $image->h), $app, $rect);
     SDL::Video::update_rects($app,$rect{middle});
 }
 
@@ -1641,18 +1643,18 @@ sub print_cancel_text {
     if ($displaying_dialog ne '') {
         $rect{middle} = get_dialog_rect();
 
-        $rect{cancel_src} = SDL::Rect->new( $rect{middle}->width - $rect{option_highlight}->width,
+        $rect{cancel_src} = SDL::Rect->new( $rect{middle}->w - $rect{option_highlight}->w,
 					    6 * $WOOD_PLANK_HEIGHT - 4,
-					    $rect{middle}->width/2, $WOOD_PLANK_HEIGHT);
+					    $rect{middle}->w/2, $WOOD_PLANK_HEIGHT);
 
-        $rect{cancel} = SDL::Rect->new( $rect{middle}->x + $rect{middle}->width - $rect{option_highlight}->width,
+        $rect{cancel} = SDL::Rect->new( $rect{middle}->x + $rect{middle}->w - $rect{option_highlight}->w,
 				        $rect{middle}->y + 6 * $WOOD_PLANK_HEIGHT - 4,
-				       $rect{middle}->width/2, $WOOD_PLANK_HEIGHT);
+				       $rect{middle}->w/2, $WOOD_PLANK_HEIGHT);
 
 			       SDL::Video::blit_surface(        $surface_dialog, $rect{cancel_src}, $app, $rect{cancel});
 			       SDL::Video::update_rects($app,$rect{cancel});
 
-			       SDLx::TTF::print_text(       $app,$rect{middle}->x + $rect{middle}->width - 120, $rect{middle}->y + 6 * $WOOD_PLANK_HEIGHT, 'CANCEL');
+			       SDLx::TTF::print_text(       $app,$rect{middle}->x + $rect{middle}->w - 120, $rect{middle}->y + 6 * $WOOD_PLANK_HEIGHT, 'CANCEL');
 
         if ($do_highlight) {
 		SDL::Video::blit_surface(            $highlight, $rect{option_highlight}, $app, $rect{cancel});
@@ -1671,7 +1673,7 @@ sub print_dialog_list_arrow {
     $rect{list_arrow_dest} = SDL::Rect->new(
 		     $rect{middle}->x + 4 * $rect{middle}->w/6 + 2,
 		     $type eq 'up' ? $rect{dialog_file_list}->y + 2
-		                          : $rect{dialog_file_list}->y + $rect{dialog_file_list}->h - $surf_list_arrow->height - 2,
+		                          : $rect{dialog_file_list}->y + $rect{dialog_file_list}->h - $surf_list_arrow->h - 2,
 		     $surf_list_arrow->w,  $surf_list_arrow->h);
 
     my $surf_scroll_list_background = SDL::Image::load( "$FPATH/gfx/scroll_list_background.png");
@@ -1756,7 +1758,7 @@ sub print_dialog_list_arrow_up {
 sub print_levelset_name {
     $rect{ls_name_erase} = SDL::Rect->new( 195,  0,  445-195,  35);
     SDL::Video::blit_surface(    $background, $rect{ls_name_erase}, $app, $rect{ls_name_erase});
-    SDLx::TTF::print_text(    $app,($background->width - SDL_TEXTWIDTH(uc($levelset_name)))/2 - 6, 7, uc($levelset_name));
+    SDLx::TTF::print_text(    $app,($background->w - SDL_TEXTWIDTH(uc($levelset_name)))/2 - 6, 7, uc($levelset_name));
 
     SDL::Video::update_rects($app, 0,0,$app->w, $app->h);
 }
@@ -1885,12 +1887,12 @@ sub print_jump_to_level_value {
         }
         # first erase the previous words
         $rect{dialog_blank} = SDL::Rect->new(0, 2 * $WOOD_PLANK_HEIGHT,
-					      $surface_dialog->width,
-					      $surface_dialog->height - 3 * $WOOD_PLANK_HEIGHT);
-        $rect{dialog_new} = SDL::Rect->new( $background->width/2 - $surface_dialog->width/2,
-					    $background->height/2 - $surface_dialog->height/2 + 2 * $WOOD_PLANK_HEIGHT,
-					    $surface_dialog->width,
-					    $surface_dialog->height - 3*$WOOD_PLANK_HEIGHT);
+					      $surface_dialog->w,
+					      $surface_dialog->h - 3 * $WOOD_PLANK_HEIGHT);
+        $rect{dialog_new} = SDL::Rect->new( $background->w/2 - $surface_dialog->w/2,
+					    $background->h/2 - $surface_dialog->h/2 + 2 * $WOOD_PLANK_HEIGHT,
+					    $surface_dialog->w,
+					    $surface_dialog->h - 3*$WOOD_PLANK_HEIGHT);
 				   SDL::Video::blit_surface(        $surface_dialog, $rect{dialog_blank}, $app, $rect{dialog_new});
 				   SDL::Video::update_rect($app, 0 , 0, $app->w, $app->h);
         if ($key == SDLK_BACKSPACE()) {
@@ -1904,7 +1906,7 @@ sub print_jump_to_level_value {
             }
         }
 
-	SDLx::TTF::print_text(     $app,$rect{dialog_new}->x + $rect{dialog_new}->width/2 - 12 * length($jump_to_level_value)/2, 210, $jump_to_level_value);
+	SDLx::TTF::print_text(     $app,$rect{dialog_new}->x + $rect{dialog_new}->w/2 - 12 * length($jump_to_level_value)/2, 210, $jump_to_level_value);
 
     }
 }
@@ -1935,12 +1937,12 @@ sub print_new_ls_name {
 						    || $key >= SDLK_0 && $key <= SDLK_9()))) {
         # first erase the previous words
         $rect{dialog_blank} = SDL::Rect->new(0,  2 * $WOOD_PLANK_HEIGHT,
-					     $surface_dialog->width,
-					      $surface_dialog->height - 3 * $WOOD_PLANK_HEIGHT);
-        $rect{dialog_new} = SDL::Rect->new( $background->width/2 - $surface_dialog->width/2,
-					    $background->height/2 - $surface_dialog->height/2 + 2 * $WOOD_PLANK_HEIGHT,
-					    $surface_dialog->width,
-					    $surface_dialog->height - 3*$WOOD_PLANK_HEIGHT);
+					     $surface_dialog->w,
+					      $surface_dialog->h - 3 * $WOOD_PLANK_HEIGHT);
+        $rect{dialog_new} = SDL::Rect->new( $background->w/2 - $surface_dialog->w/2,
+					    $background->h/2 - $surface_dialog->h/2 + 2 * $WOOD_PLANK_HEIGHT,
+					    $surface_dialog->w,
+					    $surface_dialog->h - 3*$WOOD_PLANK_HEIGHT);
 				   SDL::Video::blit_surface(        $surface_dialog, $rect{dialog_blank}, $app, $rect{dialog_new});
 				   SDL::Video::update_rect($app, 0 , 0, $app->w, $app->h);
         if ($key == SDLK_BACKSPACE()) {
@@ -1953,7 +1955,7 @@ sub print_new_ls_name {
         } else {
             $new_ls_name_text .= keysym_to_char($key);
         }
-	SDLx::TTF::print_text(       $app,$rect{dialog_new}->x + $rect{dialog_new}->width/2 - 12 * length($new_ls_name_text)/2, 210, $new_ls_name_text);
+	SDLx::TTF::print_text(       $app,$rect{dialog_new}->x + $rect{dialog_new}->w/2 - 12 * length($new_ls_name_text)/2, 210, $new_ls_name_text);
 
     }
 
@@ -1998,12 +2000,12 @@ sub print_ok_text {
         $rect{middle} = get_dialog_rect();
 
         $rect{ok_src} = SDL::Rect->new(0,  6 * $WOOD_PLANK_HEIGHT - 4,
-				        $rect{middle}->width/2,
+				        $rect{middle}->w/2,
 				        $WOOD_PLANK_HEIGHT);
 
         $rect{ok} = SDL::Rect->new( $rect{middle}->x,
 				    $rect{middle}->y + 6 * $WOOD_PLANK_HEIGHT - 4,
-				    $rect{middle}->width/2,
+				    $rect{middle}->w/2,
 				    $WOOD_PLANK_HEIGHT);
 
 			   SDL::Video::blit_surface(        $surface_dialog, $rect{ok_src}, $app, $rect{ok});
@@ -2079,8 +2081,7 @@ sub init_setup {
     add_erase_option();
 
     # set font
-    $font = SDL::TTF::Font->new("$FPATH/gfx/font.png", 12);
-
+    $font = SDLx::TTF->new("$FPATH/gfx/font.png");
     SDLx::TTF::print_text(   $app,5, $BUBBLE_WOOD_Y + 3, 'CHOOSE BUBBLE');
 
 
@@ -2123,7 +2124,7 @@ sub init_setup {
     $curr_level > keys %bubble_hash and $curr_level = 1;
     load_level();
 
-    SDL::WarpMouse(320, 240);
+    SDL::Mouse::warp_mouse(320, 240);
 
     print_levelset_name();
     SDL::Video::update_rect($app, 0 , 0, $app->w, $app->h);
