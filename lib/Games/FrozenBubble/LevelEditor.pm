@@ -2155,7 +2155,7 @@ sub init_app {
         $curr_level = 1;
     }
 
-    $font = SDLx::TTF->new("$FPATH/gfx/font.png", 12);
+    $font = SDLx::TTF->new("$FPATH/gfx/font.png");
 
     # background image
     $background = SDL::Image::load( "$FPATH/gfx/level_editor.png");
