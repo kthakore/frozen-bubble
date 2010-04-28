@@ -1200,10 +1200,10 @@ sub show_selected_level {
 	       SDL::Video::blit_surface(    $surf_select_level_background, $rect{select_level_background_src}, $app, $rect{select_level_background_dest});
 
     #now write the selected level
-    $font = SDL::TTF::Font->new("$FPATH/gfx/font-hi.png");
+    $font = SDLx::TTF->new("$FPATH/gfx/font-hi.png");
     SDLx::TTF::print_text(   $app,427 - SDL_TEXTWIDTH($start_level), $rect{middle}->y + 190, $start_level);
 
-    $font = SDL::TTF::Font->new("$FPATH/gfx/font.png");
+    $font = SDLx::TTF->new("$FPATH/gfx/font.png");
 
     SDL::Video::update_rects($app,$rect{select_level_background_dest});
 
@@ -1241,7 +1241,7 @@ sub display_levelset_list_browser {
 
     $rect{middle} = get_dialog_rect();
 	#I want the font to be blue in the dialogs
-	$font = SDL::TTF::Font->new("$FPATH/gfx/font-hi.png");
+	$font = SDLx::TTF->new("$FPATH/gfx/font-hi.png");
     $surf_file_list_background = SDL::Image::load( "$FPATH/gfx/file_list_background.png");
 
     $rect{list_box_src} = SDL::Rect->new(0,0, $surf_file_list_background->w,
@@ -1364,7 +1364,7 @@ sub display_levelset_list_browser {
     }
 
     #reset the font back to white
-    $font = SDL::TTF::Font->new("$FPATH/gfx/font.png");
+    $font = SDLx::TTF->new("$FPATH/gfx/font.png");
     SDL::Video::update_rect($app, 0 , 0, $app->w, $app->h);
 }
 
@@ -2155,7 +2155,7 @@ sub init_app {
         $curr_level = 1;
     }
 
-    $font = SDL::TTF::Font->new("$FPATH/gfx/font.png", 12);
+    $font = SDLx::TTF->new("$FPATH/gfx/font.png", 12);
 
     # background image
     $background = SDL::Image::load( "$FPATH/gfx/level_editor.png");
