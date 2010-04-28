@@ -660,11 +660,11 @@ sub handle_events {
                 } elsif ($displaying_dialog eq 'ls_open') {
                     if ($event->key_sym() == SDLK_RETURN() || $event->key_sym() == SDLK_KP_ENTER()) {
                         highlight_option('ok');
-                        $SDL::delay(200);
+                        SDL::delay(200);
                         open_levelset();
                     } elsif ($event->key_sym() == SDLK_ESCAPE()) {
                         highlight_option('cancel');
-                        $SDL::delay(200);
+                        SDL::delay(200);
                         remove_dialog();
                         if ($deleted_current_levelset == 1) {
                             create_deleted_current_levelset_dialog();
@@ -677,7 +677,7 @@ sub handle_events {
                 } elsif ($displaying_dialog eq 'ls_open_ok_only') {
                     if ($event->key_sym() == SDLK_RETURN() || $event->key_sym() == SDLK_KP_ENTER()) {
                         highlight_option('ok_right');
-                        $SDL::delay(200);
+                        SDL::delay(200);
                         open_levelset();
                     } elsif ($event->key_sym() == SDLK_DOWN()) {
                         display_levelset_list_browser($FBLE::list_browser_file_start_offset + 1, $FBLE::list_browser_highlight_offset + 1);
@@ -687,7 +687,7 @@ sub handle_events {
                 } elsif ($displaying_dialog eq 'help') {
                     if ($event->key_sym() == SDLK_RETURN() || $event->key_sym() == SDLK_KP_ENTER()) {
                         highlight_option('ok_right');
-                        $SDL::delay(200);
+                        SDL::delay(200);
                         remove_dialog();
                     }
 
@@ -698,7 +698,7 @@ sub handle_events {
                     }
                     if ($event->key_sym == SDLK_RETURN() || $event->key_sym == SDLK_KP_ENTER()) {
                         highlight_option('ok_right');
-                        $SDL::delay(200);
+                        SDL::delay(200);
                         my (@levelsets);
                         @levelsets = get_levelset_list();
                         $displaying_dialog = '';
@@ -733,11 +733,11 @@ sub handle_events {
                 } elsif ($displaying_dialog eq 'ls_delete') {
                     if ($event->key_sym() == SDLK_RETURN() || $event->key_sym() == SDLK_KP_ENTER()) {
                         highlight_option('ok');
-                        $SDL::delay(200);
+                        SDL::delay(200);
                         delete_levelset();
                     } elsif ($event->key_sym() == SDLK_ESCAPE()) {
                         highlight_option('cancel');
-                        $SDL::delay(200);
+                        SDL::delay(200);
                         remove_dialog();
                     } elsif ($event->key_sym() == SDLK_DOWN()) {
                         display_levelset_list_browser($FBLE::list_browser_file_start_offset + 1, $FBLE::list_browser_highlight_offset + 1);
@@ -747,12 +747,12 @@ sub handle_events {
                 } elsif ($displaying_dialog eq 'ls_deleted_current') {
                     if ($event->key_sym() == SDLK_RETURN() || $event->key_sym() == SDLK_KP_ENTER() ) {
                         highlight_option('ok');
-                        $SDL::delay(200);
+                        SDL::delay(200);
                         remove_dialog();
                         create_open_levelset_dialog_ok_only();
                     } elsif ($event->key_sym() == SDLK_ESCAPE()) {
                         highlight_option('cancel');
-                        $SDL::delay(200);
+                        SDL::delay(200);
                         $levelset_name = 'default-levelset';
                         %bubble_hash = read_file($levelset_name);
                         $curr_level = 1;
@@ -765,20 +765,20 @@ sub handle_events {
                 } elsif ($displaying_dialog eq 'ls_nothing_to_delete') {
                     if ($event->key_sym() == SDLK_RETURN() || $event->key_sym() == SDLK_KP_ENTER()) {
                         highlight_option('ok_right');
-                        $SDL::delay(200);
+                        SDL::delay(200);
                         $displaying_dialog = '';
                         remove_dialog();
                     }
                 } elsif ($displaying_dialog eq 'ls_save_changes') {
                     if ($event->key_sym() == SDLK_RETURN() || $event->key_sym() == SDLK_KP_ENTER() ) {
                         highlight_option('ok');
-                        $SDL::delay(200);
+                        SDL::delay(200);
                         save_file();
                         $displaying_dialog = '';
                         eval($modified_levelset_action);
                     } elsif ($event->key_sym() == SDLK_ESCAPE()) {
                         highlight_option('cancel');
-                        $SDL::delay(200);
+                        SDL::delay(200);
                         $displaying_dialog = '';
                         eval($modified_levelset_action);
                     }
@@ -811,7 +811,7 @@ sub handle_events {
             }
 
         } else {
-            $SDL::delay(1);
+            SDL::delay(1);
         }
 
     }
@@ -1119,24 +1119,24 @@ sub modify_selected_level {
 				#to compensate for that. delay 100 and then check the key again
 				#if it has changed, just exit. Otherwise, they're holding the
 				#key down and we follow the logic as usual
-                $SDL::delay(100);
+                SDL::delay(100);
                 $event->pump;
                 if ($event->poll == 0 || $event->type == SDL_MOUSEMOTION) { #mousemotion is when they are
                     #holding the mouse key down and
                     #jiggle it's position a litte bit
-                    $SDL::delay(300);
+                    SDL::delay(300);
                 } else {
                     goto done;
                 }
 
             } elsif ($loops <= 10) {
-                $SDL::delay(150);
+                SDL::delay(150);
 
             } elsif ($loops <= 20) {
-                $SDL::delay(80);
+                SDL::delay(80);
 
             } else {
-                $SDL::delay(35);
+                SDL::delay(35);
             }
 
             $loops++;
@@ -1869,11 +1869,11 @@ sub print_jump_to_level_value {
     my ($key) = @_;
     if ($key == SDLK_ESCAPE()) {
         highlight_option('cancel');
-        $SDL::delay(200);
+        SDL::delay(200);
         remove_dialog();
     } elsif (($key == SDLK_RETURN() || $key == SDLK_KP_ENTER()) && length($jump_to_level_value) > 0 ) {
         highlight_option('ok');
-        $SDL::delay(200);
+        SDL::delay(200);
         remove_dialog();
         jump_to_level($jump_to_level_value);
     } elsif ($key == SDLK_BACKSPACE() || ($key >= SDLK_0() && $key <= SDLK_9()) || ( $key >= SDLK_KP0() && $key <= SDLK_KP9())) {
@@ -1917,7 +1917,7 @@ sub print_new_ls_name {
     if ($key == SDLK_ESCAPE()) {
         if ($displaying_dialog eq 'ls_new') {
             highlight_option('cancel');
-            $SDL::delay(200);
+            SDL::delay(200);
             remove_dialog();
         }
     } elsif (($key == SDLK_RETURN() || $key == SDLK_KP_ENTER()) && length($new_ls_name_text) > 0 && is_ok_filename() ) {
@@ -1926,7 +1926,7 @@ sub print_new_ls_name {
         } elsif ($displaying_dialog eq 'ls_new_ok_only') {
             highlight_option('ok_right');
         }
-        $SDL::delay(200);
+        SDL::delay(200);
         remove_dialog();
         create_new_levelset();
     } elsif ($key == SDLK_BACKSPACE()
