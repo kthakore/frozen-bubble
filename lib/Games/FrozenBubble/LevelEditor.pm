@@ -598,8 +598,8 @@ sub handle_events {
     my $event = SDL::Event->new;
 
     while (1) {
-        $event->pump;
-        if ($event->poll != 0) {
+	    SDL::Events::pump_events();
+        if (SDL::Events::poll_event($event) != 0) {
 
             if ($event->type == SDL_MOUSEMOTION) {
                 if ($displaying_dialog eq '') {
@@ -1760,7 +1760,7 @@ sub print_levelset_name {
     SDL::Video::blit_surface(    $background, $rect{ls_name_erase}, $app, $rect{ls_name_erase});
     SDLx::TTF::print_text(    $app,($background->w - SDL_TEXTWIDTH(uc($levelset_name)))/2 - 6, 7, uc($levelset_name));
 
-    SDL::Video::update_rects($app, 0,0,$app->w, $app->h);
+    SDL::Video::update_rects($app, SDL::Rect->new(0,0,$app->w, $app->h) );
 }
 
 sub print_text_generic {
