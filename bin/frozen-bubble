@@ -285,7 +285,7 @@ sub play_music($) {
     SDL::Mixer::Music::playing_music and SDL::Mixer::Music::fade_out_music(500);
     SDL::delay(400);
     SDL::delay(10) while SDL::Mixer::Music::playing_music;  #- mikmod will segfault if we try to load a music while old one is still fading out
-    my %musics = (intro => '/snd/introzik.ogg', main1p => '/snd/frozen-mainzik-1p.ogg', main2p => '/snd/frozen-mainzik-2p.xm');
+    my %musics = (intro => '/snd/introzik.ogg', main1p => '/snd/frozen-mainzik-1p.ogg', main2p => '/snd/frozen-mainzik-2p.ogg');
     my $mus if 0;                                 #- I need to keep a reference on the music or it will be collected at the end of this function, thus I manually collect previous music
     if (@playlist) {
 	my $tryanother = sub {
