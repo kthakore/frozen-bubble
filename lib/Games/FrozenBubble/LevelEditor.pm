@@ -104,7 +104,7 @@ sub draw_bubble {
 
     $alpha and SDL::Video::set_alpha($bubble, SDL_SRCALPHA, 0x66);
 
-    SDL::Video::blit_surface($bubble, NULL, $surface_tmp, $bubble_rects{$x}{$y});
+    SDL::Video::blit_surface($bubble, SDL::Rect->new(0,0,$bubble->w, $bubble->h), $surface_tmp, $bubble_rects{$x}{$y});
     $ignore_update or SDL::Video::update_rects($surface_tmp, $bubble_rects{$x}{$y});
     
 }
@@ -2064,7 +2064,7 @@ sub add_bubble_options {
 # subroutine to add the erase option
 sub add_erase_option {
     my $erase = SDL::Image::load("$FPATH/gfx/balls/stick_effect_6.png");
-    SDL::Video::blit_surface( $erase, NULL, $app, $rect{erase});
+    SDL::Video::blit_surface( $erase,  SDL::Rect->new(0,0,$erase->w, $background->h), $app, $rect{erase});
     SDL::Video::update_rects( $app, $rect{erase});
 }
 
@@ -2074,7 +2074,7 @@ sub init_setup {
 
     init_app($application_caller, $sdlapp);
 
-    SDL::Video::blit_surface($background, NULL, $app, $rect{background});
+    SDL::Video::blit_surface($background, SDL::Rect->new(0,0,$background->w, $background->h), $app, $rect{background});
     SDL::Video::update_rects( $app, $rect{background});
 
     add_bubble_options();
