@@ -6003,12 +6003,21 @@ sub replay {
             $fh->close;
             local *F;
             local $/ = undef;
-            open(F, "bzcat '$filename'|" ) or print("Can't open '$filename': $!\n"), return;
-            $replayfile = <F>;
-            close F;
-            unlink($filename);
-            $replayfile or print("Could not bzcat '$filename', not displaying playback.\n"), return;
-        }
+       			return unless -e $filename;
+			if( eval('use Compress::Bzip2; 1') ) {
+				my $bz      = Compress::Bzip2::bzopen($filename, 'r');
+				$replayfile = '';
+				my $line    = '';
+				while($bz->bzreadline($line) > 0){ $replayfile .= $line; }
+				
+				$bz->bzclose();
+
+			}
+			else {
+				$replayfile or print("Module Compress::Bzip2 is missing, not displaying playback.\n"), return;
+			}
+			unlink ($filename);
+         }
     } else {
         if ($replayfile =~ /\.bz2$/) {
             local *F;
