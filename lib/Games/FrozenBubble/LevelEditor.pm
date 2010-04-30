@@ -602,6 +602,7 @@ sub handle_events {
         if (SDL::Events::poll_event($event) != 0) {
 
             if ($event->type == SDL_MOUSEMOTION) {
+		    #TODO: Change this ->button_x stuff to new api
                 if ($displaying_dialog eq '') {
                     choose_action($event->button_x, $event->button_y, 'motion', $event->button);  #- , )
                 } else {
@@ -1080,8 +1081,8 @@ sub modify_selected_level {
 
     #loop until we get a keyup or a mouse up
     while (1) {
-        $event->pump;
-        if ($event->poll == 0 ) {
+	    SDL::Events::pump_events();
+        if ( SDL::Events::poll_event($event) == 0 ) {
             if (is_ok_modify_selected_level($modification)) {
                 if ($modification eq 'up') {
                     $start_level++;
@@ -1120,8 +1121,8 @@ sub modify_selected_level {
 				#if it has changed, just exit. Otherwise, they're holding the
 				#key down and we follow the logic as usual
                 SDL::delay(100);
-                $event->pump;
-                if ($event->poll == 0 || $event->type == SDL_MOUSEMOTION) { #mousemotion is when they are
+		SDL::Events::pump_events();
+		if ( SDL::Events::poll_event($event) == 0 || $event->type == SDL_MOUSEMOTION) { #mousemotion is when they are
                     #holding the mouse key down and
                     #jiggle it's position a litte bit
                     SDL::delay(300);
