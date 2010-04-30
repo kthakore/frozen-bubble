@@ -1230,7 +1230,7 @@ sub print_compressor() {
 
 sub print_ {
     my ($kind, $surface, $x, $y, $text, $size, $alignment, $callback) = @_;
-	printf("print_: " . join(' ', (caller(1))) . " $text\n");
+	printf("print_: " . join(' ', (caller(1))) . " $text\n") if $ENV{FB_DEBUG};
     exists $pangocontext{$kind} or die "$kind is no kind\n";
     if ($size) {
         #- instead of segfaulting
