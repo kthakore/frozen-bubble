@@ -108,13 +108,14 @@ My::Builder->new(
         'Errno'                     => 0,
         'Data::Dumper'              => 0,
         'Getopt::Long'              => 0,
-        'IO::Socket'                => '1.24', # part od IO distribution
+        'IO::Socket'                => '1.24', # part of IO distribution
         'Math::Trig'                => 0,
         'parent'                    => 0,
         'Alien::SDL'                => '1.2',
         'SDL'                       => '2.4',
         'Time::HiRes'               => 0,
         'Locale::Maketext::Simple'  => 0,
-	'SDLx::TTF'		    => 0,
+        'File::Glob'                => 0,
+        'SDLx::TTF'                 => 0,
     },
 )->create_build_script;

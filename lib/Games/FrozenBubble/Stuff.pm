@@ -136,7 +136,7 @@ $POS_2P{rp1} = $POS_2P{p2};  #- in net/lan 2p mode, use bigger graphics and posi
 	    centerpanel => { x => 149, 'y' => 190 },
 	  );
 
-$FBHOME = "$ENV{HOME}/.frozen-bubble";
+$FBHOME   = "$ENV{HOME}/.frozen-bubble";
 $FBLEVELS = "$FBHOME/levels";
 migrate_resource_files();
 

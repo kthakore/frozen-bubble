@@ -14,6 +14,7 @@ use SDL::TTF;
 use SDL::TTF::Font;
 use SDLx::TTF;
 use SDL::Mixer;
+use File::Glob qw(bsd_glob);
 
 use Games::FrozenBubble::Stuff;
 use Games::FrozenBubble::Symbols;
@@ -393,7 +394,7 @@ sub choose_action {
 # subroutine to return the list of levelsets in $FBLEVELS
 sub get_levelset_list {
 	#my @levelsets = sort(my @dummy = all($FBLEVELS));
-	 my @levelsets = map { $_ =~ s{^.*/(.*)$}{$1}; $_; } sort(glob("$FBLEVELS/*"));
+	my @levelsets = map { $_ =~ s{^.*/(.*)$}{$1}; $_; } sort(bsd_glob("$FBLEVELS/*"));
     $displaying_dialog eq 'ls_delete' and @levelsets = difference2(\@levelsets, [ 'default-levelset' ]);
     return @levelsets;
 }
@@ -1240,13 +1241,11 @@ sub display_levelset_list_browser {
         return;
     }
 
-    $rect{middle} = get_dialog_rect();
+	$rect{middle}              = get_dialog_rect();
 	#I want the font to be blue in the dialogs
-	$font = SDLx::TTF->new("$FPATH/gfx/font-hi.png");
-    $surf_file_list_background = SDL::Image::load( "$FPATH/gfx/file_list_background.png");
-
-    $rect{list_box_src} = SDL::Rect->new(0,0, $surf_file_list_background->w,
-					 3 * $WOOD_PLANK_HEIGHT);
+	$font                      = SDLx::TTF->new("$FPATH/gfx/font-hi.png");
+	$surf_file_list_background = SDL::Image::load( "$FPATH/gfx/file_list_background.png");
+	$rect{list_box_src}        = SDL::Rect->new(0,0, $surf_file_list_background->w, 3 * $WOOD_PLANK_HEIGHT);
 
     # if the user is choosing the start level, we need to move things up a little bit to make
     # room for the choose level widget
@@ -1259,8 +1258,7 @@ sub display_levelset_list_browser {
 
     $surf_purple_highlight = SDL::Image::load( "$FPATH/gfx/purple_hover.gif");
 
-    $rect{purple_highlight_src} = SDL::Rect->new(0,0, $surf_purple_highlight->w,
-						$surf_purple_highlight->h);
+    $rect{purple_highlight_src} = SDL::Rect->new(0,0, $surf_purple_highlight->w, $surf_purple_highlight->h);
 
     # we only want to draw the arrows and background here once, when we first get launched
     if ($list_browser_highlight_offset == -1) {
@@ -1382,64 +1380,55 @@ sub rect {
 
 # display a scrrenshot (1/4 size) of the first level in a levelset on the current dialog
 sub display_levelset_screenshot {
+	my @levelsets     = get_levelset_list();
+	my $name          = $levelsets[$list_browser_highlight_offset];
+	$rect{middle}     = get_dialog_rect();
+	$rect{screenshot} = SDL::Rect->new($POS_1P{p1}{left_limit}  - 40, 0,
+	                                   $POS_1P{p1}{right_limit} - $POS_1P{p1}{left_limit} + 80,
+	                                   $POS_1P{bottom_limit}    - $POS_1P{p1}{top_limit} + 190);
+	# if the user is choosing the start level, we need to move things up a little bit to make
+	# room for the choose level widget
+	my $widgetMove    = ($displaying_dialog eq 'ls_play_choose_level') ? -25 : 0;
+	my $x             = $rect{middle}->x + $rect{middle}->w   - $rect{screenshot}->w/4 - 12;
+	my $y             = $rect{middle}->y + $rect{middle}->h/2 - $rect{screenshot}->h/8 - 3 + $widgetMove;
 
-    my @levelsets = get_levelset_list();
-    my $name = $levelsets[$list_browser_highlight_offset];
-
-    $rect{middle} = get_dialog_rect();
-    $rect{screenshot} = SDL::Rect->new( $POS_1P{p1}{left_limit} - 40, 0,
-				        $POS_1P{p1}{right_limit} - $POS_1P{p1}{left_limit} + 80,
-				        $POS_1P{bottom_limit} - $POS_1P{p1}{top_limit} + 190);
-    # if the user is choosing the start level, we need to move things up a little bit to make
-    # room for the choose level widget
-    my $widgetMove = 0;
-    if ($displaying_dialog eq 'ls_play_choose_level') {
-        $widgetMove = -25;
-    }
-
-    my ($x, $y) = ($rect{middle}->x + $rect{middle}->w - $rect{screenshot}->w/4 - 12,
-                   $rect{middle}->y + $rect{middle}->h/2 - $rect{screenshot}->h/8 - 3 + $widgetMove);
-
-
-    my %shrinks if 0;
+    my %shrinks;
     my $current_nb = $start_level || 1;
     if (!exists $shrinks{$name}{$current_nb}) {
-        my $surf = SDL::Image::load( "$FPATH/gfx/menu/please_wait.png");
-	SDL::Video::blit_surface(        $surf, SDL::Rect->new(0,0, $surf->w,  $surf->h),
-                    $app,
-                    SDL::Rect->new( $rect{scroll_list_background_dest}->x + $rect{scroll_list_background_dest}->w + 7,
-                                     $rect{scroll_list_background_dest}->y + 20,
-                                    $surf->w,  $surf->w));
-		   SDL::Video::update_rects($app,$rect{middle});
+		my $surf = SDL::Image::load("$FPATH/gfx/menu/please_wait.png");
+		SDL::Video::blit_surface($surf, SDL::Rect->new(0,0, $surf->w,  $surf->h),
+		                         $app,  SDL::Rect->new($rect{scroll_list_background_dest}->x + $rect{scroll_list_background_dest}->w + 7,
+		                                               $rect{scroll_list_background_dest}->y + 20,
+		                                               $surf->w,  $surf->w));
+		SDL::Video::update_rects($app,$rect{middle});
 
         #- sorta "read ahead": will compute next 10 levels screenshots as well
         my $s_save if 0;
-        if (!$s_save) {
-            $s_save = SDL::Image::load( "$FPATH/gfx/level_editor.png");
-        }
+		$s_save = SDL::Image::load( "$FPATH/gfx/level_editor.png") unless $s_save;
         #- don't read-ahead if $start_level is void because it
         #- indicates we're just selecting a levelset in the editor
         my @read_ahead = $start_level ? ($current_nb - 10, $current_nb - 3 .. $current_nb + 10, $current_nb + 20)
                                       : ($current_nb);
-        foreach my $nb (@read_ahead) {
-            next if $nb < 1 || exists $shrinks{$name}{$nb};
-            my %ls = %{$file_browser_levelsets{$name}};
-            last if !exists $ls{$nb};
-            my $s = SDL::Surface->new(SDL_ANYFORMAT,  $s_save->w,  $s_save->h,  32, 0,0,0,0);
-            my $rect = SDL::Rect->new(0,0 , $app->w, $app->h);
-	    SDL::Video::blit_surface(            $s_save, $rect, $s, $rect);
-            load_level($s, $nb, %ls);
-            my $dest = SDL::Surface->new(SDL_ANYFORMAT, $rect{screenshot}->w / 4, $rect{screenshot}->h / 4,
-                                          32, 0,0,0,0);
-            Games::FrozenBubble::CStuff::shrink(surf($dest), surf($s), 0, 0, rect($rect{screenshot}), 4);
-            $shrinks{$name}{$nb} = $dest;
-        }
-    }
+		foreach my $nb (@read_ahead) {
+			next if $nb < 1 || exists $shrinks{$name}{$nb};
+			my %ls = %{$file_browser_levelsets{$name}};
+			last if !exists $ls{$nb};
+			my $s    = SDL::Surface->new(SDL_SWSURFACE, $s_save->w, $s_save->h, 32);
+			my $rect = SDL::Rect->new(0, 0, $app->w, $app->h);
+			SDL::Video::blit_surface($s_save, $rect, $s, $rect);
+			load_level($s, $nb, %ls);
+			$shrinks{$name}{$nb} = SDL::Surface->new(SDL_SWSURFACE, $rect{screenshot}->w / 4, $rect{screenshot}->h / 4, 32);
+			Games::FrozenBubble::CStuff::shrink($shrinks{$name}{$nb}, $s, 0, 0, $rect{screenshot}, 4);
+		}
+	}
 
-    my $image = $shrinks{$name}{$current_nb};
-    my $rect = SDL::Rect->new($x, $y,  $image->w,  $image->h);
-    SDL::Video::blit_surface(    $image, SDL::Rect->new(0, 0, $image->w, $image->h), $app, $rect);
-    SDL::Video::update_rects($app,$rect{middle});
+	if(defined $shrinks{$name}{$current_nb})
+	{
+		my $image = $shrinks{$name}{$current_nb};
+		SDL::Video::blit_surface($image, SDL::Rect->new(0, 0, $image->w, $image->h),
+		                         $app, SDL::Rect->new($x, $y, $image->w, $image->h));
+		SDL::Video::update_rects($app,$rect{middle});
+	}
 }
 
 
