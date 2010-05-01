@@ -218,7 +218,7 @@ void squares_effect(SDL_Surface * s, SDL_Surface * img)
 
 		still_moving = 0;
 		for (j=i; j>=0; j--) {
-			if (fillrect(j, k, s ,img, squares_size, bpp))
+			if (fillrect(j, k, s ,img, bpp, squares_size))
 				still_moving = 1;
 			k++;
 		}
@@ -1676,12 +1676,12 @@ effect(s, img)
 			store_effect(s, img);
 		else if (randvalue == 3 || randvalue == 4 || randvalue == 5)
 			plasma_effect(s, img);
-                else if (randvalue == 6)
+		else if (randvalue == 6)
 			circle_effect(s, img);
 		else if (randvalue == 7)
 			bars_effect(s, img);
 		else
-                        squares_effect(s, img);
+			squares_effect(s, img);
 
 int
 get_synchro_value()

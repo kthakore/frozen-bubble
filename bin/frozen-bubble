@@ -3486,7 +3486,7 @@ sub choose_1p_game_mode() {
 
     my $overlook_index = 0;
     my $overlook = SDL::Surface->new(SDL_SWSURFACE, $imgbin{txt_1pmenu_pick_start_level_text}->w,
-	                                                $imgbin{txt_1pmenu_pick_start_level_text}->h, 32, 0, 0, 0, 0);
+	                                                $imgbin{txt_1pmenu_pick_start_level_text}->h, 32);
     my $redraw = sub {
         my $draw_element = sub {
             my ($name, $mode) = @_;
@@ -3502,7 +3502,7 @@ sub choose_1p_game_mode() {
         if ($save) {
             SDL::Video::blit_surface($save, $rects{img}, $app, $drect);
         } else {
-            $save = SDL::Surface->new(SDL_SWSURFACE, $img->w, $img->h, 32, 0, 0, 0, 0);
+            $save = SDL::Surface->new(SDL_SWSURFACE, $img->w, $img->h, 32);
             SDL::Video::blit_surface($app, $drect, $save, $rects{$img});
         }
         put_image($img, $MENUPOS{xpos_panel}, $MENUPOS{ypos_panel});
