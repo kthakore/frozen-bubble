@@ -192,8 +192,25 @@ sub fold_left(&@) {
     foreach $::b (@l) { $::a = &$f() }
     $::a
 }
-sub output { my $f = shift; local *F; open F, ">$f" or die "output in file $f failed: $!\n"; print F foreach @_; }
-sub append_to_file { my $f = shift; local *F; open F, ">>$f" or die "output in file $f failed: $!\n"; print F foreach @_; 1 }
+sub output {
+	my $f = shift;
+	local *F;
+	chmod(0666, $f) if -e $f;
+	open(F, ">$f") or die "output in file $f failed: $!\n";
+	print F foreach @_;
+	close(F);
+	chmod(0666, $f);
+}
+sub append_to_file {
+	my $f = shift;
+	local *F;
+	chmod(0666, $f) if -e $f;
+	open(F, ">>$f") or die "output in file $f failed: $!\n";
+	print F foreach @_;
+	close(F);
+	chmod(0666, $f);
+	1
+}
 sub min { my $n = shift; $_ < $n and $n = $_ foreach @_; $n }
 sub max { my $n = shift; $_ > $n and $n = $_ foreach @_; $n }
 sub backtrace {

@@ -984,20 +984,20 @@ sub iter_rowscols(&) {
 }
 
 sub save_file {
-    my @contents;
-    foreach my $lev (1 .. keys %bubble_hash) {
-	iter_rowscols {
-	    if ($::col == 0) {
-		($lev == 1 && $::row == 0) or push @contents, "\n";
-		odd($::row) and push @contents, "  ";
-	    }
-	    push @contents, "$bubble_hash{$lev}{$::col}{$::row}";
-	    $::col+odd($::row) < 7 and push @contents, "   ";
-        };
-	push @contents, "\n";
-    }
-    output("$FBLEVELS/$levelset_name", @contents);
-    $modified_levelset = 0;
+	my @contents;
+	foreach my $lev (1 .. keys %bubble_hash) {
+		iter_rowscols {
+			if ($::col == 0) {
+				($lev == 1 && $::row == 0) or push @contents, "\n";
+				odd($::row) and push @contents, "  ";
+			}
+			push @contents, "$bubble_hash{$lev}{$::col}{$::row}";
+			$::col+odd($::row) < 7 and push @contents, "   ";
+		};
+		push @contents, "\n";
+	}
+	output("$FBLEVELS/$levelset_name", @contents);
+	$modified_levelset = 0;
 }
 
 sub create_play_levelset_dialog {
