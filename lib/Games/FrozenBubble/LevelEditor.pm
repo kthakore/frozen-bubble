@@ -139,7 +139,7 @@ sub place_bubble {
         } else  {
             $x = $col * $BUBBLE_SIZE + $POS_1P{p1}{left_limit} + $BUBBLE_SIZE/2;
         }
-	if ($action eq 'erase' || $button >= 3) {  #- when in motion, the right button is reported as button 4 !?
+	if ($action eq 'erase' || $button == SDL_BUTTON_RIGHT) {  #- when in motion, the right button is reported as button 4 !?
             if (($previousx != $x || $previousy != $y) && $previousx != -1 && $previousy != -1
 		&& $bubble_hash{$curr_level}{get_col($previousx, $previousy)}{get_row($previousy)} ne '-') {
                 draw_bubble($bubble_hash{$curr_level}{get_col($previousx, $previousy)}{get_row($previousy)} + 1,
@@ -298,7 +298,9 @@ sub choose_action {
         my $color_tmp = $BUBBLES_PER_ROW * ($row - 1) + $col;
         if (0 < $color_tmp && $color_tmp <= $NUM_BUBBLES_AVAIL) {
             highlight_option("bubble-$color_tmp", bubble_optionx($col - 1), bubble_optiony($row - 1));
-            $caller eq 'button' and change_color($color_tmp);
+            if($caller eq 'button') {
+				change_color($color_tmp);
+			}
         } elsif ($color_tmp == $NUM_BUBBLES_AVAIL + 1) {
             highlight_option('erase');
             if ($caller eq 'button') {
@@ -605,7 +607,7 @@ sub handle_events {
             if ($event->type == SDL_MOUSEMOTION) {
 		    #TODO: Change this ->button_x stuff to new api
                 if ($displaying_dialog eq '') {
-                    choose_action($event->button_x, $event->button_y, 'motion', $event->button);  #- , )
+                    choose_action($event->button_x, $event->button_y, 'motion', $event->button_button);  #- , )
                 } else {
                     choose_dialog_action($event->button_x, $event->button_y, 'motion');  #- ,, )
                 }
@@ -614,7 +616,7 @@ sub handle_events {
             } elsif ($event->type == SDL_MOUSEBUTTONDOWN) {
                 $button_hold = 1;
                 if ($displaying_dialog eq '') {
-                    choose_action($event->button_x, $event->button_y, 'button', $event->button);  #- , )
+                    choose_action($event->button_x, $event->button_y, 'button', $event->button_button);  #- , )
                 } else {
                     choose_dialog_action($event->button_x, $event->button_y, 'button', $event);  #- ,, )
                 }
