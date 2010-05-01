@@ -412,6 +412,7 @@ void plasma_effect(SDL_Surface * s, SDL_Surface * img)
 	}
 }
 
+#define CLAMP(x, low, high)  (((x) > (high)) ? (high) : (((x) < (low)) ? (low) : (x)))
 
 void shrink_(SDL_Surface * dest, SDL_Surface * orig, int xpos, int ypos, SDL_Rect * orig_rect, int factor)
 {
@@ -428,28 +429,32 @@ void shrink_(SDL_Surface * dest, SDL_Surface * orig, int xpos, int ypos, SDL_Rec
 		for (y=ry; y<ry+rh; y++) {
 			if (!dest->format->palette) {
 				/* there is no palette, it's cool, I can do (uber-slow) high-quality shrink */
-				Uint32 pixelvalue; /* this should also be okay for 16-bit and 24-bit formats */
-				int r = 0; int g = 0; int b = 0;
+				int r = 0;
+				int g = 0;
+				int b = 0;
+				int a = 0;
+				Uint8 r_, g_, b_ , a_;
 				for (i=0; i<factor; i++) {
 					for (j=0; j<factor; j++) {
-						pixelvalue = 0;
-						memcpy(&pixelvalue, orig->pixels + (x*factor+i)*bpp + (y*factor+j)*orig->pitch, bpp);
-						r += (pixelvalue & orig->format->Rmask) >> orig->format->Rshift;
-						g += (pixelvalue & orig->format->Gmask) >> orig->format->Gshift;
-						b += (pixelvalue & orig->format->Bmask) >> orig->format->Bshift;
+						SDL_GetRGBA(((Uint32 *)orig->pixels)[CLAMP(x*factor+i, 0, orig->w) +  CLAMP(y*factor+j, 0, orig->h) * orig->w], 
+						            orig->format, &r_, &g_, &b_, &a_);
+						r += r_;
+						g += g_;
+						b += b_;
+						a += a_;
 					}
 				}
-				pixelvalue =
-					((r/(factor*factor)) << orig->format->Rshift) +
-					((g/(factor*factor)) << orig->format->Gshift) +
-					((b/(factor*factor)) << orig->format->Bshift);
-				memcpy(dest->pixels + (xpos+x)*bpp + (ypos+y)*dest->pitch, &pixelvalue, bpp);
-			} else {
-				/* there is a palette... I don't care of the bloody oldskoolers who still use
-				   8-bit displays & al, they can suffer and die ;p */
+				r /= factor*factor;
+				g /= factor*factor;
+				b /= factor*factor;
+				a /= factor*factor;
+				set_pixel(dest, CLAMP(xpos+x, 0, dest->w), CLAMP(ypos+y, 0, dest->h), (Uint8)r, (Uint8)g, (Uint8)b, (Uint8)a);
+			}/* else {
+				// there is a palette... I don't care of the bloody oldskoolers who still use
+				//   8-bit displays & al, they can suffer and die ;p
 				memcpy(dest->pixels + (xpos+x)*bpp + (ypos+y)*dest->pitch,
 				       orig->pixels + (x*factor)*bpp + (y*factor)*orig->pitch, bpp);
-			}
+			}*/
 		}
 	}
 	myUnlockSurface(orig);
@@ -484,7 +489,6 @@ void rotate_nearest_(SDL_Surface * dest, SDL_Surface * orig, double angle)
 	myUnlockSurface(dest);
 }
 
-#define CLAMP(x, low, high)  (((x) > (high)) ? (high) : (((x) < (low)) ? (low) : (x)))
 #define getr(pixeladdr) ( *( ( (Uint8*) pixeladdr ) + Rdec ) )
 #define getg(pixeladdr) ( *( ( (Uint8*) pixeladdr ) + Gdec ) )
 #define getb(pixeladdr) ( *( ( (Uint8*) pixeladdr ) + Bdec ) )
