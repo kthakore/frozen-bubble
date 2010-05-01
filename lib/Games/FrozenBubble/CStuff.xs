@@ -165,23 +165,21 @@ void bars_effect(SDL_Surface * s, SDL_Surface * img)
 	int bpp = img->format->BytesPerPixel;
 	const int bars_max_steps = 40;
 	const int bars_num = 16;
-
-	for (i=0; i<bars_max_steps; i++) {
-
+	for (i=0; i<bars_max_steps; i++)
+	{
 		synchro_before(s);
-
-		for (y=0; y<YRES/bars_max_steps; y++) {
+		for (y=0; y<YRES/bars_max_steps; y++)
+		{
 			int y_  = (i*YRES/bars_max_steps + y) * img->pitch;
 			int y__ = (YRES - 1 - (i*YRES/bars_max_steps + y)) * img->pitch;
-
-			for (j=0; j<bars_num/2; j++) {
+			for (j=0; j<bars_num/2; j++)
+			{
 				int x_ =    (j*2) * (XRES/bars_num) * bpp;
 				int x__ = (j*2+1) * (XRES/bars_num) * bpp;
 				memcpy(s->pixels + y_ + x_,   img->pixels + y_ + x_,   (XRES/bars_num) * bpp);
 				memcpy(s->pixels + y__ + x__, img->pixels + y__ + x__, (XRES/bars_num) * bpp);
 			}
 		}
-
 		synchro_after(s);
 	}
 }
@@ -1026,76 +1024,84 @@ struct point { double x; double y; double angle; };
 
 void points_(SDL_Surface * dest, SDL_Surface * orig, SDL_Surface * mask)
 {
-	int Bpp = dest->format->BytesPerPixel;
-        static struct point * points = NULL;
-        int i, amount = 200;
-	if (orig->format->BytesPerPixel != 4) {
-                fprintf(stderr, "points: orig surface must be 32bpp\n");
-                abort();
-        }
-	if (dest->format->BytesPerPixel != 4) {
-                fprintf(stderr, "points: dest surface must be 32bpp\n");
-                abort();
-        }
-	if (mask->format->BytesPerPixel != 4) {
-                fprintf(stderr, "points: mask surface must be 32bpp\n");
-                abort();
-        }
-        if (points == NULL) {
-                points = malloc(sizeof(struct point) * amount);
-                if (!points)
-                        fb__out_of_memory();
-                for (i = 0; i < amount; i++) {
-                        while (1) {
-                                points[i].x = rand_(dest->w/2) + dest->w/4;
-                                points[i].y = rand_(dest->h/2) + dest->h/4;
-                                if (* ( (Uint32*) ( mask->pixels + ((int)points[i].y)*mask->pitch + ((int)points[i].x)*mask->format->BytesPerPixel ) ) == 0xFFFFFFFF)
-                                        break;
-                        }
-                        points[i].angle = 2 * M_PI * rand() / RAND_MAX;
-                }
-        }
+	static struct point * points = NULL;
+	int i, amount = 200;
+	Uint8 r, g, b, a;
+	if (orig->format->BytesPerPixel == 1) {
+		fprintf(stderr, "points: orig surface must not have a palette\n");
+		abort();
+	}
+	if (dest->format->BytesPerPixel == 1) {
+		fprintf(stderr, "points: dest surface must not have a palette\n");
+		abort();
+	}
+	if (mask->format->BytesPerPixel == 1) {
+		fprintf(stderr, "points: mask surface must not have a palette\n");
+		abort();
+	}
+	if (points == NULL) {
+		points = malloc(sizeof(struct point) * amount);
+		if (!points)
+			fb__out_of_memory();
+		for (i = 0; i < amount; i++) {
+			while (1) {
+				points[i].x = rand_(dest->w/2) + dest->w/4;
+				points[i].y = rand_(dest->h/2) + dest->h/4;
+				SDL_GetRGBA(((Uint32 *)mask->pixels)[CLAMP((int)points[i].x, 0, mask->w) + CLAMP((int)points[i].y, 0, mask->h) * mask->w],
+				            mask->format, &r, &g, &b, &a);
+				if(r == 255 && g == 255 && b == 255)
+					break;
+			}
+			points[i].angle = 2 * M_PI * rand() / RAND_MAX;
+		}
+	}
 	myLockSurface(orig);
+	myLockSurface(mask);
 	myLockSurface(dest);
-        for (y = 0; y < dest->h; y++) {
-                memcpy(dest->pixels + y*dest->pitch, orig->pixels + y*orig->pitch, orig->pitch);
-        }
-        for (i = 0; i < amount; i++) {
-                double angle_distance = 0;
-
-                *( (Uint32*) ( dest->pixels + ((int)points[i].y)*dest->pitch + ((int)points[i].x)*Bpp ) ) = 0xFFCCCCCC;
-
-                points[i].x += cos(points[i].angle);
-                points[i].y += sin(points[i].angle);
-
-                if (* ( (Uint32*) ( mask->pixels + ((int)points[i].y)*mask->pitch + ((int)points[i].x)*mask->format->BytesPerPixel ) ) != 0xFFFFFFFF) {
-                        // get back on track
-                        points[i].x -= cos(points[i].angle);
-                        points[i].y -= sin(points[i].angle);
-                        while (1) {
-                                angle_distance += 2 * M_PI / 100;
-
-                                points[i].x += cos(points[i].angle + angle_distance);
-                                points[i].y += sin(points[i].angle + angle_distance);
-                                if (* ( (Uint32*) ( mask->pixels + ((int)points[i].y)*mask->pitch + ((int)points[i].x)*mask->format->BytesPerPixel ) ) == 0xFFFFFFFF) {
-                                        points[i].angle += angle_distance;
-                                        break;
-                                }
-                                points[i].x -= cos(points[i].angle + angle_distance);
-                                points[i].y -= sin(points[i].angle + angle_distance);
-
-                                points[i].x += cos(points[i].angle - angle_distance);
-                                points[i].y += sin(points[i].angle - angle_distance);
-                                if (* ( (Uint32*) ( mask->pixels + ((int)points[i].y)*mask->pitch + ((int)points[i].x)*mask->format->BytesPerPixel ) ) == 0xFFFFFFFF) {
-                                        points[i].angle -= angle_distance;
-                                        break;
-                                }
-                                points[i].x -= cos(points[i].angle - angle_distance);
-                                points[i].y -= sin(points[i].angle - angle_distance);
-                        }
-                }
-        }
+	for (x = 0; x < dest->w; x++) {
+		for (y = 0; y < dest->h; y++) {
+			SDL_GetRGBA(((Uint32 *)orig->pixels)[CLAMP(x, 0, orig->w) + CLAMP(y, 0, orig->h) * orig->w], orig->format, &r, &g, &b, &a);
+			set_pixel(dest, x, y, r, g, b, a);
+		}
+	}
+	for (i = 0; i < amount; i++) {
+		double angle_distance = 0;
+		set_pixel(dest, CLAMP((int)points[i].x, 0, dest->w), CLAMP((int)points[i].y, 0, dest->h), 0xFF, 0xCC, 0xCC, 0xCC);
+		points[i].x += cos(points[i].angle);
+		points[i].y += sin(points[i].angle);
+		SDL_GetRGBA(((Uint32 *)mask->pixels)[CLAMP((int)points[i].x, 0, mask->w) + CLAMP((int)points[i].y, 0, mask->h) * mask->w],
+		            mask->format, &r, &g, &b, &a);
+		if(r != 255 || g != 255 || b != 255) {
+			// get back on track
+			points[i].x -= cos(points[i].angle);
+			points[i].y -= sin(points[i].angle);
+			while (1) {
+				angle_distance += 2 * M_PI / 100;
+				points[i].x    += cos(points[i].angle + angle_distance);
+				points[i].y    += sin(points[i].angle + angle_distance);
+				SDL_GetRGBA(((Uint32 *)mask->pixels)[CLAMP((int)points[i].x, 0, mask->w) + CLAMP((int)points[i].y, 0, mask->h) * mask->w],
+				            mask->format, &r, &g, &b, &a);
+				if(r == 255 && g == 255 && b == 255) {
+					points[i].angle += angle_distance;
+					break;
+				}
+				points[i].x -= cos(points[i].angle + angle_distance);
+				points[i].y -= sin(points[i].angle + angle_distance);
+				points[i].x += cos(points[i].angle - angle_distance);
+				points[i].y += sin(points[i].angle - angle_distance);
+				SDL_GetRGBA(((Uint32 *)mask->pixels)[CLAMP((int)points[i].x, 0, mask->w) + CLAMP((int)points[i].y, 0, mask->h) * mask->w],
+				            mask->format, &r, &g, &b, &a);
+				if(r == 255 && g == 255 && b == 255) {
+					points[i].angle -= angle_distance;
+					break;
+				}
+				points[i].x -= cos(points[i].angle - angle_distance);
+				points[i].y -= sin(points[i].angle - angle_distance);
+			}
+		}
+	}
 	myUnlockSurface(orig);
+	myUnlockSurface(mask);
 	myUnlockSurface(dest);
 }
 
