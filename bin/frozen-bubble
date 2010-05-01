@@ -5535,8 +5535,8 @@ sub menu {
 			# logo effects (snow, water, ...)
 
 			# switching the animation every 100 ticks, just for tests
-			my @candy_methods = (1, 2, 3.1, 4.1, 5, 6, 7); #(0, 1, 2, 3.1, 4.1, 5, 6, 7, 8.1);
-			$logo_candy_method = 5; #$candy_methods[rand @candy_methods] unless $logo_candy_index % 150;
+			#my @candy_methods = (1, 2, 3.1, 4.1, 5, 6, 7, 8.1); #(0, 1, 2, 3.1, 4.1, 5, 6, 7, 8.1);
+			$logo_candy_method = 8.1; #$candy_methods[rand @candy_methods] unless $logo_candy_index % 150;
 
             Games::FrozenBubble::CStuff::rotate_bilinear($candy, $imgbin{menu_logo}, sin($logo_candy_index/40)/20) if $logo_candy_method == 0;
             Games::FrozenBubble::CStuff::flipflop($candy, $imgbin{menu_logo}, $logo_candy_index)                   if $logo_candy_method == 1;
@@ -5551,7 +5551,7 @@ sub menu {
 			SDL::Video::blit_surface($candy, SDL::Rect->new(0,0,$candy->w,$candy->h), $app, SDL::Rect->new($logox, $logoy, $candy->w, $candy->h));
 
 			# next step for the animation
-			$logo_candy_index++;
+			#$logo_candy_index++;
         }
 
         if (!$no_update) {

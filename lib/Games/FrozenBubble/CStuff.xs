@@ -47,13 +47,19 @@ const int ANIM_SPEED = 20;
 Uint32 ticks;
 Uint32 to_wait;
 
+#define CLAMP(x, low, high)  (((x) > (high)) ? (high) : (((x) < (low)) ? (low) : (x)))
+
 void set_pixel(SDL_Surface * s, int x, int y, Uint8 r, Uint8 g, Uint8 b, Uint8 a) // only 32bit surfaces yet
 {
 	((Uint32 *)s->pixels)[x + y * s->w] = (((r >> s->format->Rloss) << s->format->Rshift) & s->format->Rmask)
 	                                    | (((g >> s->format->Gloss) << s->format->Gshift) & s->format->Gmask)
 	                                    | (((b >> s->format->Bloss) << s->format->Bshift) & s->format->Bmask)
 	                                    | (((a >> s->format->Aloss) << s->format->Ashift) & s->format->Amask);
+}
 
+void get_pixel(SDL_Surface * s, int x, int y, Uint8 *r, Uint8 *g, Uint8 *b, Uint8 *a)
+{
+	SDL_GetRGBA(((Uint32 *)s->pixels)[CLAMP(x, 0, s->w) + CLAMP(y, 0, s->h) * s->w], s->format, r, g, b, a);
 }
 
 void myLockSurface(SDL_Surface * s)
@@ -409,8 +415,6 @@ void plasma_effect(SDL_Surface * s, SDL_Surface * img)
 		synchro_after(s);
 	}
 }
-
-#define CLAMP(x, low, high)  (((x) > (high)) ? (high) : (((x) < (low)) ? (low) : (x)))
 
 void shrink_(SDL_Surface * dest, SDL_Surface * orig, int xpos, int ypos, SDL_Rect * orig_rect, int factor)
 {
@@ -1442,149 +1446,151 @@ static int counter_for_new_flake = 1000;
 void snow_(SDL_Surface * dest, SDL_Surface * orig)
 {
 	int Bpp = dest->format->BytesPerPixel;
-        static struct flake * flakes = NULL;
-        int i, amount = 200;
-        double wideness = 2.0, y_speed = 0.2, moving_speed = 0.1;
-        static int new_generated = 0;
-        double a, fore_a, x_flake, y_flake, dx, dy;
-        int r, g, b, fore_r, fore_g, fore_b, back_a, x_, y_;
-        Uint8 *orig_ptr, *ptr;
-	if (orig->format->BytesPerPixel != 4) {
-                fprintf(stderr, "snow: orig surface must be 32bpp\n");
-                abort();
-        }
-	if (dest->format->BytesPerPixel != 4) {
-                fprintf(stderr, "snow: dest surface must be 32bpp\n");
-                abort();
-        }
-        if (flakes == NULL) {
-                flakes = malloc(sizeof(struct flake) * amount);
-                if (!flakes)
-                        fb__out_of_memory();
-                for (i = 0; i < amount; i++) {
-                        flakes[i].x = -1;
-                }
-        }
+	static struct flake * flakes = NULL;
+	int i, amount = 200;
+	double wideness = 2.0, y_speed = 0.2, moving_speed = 0.1;
+	static int new_generated = 0;
+	double a, fore_a, x_flake, y_flake, dx, dy;
+	int r, g, b, fore_r, fore_g, fore_b, x_, y_, y__;
+	Uint8 r_, g_, b_, a_;
+	if (orig->format->BytesPerPixel == 1)
+	{
+		fprintf(stderr, "snow: orig surface must not have a palette\n");
+		abort();
+	}
+	if (dest->format->BytesPerPixel == 1)
+	{
+		fprintf(stderr, "snow: dest surface must not have a palette\n");
+		abort();
+	}
+	if (flakes == NULL) {
+		flakes = malloc(sizeof(struct flake) * amount);
+		if (!flakes)
+			fb__out_of_memory();
+		for (i = 0; i < amount; i++)
+		{
+			flakes[i].x = -1;
+		}
+	}
 	myLockSurface(orig);
 	myLockSurface(dest);
-        for (y = 0; y < dest->h; y++) {
-                memcpy(dest->pixels + y*dest->pitch, orig->pixels + y*orig->pitch, orig->pitch);
-        }
-        for (i = 0; i < amount; i++) {
-                if (flakes[i].x == -1) {
-                        if (new_generated == 0) {
-                                // gen a new one
-                                flakes[i].x = wideness + rand_(dest->w - 3 - wideness*2) - 1;
-                                flakes[i].y = -2;
-                                flakes[i].sinpos = 100.0 * rand() / RAND_MAX;
-                                flakes[i].sincoeff = 0.3 + 0.7 * rand() / RAND_MAX;
-                                flakes[i].y_speed = 0.1 + y_speed * rand() / RAND_MAX;
-                                flakes[i].wideness = wideness/2 + wideness/2 * rand() / RAND_MAX;
-                                flakes[i].opacity = 1;
-                                new_generated = counter_for_new_flake;
-                                if (counter_for_new_flake > 50)
-                                        counter_for_new_flake -= 2;
-                        } else {
-                                new_generated--;
-                        }
-                        continue;
+	for (x = 0; x < dest->w; x++)
+	{
+		for (y = 0; y < dest->h; y++)
+		{
+			get_pixel(orig, x, y, &r_, &g_, &b_, &a_);
+			set_pixel(dest, x, y, r_, g_, b_, a_);
+		}
+	}
+	for (i = 0; i < amount; i++)
+	{
+		if (flakes[i].x == -1)
+		{
+			if (new_generated == 0)
+			{
+				// gen a new one
+				flakes[i].x        = wideness + rand_(dest->w - 3 - wideness*2) - 1;
+				flakes[i].y        = -2;
+				flakes[i].sinpos   = 100.0                   * rand() / RAND_MAX;
+				flakes[i].sincoeff = 0.3        + 0.7        * rand() / RAND_MAX;
+				flakes[i].y_speed  = 0.1        + y_speed    * rand() / RAND_MAX;
+				flakes[i].wideness = wideness/2 + wideness/2 * rand() / RAND_MAX;
+				flakes[i].opacity  = 1;
+				new_generated      = counter_for_new_flake;
+				if (counter_for_new_flake > 50)
+					counter_for_new_flake -= 2;
+			}
+			else
+			{
+				new_generated--;
+			}
+			continue;
+		}
+		// render existing flakes
+		x_flake = flakes[i].x + sin(flakes[i].sinpos * flakes[i].sincoeff) * flakes[i].wideness;
+		y_flake = flakes[i].y;
+		x_      = floor(x_flake);
+		y_      = floor(y_flake);
+		dx      = 1 - (x_flake - x_);
+		dy      = 1 - (y_flake - y_);
+		// collision with background?
+		get_pixel(orig, x_, y_ + 1, &r_, &g_, &b_, &a_);
+		if (y_ >= 0)
+		{
+			if (a_ > 191 + rand_(64))
+			{
+				get_pixel(orig, x_ + 3, y_ + 1, &r_, &g_, &b_, &a_);
+				if(a_ > 191 + rand_(64))
+					flakes[i].x = -1;
+			}
+		}
+		for (x = 0; x < orig_flake_w; x++)
+		{
+			y__ = 0;
+			for (y = MAX(0, -y_); y < orig_flake_h; y++)
+			{
+				get_pixel(dest, x_ + x, MAX(0, y_) + y__, &r_, &g_, &b_, &a_);
+				// 1. bilinear filter orig_flake for smooth subpixel movement
+				Uint32 *A = orig_flake + x     +  y      * orig_flake_pitch;
+				Uint32 *B = orig_flake + x + 1 +  y      * orig_flake_pitch;
+				Uint32 *C = orig_flake + x     + (y + 1) * orig_flake_pitch;
+				Uint32 *D = orig_flake + x + 1 + (y + 1) * orig_flake_pitch;
+				fore_a = (geta(A) * ( 1 - dx ) + geta(B) * dx) * ( 1 - dy ) + (geta(C) * ( 1 - dx ) + geta(D) * dx) * dy;
+				if (fore_a == 0)
+				{
+					// fully transparent, nothing to do
+					y__++;
+					continue;
+				}
 
-                }
+				if (fore_a == 255) {
+					// fully opaque, optimized
+					fore_r = (getr(A) * ( 1 - dx ) + getr(B) * dx) * ( 1 - dy ) + (getr(C) * ( 1 - dx ) + getr(D) * dx) * dy;
+					fore_g = (getg(A) * ( 1 - dx ) + getg(B) * dx) * ( 1 - dy ) + (getg(C) * ( 1 - dx ) + getg(D) * dx) * dy;
+					fore_b = (getb(A) * ( 1 - dx ) + getb(B) * dx) * ( 1 - dy ) + (getb(C) * ( 1 - dx ) + getb(D) * dx) * dy;
+				}
+				else
+				{
+					// not fully opaque, means A B C or D was not fully opaque, need to weight channels with
+					fore_r = ( (getr(A) * geta(A) * ( 1 - dx ) + getr(B) * geta(B) * dx) * ( 1 - dy ) + (getr(C) * geta(C) * ( 1 - dx ) + getr(D) * geta(D) * dx) * dy ) / fore_a;
+					fore_g = ( (getg(A) * geta(A) * ( 1 - dx ) + getg(B) * geta(B) * dx) * ( 1 - dy ) + (getg(C) * geta(C) * ( 1 - dx ) + getg(D) * geta(D) * dx) * dy ) / fore_a;
+					fore_b = ( (getb(A) * geta(A) * ( 1 - dx ) + getb(B) * geta(B) * dx) * ( 1 - dy ) + (getb(C) * geta(C) * ( 1 - dx ) + getb(D) * geta(D) * dx) * dy ) / fore_a;
+				}
 
-                // render existing flakes
-                x_flake = flakes[i].x + sin(flakes[i].sinpos*flakes[i].sincoeff)*flakes[i].wideness;
-                y_flake = flakes[i].y;
-                x_ = floor(x_flake);
-                y_ = floor(y_flake);
-                dx = 1 - (x_flake - x_);
-                dy = 1 - (y_flake - y_);
-                // collision with background?
-                orig_ptr = orig->pixels + x_ * Bpp + (y_ + 1) * orig->pitch;
-                if (y_ >= 0) {
-                        if (geta(orig_ptr) > 191 + rand_(64)
-                            && geta(orig_ptr + 3 * Bpp) > 191 + rand_(64)) {
-                                flakes[i].x = -1;
-                        }
-                }
-                for (x = 0; x < orig_flake_w; x++) {
-                        ptr = dest->pixels + (x_ + x) * Bpp + MAX(0, y_) * dest->pitch;
-                        orig_ptr = orig->pixels + (x_ + x) * Bpp + MAX(0, y_) * orig->pitch;
-                        for (y = MAX(0, -y_); y < orig_flake_h; y++) {
-                                // 1. bilinear filter orig_flake for smooth subpixel movement
-                                Uint32 *A = orig_flake + x + y*orig_flake_pitch;
-                                Uint32 *B = orig_flake + (x+1) + y*orig_flake_pitch;
-                                Uint32 *C = orig_flake + x + (y+1)*orig_flake_pitch;
-                                Uint32 *D = orig_flake + (x+1) + (y+1)*orig_flake_pitch;
-                                fore_a = (geta(A) * ( 1 - dx ) + geta(B) * dx) * ( 1 - dy ) + (geta(C) * ( 1 - dx ) + geta(D) * dx) * dy;
-                                if (fore_a == 0) {
-                                        // fully transparent, nothing to do
-                                        ptr += dest->pitch;
-                                        orig_ptr += orig->pitch;
-                                        continue;
-                                }
+				fore_a *= flakes[i].opacity;
 
-                                if (fore_a == 255) {
-                                        // fully opaque, optimized
-                                        fore_r = (getr(A) * ( 1 - dx ) + getr(B) * dx) * ( 1 - dy ) + (getr(C) * ( 1 - dx ) + getr(D) * dx) * dy;
-                                        fore_g = (getg(A) * ( 1 - dx ) + getg(B) * dx) * ( 1 - dy ) + (getg(C) * ( 1 - dx ) + getg(D) * dx) * dy;
-                                        fore_b = (getb(A) * ( 1 - dx ) + getb(B) * dx) * ( 1 - dy ) + (getb(C) * ( 1 - dx ) + getb(D) * dx) * dy;
-                                } else {
-                                        // not fully opaque, means A B C or D was not fully opaque, need to weight channels with
-                                        fore_r = ( (getr(A) * geta(A) * ( 1 - dx ) + getr(B) * geta(B) * dx) * ( 1 - dy ) + (getr(C) * geta(C) * ( 1 - dx ) + getr(D) * geta(D) * dx) * dy ) / fore_a;
-                                        fore_g = ( (getg(A) * geta(A) * ( 1 - dx ) + getg(B) * geta(B) * dx) * ( 1 - dy ) + (getg(C) * geta(C) * ( 1 - dx ) + getg(D) * geta(D) * dx) * dy ) / fore_a;
-                                        fore_b = ( (getb(A) * geta(A) * ( 1 - dx ) + getb(B) * geta(B) * dx) * ( 1 - dy ) + (getb(C) * geta(C) * ( 1 - dx ) + getb(D) * geta(D) * dx) * dy ) / fore_a;
-                                }
+				// 2. alpha composite with existing background (other flakes, alpha border of logo)
+				a = fore_a + (255 - fore_a) * a_ / 255;
+				if (a == 0)
+					set_pixel(dest, x_ + x, MAX(0, y_) + y__, 0, 0, 0, 0);
+				else
+				{
+					if (a_ == 0) {
+						r = fore_r;
+						g = fore_g;
+						b = fore_b;
+					} 
+					else
+					{
+						r = (fore_r * fore_a + ((r_ * (255 - fore_a) * a_) / 255)) / a;
+						g = (fore_g * fore_a + ((g_ * (255 - fore_a) * a_) / 255)) / a;
+						b = (fore_b * fore_a + ((b_ * (255 - fore_a) * a_) / 255)) / a;
+					}
+					if (flakes[i].x == -1)
+						set_pixel(orig, x_ + x, MAX(0, y_) + y__, (Uint8)r, (Uint8)g, (Uint8)b, (Uint8)a);
 
-                                fore_a *= flakes[i].opacity;
-
-                                // 2. alpha composite with existing background (other flakes, alpha border of logo)
-                                back_a = geta(ptr);
-                                a = fore_a + (255 - fore_a) * back_a / 255;
-                                if (a == 0) {
-                                        * ( (Uint32*) ptr ) = 0;
-                                } else {
-                                        if (back_a == 0) {
-                                                r = fore_r;
-                                                g = fore_g;
-                                                b = fore_b;
-                                        } else {
-                                                r = (fore_r * fore_a + ((getr(ptr) * (255 - fore_a) * back_a) / 255)) / a;
-                                                g = (fore_g * fore_a + ((getg(ptr) * (255 - fore_a) * back_a) / 255)) / a;
-                                                b = (fore_b * fore_a + ((getb(ptr) * (255 - fore_a) * back_a) / 255)) / a;
-                                        }
-//                                        if (fore_a>255 ||fore_r>255||fore_g>255||fore_b>255||a>255||r>255||g>255||b>255){
-//                                                printf("%dx%d (at %dx%d, d%fx%f):\n", x, y, x_, y_, dx, dy);
-//                                                printf("\tA = %d %d %d %d\n", geta(A), getr(A), getg(A), getb(A));
-//                                                printf("\tB = %d %d %d %d\n", geta(B), getr(B), getg(B), getb(B));
-//                                                printf("\tC = %d %d %d %d\n", geta(C), getr(C), getg(C), getb(C));
-//                                                printf("\tD = %d %d %d %d\n", geta(D), getr(D), getg(D), getb(D));
-//                                                printf("\t\t=> %f %d %d %d\n", fore_a, fore_r, fore_g, fore_b);
-//                                                printf("\talpha with existing %d %d %d %d\n", geta(ptr), getr(ptr), getg(ptr), getb(ptr));
-//                                                printf("\t\t=> %f %d %d %d\n", a, r, g, b); }
-//                                                abort();
-//                                        }
-                                        if (flakes[i].x == -1) {
-                                                * ( orig_ptr + Rdec ) = r;
-                                                * ( orig_ptr + Gdec ) = g;
-                                                * ( orig_ptr + Bdec ) = b;
-                                                * ( orig_ptr + Adec ) = a;
-                                        }
-                                        * ( ptr + Rdec ) = r;
-                                        * ( ptr + Gdec ) = g;
-                                        * ( ptr + Bdec ) = b;
-                                        * ( ptr + Adec ) = a;
-                                }
-                                ptr += dest->pitch;
-                                orig_ptr += orig->pitch;
-                        }
-                }
-                flakes[i].sinpos += moving_speed;
-                flakes[i].y += flakes[i].y_speed;
-                if (flakes[i].y > dest->h - 22)
-                        flakes[i].opacity = (double)(dest->h - flakes[i].y - 2)/20;
-                if (flakes[i].y >= dest->h - 4)
-                        flakes[i].x = -1;
-        }
+					set_pixel(dest, x_ + x, MAX(0, y_) + y__, (Uint8)r, (Uint8)g, (Uint8)b, (Uint8)a);
+				}
+				y__++;
+			}
+		}
+		flakes[i].sinpos += moving_speed;
+		flakes[i].y      += flakes[i].y_speed;
+		if (flakes[i].y > dest->h - 22)
+			flakes[i].opacity = (double)(dest->h - flakes[i].y - 2)/20;
+		if (flakes[i].y >= dest->h - 4)
+			flakes[i].x = -1;
+	}
 	myUnlockSurface(orig);
 	myUnlockSurface(dest);
 }
