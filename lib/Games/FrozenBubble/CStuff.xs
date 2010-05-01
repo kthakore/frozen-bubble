@@ -499,65 +499,71 @@ void rotate_nearest_(SDL_Surface * dest, SDL_Surface * orig, double angle)
 void rotate_bilinear_(SDL_Surface * dest, SDL_Surface * orig, double angle)
 {
 	int Bpp = dest->format->BytesPerPixel;
-        Uint32 *ptr;
-        int x_, y_;
-        int r, g, b;
-        double a;
-        double dx, dy;
-        double cosval = cos(angle);
-        double sinval = sin(angle);
-	if (orig->format->BytesPerPixel != 4) {
-                fprintf(stderr, "rotate_bilinear: orig surface must be 32bpp\n");
-                abort();
-        }
-	if (dest->format->BytesPerPixel != 4) {
-                fprintf(stderr, "rotate_bilinear: dest surface must be 32bpp\n");
-                abort();
-        }
+	int x_, y_;
+	int r, g, b;
+	double a;
+	double dx, dy;
+	double cosval = cos(angle);
+	double sinval = sin(angle);
+	Uint8 Ar, Ag, Ab, Aa, Br, Bg, Bb, Ba, Cr, Cg, Cb, Ca, Dr, Dg, Db, Da;
+	if (orig->format->BytesPerPixel == 1)
+	{
+		fprintf(stderr, "rotate_bilinear: orig surface must not have a palette\n");
+		abort();
+	}
+	if (dest->format->BytesPerPixel == 1)
+	{
+			fprintf(stderr, "rotate_bilinear: dest surface must not have a palette\n");
+			abort();
+	}
 	myLockSurface(orig);
 	myLockSurface(dest);
-        for (y = 0; y < dest->h; y++) {
-                double x__ = - dest->w/2*cosval - (y - dest->h/2)*sinval + dest->w/2;
-                double y__ = (y - dest->h/2)*cosval - dest->w/2*sinval + dest->h/2;
-                ptr = dest->pixels + y*dest->pitch;
-                for (x = 0; x < dest->w; x++) {
-                        Uint32 *A, *B, *C, *D;
-                        x_ = floor(x__);
-                        y_ = floor(y__);
-                        if (x_ < 0 || x_ > orig->w - 2 || y_ < 0 || y_ > orig->h - 2) {
-                                // out of band
-                                *ptr = 0;
-
-                        } else {
-                                dx = x__ - x_;
-                                dy = y__ - y_;
-                                A = orig->pixels + x_*Bpp     + y_*orig->pitch;
-                                B = orig->pixels + (x_+1)*Bpp + y_*orig->pitch;
-                                C = orig->pixels + x_*Bpp     + (y_+1)*orig->pitch;
-                                D = orig->pixels + (x_+1)*Bpp + (y_+1)*orig->pitch;
-                                a = (geta(A) * ( 1 - dx ) + geta(B) * dx) * ( 1 - dy ) + (geta(C) * ( 1 - dx ) + geta(D) * dx) * dy;
-                                if (a == 0) {
-                                        // fully transparent, no use working
-                                        r = g = b = 0;
-                                } else if (a == 255) {
-                                        // fully opaque, optimized
-                                        r = (getr(A) * ( 1 - dx ) + getr(B) * dx) * ( 1 - dy ) + (getr(C) * ( 1 - dx ) + getr(D) * dx) * dy;
-                                        g = (getg(A) * ( 1 - dx ) + getg(B) * dx) * ( 1 - dy ) + (getg(C) * ( 1 - dx ) + getg(D) * dx) * dy;
-                                        b = (getb(A) * ( 1 - dx ) + getb(B) * dx) * ( 1 - dy ) + (getb(C) * ( 1 - dx ) + getb(D) * dx) * dy;
-                                } else {
-                                        // not fully opaque, means A B C or D was not fully opaque, need to weight channels with
-                                        r = ( (getr(A) * geta(A) * ( 1 - dx ) + getr(B) * geta(B) * dx) * ( 1 - dy ) + (getr(C) * geta(C) * ( 1 - dx ) + getr(D) * geta(D) * dx) * dy ) / a;
-                                        g = ( (getg(A) * geta(A) * ( 1 - dx ) + getg(B) * geta(B) * dx) * ( 1 - dy ) + (getg(C) * geta(C) * ( 1 - dx ) + getg(D) * geta(D) * dx) * dy ) / a;
-                                        b = ( (getb(A) * geta(A) * ( 1 - dx ) + getb(B) * geta(B) * dx) * ( 1 - dy ) + (getb(C) * geta(C) * ( 1 - dx ) + getb(D) * geta(D) * dx) * dy ) / a;
-                                }
-                                * ( ( (Uint8*) ptr ) + Rdec ) = r;  // it is slightly faster to not recompose the 32-bit pixel - at least on my p4
-                                * ( ( (Uint8*) ptr ) + Gdec ) = g;
-                                * ( ( (Uint8*) ptr ) + Bdec ) = b;
-                                * ( ( (Uint8*) ptr ) + Adec ) = a;
-                        }
-                        x__ += cosval;
-                        y__ += sinval;
-                        ptr++;
+	for (y = 0; y < dest->h; y++)
+	{
+		double x__ = - dest->w/2*cosval - (y - dest->h/2)*sinval + dest->w/2;
+		double y__ = (y - dest->h/2)*cosval - dest->w/2*sinval + dest->h/2;
+		for (x = 0; x < dest->w; x++)
+		{
+			Uint32 *A, *B, *C, *D;
+			x_ = floor(x__);
+			y_ = floor(y__);
+			if (x_ < 0 || x_ > orig->w - 2 || y_ < 0 || y_ > orig->h - 2)
+			{
+				// out of band
+				set_pixel(dest, x, y, 0, 0, 0, 0);
+			}
+			else
+			{
+				dx = x__ - x_;
+				dy = y__ - y_;
+				get_pixel(orig, x_,     y_,     &Ar, &Ag, &Ab, &Aa);
+				get_pixel(orig, x_ + 1, y_,     &Br, &Bg, &Bb, &Ba);
+				get_pixel(orig, x_,     y_ + 1, &Cr, &Cg, &Cb, &Ca);
+				get_pixel(orig, x_ + 1, y_ + 1, &Dr, &Dg, &Db, &Da);
+				a = (Aa * ( 1 - dx ) + Ba * dx) * ( 1 - dy ) + (Ca * ( 1 - dx ) + Da * dx) * dy;
+				if (a == 0)
+				{
+					// fully transparent, no use working
+					r = g = b = 0;
+				}
+				else if (a == 255)
+				{
+					// fully opaque, optimized
+					r = (Ar * ( 1 - dx ) + Br * dx) * ( 1 - dy ) + (Cr * ( 1 - dx ) + Dr * dx) * dy;
+					g = (Ag * ( 1 - dx ) + Bg * dx) * ( 1 - dy ) + (Cg * ( 1 - dx ) + Dg * dx) * dy;
+					b = (Ab * ( 1 - dx ) + Bb * dx) * ( 1 - dy ) + (Cb * ( 1 - dx ) + Db * dx) * dy;
+				}
+				else
+				{
+					// not fully opaque, means A B C or D was not fully opaque, need to weight channels with
+					r = ( (Ar * Aa * ( 1 - dx ) + Br * Ba * dx) * ( 1 - dy ) + (Cr * Ca * ( 1 - dx ) + Dr * Da * dx) * dy ) / a;
+					g = ( (Ag * Aa * ( 1 - dx ) + Bg * Ba * dx) * ( 1 - dy ) + (Cg * Ca * ( 1 - dx ) + Dg * Da * dx) * dy ) / a;
+					b = ( (Ab * Aa * ( 1 - dx ) + Bb * Ba * dx) * ( 1 - dy ) + (Cb * Ca * ( 1 - dx ) + Db * Da * dx) * dy ) / a;
+				}
+				set_pixel(dest, x, y, r, g, b, a);
+			}
+			x__ += cosval;
+			y__ += sinval;
 		}
 	}
 	myUnlockSurface(orig);
