@@ -94,23 +94,25 @@ $CANON_ROTATIONS_NB = 100;      # number of rotations of images for canon
 
 $TIMEOUT_PINGUIN_SLEEP = 200;
 $FREE_FALL_CONSTANT = 0.5;
-$KEYS = { p1 => { left => SDLK_LEFT, right => SDLK_RIGHT, fire => SDLK_UP, center => SDLK_DOWN },
-          p2 => { left => SDLK_x,    right => SDLK_v,     fire => SDLK_c,  center => SDLK_d },
-	  misc => { fs => SDLK_f, chat => SDLK_RETURN, send_malus_to_rp1 => SDLK_F1, send_malus_to_rp2 => SDLK_F2, send_malus_to_rp3 => SDLK_F3,
-                    send_malus_to_rp4 => SDLK_F4, send_malus_to_all => SDLK_F10, next_playlist_elem => SDLK_TAB, save_record => SDLK_PRINT,
-                    toggle_music => SDLK_F11, toggle_sound => SDLK_F12, raise_volume => SDLK_KP_PLUS, lower_volume => SDLK_KP_MINUS } };
-$sdl_flags = SDL_HWSURFACE | SDL_DOUBLEBUF | SDL_HWACCEL | SDL_ASYNCBLIT;
-$sdl_flags = SDL_SWSURFACE;
-$mixer = 0;
-$graphics_level = 3;
-@PLAYERS = qw(p1 p2);
-@ALL_PLAYERS = qw(p1 p2 rp1 rp2 rp3 rp4);
-$playermalus = 0;
-$mptrainingdiff = 30;
-$chainreaction = 0;
-$mynick = $ENV{USER};
-$HISCORES = [];
-$HISCORES_MPTRAIN = [];
+$KEYS                           = {
+	p1   => { left => SDLK_LEFT, right => SDLK_RIGHT, fire => SDLK_UP, center => SDLK_DOWN },
+	p2   => { left => SDLK_x,    right => SDLK_v,     fire => SDLK_c,  center => SDLK_d },
+	misc => { fs   => SDLK_f, chat => SDLK_RETURN, send_malus_to_rp1 => SDLK_F1, send_malus_to_rp2 => SDLK_F2, send_malus_to_rp3 => SDLK_F3,
+	          send_malus_to_rp4 => SDLK_F4, send_malus_to_all => SDLK_F10, next_playlist_elem => SDLK_TAB, save_record => SDLK_PRINT,
+	          toggle_music => SDLK_F11, toggle_sound => SDLK_F12, raise_volume => SDLK_KP_PLUS, lower_volume => SDLK_KP_MINUS }
+};
+$sdl_flags                      = SDL_HWSURFACE | SDL_DOUBLEBUF | SDL_HWACCEL | SDL_ASYNCBLIT;
+$sdl_flags                      = SDL_SWSURFACE;
+$mixer                          = 0;
+$graphics_level                 = 3;
+@PLAYERS                        = qw(p1 p2);
+@ALL_PLAYERS                    = qw(p1 p2 rp1 rp2 rp3 rp4);
+$playermalus                    = 0;
+$mptrainingdiff                 = 30;
+$chainreaction                  = 0;
+$mynick                         = ($^O eq 'Win32') ? getlogin() : $ENV{USER};
+$HISCORES                       = [];
+$HISCORES_MPTRAIN               = [];
 $HISCORES_MPTRAIN_CHAINREACTION = [];
 
 my $RECORD_PROTOCOL_LEVEL = 0;
