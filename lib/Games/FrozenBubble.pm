@@ -1,6 +1,6 @@
 package Games::FrozenBubble;
 
-our $VERSION = '0.001_1';
+our $VERSION = '2.201'; #Mostly playable version
 
 1;
 
