@@ -99,17 +99,18 @@ sub readline_() {
         while ($results !~ /\n/) {
             my $buf;
 
-			next if $^O eq 'MSWin32' && !defined IO::Select->new($sock)->can_read(0.001);
+			if($^O eq 'MSWin32' && !defined IO::Select->new($sock)->can_read(0.00001)) {
+				sleep($ping/1000/3);
+				next;
+			}
 
-            my $bytes = sysread($sock, $buf, 1);
+			my $bytes = sysread($sock, $buf, 1);
             if (!defined($bytes)) {
-                if ($! == EAGAIN) {
+                if (0 + $! == EAGAIN) {
                     sleep($ping/1000/3);
                 } elsif ($! == ECONNRESET) {
                     disconnect();
                     return $results;
-				#} elsif (0 + $! == 10035) {
-				#	return undef;
                 } else {
                     printf STDERR "Oops, system error: " .(0+$!). " at line %d, %s\n", __LINE__, $^E;
                     return undef;
@@ -140,18 +141,16 @@ sub readline_ifdata() {
         return undef;
     }
 
-	return if $^O eq 'MSWin32' && !defined IO::Select->new($sock)->can_read(0.001);
+	return undef if $^O eq 'MSWin32' && !defined IO::Select->new($sock)->can_read(0.00001);
 
     my $buf;
-    my $bytes = sysread($sock, $buf, 1);
+	my $bytes = sysread($sock, $buf, 1);
     if (!defined($bytes)) {
-        if (0 + $! == EAGAIN) {
+        if (0 + $! == EAGAIN) { # nothing there to read
             return undef;
         } elsif (0 + $! == ECONNRESET) {
             disconnect();
             return undef;
-        #} elsif (0 + $! == 10035) {
-        #    return undef;
         } else {
             printf STDERR "Oops, system error: " .(0+$!). " at line %d, %s\n", __LINE__, $^E;
             return undef;
@@ -339,11 +338,8 @@ sub connect {
     #BEWARE non-blocking sockets work on Win32 only with IO-1.24 or higher
 	# http://www.codeguru.com/forum/showthread.php?t=468281
 	# http://perldoc.perl.org/IO/Select.html
-	
-	if($^O ne 'MSWin32') {
-		$sock->blocking(0);
-		return { failure => 'Cannot set unblocking '.(0+$!) } if 0+$!;
-	}
+	$sock->blocking(0);
+	return { failure => 'Cannot set unblocking '.(0+$!) } if 0+$!;
 
     $current_host = $host;
     $current_port = $port;
@@ -488,7 +484,7 @@ sub grecv() {
         return @msg;
     }
 
-	return if $^O eq 'MSWin32' && !defined IO::Select->new($sock)->can_read(0.001);
+	return @msg if $^O eq 'MSWin32' && !defined IO::Select->new($sock)->can_read(0.00001);
 
     my $buf;
     my $bytes = sysread($sock, $buf, 1024);
@@ -498,8 +494,6 @@ sub grecv() {
         } elsif ($! == ECONNRESET) {
             disconnect();
             return;
-		#} elsif (0 + $! == 10035) {
-		#	return undef;
 		} else {
 			printf STDERR "Oops, system error: " .(0+$!). " at line %d, %s\n", __LINE__, $^E;
 			return undef;
