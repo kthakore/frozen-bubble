@@ -102,7 +102,6 @@ $KEYS                           = {
 	          toggle_music => SDLK_F11, toggle_sound => SDLK_F12, raise_volume => SDLK_KP_PLUS, lower_volume => SDLK_KP_MINUS }
 };
 $sdl_flags                      = SDL_HWSURFACE | SDL_DOUBLEBUF | SDL_HWACCEL | SDL_ASYNCBLIT;
-$sdl_flags                      = SDL_SWSURFACE;
 $mixer                          = 0;
 $graphics_level                 = 3;
 @PLAYERS                        = qw(p1 p2);

@@ -1,6 +1,6 @@
 package Games::FrozenBubble;
 
-our $VERSION = '2.201'; #Mostly playable version
+our $VERSION = '2.202'; #Mostly playable version
 
 1;
 
@@ -11,6 +11,10 @@ __END__
 =head1 NAME
 
 Games::FrozenBubble - The classic penguin game ported to CPAN
+
+=head1 DISCLAIMER
+
+This release is under review and is not an official release of Frozen Bubble
 
 =head1 TIPS
 
