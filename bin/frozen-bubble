@@ -541,22 +541,22 @@ sub is_distant_player($) {
 }
 
 sub mp_ping_if_needed {
-    my ($ticks) = @_;
-    if (SDL::get_ticks() - $ticks > 1000) {
+    my ($ticks_ref) = @_;
+    if (SDL::get_ticks() - $$ticks_ref > 1000) {
         Games::FrozenBubble::Net::gsend('p');
-        $ticks = SDL::get_ticks();
+        $$ticks_ref = SDL::get_ticks();
     }
 }
 
 sub mp_propagate {
-    my ($key, $value, $ticks) = @_;
+    my ($key, $value, $ticks_ref) = @_;
     if (is_leader()) {
         dbgnet("as leader, sending $key$value");
         Games::FrozenBubble::Net::gsend("$key$value");
         return $value;
     } else {
         my $m = Games::FrozenBubble::Net::grecv_get1msg();
-        mp_ping_if_needed($ticks);
+        mp_ping_if_needed($ticks_ref);
         if ($m->{msg} !~ /^\Q$key\E(.+)/) {
             if ($m->{msg} eq 'l') {
                 print "Server said that one of the players left - probably because of too high lag.\n";
