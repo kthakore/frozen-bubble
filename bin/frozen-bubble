@@ -1675,9 +1675,9 @@ sub handle_game_events() {
         $keypressed = undef;
 	if ($event->type == SDL_KEYUP) {
 	    $keypressed = $event->key_sym;
-	} elsif ($event->type == Games::FrozenBubble::CStuff::JOYAXISMOTION() || $event->type() == Games::FrozenBubble::CStuff::JOYBUTTONUP()) {
+	} elsif ($event->type == SDL_JOYAXISMOTION || $event->type() == SDL_JOYBUTTONUP) {
 	    $keypressed = translate_joystick_tokey($event);
-            if ($event->type == Games::FrozenBubble::CStuff::JOYAXISMOTION() && $keypressed !~ /^joystick\|axisvalue\|\d+\|\d+\|0$/) {  #- we treat position at 0 as KEYUP
+            if ($event->type == SDL_JOYAXISMOTION && $keypressed !~ /^joystick\|axisvalue\|\d+\|\d+\|0$/) {  #- we treat position at 0 as KEYUP
                 $keypressed = undef;
             }
             $keypressed =~ s/^joystick\|buttonup/joystick|buttondown/;
@@ -2003,7 +2003,7 @@ sub update_lost {
                 die 'new_game';
             }
             if (!@{$sticked_bubbles{$player}}) {
-                if ($event->type == SDL_KEYDOWN || $event->type == Games::FrozenBubble::CStuff::JOYBUTTONUP()) {
+                if ($event->type == SDL_KEYDOWN || $event->type == SDL_JOYBUTTONUP) {
                     die 'new_game';
                 }
             }
@@ -2410,7 +2410,7 @@ sub update_game() {
                     if ($event->type == SDL_KEYDOWN && $event->key_sym == SDLK_ESCAPE()) {
                         die 'quit';
                     }
-                    if ($event->type == SDL_KEYDOWN || $event->type == Games::FrozenBubble::CStuff::JOYBUTTONUP()) {
+                    if ($event->type == SDL_KEYDOWN || $event->type == SDL_JOYBUTTONUP) {
                         if ($playdata) {
                             die 'quit';
                         } elsif (is_mp_game()) {
@@ -2653,6 +2653,7 @@ sub init_game() {
 #		-height     => 480
 #	);
 
+	SDL::init(SDL_INIT_EVERYTHING);
 	$app = SDL::Video::set_video_mode(640, 480, 24, $sdl_flags | ($fullscreen ? SDL_FULLSCREEN : 0));
 	SDL::Video::wm_set_icon(SDL::Video::load_BMP("$FPATH/gfx/pinguins/window_icon_penguin.png"));
 	SDL::Video::wm_set_caption('Frozen-Bubble 2', 'Frozen-Bubble 2');
@@ -2660,7 +2661,7 @@ sub init_game() {
     my $joys = SDL::Joystick::num_joysticks();
     $joysticksinfo and print "\nfound $joys joystick(s)\n";
     for (my $i = 0; $i < $joys; $i++) {
-	push @joysticks, SDL::Joystick::open($i);
+	push @joysticks, SDL::Joystick->new($i);
         $joysticksinfo and print "\t" . ($i + 1) . ': ' . (SDL::Joystick::name(SDL::Joystick::index($joysticks[$i])) || 'unknown joystick') . "\n";
     }
     $frame = 0;
@@ -2931,10 +2932,10 @@ sub open_level($) {
 
 sub translate_joystick_tokey($) {
     my ($event) = @_;
-    my $which =  SDL::JoyAxisEventWhich($event);
-    if ($event->type == Games::FrozenBubble::CStuff::JOYAXISMOTION()) {
-        my $axis = SDL::JoyAxisEventAxis($event);
-        my $value = Games::FrozenBubble::CStuff::JoyAxisEventValue($event);
+    my $which = $event->jaxis_which;
+    if ($event->type == SDL_JOYAXISMOTION) {
+        my $axis = $event->jaxis_axis;
+        my $value = $event->jaxis_value;
         if ($value <= -10000) {  #- should work properly with analog joysticks
             return "joystick|axisvalue|$which|$axis|-10000";
         } elsif ($value >= 10000) {
@@ -2942,11 +2943,11 @@ sub translate_joystick_tokey($) {
         } else {
             return "joystick|axisvalue|$which|$axis|0";
         }
-    } elsif ($event->type() == Games::FrozenBubble::CStuff::JOYBUTTONDOWN()) {
-        my $button = SDL::JoyButtonEventButton($event) + 1;
+    } elsif ($event->type() == SDL_JOYBUTTONDOWN) {
+        my $button = $event->jbutton_button + 1;
         return "joystick|buttondown|$which|$button";
-    } elsif ($event->type() == Games::FrozenBubble::CStuff::JOYBUTTONUP()) {
-        my $button = SDL::JoyButtonEventButton($event) + 1;
+    } elsif ($event->type() == SDL_JOYBUTTONUP) {
+        my $button = $event->jbutton_button + 1;
         return "joystick|buttonup|$which|$button";
     }
 }
@@ -2955,7 +2956,7 @@ sub extended_keypress($) {
     my ($event) = @_;
     if ($event->type == SDL_KEYDOWN) {
         return $event->key_sym;
-    } elsif ($event->type == Games::FrozenBubble::CStuff::JOYAXISMOTION() || $event->type() == Games::FrozenBubble::CStuff::JOYBUTTONDOWN()) {
+    } elsif ($event->type == SDL_JOYAXISMOTION || $event->type() == SDL_JOYBUTTONDOWN) {
         my $keypressed = translate_joystick_tokey($event);
         if ($keypressed =~ /^joystick\|axisvalue\|\d+\|\d+\|0$/) {  #- we treat position at 0 as KEYUP
             $keypressed = undef;
@@ -2971,7 +2972,7 @@ sub grab_key {
 	SDL::Events::wait_event($event);
 	if ($event->type == SDL_KEYDOWN) {
 	    $keyp = $event->key_sym;
-	} elsif ($event->type == Games::FrozenBubble::CStuff::JOYAXISMOTION() || $event->type() == Games::FrozenBubble::CStuff::JOYBUTTONDOWN()) {
+	} elsif ($event->type == SDL_JOYAXISMOTION || $event->type() == SDL_JOYBUTTONDOWN) {
 	    $keyp = translate_joystick_tokey($event);
         }
     } while (!defined($keyp));
@@ -4523,7 +4524,7 @@ sub smg_choose_game() {
             my $k;
             if ($event->type == SDL_KEYDOWN) {
                 $k = $event->key_sym;
-            } elsif ($curaction->()->{action} ne 'CHAT' && ($event->type == Games::FrozenBubble::CStuff::JOYAXISMOTION() || $event->type() == Games::FrozenBubble::CStuff::JOYBUTTONDOWN())) {
+            } elsif ($curaction->()->{action} ne 'CHAT' && ($event->type == SDL_JOYAXISMOTION || $event->type() == SDL_JOYBUTTONDOWN)) {
                 $k = translate_joystick_tokey($event);
             }
             if ($k) {
