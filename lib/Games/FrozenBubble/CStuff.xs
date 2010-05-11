@@ -1880,31 +1880,4 @@ utf8key(event)
   RETVAL
 
 
-Sint16
-JoyAxisEventValue ( e )
-        SDL_Event *e
-        CODE:
-                RETVAL = e->jaxis.value;   // buggy up to 2.1.2
-        OUTPUT:
-                RETVAL
 
-Uint8
-JOYAXISMOTION ()
-        CODE:
-                RETVAL = SDL_JOYAXISMOTION; // missing in 2.1.2
-        OUTPUT:
-                RETVAL
-
-Uint8
-JOYBUTTONDOWN ()
-        CODE:
-                RETVAL = SDL_JOYBUTTONDOWN; // missing in 2.1.2
-        OUTPUT:
-                RETVAL
-
-Uint8
-JOYBUTTONUP ()
-        CODE:
-                RETVAL = SDL_JOYBUTTONUP; // missing in 2.1.2
-        OUTPUT:
-                RETVAL
