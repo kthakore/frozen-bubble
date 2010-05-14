@@ -61,7 +61,7 @@ My::Builder->new(
         'IO::Socket'                => '1.24', # part od IO distribution
         'Math::Trig'                => 0,
         'parent'                    => 0,
-        'Alien::SDL'                => '1.403',
+        'Alien::SDL'                => '1.404',
         'SDL'                       => '2.405',
 	'ExtUtils::CBuilder'	    => 0,
         'Time::HiRes'               => 0,
