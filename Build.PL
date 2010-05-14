@@ -33,7 +33,7 @@ My::Builder->new(
     configure_requires => {
         perl                        => '5.008',
         autodie                     => 0,
-        'Alien::SDL'                => '1.1',
+        'Alien::SDL'                => '1.404',
         Config                      => 0,
         'ExtUtils::ParseXS'         => '2.16',
         'File::Basename'            => 0,
