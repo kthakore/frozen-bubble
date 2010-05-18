@@ -658,7 +658,7 @@ transform_cubic(double dx, int jm1, int j, int jp1, int jp2)
 void rotate_bicubic_(SDL_Surface * dest, SDL_Surface * orig, double angle)
 {
 	Uint8 r, g, b, a;
-	Uint8 r_ [15], g_ [15], b_ [15], a_ [15];
+	Uint8 r_ [16], g_ [16], b_ [16], a_ [16];
 	int x_, y_;
 	double cosval = cos(angle);
 	double sinval = sin(angle);
