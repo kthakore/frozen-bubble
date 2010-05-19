@@ -40,3 +40,4 @@ SIGNATURE
 Games-FrozenBubble*
 lib/Games/FrozenBubble/CStuff.c
 lib/Games/FrozenBubble/CStuff.o
+bin/fb-server
