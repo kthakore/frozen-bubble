@@ -5479,7 +5479,7 @@ sub menu {
     my $speed_ok = 4;
 
     my $candy_init = sub {
-		# caclulating positions and creating new surfaces for logo animations
+		# calculating positions and creating new surfaces for logo animations
         if (defined($candy)) {
             erase_image_from($imgbin{menu_logo}, $logox, $logoy, $back_start);
             $candy = undef;
