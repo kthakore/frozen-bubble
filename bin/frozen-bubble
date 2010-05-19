@@ -433,7 +433,7 @@ sub switch_image_on_background($$$;$) {
     my ($image, $x, $y, $save) = @_;
     my $drect = SDL::Rect->new( $x, $y,  $image->w,  $image->h);
     if ($save) {
-	$save = SDL::Surface->new( SDL_ANYFORMAT, $image->w, $image->h, 32, 0 , 0, 0, 0);  
+	$save = SDL::Surface->new( SDL_SWSURFACE, $image->w, $image->h, 32, 0 , 0, 0, 0);  
         #- grrr... this piece of shit of Amask made the surfaces slightly modify along the print/erase of "Hurry" and "Pause".... took me so much time to debug and find that the problem came from a bug when Amask is set to 0xFF000000 (while it's -supposed- to be set to 0xFF000000 with 32-bit graphics!!)
 	SDL::Video::blit_surface($background, $drect, $save, $rects{$image});
     }
@@ -2809,7 +2809,7 @@ sub init_game() {
     $imgbin{menu_cursor}{highscores} = [ map { add_image("menu/anims/highscore_00$_.png") } ('01'..'89') ];
     foreach my $cursortype (keys %{$imgbin{menu_cursor}}) {
         foreach my $img (@{$imgbin{menu_cursor}{$cursortype}}) {
-            #my $alpha = SDL::Surface->new( SDL_ANYFORMAT,  $img->w,  $img->h,  32, 0,0,0,0);
+            #my $alpha = SDL::Surface->new( SDL_SWSURFACE,  $img->w,  $img->h,  32, 0,0,0,0);
             #SDL::Video::set_alpha($img, 0, SDL_ALPHA_OPAQUE);  #- for RGBA->RGBA blits, SDL_SRCALPHA must be removed or destination alpha is preserved
             #SDL::Video::blit_surface($img, SDL::Rect->new(0,0,$img->w,$img->h), $alpha, SDL::Rect->new(0,0,$img->w,$img->h));
             #Games::FrozenBubble::CStuff::alphaize($alpha);
@@ -2900,7 +2900,7 @@ sub init_game() {
     }
 
     #- the RGBA effects algorithms assume little endian RGBA surfaces
-    #my $replace = SDL::Surface->new( SDL_ANYFORMAT, $imgbin{menu_logo}->w,  $imgbin{menu_logo}->h, 32, 0, 0, 0, 0);
+    #my $replace = SDL::Surface->new( SDL_SWSURFACE, $imgbin{menu_logo}->w,  $imgbin{menu_logo}->h, 32, 0, 0, 0, 0);
     #SDL::Video::set_alpha($imgbin{menu_logo}, 0, SDL_ALPHA_OPAQUE);  #- for RGBA->RGBA blits, SDL_SRCALPHA must be removed or destination alpha is preserved
     #SDL::Video::blit_surface($imgbin{menu_logo}, SDL::Rect->new(0,0,$imgbin{menu_logo}->w,$imgbin{menu_logo}->h), $replace, SDL::Rect->new(0,0,$imgbin{menu_logo}->w,$imgbin{menu_logo}->h));
     #$imgbin{menu_logo} = $imgbin{menu_logo}; #$replace;
@@ -5500,7 +5500,7 @@ sub menu {
         }
         if ($logo_candy_method == 4) {
             #- tilt needs a bit more horizontal room
-            my $newlogosurface = SDL::Surface->new(SDL_ANYFORMAT, $imgbin{menu_logo}->w * 1.1,  $imgbin{menu_logo}->h * 1.05,  32, 0xFF000000, 0xFF0000, 0xFF00, 0xFF);
+            my $newlogosurface = SDL::Surface->new(SDL_SWSURFACE, $imgbin{menu_logo}->w * 1.1,  $imgbin{menu_logo}->h * 1.05,  32, 0xFF000000, 0xFF0000, 0xFF00, 0xFF);
 			SDL::Video::set_alpha($imgbin{menu_logo}, 0, 0); #- for RGBA->RGBA blits, SDL_SRCALPHA must be removed or destination alpha is preserved
             SDL::Video::blit_surface($imgbin{menu_logo}, SDL::Rect->new(0,0,$imgbin{menu_logo}->w,$imgbin{menu_logo}->h), $newlogosurface, SDL::Rect->new( $imgbin{menu_logo}->w * 0.05, $imgbin{menu_logo}->h * 0.025, $imgbin{menu_logo}->w, $imgbin{menu_logo}->h));
             $logox -= $imgbin{menu_logo}->w * 0.05;
@@ -5511,7 +5511,7 @@ sub menu {
         }
         if ($logo_candy_method == 8) {
             #- snow needs to extend top, and a little more wideness
-            my $newlogosurface = SDL::Surface->new( SDL_ANYFORMAT, $imgbin{menu_logo}->w * 1.1,  $imgbin{menu_logo}->h + $logoy, 32, 0xFF000000, 0xFF0000, 0xFF00, 0xFF);
+            my $newlogosurface = SDL::Surface->new( SDL_SWSURFACE, $imgbin{menu_logo}->w * 1.1,  $imgbin{menu_logo}->h + $logoy, 32, 0xFF000000, 0xFF0000, 0xFF00, 0xFF);
 			SDL::Video::set_alpha( $imgbin{menu_logo}, 0, 0); #- for RGBA->RGBA blits, SDL_SRCALPHA must be removed or destination alpha is preserved
             SDL::Video::blit_surface( $imgbin{menu_logo}, SDL::Rect->new(0,0,$imgbin{menu_logo}->w,$imgbin{menu_logo}->h), $newlogosurface, SDL::Rect->new($imgbin{menu_logo}->w * 0.05, $logoy, $imgbin{menu_logo}->w, $imgbin{menu_logo}->h));
             $logox -= $imgbin{menu_logo}->w * 0.05;
@@ -5633,7 +5633,7 @@ sub menu {
                                           $imgbin{menu_cursor}{$m}[$pdata{cursor_img}{$m}]->w,
                                          $imgbin{menu_cursor}{$m}[$pdata{cursor_img}{$m}]->h);
         if (!defined($cursor_save_bg{$m})) {
-            $cursor_save_bg{$m} = SDL::Surface->new(SDL_ANYFORMAT, $imgbin{menu_cursor}{$m}[0]->w, $imgbin{menu_cursor}{$m}[0]->h, 32, 0,0,0,0);
+            $cursor_save_bg{$m} = SDL::Surface->new(SDL_SWSURFACE, $imgbin{menu_cursor}{$m}[0]->w, $imgbin{menu_cursor}{$m}[0]->h, 32, 0,0,0,0);
 			SDL::Video::blit_surface($app, $cursor_rect, $cursor_save_bg{$m}, SDL::Rect->new( 0,  0,  $imgbin{menu_cursor}{$m}[0]->w, $imgbin{menu_cursor}{$m}[0]->h));
         }
 		SDL::Video::blit_surface($cursor_save_bg{$m}, SDL::Rect->new(0,0,$cursor_save_bg{$m}->w,$cursor_save_bg{$m}->h), $app, $cursor_rect);
