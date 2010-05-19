@@ -5522,8 +5522,7 @@ sub menu {
         }
         $candy = SDL::Surface->new(SDL_SWSURFACE, $imgbin{menu_logo}->w,  $imgbin{menu_logo}->h, 32, 0xFF000000, 0xFF0000, 0xFF00, 0xFF);
     };
-    $candy_init->() unless defined $candy;
-
+    defined($candy) or $candy_init->(); 
 	my $draw_logo = sub {
 		my ($no_update) = @_;
 		erase_image_from($imgbin{menu_logo}, $logox, $logoy, $back_start);
