@@ -6000,7 +6000,7 @@ sub replay {
             local *F;
             local $/ = undef;
        			return unless -e $filename;
-			if( eval('use Compress::Bzip2; 1') ) {
+			if( eval {require Compress::Bzip2} ) {
 				my $bz      = Compress::Bzip2::bzopen($filename, 'r');
 				$replayfile = '';
 				my $line    = '';
