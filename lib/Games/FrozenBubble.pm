@@ -87,5 +87,3 @@ your igloo.
 Talk to FROGGS or kthakore on #sdl irc.perl.org.
 
 Fork and hack on L<http://github.com/kthakore/frozen-bubble>
-
-see PORT_TODO that came with this distribution
