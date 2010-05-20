@@ -1,1 +1,9 @@
-see INSTALL section of lib/Games/FrozenBubble.pm
+=encoding UTF-8
+
+=head1 NAME
+
+INSTALL - installation instructions
+
+
+See sections C<INSTALLATION> and C<DEPENDENCIES> of the F<README> file
+(online at L<http://search.cpan.org/dist/Games-FrozenBubble/README>).

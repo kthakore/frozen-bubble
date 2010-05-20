@@ -82,49 +82,6 @@ next to the player turns white - you can see who is attacking by
 the presence of the small pinguins of the opponent on the left of
 your igloo.
 
-
-=head1 INSTALL
-
-=head2 Pango headers
-
-Ensure libpango1-dev and pkg-config are installed on your system.
-
-    sudo apt-get install libpango1-dev
-
-Strawberry perl windows users need not worry!
-
-=head2 Alien::SDL
-
-=head3 Unix/Linux/Macs
-
-You may need the following packages
-
-    libpng-dev libvorbis-dev x11proto-xext-dev libxft-dev
-
-Then B<CRITICAL> select pango support!
-
-Install with CPAN:
-
-    cpan Alien::SDL
-
-or on the system:
-
-    perl Build.PL
-    ./Build 
-    sudo ./Build install
-
-=head2 SDL and Games::FrozenBubble
-
-Both with CPAN:
-
-    cpan SDL Games::FrozenBubble
-
-or both on the system:
-
-    perl Build.PL
-    ./Build 
-    sudo ./Build install
-
 =head1 CONTRIBUTE
 
 Talk to FROGGS or kthakore on #sdl irc.perl.org.
