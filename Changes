@@ -4,7 +4,18 @@
 
 Changes - Revision history for Games-FrozenBubble
 
-=head2 2.2.1
+=head2 2.202
+
+=over
+
+=item Clean up of most visual effects (FROGGS, kthakore)
+
+=item Game and net play working in windows (FROGGS,kthakore)
+
+=back 
+
+
+=head2 2.201
 
 =over
 
