@@ -11,14 +11,12 @@ my ($lang) = split(':', $ENV{LANGUAGE});
 gettext_lang($lang);
 
 use vars qw(@ISA @EXPORT $FPATH $FLPATH $FBHOME $FBLEVELS $colourblind %POS_1P %POS_2P %POS_MP $BUBBLE_SIZE $ROW_SIZE
-            $PI $version);
+            $PI);
 @ISA = qw(Exporter);
-@EXPORT = qw($version $FPATH $FLPATH $colourblind $FBHOME $FBLEVELS %POS_1P %POS_2P %POS_MP $BUBBLE_SIZE $ROW_SIZE
+@EXPORT = qw($FPATH $FLPATH $colourblind $FBHOME $FBLEVELS %POS_1P %POS_2P %POS_MP $BUBBLE_SIZE $ROW_SIZE
              $PI cat_ member difference2 any every even odd sqr to_bool to_int if_ chomp_
              fold_left output append_to_file min max backtrace basename cp_af all partition ssort
              sum put_in_hash mapn mapn_ before_leaving fastuniq deep_copy stringchars loc dbgnet);
-
-$version = '2.2.0';
 
 %POS_1P = ( p1 => { left_limit => 190, right_limit => 446, top_limit => 44, 'initial_bubble_y' => 390,
                     canon => { x => 268, 'y' => 356 },

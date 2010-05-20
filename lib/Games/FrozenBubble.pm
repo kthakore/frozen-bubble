@@ -1,6 +1,6 @@
 package Games::FrozenBubble;
 
-our $VERSION = '2.202'; #Mostly playable version
+our $VERSION = '2.2.1_01';
 
 1;
 
@@ -10,11 +10,7 @@ __END__
 
 =head1 NAME
 
-Games::FrozenBubble - The classic penguin game ported to CPAN
-
-=head1 DISCLAIMER
-
-This release is under review and is not an official release of Frozen Bubble
+Games::FrozenBubble - arcade/reflex game - THIS IS A BETA VERSION
 
 =head1 TIPS
 
@@ -107,13 +103,27 @@ You may need the following packages
 
 Then B<CRITICAL> select pango support!
 
+Install with CPAN:
+
     cpan Alien::SDL
 
+or on the system:
+
+    perl Build.PL
+    ./Build 
+    sudo ./Build install
 
 =head2 SDL and Games::FrozenBubble
 
+Both with CPAN:
+
     cpan SDL Games::FrozenBubble
 
+or both on the system:
+
+    perl Build.PL
+    ./Build 
+    sudo ./Build install
 
 =head1 CONTRIBUTE
 
@@ -122,12 +132,3 @@ Talk to FROGGS or kthakore on #sdl irc.perl.org.
 Fork and hack on L<http://github.com/kthakore/frozen-bubble>
 
 see PORT_TODO that came with this distribution
-
-=head1 AUTHOR
-
-Guillaume Cottenceau and others
-L<http://www.frozen-bubble.org/>
-
-=head1 PORTERS
-
-FROGGS, daxim, kthakore, kmx

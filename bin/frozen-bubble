@@ -3,7 +3,7 @@
 #
 #                          Frozen-Bubble
 #
-# Copyright (c) 2000-2008 The Frozen-Bubble Team
+# Copyright (c) 2000-2010 The Frozen-Bubble Team
 #
 # Originally sponsored by Mandriva <http://www.mandriva.com/>
 #
@@ -129,7 +129,7 @@ my ($lang) = split(':', $ENV{LANGUAGE});
 gettext_lang($lang);
 our $is_rtl = $ENV{LANGUAGE} =~ /^fa/;
 
-print "        [[ Frozen-Bubble-$version ]]\n\n";
+print "        [[ Frozen-Bubble-$Games::FrozenBubble::VERSION ]]\n\n";
 print '  http://www.frozen-bubble.org/
 
   Copyright (c) 2000-2008 The Frozen-Bubble Team.
