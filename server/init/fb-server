@@ -22,60 +22,60 @@ servicename=fb-server
 [ ${NETWORKING} = "no" ] && exit 0
 
 start() {
-	gprintf "Starting Frozen-Bubble server(s): "
+        gprintf "Starting Frozen-Bubble server(s): "
         ATLEASTONE=-1
         for file in $conffiles; do
-            su -l fbuser -s /bin/sh -c "fb-server -c $file >/dev/null" && success || failure  
+            su -l fbuser -s /bin/sh -c "fb-server -c $file >/dev/null" && success || failure
             RETVAL=$?
             if [ "$ATLEASTONE" -ne 0 ]; then
                 ATLEASTONE=$RETVAL
             fi
             echo
         done
-	if [ $ATLEASTONE -eq 0 ]; then
+        if [ $ATLEASTONE -eq 0 ]; then
             touch /var/lock/subsys/$servicename
         fi
-	return $ATLEASTONE
+        return $ATLEASTONE
 }
 
 stop() {
-	gprintf "Stopping Frozen-Bubble server(s): "
+        gprintf "Stopping Frozen-Bubble server(s): "
         killproc fb-server -TERM
-	RETVAL=$?
-	echo
-	if [ $RETVAL -eq 0 ]; then
+        RETVAL=$?
+        echo
+        if [ $RETVAL -eq 0 ]; then
             rm -f /var/lock/subsys/$servicename
         fi
-	return $RETVAL
+        return $RETVAL
 }
 
 restart() {
-	stop
-	start
+        stop
+        start
 }
 
 # See how we were called.
 case "$1" in
   start)
-	start
-	;;
+        start
+        ;;
   stop)
-	stop
-	;;
+        stop
+        ;;
   restart)
-	stop
-	start
-	;;
+        stop
+        start
+        ;;
   status)
         status fb-server
         RETVAL=$?
         ;;
   condrestart)
-	[ -f /var/lock/subsys/$servicename ] && restart || :
-	;;
+        [ -f /var/lock/subsys/$servicename ] && restart || :
+        ;;
   *)
-	gprintf "Usage: $servicename {start|stop|restart|status|condrestart}\n"
-	exit 1
+        gprintf "Usage: $servicename {start|stop|restart|status|condrestart}\n"
+        exit 1
 esac
 
 exit $?

@@ -90,9 +90,9 @@ sub ACTION_messages {
 sub ACTION_server {
     if($^O =~ /(w|W)in/ && $^O !~ /darwin/)
     {
-	print STDERR "###Cannot build fb-server on windows \n";
+        print STDERR "###Cannot build fb-server on windows \n";
 
-	return;
+        return;
     }
     my ($self) = @_;
     my $server_directory = 'server';

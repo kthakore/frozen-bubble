@@ -87,19 +87,19 @@ $FPATH = dist_dir('Games-FrozenBubble');
 Locale::Maketext::Simple->import(Path => "$FPATH/locale", Style => 'gettext', Export => 'gettext');
 
 $TARGET_ANIM_SPEED = 20;        # number of milliseconds that should last between two animation frames
-$LAUNCHER_SPEED = 0.03;	        # speed of rotation of launchers
-$BUBBLE_SPEED = 10;	        # speed of movement of launched bubbles
+$LAUNCHER_SPEED = 0.03;         # speed of rotation of launchers
+$BUBBLE_SPEED = 10;             # speed of movement of launched bubbles
 $MALUS_BUBBLE_SPEED = 30;       # speed of movement of "malus" launched bubbles
 $CANON_ROTATIONS_NB = 100;      # number of rotations of images for canon
 
 $TIMEOUT_PINGUIN_SLEEP = 200;
 $FREE_FALL_CONSTANT = 0.5;
 $KEYS                           = {
-	p1   => { left => SDLK_LEFT, right => SDLK_RIGHT, fire => SDLK_UP, center => SDLK_DOWN },
-	p2   => { left => SDLK_x,    right => SDLK_v,     fire => SDLK_c,  center => SDLK_d },
-	misc => { fs   => SDLK_f, chat => SDLK_RETURN, send_malus_to_rp1 => SDLK_F1, send_malus_to_rp2 => SDLK_F2, send_malus_to_rp3 => SDLK_F3,
-	          send_malus_to_rp4 => SDLK_F4, send_malus_to_all => SDLK_F10, next_playlist_elem => SDLK_TAB, save_record => SDLK_PRINT,
-	          toggle_music => SDLK_F11, toggle_sound => SDLK_F12, raise_volume => SDLK_KP_PLUS, lower_volume => SDLK_KP_MINUS }
+        p1   => { left => SDLK_LEFT, right => SDLK_RIGHT, fire => SDLK_UP, center => SDLK_DOWN },
+        p2   => { left => SDLK_x,    right => SDLK_v,     fire => SDLK_c,  center => SDLK_d },
+        misc => { fs   => SDLK_f, chat => SDLK_RETURN, send_malus_to_rp1 => SDLK_F1, send_malus_to_rp2 => SDLK_F2, send_malus_to_rp3 => SDLK_F3,
+                  send_malus_to_rp4 => SDLK_F4, send_malus_to_all => SDLK_F10, next_playlist_elem => SDLK_TAB, save_record => SDLK_PRINT,
+                  toggle_music => SDLK_F11, toggle_sound => SDLK_F12, raise_volume => SDLK_KP_PLUS, lower_volume => SDLK_KP_MINUS }
 };
 $sdl_flags                      = SDL_HWSURFACE | SDL_DOUBLEBUF | SDL_HWACCEL | SDL_ASYNCBLIT;
 $mixer                          = 0;
@@ -265,7 +265,7 @@ sub format_addiction {
 
 END {
     if ($app && $addicted_time) {
-	print "\nAddicted for ", format_addiction($addicted_time/1000, 0), "\n";
+        print "\nAddicted for ", format_addiction($addicted_time/1000, 0), "\n";
     }
 }
 
@@ -289,26 +289,26 @@ sub play_music($) {
     my %musics = (intro => '/snd/introzik.ogg', main1p => '/snd/frozen-mainzik-1p.ogg', main2p => '/snd/frozen-mainzik-2p.ogg');
     my $mus if 0;                                 #- I need to keep a reference on the music or it will be collected at the end of this function, thus I manually collect previous music
     if (@playlist) {
-	my $tryanother = sub {
-	    my $elem = chomp_(shift @playlist);
-	    $elem or return -1;
-	    -f $elem or return 0;
-	    push @playlist, $elem;
-	    $mus = SDL::Mixer::Music::load_MUS($elem) if -e $elem;
-	    if ($mus) {
-		print STDERR "[Playlist] playing `$elem'\n";
-		SDL::Mixer::Music::play_music($mus, 0);
-		return 1;
-	    } else {
-		print STDERR "Warning, could not create new music from '$elem' (reason: ", SDL::get_error(), ").\n";
-		return 0;
-	    }
-	};
-	while ($tryanother->() == 0) {};
+        my $tryanother = sub {
+            my $elem = chomp_(shift @playlist);
+            $elem or return -1;
+            -f $elem or return 0;
+            push @playlist, $elem;
+            $mus = SDL::Mixer::Music::load_MUS($elem) if -e $elem;
+            if ($mus) {
+                print STDERR "[Playlist] playing `$elem'\n";
+                SDL::Mixer::Music::play_music($mus, 0);
+                return 1;
+            } else {
+                print STDERR "Warning, could not create new music from '$elem' (reason: ", SDL::get_error(), ").\n";
+                return 0;
+            }
+        };
+        while ($tryanother->() == 0) {};
     } else {
-	$mus = SDL::Mixer::Music::load_MUS("$FPATH$musics{$name}") if -e "$FPATH$musics{$name}";
+        $mus = SDL::Mixer::Music::load_MUS("$FPATH$musics{$name}") if -e "$FPATH$musics{$name}";
         if ($mus) {
-		SDL::Mixer::Music::play_music($mus, -1);
+                SDL::Mixer::Music::play_music($mus, -1);
             $music{current} = $name;
         } else {
             print STDERR "Warning, could not create new music from '$FPATH$musics{$name}' (reason: ", SDL::get_error(), ").\n";
@@ -318,25 +318,25 @@ sub play_music($) {
 
 sub init_sound() {
     eval {
-	     SDL::Mixer::open_audio( 22050, AUDIO_S16SYS, 2,1024);
-      		 };
+             SDL::Mixer::open_audio( 22050, AUDIO_S16SYS, 2,1024);
+                 };
     if ($@) {
-	$@ =~ s| at \S+ line.*\n||;
-	print STDERR "\nWarning: can't initialize sound (reason: $@).\n";
-	return 0;
+        $@ =~ s| at \S+ line.*\n||;
+        print STDERR "\nWarning: can't initialize sound (reason: $@).\n";
+        return 0;
     }
 
     $mixer = 1;
     print "[Sound Init] ";
     my @sounds = qw(stick destroy_group newroot newroot_solo lose hurry pause menu_change menu_selected rebound launch malus noh snore cancel typewriter applause chatted);
     foreach (@sounds) {
-	my $sound_path = "$FPATH/snd/$_.ogg";
-	$sound{$_} = SDL::Mixer::Samples::load_WAV($sound_path);
-	if (UNIVERSAL::isa($sound{$_}, 'HASH') ? $sound{$_}{-data} : ${$sound{$_}}) {
-	    $sound{$_}->volume(100);
-	} else {
-	    print STDERR "Warning, could not create new sound from '$sound_path'.\n";
-	}
+        my $sound_path = "$FPATH/snd/$_.ogg";
+        $sound{$_} = SDL::Mixer::Samples::load_WAV($sound_path);
+        if (UNIVERSAL::isa($sound{$_}, 'HASH') ? $sound{$_}{-data} : ${$sound{$_}}) {
+            $sound{$_}->volume(100);
+        } else {
+            print STDERR "Warning, could not create new sound from '$sound_path'.\n";
+        }
     }
     return 1;
 }
@@ -390,14 +390,14 @@ sub put_image_to_background($$$) {
     $image = translate_mini_image($image);
     ($x == 0 && $y == 0) and print "put_image_to_background: warning, X and Y are 0\n".backtrace();
     if ($y > 0) {
-	$drect = SDL::Rect->new($x, $y, $image->w, $image->h);
-	$display_on_app_disabled or SDL::Video::blit_surface ($image, $rects{$image}, $app, $drect);
-	SDL::Video::blit_surface($image , $rects{$image}, $background, $drect);
+        $drect = SDL::Rect->new($x, $y, $image->w, $image->h);
+        $display_on_app_disabled or SDL::Video::blit_surface ($image, $rects{$image}, $app, $drect);
+        SDL::Video::blit_surface($image , $rects{$image}, $background, $drect);
     } else {  #- clipping seems to not work when from one Surface to another Surface, so I need to do clipping by hand
-	$drect = SDL::Rect->new( $x, 0, $image->w, $image->h + $y);
-	my $irect = SDL::Rect->new( 0 , -$y , $image->w,  $image->h + $y);
-	$display_on_app_disabled or SDL::Video::blit_surface($image, $irect, $app, $drect);
-	SDL::Video::blit_surface($image, $irect, $background, $drect);
+        $drect = SDL::Rect->new( $x, 0, $image->w, $image->h + $y);
+        my $irect = SDL::Rect->new( 0 , -$y , $image->w,  $image->h + $y);
+        $display_on_app_disabled or SDL::Video::blit_surface($image, $irect, $app, $drect);
+        SDL::Video::blit_surface($image, $irect, $background, $drect);
     }
     push @update_rects, $drect;
 }
@@ -415,12 +415,12 @@ sub remove_image_from_background($$$) {
 sub remove_images_from_background {
     my ($player, @images) = @_;
     foreach my $image (@images) {
-	($image->{'x'} == 0 && $image->{'y'} == 0) and print "remove_images_from_background: warning, X and Y are 0\n";
+        ($image->{'x'} == 0 && $image->{'y'} == 0) and print "remove_images_from_background: warning, X and Y are 0\n";
         my $img = translate_mini_image($image->{img});
-	my $drect = SDL::Rect->new( $image->{'x'}, $image->{'y'}, $img->w, $img->h );
-	SDL::Video::blit_surface($background_orig, $drect, $background, $drect);
-	SDL::Video::blit_surface($background_orig, $drect, $app, $drect);
-	push @update_rects, $drect;
+        my $drect = SDL::Rect->new( $image->{'x'}, $image->{'y'}, $img->w, $img->h );
+        SDL::Video::blit_surface($background_orig, $drect, $background, $drect);
+        SDL::Video::blit_surface($background_orig, $drect, $app, $drect);
+        push @update_rects, $drect;
     }
 }
 
@@ -433,9 +433,9 @@ sub switch_image_on_background($$$;$) {
     my ($image, $x, $y, $save) = @_;
     my $drect = SDL::Rect->new( $x, $y,  $image->w,  $image->h);
     if ($save) {
-	$save = SDL::Surface->new( SDL_SWSURFACE, $image->w, $image->h, 32, 0 , 0, 0, 0);  
+        $save = SDL::Surface->new( SDL_SWSURFACE, $image->w, $image->h, 32, 0 , 0, 0, 0);  
         #- grrr... this piece of shit of Amask made the surfaces slightly modify along the print/erase of "Hurry" and "Pause".... took me so much time to debug and find that the problem came from a bug when Amask is set to 0xFF000000 (while it's -supposed- to be set to 0xFF000000 with 32-bit graphics!!)
-	SDL::Video::blit_surface($background, $drect, $save, $rects{$image});
+        SDL::Video::blit_surface($background, $drect, $save, $rects{$image});
     }
     SDL::Video::blit_surface($image, $rects{$image} || SDL::Rect->new(0, 0, $image->w, $image->h), $background, $drect);
     SDL::Video::blit_surface($background, $drect, $app, $drect);
@@ -483,9 +483,9 @@ sub iter_players(&) {
         local $BUBBLE_SIZE = $BUBBLE_SIZE / 2;
         local $BUBBLE_SPEED = $BUBBLE_SPEED / 2;
         local $ROW_SIZE = $ROW_SIZE / 2;
-	local $FREE_FALL_CONSTANT = $FREE_FALL_CONSTANT / 2;
+        local $FREE_FALL_CONSTANT = $FREE_FALL_CONSTANT / 2;
       normal_sizes:
-	&$f;
+        &$f;
     }
 }
 sub iter_players_(&) {  #- so that I can do an iter_players_ from within an iter_players
@@ -495,7 +495,7 @@ sub iter_players_(&) {  #- so that I can do an iter_players_ from within an iter
     @p or @p = @PLAYERS;
     local $::p_;
     foreach $::p_ (@p) {
-	&$f;
+        &$f;
     }
 }
 sub iter_players_but_first(&) {
@@ -645,8 +645,8 @@ sub each_index(&@) {
     my $f = shift;
     local $::i = 0;
     foreach (@_) {
-	$f->();
-	$::i++;
+        $f->();
+        $::i++;
     }
 }
 sub get_bubble_num {
@@ -660,9 +660,9 @@ sub iter_rowscols(&$) {
     my ($f, $oddswap) = @_;
     local $::row; local $::col;
     foreach $::row (0 .. 11) {
-	foreach $::col (0 .. 7 - odd($::row+$oddswap)) {
-	    &$f;
-	}
+        foreach $::col (0 .. 7 - odd($::row+$oddswap)) {
+            &$f;
+        }
     }
 }
 
@@ -670,8 +670,8 @@ sub each_index(&@) {
     my $f = shift;
     local $::i = 0;
     foreach (@_) {
-	&$f($::i);
-	$::i++;
+        &$f($::i);
+        $::i++;
     }
 }
 sub img2numb { my ($i, $f) = @_; each_index { $i eq $_ and $f = $::i } @bubbles_images; return defined($f) ? $f : '-' }
@@ -689,9 +689,9 @@ sub bubble_next_to($$$$$) {
 sub next_positions($$) {
     my ($b, $player) = @_;
     my $validate_pos = sub {
-	my ($x, $y) = @_;
-	if_($x >= 0 && $x+odd($y+$pdata{$player}{oddswap}) <= 7 && $y >= 0 && $y >= $pdata{$player}{newrootlevel} && $y <= 11,
-	    [ $x, $y ]);
+        my ($x, $y) = @_;
+        if_($x >= 0 && $x+odd($y+$pdata{$player}{oddswap}) <= 7 && $y >= 0 && $y >= $pdata{$player}{newrootlevel} && $y <= 11,
+            [ $x, $y ]);
     };
     ($validate_pos->($b->{cx} - 1, $b->{cy}),
      $validate_pos->($b->{cx} + 1, $b->{cy}),
@@ -707,10 +707,10 @@ sub real_stick_bubble {
     $bubble->{cx} = $xpos;
     $bubble->{cy} = $ypos;
     foreach (@{$sticked_bubbles{$player}}) {
-	if (bubble_next_to($_->{cx}, $_->{cy}, $bubble->{cx}, $bubble->{cy}, $player)) {
-	    push @{$_->{neighbours}}, $bubble;
-	    $neighbours_ok or push @{$bubble->{neighbours}}, $_;
-	}
+        if (bubble_next_to($_->{cx}, $_->{cy}, $bubble->{cx}, $bubble->{cy}, $player)) {
+            push @{$_->{neighbours}}, $bubble;
+            $neighbours_ok or push @{$bubble->{neighbours}}, $_;
+        }
     }
     push @{$sticked_bubbles{$player}}, $bubble;
     $bubble->{cy} == $pdata{$player}{newrootlevel} and push @{$root_bubbles{$player}}, $bubble;
@@ -722,8 +722,8 @@ sub destroy_bubbles {
     my ($player, @bubz) = @_;
     $graphics_level == 1 and return;
     foreach (@bubz) {
-	$_->{speedx} = (rand(3)-1.5) / ( mini_graphics($player) ? 2 : 1 );
-	$_->{speedy} = (-rand(4)-2) / ( mini_graphics($player) ? 2 : 1 );
+        $_->{speedx} = (rand(3)-1.5) / ( mini_graphics($player) ? 2 : 1 );
+        $_->{speedy} = (-rand(4)-2) / ( mini_graphics($player) ? 2 : 1 );
     }
     push @{$exploding_bubble{$player}}, @bubz;
 }
@@ -733,9 +733,9 @@ sub find_bubble_group($) {
     my @neighbours = $b;
     my @group;
     while (1) {
-	push @group, @neighbours;
-	@neighbours = grep { $b->{img} eq $_->{img} && !member($_, @group) } fastuniq(map { @{$_->{neighbours}} } @neighbours);
-	last if !@neighbours;
+        push @group, @neighbours;
+        @neighbours = grep { $b->{img} eq $_->{img} && !member($_, @group) } fastuniq(map { @{$_->{neighbours}} } @neighbours);
+        last if !@neighbours;
     }
     @group;
 }
@@ -752,90 +752,90 @@ sub stick_bubble($$$$$) {
     my @will_destroy = difference2([ find_bubble_group($bubble) ], [ $bubble ]);
 
     if (@will_destroy <= 1) {
-	#- stick
-	play_sound('stick');
-	real_stick_bubble($bubble, $xpos, $ypos, $player, 1);
-	$sticking_bubble{$player} = $bubble;
-	$pdata{$player}{sticking_step} = 0;
+        #- stick
+        play_sound('stick');
+        real_stick_bubble($bubble, $xpos, $ypos, $player, 1);
+        $sticking_bubble{$player} = $bubble;
+        $pdata{$player}{sticking_step} = 0;
     } else {
-	#- destroy the group
-	play_sound('destroy_group');
-	foreach my $b (difference2([ fastuniq(map { @{$_->{neighbours}} } @will_destroy) ], \@will_destroy)) {
-	    @{$b->{neighbours}} = difference2($b->{neighbours}, \@will_destroy);
-	}
-	@{$sticked_bubbles{$player}} = difference2($sticked_bubbles{$player}, \@will_destroy);
-	@{$root_bubbles{$player}} = difference2($root_bubbles{$player}, \@will_destroy);
+        #- destroy the group
+        play_sound('destroy_group');
+        foreach my $b (difference2([ fastuniq(map { @{$_->{neighbours}} } @will_destroy) ], \@will_destroy)) {
+            @{$b->{neighbours}} = difference2($b->{neighbours}, \@will_destroy);
+        }
+        @{$sticked_bubbles{$player}} = difference2($sticked_bubbles{$player}, \@will_destroy);
+        @{$root_bubbles{$player}} = difference2($root_bubbles{$player}, \@will_destroy);
 
-	$bubble->{'cx'} = $xpos;
-	$bubble->{'cy'} = $ypos;
-	calc_real_pos($bubble, $player);
-	destroy_bubbles($player, @will_destroy, $bubble);
+        $bubble->{'cx'} = $xpos;
+        $bubble->{'cy'} = $ypos;
+        calc_real_pos($bubble, $player);
+        destroy_bubbles($player, @will_destroy, $bubble);
 
-	#- find falling bubbles
-	$_->{distance_to_root} = 0 foreach @{$sticked_bubbles{$player}};
-	my @still_sticked;
-	my @neighbours = @{$root_bubbles{$player}};
-	my $distance_to_root;
-	while (1) {
-	    $_->{distance_to_root} = ++$distance_to_root foreach @neighbours;
-	    push @still_sticked, @neighbours;
-	    @neighbours = grep { $_->{distance_to_root} == 0 } map { @{$_->{neighbours}} } @neighbours;
-	    last if !@neighbours;
-	}
-	@falling = difference2($sticked_bubbles{$player}, \@still_sticked);
-	@{$sticked_bubbles{$player}} = difference2($sticked_bubbles{$player}, \@falling);
+        #- find falling bubbles
+        $_->{distance_to_root} = 0 foreach @{$sticked_bubbles{$player}};
+        my @still_sticked;
+        my @neighbours = @{$root_bubbles{$player}};
+        my $distance_to_root;
+        while (1) {
+            $_->{distance_to_root} = ++$distance_to_root foreach @neighbours;
+            push @still_sticked, @neighbours;
+            @neighbours = grep { $_->{distance_to_root} == 0 } map { @{$_->{neighbours}} } @neighbours;
+            last if !@neighbours;
+        }
+        @falling = difference2($sticked_bubbles{$player}, \@still_sticked);
+        @{$sticked_bubbles{$player}} = difference2($sticked_bubbles{$player}, \@falling);
 
-	#- chain-reaction on falling bubbles
-	if ($chainreaction) {
-	    my @falling_colors = map { $_->{img} } @falling;
-	    #- optimize a bit by first calculating bubbles that are next to another bubble of the same color
-	    my @grouped_bubbles = grep {
-		my $b = $_;
-		member($b->{img}, @falling_colors) && any { $b->{img} eq $_->{img} } @{$b->{neighbours}}
-	    } @{$sticked_bubbles{$player}};
-	    if (@grouped_bubbles) {
-		#- all positions on which we can't chain-react
-		my @occupied_positions = map { $_->{cy}*8 + $_->{cx} } @{$sticked_bubbles{$player}};
-		push @occupied_positions, map { $_->{chaindestcy}*8 + $_->{chaindestcx} } @{$chains{$player}{falling_chained}};
-		#- examine groups beginning at the root bubbles, for the case in which
-		#- there is a group that will fall from an upper chain-reaction
-		foreach my $pos (sort { $a->{distance_to_root} <=> $b->{distance_to_root} } @grouped_bubbles) {
-		    #- now examine if there is a free position to chain-react in it
-		    foreach my $npos (next_positions($pos, $player)) {
-			#- we can't chain-react somewhere if it explodes a group already chained
-			next if any { $pos->{cx} == $_->{cx} && $pos->{cy} == $_->{cy} }
-			        map { @{$chains{$player}{chained_bubbles}{$_}}} keys %{$chains{$player}{chained_bubbles}};
-			if (!member($npos->[1]*8 + $npos->[0], @occupied_positions)) {
-			    #- find a suitable falling bubble for that free position
-			    foreach my $falling (@falling) {
-				next if member($falling, @{$chains{$player}{falling_chained}});
-				if ($pos->{img} eq $falling->{img}) {
-				    ($falling->{chaindestcx}, $falling->{chaindestcy}) = ($npos->[0], $npos->[1]);
-				    ($falling->{chaindestx}, $falling->{chaindesty}) = calc_real_pos_given_arraypos($npos->[0], $npos->[1], $player);
-				    push @{$chains{$player}{falling_chained}}, $falling;
-				    push @occupied_positions, $npos->[1]*8 + $npos->[0];
+        #- chain-reaction on falling bubbles
+        if ($chainreaction) {
+            my @falling_colors = map { $_->{img} } @falling;
+            #- optimize a bit by first calculating bubbles that are next to another bubble of the same color
+            my @grouped_bubbles = grep {
+                my $b = $_;
+                member($b->{img}, @falling_colors) && any { $b->{img} eq $_->{img} } @{$b->{neighbours}}
+            } @{$sticked_bubbles{$player}};
+            if (@grouped_bubbles) {
+                #- all positions on which we can't chain-react
+                my @occupied_positions = map { $_->{cy}*8 + $_->{cx} } @{$sticked_bubbles{$player}};
+                push @occupied_positions, map { $_->{chaindestcy}*8 + $_->{chaindestcx} } @{$chains{$player}{falling_chained}};
+                #- examine groups beginning at the root bubbles, for the case in which
+                #- there is a group that will fall from an upper chain-reaction
+                foreach my $pos (sort { $a->{distance_to_root} <=> $b->{distance_to_root} } @grouped_bubbles) {
+                    #- now examine if there is a free position to chain-react in it
+                    foreach my $npos (next_positions($pos, $player)) {
+                        #- we can't chain-react somewhere if it explodes a group already chained
+                        next if any { $pos->{cx} == $_->{cx} && $pos->{cy} == $_->{cy} }
+                                map { @{$chains{$player}{chained_bubbles}{$_}}} keys %{$chains{$player}{chained_bubbles}};
+                        if (!member($npos->[1]*8 + $npos->[0], @occupied_positions)) {
+                            #- find a suitable falling bubble for that free position
+                            foreach my $falling (@falling) {
+                                next if member($falling, @{$chains{$player}{falling_chained}});
+                                if ($pos->{img} eq $falling->{img}) {
+                                    ($falling->{chaindestcx}, $falling->{chaindestcy}) = ($npos->[0], $npos->[1]);
+                                    ($falling->{chaindestx}, $falling->{chaindesty}) = calc_real_pos_given_arraypos($npos->[0], $npos->[1], $player);
+                                    push @{$chains{$player}{falling_chained}}, $falling;
+                                    push @occupied_positions, $npos->[1]*8 + $npos->[0];
 
-				    #- next lines will allow not to chain-react on the same group from two different positions,
-				    #- and even to not chain-react on a group that will itself fall from a chain-reaction
-				    @{$falling->{neighbours}} = grep { bubble_next_to($_->{cx}, $_->{cy}, $npos->[0], $npos->[1], $player) } @{$sticked_bubbles{$player}};
-				    my @chained_bubbles = find_bubble_group($falling);
-				    $_->{mark} = 0 foreach @{$sticked_bubbles{$player}};
-				    my @still_sticked;
-				    my @neighbours = difference2($root_bubbles{$player}, \@chained_bubbles);
-				    while (1) {
-					$_->{mark} = 1 foreach @neighbours;
-					push @still_sticked, @neighbours;
-					@neighbours = difference2([ grep { $_->{mark} == 0 } map { @{$_->{neighbours}} } @neighbours ],
-								  \@chained_bubbles);
-					last if !@neighbours;
-				    }
-				    @{$chains{$player}{chained_bubbles}{$falling}} = difference2($sticked_bubbles{$player}, \@still_sticked);
-				    last;
-				}
-			    }
-			}
-		    }
-		}
+                                    #- next lines will allow not to chain-react on the same group from two different positions,
+                                    #- and even to not chain-react on a group that will itself fall from a chain-reaction
+                                    @{$falling->{neighbours}} = grep { bubble_next_to($_->{cx}, $_->{cy}, $npos->[0], $npos->[1], $player) } @{$sticked_bubbles{$player}};
+                                    my @chained_bubbles = find_bubble_group($falling);
+                                    $_->{mark} = 0 foreach @{$sticked_bubbles{$player}};
+                                    my @still_sticked;
+                                    my @neighbours = difference2($root_bubbles{$player}, \@chained_bubbles);
+                                    while (1) {
+                                        $_->{mark} = 1 foreach @neighbours;
+                                        push @still_sticked, @neighbours;
+                                        @neighbours = difference2([ grep { $_->{mark} == 0 } map { @{$_->{neighbours}} } @neighbours ],
+                                                                  \@chained_bubbles);
+                                        last if !@neighbours;
+                                    }
+                                    @{$chains{$player}{chained_bubbles}{$falling}} = difference2($sticked_bubbles{$player}, \@still_sticked);
+                                    last;
+                                }
+                            }
+                        }
+                    }
+                }
                 #- now examine all chaining bubbles. for each one, check that consequences of all other chaining bubbles
                 #- do not cancel it. start by the lowest falling as they are likely to be the first to reach destination.
                 foreach my $falling (sort { $b->{cy} <=> $a->{cy} } @falling) {
@@ -866,74 +866,74 @@ sub stick_bubble($$$$$) {
                     }
                 }
             }
-	}
+        }
 
-	#- prepare falling bubbles
-	if ($graphics_level > 1 || $chainreaction) {
-	    my $max_cy_falling = fold_left { $::b->{cy} > $::a ? $::b->{cy} : $::a } 0, @falling;  #- I have a fold_left in my prog! :-)
-	    my ($shift_on_same_line, $line) = (0, $max_cy_falling);
-	    foreach (sort { $b->{cy}*8 + $b->{cx} <=> $a->{cy}*8 + $a->{cx} } @falling) {  #- sort bottom-to-up / right-to-left
-		$line != $_->{cy} and $shift_on_same_line = 0;
-		$line = $_->{cy};
-		$_->{wait_fall} = ($max_cy_falling - $_->{cy})*5 + $shift_on_same_line;
-		$shift_on_same_line++;
-		$_->{speed} = 0;
-	    }
-	    push @{$falling_bubble{$player}}, @falling;
-	}
+        #- prepare falling bubbles
+        if ($graphics_level > 1 || $chainreaction) {
+            my $max_cy_falling = fold_left { $::b->{cy} > $::a ? $::b->{cy} : $::a } 0, @falling;  #- I have a fold_left in my prog! :-)
+            my ($shift_on_same_line, $line) = (0, $max_cy_falling);
+            foreach (sort { $b->{cy}*8 + $b->{cx} <=> $a->{cy}*8 + $a->{cx} } @falling) {  #- sort bottom-to-up / right-to-left
+                $line != $_->{cy} and $shift_on_same_line = 0;
+                $line = $_->{cy};
+                $_->{wait_fall} = ($max_cy_falling - $_->{cy})*5 + $shift_on_same_line;
+                $shift_on_same_line++;
+                $_->{speed} = 0;
+            }
+            push @{$falling_bubble{$player}}, @falling;
+        }
 
-	remove_images_from_background($player, @will_destroy, @falling);
-	#- redraw neighbours because parts of neighbours have been erased by previous statement
-	put_image_to_background($_->{img}, $_->{'x'}, $_->{'y'})
-	  foreach grep { !member($_, @will_destroy) && !member($_, @falling) } fastuniq(map { @{$_->{neighbours}} } @will_destroy, @falling);
-	$need_redraw = 1;
+        remove_images_from_background($player, @will_destroy, @falling);
+        #- redraw neighbours because parts of neighbours have been erased by previous statement
+        put_image_to_background($_->{img}, $_->{'x'}, $_->{'y'})
+          foreach grep { !member($_, @will_destroy) && !member($_, @falling) } fastuniq(map { @{$_->{neighbours}} } @will_destroy, @falling);
+        $need_redraw = 1;
     }
 
     if ($count_for_root) {
-	$pdata{$player}{newroot}++;
-	if ($pdata{$player}{newroot} == $TIME_APPEARS_NEW_ROOT-1) {
-	    $pdata{$player}{newroot_prelight} = 2;
-	    $pdata{$player}{newroot_prelight_step} = 0;
-	}
-	if ($pdata{$player}{newroot} == $TIME_APPEARS_NEW_ROOT) {
-	    $pdata{$player}{newroot_prelight} = 1;
-	    $pdata{$player}{newroot_prelight_step} = 0;
-	}
-	if ($pdata{$player}{newroot} > $TIME_APPEARS_NEW_ROOT) {
+        $pdata{$player}{newroot}++;
+        if ($pdata{$player}{newroot} == $TIME_APPEARS_NEW_ROOT-1) {
+            $pdata{$player}{newroot_prelight} = 2;
+            $pdata{$player}{newroot_prelight_step} = 0;
+        }
+        if ($pdata{$player}{newroot} == $TIME_APPEARS_NEW_ROOT) {
+            $pdata{$player}{newroot_prelight} = 1;
+            $pdata{$player}{newroot_prelight_step} = 0;
+        }
+        if ($pdata{$player}{newroot} > $TIME_APPEARS_NEW_ROOT) {
             my $_1p_mode = is_1p_game() && $levels{current} ne 'mp_train';
-	    $need_redraw = 1;
-	    $pdata{$player}{newroot_prelight} = 0;
-	    play_sound($_1p_mode ? 'newroot_solo' : 'newroot');
-	    $pdata{$player}{newroot} = 0;
-	    $pdata{$player}{oddswap} = !$pdata{$player}{oddswap};
-	    remove_images_from_background($player, @{$sticked_bubbles{$player}});
-	    foreach (@{$sticked_bubbles{$player}}) {
-		$_->{'cy'}++;
-		calc_real_pos($_, $player);
-	    }
-	    foreach (@{$falling_bubble{$player}}) {
-		exists $_->{chaindestx} or next;
-		$_->{chaindestcy}++;
-		$_->{chaindesty} += $ROW_SIZE;
-	    }
-	    put_allimages_to_background($player);
-	    if ($_1p_mode) {
-		$pdata{$player}{newrootlevel}++;
-		print_compressor();
-	    } else {
-		@{$root_bubbles{$player}} = ();
-		real_stick_bubble(create_bubble_given_img_num($pdata{$player}{nextcolors}[$_]), $_, 0, $player, 0) foreach (0..(7-$pdata{$player}{oddswap}));
+            $need_redraw = 1;
+            $pdata{$player}{newroot_prelight} = 0;
+            play_sound($_1p_mode ? 'newroot_solo' : 'newroot');
+            $pdata{$player}{newroot} = 0;
+            $pdata{$player}{oddswap} = !$pdata{$player}{oddswap};
+            remove_images_from_background($player, @{$sticked_bubbles{$player}});
+            foreach (@{$sticked_bubbles{$player}}) {
+                $_->{'cy'}++;
+                calc_real_pos($_, $player);
+            }
+            foreach (@{$falling_bubble{$player}}) {
+                exists $_->{chaindestx} or next;
+                $_->{chaindestcy}++;
+                $_->{chaindesty} += $ROW_SIZE;
+            }
+            put_allimages_to_background($player);
+            if ($_1p_mode) {
+                $pdata{$player}{newrootlevel}++;
+                print_compressor();
+            } else {
+                @{$root_bubbles{$player}} = ();
+                real_stick_bubble(create_bubble_given_img_num($pdata{$player}{nextcolors}[$_]), $_, 0, $player, 0) foreach (0..(7-$pdata{$player}{oddswap}));
                 delete $pdata{$player}{nextcolors};
-	    }
-	}
+            }
+        }
     }
 
     if ($need_redraw) {
-	my $malus_val = @will_destroy + @falling - 2;
-	$malus_val > 0 && !is_mp_game() and $malus_val += ($player eq 'p1' ? $playermalus : -$playermalus);
-	$malus_val < 0 and $malus_val = 0;
-	SDL::Video::blit_surface($background, $apprects{$player}, $app, $apprects{$player});
-	malus_change($malus_val, $player);
+        my $malus_val = @will_destroy + @falling - 2;
+        $malus_val > 0 && !is_mp_game() and $malus_val += ($player eq 'p1' ? $playermalus : -$playermalus);
+        $malus_val < 0 and $malus_val = 0;
+        SDL::Video::blit_surface($background, $apprects{$player}, $app, $apprects{$player});
+        malus_change($malus_val, $player);
     }
 }
 
@@ -1020,45 +1020,45 @@ sub handle_graphics($) {
 
     iter_players {
         $pdata{$::p}{state} eq 'left' and next;  #- remote players already left in a previous subgame in mp game
-	#- bubbles
-	foreach ($launched_bubble{$::p}, if_($fun ne \&erase_image, $tobe_launched{$::p})) {
-	    $_ and $fun->($_->{img}, $_->{'x'}, $_->{'y'});
-	}
-	if ($fun eq \&put_image && $pdata{$::p}{newroot_prelight}) {
-	    if ($pdata{$::p}{newroot_prelight_step}++ > 30*$pdata{$::p}{newroot_prelight}) {
-		$pdata{$::p}{newroot_prelight_step} = 0;
-	    }
-	    if ($pdata{$::p}{newroot_prelight_step} <= 8) {
-		my $hurry_overwritten = 0;
-		foreach my $b (@{$sticked_bubbles{$::p}}) {
-		    next if ($graphics_level == 1 && $b->{'cy'} > 0);  #- in low graphics, only prelight first row
-		    $b->{'cx'}+1 == $pdata{$::p}{newroot_prelight_step} and put_image($b->{img}, $b->{'x'}, $b->{'y'});
-		    $b->{'cx'} == $pdata{$::p}{newroot_prelight_step} and put_image($bubbles_anim{white}, $b->{'x'}, $b->{'y'});
-		    $b->{'cy'} > 6 and $hurry_overwritten = 1;
-		}
-		$hurry_overwritten && $pdata{$::p}{hurry_save_img} and print_hurry($::p, 1);  #- hurry was potentially overwritten
-	    }
-	}
-	if ($sticking_bubble{$::p} && $graphics_level > 1) {
-	    my $b = $sticking_bubble{$::p};
-	    if ($fun eq \&erase_image) {
-		put_image($b->{img}, $b->{'x'}, $b->{'y'});
-	    } else {
-		if ($pdata{$::p}{sticking_step} == @{$bubbles_anim{stick}}) {
-		    $sticking_bubble{$::p} = undef;
-		} else {
-		    put_image(${$bubbles_anim{stick}}[$pdata{$::p}{sticking_step}], $b->{'x'}, $b->{'y'});
-		    if ($pdata{$::p}{sticking_step_slowdown}) {
-			$pdata{$::p}{sticking_step}++;
-			$pdata{$::p}{sticking_step_slowdown} = 0;
-		    } else {
-			$pdata{$::p}{sticking_step_slowdown}++;
-		    }
-		}
-	    }
-	}
+        #- bubbles
+        foreach ($launched_bubble{$::p}, if_($fun ne \&erase_image, $tobe_launched{$::p})) {
+            $_ and $fun->($_->{img}, $_->{'x'}, $_->{'y'});
+        }
+        if ($fun eq \&put_image && $pdata{$::p}{newroot_prelight}) {
+            if ($pdata{$::p}{newroot_prelight_step}++ > 30*$pdata{$::p}{newroot_prelight}) {
+                $pdata{$::p}{newroot_prelight_step} = 0;
+            }
+            if ($pdata{$::p}{newroot_prelight_step} <= 8) {
+                my $hurry_overwritten = 0;
+                foreach my $b (@{$sticked_bubbles{$::p}}) {
+                    next if ($graphics_level == 1 && $b->{'cy'} > 0);  #- in low graphics, only prelight first row
+                    $b->{'cx'}+1 == $pdata{$::p}{newroot_prelight_step} and put_image($b->{img}, $b->{'x'}, $b->{'y'});
+                    $b->{'cx'} == $pdata{$::p}{newroot_prelight_step} and put_image($bubbles_anim{white}, $b->{'x'}, $b->{'y'});
+                    $b->{'cy'} > 6 and $hurry_overwritten = 1;
+                }
+                $hurry_overwritten && $pdata{$::p}{hurry_save_img} and print_hurry($::p, 1);  #- hurry was potentially overwritten
+            }
+        }
+        if ($sticking_bubble{$::p} && $graphics_level > 1) {
+            my $b = $sticking_bubble{$::p};
+            if ($fun eq \&erase_image) {
+                put_image($b->{img}, $b->{'x'}, $b->{'y'});
+            } else {
+                if ($pdata{$::p}{sticking_step} == @{$bubbles_anim{stick}}) {
+                    $sticking_bubble{$::p} = undef;
+                } else {
+                    put_image(${$bubbles_anim{stick}}[$pdata{$::p}{sticking_step}], $b->{'x'}, $b->{'y'});
+                    if ($pdata{$::p}{sticking_step_slowdown}) {
+                        $pdata{$::p}{sticking_step}++;
+                        $pdata{$::p}{sticking_step_slowdown} = 0;
+                    } else {
+                        $pdata{$::p}{sticking_step_slowdown}++;
+                    }
+                }
+            }
+        }
 
-	#- shooter
+        #- shooter
         if ($graphics_level > 1) {
             my $num = int($angle{$::p}*$CANON_ROTATIONS_NB/($PI/2) + 0.5)-$CANON_ROTATIONS_NB;
             $fun->($canon{mini_graphics($::p) ? 'img_mini' : 'img'}{$num},
@@ -1096,10 +1096,10 @@ sub handle_graphics($) {
             }
         }
 
-	#- moving bubbles --> I want them on top of the rest
-	foreach (@{$malus_bubble{$::p}}, @{$falling_bubble{$::p}}, @{$exploding_bubble{$::p}}) {
-	    $fun->($_->{img}, $_->{'x'}, $_->{'y'});
-	}
+        #- moving bubbles --> I want them on top of the rest
+        foreach (@{$malus_bubble{$::p}}, @{$falling_bubble{$::p}}, @{$exploding_bubble{$::p}}) {
+            $fun->($_->{img}, $_->{'x'}, $_->{'y'});
+        }
 
     };
 
@@ -1224,14 +1224,14 @@ sub print_compressor() {
     $y -= $comp_main->h - 3;
 
     while ($y > 0) {
-	put_image_to_background($comp_ext, $x - $comp_ext->w/2, $y - $comp_ext->h);
-	$y -= $comp_ext->h;
+        put_image_to_background($comp_ext, $x - $comp_ext->w/2, $y - $comp_ext->h);
+        $y -= $comp_ext->h;
     }
 }
 
 sub print_ {
     my ($kind, $surface, $x, $y, $text, $size, $alignment, $callback) = @_;
-	printf("print_: " . join(' ', (caller(1))) . " $text\n") if $ENV{FB_DEBUG};
+        printf("print_: " . join(' ', (caller(1))) . " $text\n") if $ENV{FB_DEBUG};
     exists $pangocontext{$kind} or die "$kind is no kind\n";
     if ($size) {
         #- instead of segfaulting
@@ -1249,8 +1249,8 @@ sub print_ {
     }
     SDL::Video::blit_surface($surf, SDL::Rect->new(0, 0, $surf->w, $surf->h), $surface, SDL::Rect->new($x + 1, $y + 1, $surf->w, $surf->h));
     $surf = Games::FrozenBubble::CStuff::sdlpango_draw_givenalignment($pangocontext{$kind}{context_fg}, $text, $size || -1, $alignment || 'left');
-	#printf("sdlpango_draw_givenalignment: %s, %s, %s, %s\n", $kind, $text, $size || -1, $alignment || 'left');
-	#printf("SDL::Rect->new($x, $y, " . $surf->w . ", " . $surf->h . ")\n");
+        #printf("sdlpango_draw_givenalignment: %s, %s, %s, %s\n", $kind, $text, $size || -1, $alignment || 'left');
+        #printf("SDL::Rect->new($x, $y, " . $surf->w . ", " . $surf->h . ")\n");
     SDL::Video::blit_surface($surf, SDL::Rect->new(0, 0, $surf->w, $surf->h), $surface, SDL::Rect->new($x, $y, $surf->w, $surf->h));
 }
 
@@ -1320,8 +1320,8 @@ sub redraw_attackingme {
     $pdata{p1}{chatting} and return;
     my $xpos = $POS{p1}{attackme}{x};
     my $drect = SDL::Rect->new($xpos, $POS{p1}{attackme}{'y'}, 3*24 + $imgbin{attackme}{rp1}->w, $imgbin{attackme}{rp1}->h);
-	SDL::Video::blit_surface($background_orig, $drect, $background, $drect);
-	SDL::Video::blit_surface($background_orig, $drect, $app, $drect);
+        SDL::Video::blit_surface($background_orig, $drect, $background, $drect);
+        SDL::Video::blit_surface($background_orig, $drect, $app, $drect);
     push @update_rects, $drect;
     foreach my $attackingme (@{$pdata{attackingme}}) {
         put_image_to_background($imgbin{attackme}{$attackingme}, $xpos, $POS{p1}{attackme}{'y'});
@@ -1488,7 +1488,7 @@ sub handle_whenever_events {
         SDL::Video::wm_toggle_fullscreen($app);
     }
     if ($keypressed eq $KEYS->{misc}{toggle_sound}) {
-	if (!$mixer_enabled) {
+        if (!$mixer_enabled) {
             if ($mixer || init_sound()) {
                 $mixer_enabled = 1;
                 play_music($current_theoretical_music);
@@ -1673,10 +1673,10 @@ sub handle_game_events() {
         }
 
         $keypressed = undef;
-	if ($event->type == SDL_KEYUP) {
-	    $keypressed = $event->key_sym;
-	} elsif ($event->type == SDL_JOYAXISMOTION || $event->type() == SDL_JOYBUTTONUP) {
-	    $keypressed = translate_joystick_tokey($event);
+        if ($event->type == SDL_KEYUP) {
+            $keypressed = $event->key_sym;
+        } elsif ($event->type == SDL_JOYAXISMOTION || $event->type() == SDL_JOYBUTTONUP) {
+            $keypressed = translate_joystick_tokey($event);
             if ($event->type == SDL_JOYAXISMOTION && $keypressed !~ /^joystick\|axisvalue\|\d+\|\d+\|0$/) {  #- we treat position at 0 as KEYUP
                 $keypressed = undef;
             }
@@ -1684,9 +1684,9 @@ sub handle_game_events() {
         }
 
         if ($keypressed) {
-	    iter_local_players {
-		foreach my $action (qw(left right fire center)) {
-		    if ($keypressed eq $KEYS->{$::p}{$action}) {
+            iter_local_players {
+                foreach my $action (qw(left right fire center)) {
+                    if ($keypressed eq $KEYS->{$::p}{$action}) {
                         $actions{$::p}{$action} = 0;
                         is_mp_game() && $action ne 'fire' and Games::FrozenBubble::Net::gsend('r');
                         last;
@@ -1695,11 +1695,11 @@ sub handle_game_events() {
                         is_mp_game() && $action ne 'fire' and Games::FrozenBubble::Net::gsend('r');
                         #- no last, there might be two values of the same axis
                     }
-		}
-	    }
-	}
+                }
+            }
+        }
 
-	if ($event->type == SDL_KEYDOWN && $event->key_sym == SDLK_ESCAPE) {
+        if ($event->type == SDL_KEYDOWN && $event->key_sym == SDLK_ESCAPE) {
             if (is_mp_game()) {
                 if ($pdata{p1}{chatting}) {
                     cleanup_chatting();
@@ -1713,7 +1713,7 @@ sub handle_game_events() {
                 $pdata{p1}{left} = 1;
                 die 'quit';
             }
-	}
+        }
         if ($event->type == SDL_QUIT) {
             cleanup_and_exit();
         }
@@ -1938,16 +1938,16 @@ sub lose {
 
 sub verify_if_end {
     iter_players {
-	if ($pdata{state} eq 'game' && any { $_->{cy} > 11 } @{$sticked_bubbles{$::p}}) {
+        if ($pdata{state} eq 'game' && any { $_->{cy} > 11 } @{$sticked_bubbles{$::p}}) {
             lose($::p);
-	}
+        }
     };
 
     if (is_1p_game() && $levels{current} ne 'mp_train' && @{$sticked_bubbles{$PLAYERS[0]}} == 0) {
-	put_image_to_background($imgbin{win_panel_1player}, $POS{centerpanel}{x}, $POS{centerpanel}{'y'});
-	$pdata{state} = "won $PLAYERS[0]";
-	$pdata{$PLAYERS[0]}{ping_right}{state} = 'win';
-	$pdata{$PLAYERS[0]}{ping_right}{img} = 0;
+        put_image_to_background($imgbin{win_panel_1player}, $POS{centerpanel}{x}, $POS{centerpanel}{'y'});
+        $pdata{state} = "won $PLAYERS[0]";
+        $pdata{$PLAYERS[0]}{ping_right}{state} = 'win';
+        $pdata{$PLAYERS[0]}{ping_right}{img} = 0;
         if ($levels{current} ne 'random') {
             $levels{current} and $levels{current}++;
             if ($levels{current} && !$levels{$levels{current}}) {
@@ -2071,7 +2071,7 @@ sub update_game() {
 
     if ($pdata{state} eq 'game') {
         handle_game_events();
-	iter_players {
+        iter_players {
             if ($pdata{$::p}{state} eq 'lost') {
                 update_lost($::p);
 
@@ -2276,7 +2276,7 @@ sub update_game() {
             }
         };
 
-	verify_if_end();
+        verify_if_end();
 
     } elsif ($pdata{state} =~ /^lost (.*)/) {
         #- 1p and 2p game only state
@@ -2353,7 +2353,7 @@ sub update_game() {
             check_mp_connection();
             $frame % (1000/$TARGET_ANIM_SPEED) == 0 and Games::FrozenBubble::Net::gsend('p');
         }
-	if (!$winner || @{$exploding_bubble{$winner}} == 0) {
+        if (!$winner || @{$exploding_bubble{$winner}} == 0) {
             my $still_needwait = 0;
             #- still wait if some bubbles are not yet "frozen"
             iter_players {
@@ -2448,7 +2448,7 @@ sub update_game() {
         }
 
     } else {
-	die "oops unhandled game state ($pdata{state})\n";
+        die "oops unhandled game state ($pdata{state})\n";
     }
 
     if (is_mp_game()) {
@@ -2457,10 +2457,10 @@ sub update_game() {
 
     #- things that need to be updated in all states of the game
     iter_players {
-	my $malus_end = [];
-	foreach my $b (@{$malus_bubble{$::p}}) {
-	    !$b->{freeze} and $b->{'y'} -= $MALUS_BUBBLE_SPEED;
-	    if (get_array_yclosest($b->{'y'}, $::p) <= $b->{'stick_y'}) {
+        my $malus_end = [];
+        foreach my $b (@{$malus_bubble{$::p}}) {
+            !$b->{freeze} and $b->{'y'} -= $MALUS_BUBBLE_SPEED;
+            if (get_array_yclosest($b->{'y'}, $::p) <= $b->{'stick_y'}) {
                 if (is_local_player($::p)) {
                     real_stick_bubble($b, $b->{'cx'}, $b->{'stick_y'}, $::p, 0);
                     push @$malus_end, $b;
@@ -2469,25 +2469,25 @@ sub update_game() {
                 } else {
                     $b->{freeze} = 1;
                 }
-	    }
+            }
             if ($b->{mp_stick}) {
                 real_stick_bubble($b, $b->{'cx'}, $b->{'stick_y'}, $::p, 0);
                 push @$malus_end, $b;
             }
-	}
-	@$malus_end and @{$malus_bubble{$::p}} = difference2($malus_bubble{$::p}, $malus_end);
+        }
+        @$malus_end and @{$malus_bubble{$::p}} = difference2($malus_bubble{$::p}, $malus_end);
 
-	my $falling_end = [];
-	foreach my $b (@{$falling_bubble{$::p}}) {
-	    if ($b->{wait_fall}) {
-		$b->{wait_fall}--;
-	    } else {
+        my $falling_end = [];
+        foreach my $b (@{$falling_bubble{$::p}}) {
+            if ($b->{wait_fall}) {
+                $b->{wait_fall}--;
+            } else {
                 my $maxy = @PLAYERS == 2 ? 380 : member($::p, 'rp1', 'rp2') ? 185 : member($::p, 'rp3', 'rp4') ? 415 : 380;
-		if (exists $b->{chaindestx} && ($b->{'y'} > $maxy || $b->{chaingoingup})) {
-		    my $acceleration = $FREE_FALL_CONSTANT*3;
-		    if (!$b->{chaingoingup}) {
-			my $time_to_zero = $b->{speed}/$acceleration;
-			my $distance_to_zero = $b->{speed} * ($b->{speed}/$acceleration + 1) / 2;
+                if (exists $b->{chaindestx} && ($b->{'y'} > $maxy || $b->{chaingoingup})) {
+                    my $acceleration = $FREE_FALL_CONSTANT*3;
+                    if (!$b->{chaingoingup}) {
+                        my $time_to_zero = $b->{speed}/$acceleration;
+                        my $distance_to_zero = $b->{speed} * ($b->{speed}/$acceleration + 1) / 2;
                         my $tobe_sqrted = 1 + 8/$acceleration*($b->{'y'}-$b->{chaindesty}+$distance_to_zero);
                         if ($tobe_sqrted < 0) {
                             #- avoid SQRT of a negative number
@@ -2501,40 +2501,40 @@ sub update_game() {
                                 $b->{speedx} = ($b->{chaindestx} - $b->{x}) / ($time_to_zero + $time_to_destination);
                             }
                         }
-			$b->{chaingoingup} = 1;
-		    }
-		    $b->{speed} -= $acceleration;
-		    $b->{x} += $b->{speedx};
-		    if (abs($b->{x} - $b->{chaindestx}) < abs($b->{speedx})) {
-			$b->{'x'} = $b->{chaindestx};
-			$b->{speedx} = 0;
-		    }
-		    $b->{'y'} += $b->{speed};
-		    $b->{'y'} < $b->{chaindesty} and push @$falling_end, $b;
-		} else {
-		    $b->{'y'} += $b->{speed};
-		    $b->{speed} += $FREE_FALL_CONSTANT;
-		}
-	    }
-	    $b->{'y'} > 470 && !exists $b->{chaindestx} and push @$falling_end, $b;
-	}
-	@$falling_end and @{$falling_bubble{$::p}} = difference2($falling_bubble{$::p}, $falling_end);
-	foreach (@$falling_end) {
-	    exists $_->{chaindestx} or next;
-	    @{$chains{$::p}{falling_chained}} = difference2($chains{$::p}{falling_chained}, [ $_ ]);
-	    delete $chains{$::p}{chained_bubbles}{$_};
-	    stick_bubble($_, $_->{chaindestcx}, $_->{chaindestcy}, $::p, 0);
-	}
+                        $b->{chaingoingup} = 1;
+                    }
+                    $b->{speed} -= $acceleration;
+                    $b->{x} += $b->{speedx};
+                    if (abs($b->{x} - $b->{chaindestx}) < abs($b->{speedx})) {
+                        $b->{'x'} = $b->{chaindestx};
+                        $b->{speedx} = 0;
+                    }
+                    $b->{'y'} += $b->{speed};
+                    $b->{'y'} < $b->{chaindesty} and push @$falling_end, $b;
+                } else {
+                    $b->{'y'} += $b->{speed};
+                    $b->{speed} += $FREE_FALL_CONSTANT;
+                }
+            }
+            $b->{'y'} > 470 && !exists $b->{chaindestx} and push @$falling_end, $b;
+        }
+        @$falling_end and @{$falling_bubble{$::p}} = difference2($falling_bubble{$::p}, $falling_end);
+        foreach (@$falling_end) {
+            exists $_->{chaindestx} or next;
+            @{$chains{$::p}{falling_chained}} = difference2($chains{$::p}{falling_chained}, [ $_ ]);
+            delete $chains{$::p}{chained_bubbles}{$_};
+            stick_bubble($_, $_->{chaindestcx}, $_->{chaindestcy}, $::p, 0);
+        }
 
-	my $exploding_end = [];
-	foreach my $b (@{$exploding_bubble{$::p}}) {
-	    $b->{'x'} += $b->{speedx};
-	    $b->{'y'} += $b->{speedy};
-	    $b->{speedy} += $FREE_FALL_CONSTANT;
-	    push @$exploding_end, $b if $b->{'y'} > 470;
-	}
-	if (@$exploding_end) {
-	    @{$exploding_bubble{$::p}} = difference2($exploding_bubble{$::p}, $exploding_end);
+        my $exploding_end = [];
+        foreach my $b (@{$exploding_bubble{$::p}}) {
+            $b->{'x'} += $b->{speedx};
+            $b->{'y'} += $b->{speedy};
+            $b->{speedy} += $FREE_FALL_CONSTANT;
+            push @$exploding_end, $b if $b->{'y'} > 470;
+        }
+        if (@$exploding_end) {
+            @{$exploding_bubble{$::p}} = difference2($exploding_bubble{$::p}, $exploding_end);
             if (!@{$exploding_bubble{$::p}} && !@{$sticked_bubbles{$::p}}) {
                 if ($pdata{state} =~ /^lost (.*)/ && $::p ne $1 && !is_1p_game()) {
                     put_image($imgbin{win}{$::p}, $POS{centerpanel}{'x'}, $POS{centerpanel}{'y'});
@@ -2554,12 +2554,12 @@ sub update_game() {
                     };
                 }
             }
-	}
+        }
 
-	if (member($pdata{$::p}{ping_right}{state}, qw(action right_to right_from left_to left_from wait_to wait win lose_to lose))) {
-	    $pdata{$::p}{ping_right}{img}++;
+        if (member($pdata{$::p}{ping_right}{state}, qw(action right_to right_from left_to left_from wait_to wait win lose_to lose))) {
+            $pdata{$::p}{ping_right}{img}++;
 #            print "...state $pdata{$::p}{ping_right}{state} image $pdata{$::p}{ping_right}{img}\n";
-	    if ($pdata{$::p}{ping_right}{img} == @{$pinguin{$::p}{$pdata{$::p}{ping_right}{state}}}) {
+            if ($pdata{$::p}{ping_right}{img} == @{$pinguin{$::p}{$pdata{$::p}{ping_right}{state}}}) {
 #                print "finish images of state $pdata{$::p}{ping_right}{state} (" . int(@{$pinguin{$::p}{$pdata{$::p}{ping_right}{state}}}) . ")\n";
                 if ($pdata{$::p}{ping_right}{state} eq 'right_to') {
                     $pdata{$::p}{ping_right}{state} = 'right';
@@ -2623,45 +2623,45 @@ sub load_levelset {
     $lev_number = 1;
 
     foreach my $line (cat_($levelset_name)) {
-	if ($line !~ /\S/) {
-	    if ($row_numb) {
-		$lev_number++;
-		$row_numb = 0;
-	    }
-	} else {
-	    my $col_numb = 0;
-	    foreach (split ' ', $line) {
-		/-/ or push @{$levels{$lev_number}}, { cx => $col_numb, cy => $row_numb, img_num => $_ };
-		$col_numb++;
-	    }
-	    $row_numb++;
-	}
+        if ($line !~ /\S/) {
+            if ($row_numb) {
+                $lev_number++;
+                $row_numb = 0;
+            }
+        } else {
+            my $col_numb = 0;
+            foreach (split ' ', $line) {
+                /-/ or push @{$levels{$lev_number}}, { cx => $col_numb, cy => $row_numb, img_num => $_ };
+                $col_numb++;
+            }
+            $row_numb++;
+        }
     }
 }
 
 sub init_game() {
     -r "$FPATH/$_" or die "[*ERROR*] the datafiles seem to be missing! (could not read `$FPATH/$_')\n".
                           "          The datafiles need to go to `$FPATH'.\n"
-			    foreach qw(gfx snd data);
+                            foreach qw(gfx snd data);
 
     print '[SDL Init] ';
 #    $app = SDL::App->new(
-#		-icon       => "$FPATH/gfx/pinguins/window_icon_penguin.png",
-#		-flags      => $sdl_flags | ($fullscreen ? SDL_FULLSCREEN : 0),
-#		-title      => 'Frozen-Bubble 2',
-#		-width      => 640,
-#		-height     => 480
-#	);
+#               -icon       => "$FPATH/gfx/pinguins/window_icon_penguin.png",
+#               -flags      => $sdl_flags | ($fullscreen ? SDL_FULLSCREEN : 0),
+#               -title      => 'Frozen-Bubble 2',
+#               -width      => 640,
+#               -height     => 480
+#       );
 
-	SDL::init(SDL_INIT_EVERYTHING);
-	$app = SDL::Video::set_video_mode(640, 480, 24, $sdl_flags | ($fullscreen ? SDL_FULLSCREEN : 0));
-	SDL::Video::wm_set_icon(SDL::Video::load_BMP("$FPATH/gfx/pinguins/window_icon_penguin.png"));
-	SDL::Video::wm_set_caption('Frozen-Bubble 2', 'Frozen-Bubble 2');
+        SDL::init(SDL_INIT_EVERYTHING);
+        $app = SDL::Video::set_video_mode(640, 480, 24, $sdl_flags | ($fullscreen ? SDL_FULLSCREEN : 0));
+        SDL::Video::wm_set_icon(SDL::Video::load_BMP("$FPATH/gfx/pinguins/window_icon_penguin.png"));
+        SDL::Video::wm_set_caption('Frozen-Bubble 2', 'Frozen-Bubble 2');
 
     my $joys = SDL::Joystick::num_joysticks();
     $joysticksinfo and print "\nfound $joys joystick(s)\n";
     for (my $i = 0; $i < $joys; $i++) {
-	push @joysticks, SDL::Joystick->new($i);
+        push @joysticks, SDL::Joystick->new($i);
         $joysticksinfo and print "\t" . ($i + 1) . ': ' . (SDL::Joystick::name(SDL::Joystick::index($joysticks[$i])) || 'unknown joystick') . "\n";
     }
     $frame = 0;
@@ -2672,7 +2672,7 @@ sub init_game() {
     SDL::Mouse::show_cursor(0);
     $imgbin{loading} = add_image('loading.png');
     put_image($imgbin{loading}, 10, 10);
-	SDL::Video::update_rect($app, 0, 0, 0, 0);
+        SDL::Video::update_rect($app, 0, 0, 0, 0);
     $imgbin{loading_step} = add_image('loading_step.png');
     $imgbin{loading_step_initial} = add_image('loading_step_initial.png');
 
@@ -2716,29 +2716,29 @@ sub init_game() {
     foreach my $number (-$CANON_ROTATIONS_NB..$CANON_ROTATIONS_NB) {
         my $angle = $number*($PI/2)/$CANON_ROTATIONS_NB;
 
-		# rendering all high-quality canons
+                # rendering all high-quality canons
         $canon{img}{$number} = SDL::Surface->new( SDL_SWSURFACE, $shooter->w, $shooter->h, 32, 0xFF000000, 0xFF0000, 0xFF00, 0xFF);
         Games::FrozenBubble::CStuff::rotate_bicubic($canon{img}{$number}, $shooter, $angle);
         $canon{data}{$number} = Games::FrozenBubble::CStuff::autopseudocrop($canon{img}{$number});
         #- now crop (and use native RGBA ordering)
         my $replace = SDL::Surface->new( SDL_SWSURFACE, $canon{data}{$number}[2],  $canon{data}{$number}[3], 32, 0xFF000000, 0xFF0000, 0xFF00, 0xFF);
-		SDL::Video::set_alpha($canon{img}{$number}, 0, 0);
-		SDL::Video::blit_surface( $canon{img}{$number}, SDL::Rect->new( $canon{data}{$number}[0],  $canon{data}{$number}[1],
+                SDL::Video::set_alpha($canon{img}{$number}, 0, 0);
+                SDL::Video::blit_surface( $canon{img}{$number}, SDL::Rect->new( $canon{data}{$number}[0],  $canon{data}{$number}[1],
                                                                     $canon{data}{$number}[2],  $canon{data}{$number}[3]),
-							  $replace, SDL::Rect->new(0, 0, $canon{img}{$number}->w, $canon{img}{$number}->h));
+                                                          $replace, SDL::Rect->new(0, 0, $canon{img}{$number}->w, $canon{img}{$number}->h));
         $canon{img}{$number} = $replace;
         add_default_rect($canon{img}{$number});
 
-		# rendering all mid-quality canons
+                # rendering all mid-quality canons
         $canon{img_mini}{$number} = SDL::Surface->new( SDL_SWSURFACE,  $shooter_mini->w,  $shooter_mini->h, 32, 0xFF000000, 0xFF0000, 0xFF00, 0xFF);
         Games::FrozenBubble::CStuff::rotate_bicubic($canon{img_mini}{$number}, $shooter_mini, $angle);
         $canon{data_mini}{$number} = Games::FrozenBubble::CStuff::autopseudocrop($canon{img_mini}{$number});
         #- now crop (and use native RGBA ordering)
         my $replace2 = SDL::Surface->new( SDL_SWSURFACE, $canon{data_mini}{$number}[2], $canon{data_mini}{$number}[3], 32, 0xFF000000, 0xFF0000, 0xFF00, 0xFF);
-		SDL::Video::set_alpha($canon{img_mini}{$number}, 0, 0);
-		SDL::Video::blit_surface( $canon{img_mini}{$number}, SDL::Rect->new( $canon{data_mini}{$number}[0], $canon{data_mini}{$number}[1],
+                SDL::Video::set_alpha($canon{img_mini}{$number}, 0, 0);
+                SDL::Video::blit_surface( $canon{img_mini}{$number}, SDL::Rect->new( $canon{data_mini}{$number}[0], $canon{data_mini}{$number}[1],
                                                         $canon{data_mini}{$number}[2], $canon{data_mini}{$number}[3]), $replace2,
-														SDL::Rect->new(0,0,$canon{img_mini}{$number}->w,$canon{img_mini}{$number}->h));
+                                                                                                                SDL::Rect->new(0,0,$canon{img_mini}{$number}->w,$canon{img_mini}{$number}->h));
         $canon{img_mini}{$number} = $replace2;
         add_default_rect($canon{img_mini}{$number});
 
@@ -2923,10 +2923,10 @@ sub open_level($) {
 
     $levels{$level} or die "No such level or void level ($level).\n";
     foreach my $l (@{$levels{$level}}) {
-	iter_players {
-	    my $img = $l->{img_num} =~ /^\d+$/ ? $bubbles_images[$l->{img_num}] : $bubbles_anim{lose};
-	    real_stick_bubble(create_bubble_given_img($img), $l->{cx}, $l->{cy}, $::p, 0);
-	};
+        iter_players {
+            my $img = $l->{img_num} =~ /^\d+$/ ? $bubbles_images[$l->{img_num}] : $bubbles_anim{lose};
+            real_stick_bubble(create_bubble_given_img($img), $l->{cx}, $l->{cy}, $::p, 0);
+        };
     }
 }
 
@@ -2969,11 +2969,11 @@ sub grab_key {
     my $keyp;
 
     do {
-	SDL::Events::wait_event($event);
-	if ($event->type == SDL_KEYDOWN) {
-	    $keyp = $event->key_sym;
-	} elsif ($event->type == SDL_JOYAXISMOTION || $event->type() == SDL_JOYBUTTONDOWN) {
-	    $keyp = translate_joystick_tokey($event);
+        SDL::Events::wait_event($event);
+        if ($event->type == SDL_KEYDOWN) {
+            $keyp = $event->key_sym;
+        } elsif ($event->type == SDL_JOYAXISMOTION || $event->type() == SDL_JOYBUTTONDOWN) {
+            $keyp = translate_joystick_tokey($event);
         }
     } while (!defined($keyp));
 
@@ -3036,8 +3036,8 @@ sub display_highscores {
             }
 
             put_image($imgbin{hiscore_frame}, $high_posx - 7, $high_posy - 6);
-			my $tmp = SDL::Surface->new(SDL_SWSURFACE, $high_rect->w/4, $high_rect->h/4, 32);
-			Games::FrozenBubble::CStuff::shrink($tmp, $background, 0, 0, $high_rect, 4);
+                        my $tmp = SDL::Surface->new(SDL_SWSURFACE, $high_rect->w/4, $high_rect->h/4, 32);
+                        Games::FrozenBubble::CStuff::shrink($tmp, $background, 0, 0, $high_rect, 4);
             SDL::Video::blit_surface($tmp, SDL::Rect->new(0,0,$tmp->w,$tmp->h), $app, SDL::Rect->new($high_posx, $high_posy, $tmp->w, $tmp->h));
             $centered_print->($high_posx - 15, $high_posy, $high->{name}, $new_entry == $high);
             $centered_print->($high_posx - 15, $high_posy + 20, $high->{level} eq 'WON' ? loc("won!") : loc("level %s", i18n_number($high->{level})), $new_entry == $high);
@@ -3128,8 +3128,8 @@ sub ask_from($) {
                  echo => $is_rtl ? $MENUPOS{xpos_panel} + $imgbin{void_panel}->w*1/3 - 100 : $MENUPOS{xpos_panel} + $imgbin{void_panel}->w*2/3 );
 
     foreach my $i (@{$w->{intro}}) {
-		print_('menu', $app, $MENUPOS{xpos_panel}, $ypos, $i, $imgbin{void_panel}->w, 'center') if $i;
-		$ypos += $lineheight;
+                print_('menu', $app, $MENUPOS{xpos_panel}, $ypos, $i, $imgbin{void_panel}->w, 'center') if $i;
+                $ypos += $lineheight;
     }
 
     $ypos += 10;
@@ -3141,79 +3141,79 @@ sub ask_from($) {
         #- in case wrapping occurred
         SDL::Video::blit_surface($imgbin{void_panel}, SDL::Rect->new(10, $ypos - $MENUPOS{ypos_panel}, $imgbin{void_panel}->w - 20, 30), $app,
                                   SDL::Rect->new($MENUPOS{xpos_panel} + 10, $ypos, $imgbin{void_panel}->w, $imgbin{void_panel}->h));
-		print_('menu', $app, $xpos{questions}, $ypos, $entry->{'q'}, $imgbin{void_panel}->w*2/3 - 10, @{$w->{entries}} == 1 ? 'center' : 'right');
-		SDL::Video::update_rect($app, 0, 0, 0, 0);
-		my $srect_mulchar_redraw = SDL::Rect->new($xpos{echo} - 3 - $MENUPOS{xpos_panel}, $ypos - $MENUPOS{ypos_panel}, $imgbin{void_panel}->w*1/3, 30);
-		my $drect_mulchar_redraw = SDL::Rect->new($xpos{echo} - 3, $ypos, $imgbin{void_panel}->w, $imgbin{void_panel}->h);
-			my $x_echo = $xpos{echo};
-		my $txt;
-			if ($entry->{f} ne 'SPACE') {
-				if ($entry->{f} eq 'ONE_CHAR') {
-					my $k;
-					while (!defined($k)) {
-						$k = grab_key();
-						if ($k =~ /^joystick\|axisvalue\|\d+\|\d+\|0$/) {  #- we treat position at 0 as KEYUP
-							$k = undef;
-						}
-					}
-					$no_echo or play_sound('typewriter');
-					$k == SDLK_ESCAPE and $ok = 0, last ask_from_entries;
-					$txt = $k;
-					if ($k =~ /^joystick\|axisvalue\|(\d+)\|(\d+)\|([-\d]+)/) {
-						my $num = @joysticks > 1 ? $1 + 1 : '';
-						$k = 'joy' . i18n_number($num) . '-' . (even($2) ? ($3 < 0 ? loc("left") : loc("right")) : ($3 < 0 ? loc("up") : loc("down")));
-					} elsif ($k =~ /^joystick\|buttondown\|(\d+)\|(\d+)/) {
-						my $num = @joysticks > 1 ? $1 + 1 : '';
-						my $button = $2 + 1;
-						$k = 'joy' . i18n_number($num) . '-' . loc("button") . i18n_number($2);
-					} else {
-						$k = keysym_to_char($k);
-					}
-					print_('menu', $app, $x_echo, $ypos, $k, 100, $is_rtl ? 'right' : 'left');  #- always in ASCII so need to tell it to go right in RTL
-				} else {
-					callback_entry('reset');
-				  ask_from_main_loop:
-					while (1) {
-						if (callback_entry('ping')) {
-							SDL::Video::blit_surface($imgbin{void_panel}, $srect_mulchar_redraw, $app, $drect_mulchar_redraw);
-							callback_entry('print', { xpos => $x_echo, ypos => $ypos, maxlen => 100, font => 'menu' });
-						}
-						SDL::Video::update_rect($app, 0, 0, 0, 0);
-						SDL::Events::pump_events();
-						while (SDL::Events::poll_event($event) != 0) {
-							if ($event->type == SDL_KEYDOWN) {
-								my $k = $event->key_sym;
-								if ($k == SDLK_ESCAPE()) {
-									$ok = 0;
-									last ask_from_entries;
-								} elsif ($k == SDLK_RETURN() || $k == SDLK_KP_ENTER()) {
-									$txt = join('', callback_entry('gettext'));
-									last ask_from_main_loop;
-								} else {
-									callback_entry('keypressed', { event => $event, maxlen => 100, font => 'menu' });
-									SDL::Video::blit_surface($imgbin{void_panel}, $srect_mulchar_redraw, $app, $drect_mulchar_redraw);
-									callback_entry('moved');
-									callback_entry('print', { xpos => $x_echo, ypos => $ypos, maxlen => 100, font => 'menu' });
-								}
-							}
-						}
-						Games::FrozenBubble::CStuff::fbdelay($TARGET_ANIM_SPEED);
-					}
-				}
-		}
-		$entry->{answer} = $txt;
-		$ypos += $entry->{f} eq 'SPACE' ? $lineheight / 2 : $lineheight;
+                print_('menu', $app, $xpos{questions}, $ypos, $entry->{'q'}, $imgbin{void_panel}->w*2/3 - 10, @{$w->{entries}} == 1 ? 'center' : 'right');
+                SDL::Video::update_rect($app, 0, 0, 0, 0);
+                my $srect_mulchar_redraw = SDL::Rect->new($xpos{echo} - 3 - $MENUPOS{xpos_panel}, $ypos - $MENUPOS{ypos_panel}, $imgbin{void_panel}->w*1/3, 30);
+                my $drect_mulchar_redraw = SDL::Rect->new($xpos{echo} - 3, $ypos, $imgbin{void_panel}->w, $imgbin{void_panel}->h);
+                        my $x_echo = $xpos{echo};
+                my $txt;
+                        if ($entry->{f} ne 'SPACE') {
+                                if ($entry->{f} eq 'ONE_CHAR') {
+                                        my $k;
+                                        while (!defined($k)) {
+                                                $k = grab_key();
+                                                if ($k =~ /^joystick\|axisvalue\|\d+\|\d+\|0$/) {  #- we treat position at 0 as KEYUP
+                                                        $k = undef;
+                                                }
+                                        }
+                                        $no_echo or play_sound('typewriter');
+                                        $k == SDLK_ESCAPE and $ok = 0, last ask_from_entries;
+                                        $txt = $k;
+                                        if ($k =~ /^joystick\|axisvalue\|(\d+)\|(\d+)\|([-\d]+)/) {
+                                                my $num = @joysticks > 1 ? $1 + 1 : '';
+                                                $k = 'joy' . i18n_number($num) . '-' . (even($2) ? ($3 < 0 ? loc("left") : loc("right")) : ($3 < 0 ? loc("up") : loc("down")));
+                                        } elsif ($k =~ /^joystick\|buttondown\|(\d+)\|(\d+)/) {
+                                                my $num = @joysticks > 1 ? $1 + 1 : '';
+                                                my $button = $2 + 1;
+                                                $k = 'joy' . i18n_number($num) . '-' . loc("button") . i18n_number($2);
+                                        } else {
+                                                $k = keysym_to_char($k);
+                                        }
+                                        print_('menu', $app, $x_echo, $ypos, $k, 100, $is_rtl ? 'right' : 'left');  #- always in ASCII so need to tell it to go right in RTL
+                                } else {
+                                        callback_entry('reset');
+                                  ask_from_main_loop:
+                                        while (1) {
+                                                if (callback_entry('ping')) {
+                                                        SDL::Video::blit_surface($imgbin{void_panel}, $srect_mulchar_redraw, $app, $drect_mulchar_redraw);
+                                                        callback_entry('print', { xpos => $x_echo, ypos => $ypos, maxlen => 100, font => 'menu' });
+                                                }
+                                                SDL::Video::update_rect($app, 0, 0, 0, 0);
+                                                SDL::Events::pump_events();
+                                                while (SDL::Events::poll_event($event) != 0) {
+                                                        if ($event->type == SDL_KEYDOWN) {
+                                                                my $k = $event->key_sym;
+                                                                if ($k == SDLK_ESCAPE()) {
+                                                                        $ok = 0;
+                                                                        last ask_from_entries;
+                                                                } elsif ($k == SDLK_RETURN() || $k == SDLK_KP_ENTER()) {
+                                                                        $txt = join('', callback_entry('gettext'));
+                                                                        last ask_from_main_loop;
+                                                                } else {
+                                                                        callback_entry('keypressed', { event => $event, maxlen => 100, font => 'menu' });
+                                                                        SDL::Video::blit_surface($imgbin{void_panel}, $srect_mulchar_redraw, $app, $drect_mulchar_redraw);
+                                                                        callback_entry('moved');
+                                                                        callback_entry('print', { xpos => $x_echo, ypos => $ypos, maxlen => 100, font => 'menu' });
+                                                                }
+                                                        }
+                                                }
+                                                Games::FrozenBubble::CStuff::fbdelay($TARGET_ANIM_SPEED);
+                                        }
+                                }
+                }
+                $entry->{answer} = $txt;
+                $ypos += $entry->{f} eq 'SPACE' ? $lineheight / 2 : $lineheight;
     }
     SDL::Events::enable_key_repeat(0, 0);
 
     if ($ok) {
-		${$_->{a}} = $_->{answer} foreach @{$w->{entries}};
-		print_('menu', $app, $MENUPOS{xpos_panel}, $MENUPOS{ypos_panel} + $imgbin{void_panel}->h - 35, $w->{outro}, $imgbin{void_panel}->w, 'center');
-		SDL::Video::update_rect($app, 0, 0, 0, 0);
-		play_sound('menu_selected');
-		sleep 2;
+                ${$_->{a}} = $_->{answer} foreach @{$w->{entries}};
+                print_('menu', $app, $MENUPOS{xpos_panel}, $MENUPOS{ypos_panel} + $imgbin{void_panel}->h - 35, $w->{outro}, $imgbin{void_panel}->w, 'center');
+                SDL::Video::update_rect($app, 0, 0, 0, 0);
+                play_sound('menu_selected');
+                sleep 2;
     } else {
-		play_sound('cancel');
+                play_sound('cancel');
     }
 
     exists $w->{erase_background} and erase_image_from($imgbin{void_panel}, $MENUPOS{xpos_panel}, $MENUPOS{ypos_panel}, $w->{erase_background});
@@ -3247,11 +3247,11 @@ sub new_game() {
         }
         $pdata{inconsistency} = undef;
     } elsif (is_2p_game()) {
-	$backgr = $imgbin{back_2p};
-	%POS = %POS_2P;
+        $backgr = $imgbin{back_2p};
+        %POS = %POS_2P;
     } elsif (is_1p_game()) {
-	$backgr = $imgbin{back_1p};
-	%POS = %POS_1P;
+        $backgr = $imgbin{back_1p};
+        %POS = %POS_1P;
         if ($levels{current} eq 'mp_train') {
             $pdata{$PLAYERS[0]}{score} = 0;
         } else {
@@ -3264,37 +3264,37 @@ sub new_game() {
             $pdata{$PLAYERS[0]}{score} = $levels{current};
         }
     } else {
-	die "oops";
+        die "oops";
     }
 
     SDL::Video::blit_surface($backgr, $apprects{main}, $background_orig, $apprects{main});
     if ($levels{current} eq 'mp_train') {
-	my $drect = SDL::Rect->new(32, 152, $imgbin{void_mp_training}->w, $imgbin{void_mp_training}->h);
-	SDL::Video::blit_surface($imgbin{void_mp_training}, $rects{$imgbin{void_mp_training}}, $background_orig, $drect);
+        my $drect = SDL::Rect->new(32, 152, $imgbin{void_mp_training}->w, $imgbin{void_mp_training}->h);
+        SDL::Video::blit_surface($imgbin{void_mp_training}, $rects{$imgbin{void_mp_training}}, $background_orig, $drect);
     }
     SDL::Video::blit_surface($background_orig, $apprects{main}, $background, $apprects{main});
 
     iter_players {
-	$actions{$::p}{$_} = 0 foreach qw(left right fire center);
-	$angle{$::p} = $PI/2;
-	@{$sticked_bubbles{$::p}} = ();
-	@{$malus_bubble{$::p}} = ();
-	@{$root_bubbles{$::p}} = ();
-	@{$falling_bubble{$::p}} = ();
-	@{$exploding_bubble{$::p}} = ();
+        $actions{$::p}{$_} = 0 foreach qw(left right fire center);
+        $angle{$::p} = $PI/2;
+        @{$sticked_bubbles{$::p}} = ();
+        @{$malus_bubble{$::p}} = ();
+        @{$root_bubbles{$::p}} = ();
+        @{$falling_bubble{$::p}} = ();
+        @{$exploding_bubble{$::p}} = ();
         delete $pdata{$::p}{nextcolors};
-	@{$chains{$::p}{falling_chained}} = ();
-	%{$chains{$::p}{chained_bubbles}} = ();
-	$launched_bubble{$::p} = undef;
-	$sticking_bubble{$::p} = undef;
-	$pdata{$::p}{$_} = 0 foreach qw(newroot newroot_prelight oddswap hurry newrootlevel);
-	@{$pdata{$::p}{malus}} = ();
+        @{$chains{$::p}{falling_chained}} = ();
+        %{$chains{$::p}{chained_bubbles}} = ();
+        $launched_bubble{$::p} = undef;
+        $sticking_bubble{$::p} = undef;
+        $pdata{$::p}{$_} = 0 foreach qw(newroot newroot_prelight oddswap hurry newrootlevel);
+        @{$pdata{$::p}{malus}} = ();
         $pdata{$::p}{state} = 'ingame';
-	$pdata{$::p}{ping_right}{img} = 0;
-	$pdata{$::p}{ping_right}{state} = 'normal';
+        $pdata{$::p}{ping_right}{img} = 0;
+        $pdata{$::p}{ping_right}{state} = 'normal';
         $pdata{$::p}{hurry_save_img} = undef;
-	$apprects{$::p} = SDL::Rect->new( $POS{$::p}{left_limit},  $POS{$::p}{top_limit},
-					  $POS{$::p}{right_limit}-$POS{$::p}{left_limit}, $POS{$::p}{'initial_bubble_y'}-$POS{$::p}{top_limit});
+        $apprects{$::p} = SDL::Rect->new( $POS{$::p}{left_limit},  $POS{$::p}{top_limit},
+                                          $POS{$::p}{right_limit}-$POS{$::p}{left_limit}, $POS{$::p}{'initial_bubble_y'}-$POS{$::p}{top_limit});
         if (is_distant_player($::p)) {
             if (!$pdata{$::p}{left}) {
                 $pdata{$::p}{still_game_messages} = 1;
@@ -3329,10 +3329,10 @@ sub new_game() {
         push @{$recorddata{data}}, { srand => $srand };  #- the first record entry is used for pdatas (more keys added later)
     }
     if ($levels{current} =~ /^\d+$/) {
-	open_level($levels{current});
+        open_level($levels{current});
     } else {
-	foreach my $cy (0 .. 4) {
-	    foreach my $cx (0 .. (6 + even($cy))) {
+        foreach my $cy (0 .. 4) {
+            foreach my $cx (0 .. (6 + even($cy))) {
                 my $num = int(rand(@bubbles_images));
                 if (is_mp_game()) {
                     if (!$playdata) {
@@ -3354,8 +3354,8 @@ sub new_game() {
                         $pdata{$::p}{left} or real_stick_bubble(create_bubble_given_img($b->{img}), $cx, $cy, $::p, 0);
                     };
                 }
-	    }
-	}
+            }
+        }
     }
 
     my ($next_num, $tobe_num);
@@ -3390,10 +3390,10 @@ sub new_game() {
     }
 
     if ($graphics_level == 1) {
-	SDL::Video::blit_surface($background, $apprects{main}, $app, $apprects{main});
-	SDL::Video::update_rect($app, 0, 0, 0, 0);
+        SDL::Video::blit_surface($background, $apprects{main}, $app, $apprects{main});
+        SDL::Video::update_rect($app, 0, 0, 0, 0);
     } else {
-	Games::FrozenBubble::CStuff::effect($app, SDL::Video::display_format($background));
+        Games::FrozenBubble::CStuff::effect($app, SDL::Video::display_format($background));
     }
 
     $display_on_app_disabled = 0;
@@ -3486,14 +3486,14 @@ sub choose_1p_game_mode() {
 
     my $overlook_index = 0;
     my $overlook = SDL::Surface->new(SDL_SWSURFACE, $imgbin{txt_1pmenu_pick_start_level_text}->w,
-	                                                $imgbin{txt_1pmenu_pick_start_level_text}->h, 32);
+                                                        $imgbin{txt_1pmenu_pick_start_level_text}->h, 32);
     my $redraw = sub {
         my $draw_element = sub {
             my ($name, $mode) = @_;
             put_image($imgbin{"txt_1pmenu_$mode"}, $menu_xpos, $name2ypos{$name});
             SDL::Video::blit_surface($imgbin{"txt_1pmenu_${name}_outlined_text"}, SDL::Rect->new(0,0,$imgbin{"txt_1pmenu_${name}_outlined_text"}->w,$imgbin{"txt_1pmenu_${name}_outlined_text"}->h),
-			                         $app, SDL::Rect->new($menu_xpos, $name2ypos{$name}, $imgbin{"txt_1pmenu_${name}_outlined_text"}->w,
-									                                                     $imgbin{"txt_1pmenu_${name}_outlined_text"}->h));
+                                                 $app, SDL::Rect->new($menu_xpos, $name2ypos{$name}, $imgbin{"txt_1pmenu_${name}_outlined_text"}->w,
+                                                                                                                             $imgbin{"txt_1pmenu_${name}_outlined_text"}->h));
         };
 
         my $img = $imgbin{'1p_panel'};
@@ -3538,7 +3538,7 @@ sub choose_1p_game_mode() {
     $redraw->();
 
     while (1) {
-		my $synchro_ticks = SDL::get_ticks();
+                my $synchro_ticks = SDL::get_ticks();
 # commented out because otherwise we see only a white box instead of highlighted background image
 #        if ($graphics_level > 1) {
 #            $draw_overlook->();
@@ -4181,8 +4181,8 @@ sub smg_choose_game() {
         } \@wholist, \@free_geolocs;
 
         foreach (@labels) {
-		SDL::Video::fill_rect($app, $_->{backrect1}, $label_outer_color);
-		SDL::Video::fill_rect($app, $_->{backrect2}, $label_background_color);
+                SDL::Video::fill_rect($app, $_->{backrect1}, $label_outer_color);
+                SDL::Video::fill_rect($app, $_->{backrect2}, $label_background_color);
             print_('netdialogs_servermsg', $app, $_->{x}, $_->{y}, $_->{text});
         }
 
@@ -4622,7 +4622,7 @@ sub smg_choose_game() {
                             $text = undef;
                         } elsif ($text =~ m|^/fs|) {
                             $fullscreen = !$fullscreen;
-							SDL::Video::wm_toggle_fullscreen($app);
+                                                        SDL::Video::wm_toggle_fullscreen($app);
                             $text = undef;
                         } elsif ($text =~ m|^/geolocate|) {
                             $geolocate->();
@@ -5138,7 +5138,7 @@ sub setup_mp_game() {
             Games::FrozenBubble::Net::connect($host, $port);
             if (!Games::FrozenBubble::Net::isconnected()) {
                 smg_add_status_msg(loc("*** Cannot connect to specified gameserver, fallbacking to contacting master server"));
-		print STDERR "Cannot connect to specified gameserver, fallbacking to contacting master server\n";
+                print STDERR "Cannot connect to specified gameserver, fallbacking to contacting master server\n";
                 goto choose_server;
             }
         } else {
@@ -5291,15 +5291,15 @@ sub append_highscore_level() {
     my @contents;
 
     foreach my $line (cat_($loaded_levelset)) {
-	if ($line !~ /\S/) {
-	    if ($row_numb) {
-		$lvl++;
-		$row_numb = 0;
+        if ($line !~ /\S/) {
+            if ($row_numb) {
+                $lvl++;
+                $row_numb = 0;
             }
         } else {
             $row_numb++;
             $lvl == ($levels{current} eq 'WON' ? (keys %levels)-1 : $levels{current})
-	      and push @contents, $line;
+              and push @contents, $line;
         }
     }
 
@@ -5310,10 +5310,10 @@ sub count_highscorehistory_levels() {
     my $cnt = 0;
     my $row_numb = 0;
     foreach my $line (cat_("$FBHOME/highlevelshistory")) {
-	if ($line !~ /\S/) {
-	    if ($row_numb) {
-		$cnt++;
-		$row_numb = 0;
+        if ($line !~ /\S/) {
+            if ($row_numb) {
+                $cnt++;
+                $row_numb = 0;
             }
         } else {
             $row_numb++;
@@ -5389,7 +5389,7 @@ sub save_config {
     #- for $KEYS, try hard to keep SDLK_<key> instead of integer value in rcfile
     my $KEYS_;
     foreach my $p (keys %$KEYS) {
-	foreach my $k (keys %{$KEYS->{$p}}) {
+        foreach my $k (keys %{$KEYS->{$p}}) {
             if ($KEYS->{$p}{$k} =~ /^\d+$/) {
                 foreach (@fbsyms::syms) {
                     if (eval("$KEYS->{$p}{$k} eq SDLK_$_")) {
@@ -5400,7 +5400,7 @@ sub save_config {
             }
             $KEYS_->{$p}{$k} = $KEYS->{$p}{$k};  #- fallback to numeric
           nextkey:
-	}
+        }
     }
     #- special hook for $mylatitude as we don't want to save an empty value
     my $dump = Data::Dumper->Dump([$fullscreen, $graphics_level, $mynick, $music_disabled,
@@ -5423,47 +5423,47 @@ sub menu {
 
     my $back_start   = $imgbin{back_menu};;
     my $display_menu = sub {
-		SDL::Video::blit_surface($back_start, $apprects{main}, $app, $apprects{main});
+                SDL::Video::blit_surface($back_start, $apprects{main}, $app, $apprects{main});
 
-		# stamp is the "frozen bubble since 2002"-logo underneath the (animated) logo
-		SDL::Video::blit_surface($imgbin{stamp},SDL::Rect->new(0,0,$imgbin{stamp}->w,$imgbin{stamp}->h), $app, SDL::Rect->new( 490,  142, $imgbin{stamp}->w, $imgbin{stamp}->h));
+                # stamp is the "frozen bubble since 2002"-logo underneath the (animated) logo
+                SDL::Video::blit_surface($imgbin{stamp},SDL::Rect->new(0,0,$imgbin{stamp}->w,$imgbin{stamp}->h), $app, SDL::Rect->new( 490,  142, $imgbin{stamp}->w, $imgbin{stamp}->h));
     };
 
     $display_menu->();
 
     my $invalidate_all;
 
-	my $menu_display_highscores = sub {
-		display_highscores();
-		$display_menu->();
-		SDL::Video::update_rect($app, 0, 0, 0, 0);
-		$invalidate_all->();
-	};
+        my $menu_display_highscores = sub {
+                display_highscores();
+                $display_menu->();
+                SDL::Video::update_rect($app, 0, 0, 0, 0);
+                $invalidate_all->();
+        };
 
-	# Q&A for changing keys
-	my $change_keys = sub {
-		ask_from({
-			intro => [ loc("Please enter new keys:") ],
-			entries => [
-				{ 'q' => loc("Player 1; turn left?"),  'a' => \$KEYS->{p1}{left},   f => 'ONE_CHAR' },
-				{ 'q' => loc("Player 1; turn right?"), 'a' => \$KEYS->{p1}{right},  f => 'ONE_CHAR' },
-				{ 'q' => loc("Player 1; fire?"),       'a' => \$KEYS->{p1}{fire},   f => 'ONE_CHAR' },
-				{ 'q' => loc("Player 1; center?"),     'a' => \$KEYS->{p1}{center}, f => 'ONE_CHAR' },
-				{ f => 'SPACE' },
-				{ 'q' => loc("Player 2; turn left?"),  'a' => \$KEYS->{p2}{left},   f => 'ONE_CHAR' },
-				{ 'q' => loc("Player 2; turn right?"), 'a' => \$KEYS->{p2}{right},  f => 'ONE_CHAR' },
-				{ 'q' => loc("Player 2; fire?"),       'a' => \$KEYS->{p2}{fire},   f => 'ONE_CHAR' },
-				{ 'q' => loc("Player 2; center?"),     'a' => \$KEYS->{p2}{center}, f => 'ONE_CHAR' },
-				{ f => 'SPACE' },
-				{ 'q' => loc("Toggle fullscreen?"),    'a' => \$KEYS->{misc}{fs},   f => 'ONE_CHAR' },
-				{ 'q' => loc("Chat (net/lan game)?"),  'a' => \$KEYS->{misc}{chat}, f => 'ONE_CHAR' },
-			],
-			outro => loc("Thanks!"),
-			erase_background => $back_start
-		});
-		$invalidate_all->();
-#		print Data::Dumper->Dump([$KEYS], [qw(KEYS)]), "\n";
-#		die;
+        # Q&A for changing keys
+        my $change_keys = sub {
+                ask_from({
+                        intro => [ loc("Please enter new keys:") ],
+                        entries => [
+                                { 'q' => loc("Player 1; turn left?"),  'a' => \$KEYS->{p1}{left},   f => 'ONE_CHAR' },
+                                { 'q' => loc("Player 1; turn right?"), 'a' => \$KEYS->{p1}{right},  f => 'ONE_CHAR' },
+                                { 'q' => loc("Player 1; fire?"),       'a' => \$KEYS->{p1}{fire},   f => 'ONE_CHAR' },
+                                { 'q' => loc("Player 1; center?"),     'a' => \$KEYS->{p1}{center}, f => 'ONE_CHAR' },
+                                { f => 'SPACE' },
+                                { 'q' => loc("Player 2; turn left?"),  'a' => \$KEYS->{p2}{left},   f => 'ONE_CHAR' },
+                                { 'q' => loc("Player 2; turn right?"), 'a' => \$KEYS->{p2}{right},  f => 'ONE_CHAR' },
+                                { 'q' => loc("Player 2; fire?"),       'a' => \$KEYS->{p2}{fire},   f => 'ONE_CHAR' },
+                                { 'q' => loc("Player 2; center?"),     'a' => \$KEYS->{p2}{center}, f => 'ONE_CHAR' },
+                                { f => 'SPACE' },
+                                { 'q' => loc("Toggle fullscreen?"),    'a' => \$KEYS->{misc}{fs},   f => 'ONE_CHAR' },
+                                { 'q' => loc("Chat (net/lan game)?"),  'a' => \$KEYS->{misc}{chat}, f => 'ONE_CHAR' },
+                        ],
+                        outro => loc("Thanks!"),
+                        erase_background => $back_start
+                });
+                $invalidate_all->();
+#               print Data::Dumper->Dump([$KEYS], [qw(KEYS)]), "\n";
+#               die;
     };
 
     my $launch_editor = sub {
@@ -5471,7 +5471,7 @@ sub menu {
         Games::FrozenBubble::LevelEditor::init_setup('embedded', $app);
         Games::FrozenBubble::LevelEditor::handle_events();
         SDL::Mouse::show_cursor(0);
-		$display_menu->();
+                $display_menu->();
         SDL::Video::update_rect($app, 0, 0, 0, 0);
         $invalidate_all->();
     };
@@ -5479,7 +5479,7 @@ sub menu {
     my $speed_ok = 4;
 
     my $candy_init = sub {
-		# calculating positions and creating new surfaces for logo animations
+                # calculating positions and creating new surfaces for logo animations
         if (defined($candy)) {
             erase_image_from($imgbin{menu_logo}, $logox, $logoy, $back_start);
             $candy = undef;
@@ -5490,7 +5490,7 @@ sub menu {
         if ($logo_candy_method == 3) {
             #- stretch needs a bit more room
             my $newlogosurface = SDL::Surface->new(SDL_SWSURFACE, $imgbin{menu_logo}->w * 1.1,  $imgbin{menu_logo}->h * 1.1,  32, 0xFF000000, 0xFF0000, 0xFF00, 0xFF);
-			SDL::Video::set_alpha($imgbin{menu_logo}, 0, 0); #- for RGBA->RGBA blits, SDL_SRCALPHA must be removed or destination alpha is preserved
+                        SDL::Video::set_alpha($imgbin{menu_logo}, 0, 0); #- for RGBA->RGBA blits, SDL_SRCALPHA must be removed or destination alpha is preserved
             SDL::Video::blit_surface($imgbin{menu_logo}, SDL::Rect->new(0,0,$imgbin{menu_logo}->w,$imgbin{menu_logo}->h), $newlogosurface, SDL::Rect->new( $imgbin{menu_logo}->w * 0.05, $imgbin{menu_logo}->h * 0.05, $imgbin{menu_logo}->w, $imgbin{menu_logo}->h));
             $logox -= $imgbin{menu_logo}->w * 0.05;
             $logoy -= $imgbin{menu_logo}->h * 0.05;
@@ -5501,7 +5501,7 @@ sub menu {
         if ($logo_candy_method == 4) {
             #- tilt needs a bit more horizontal room
             my $newlogosurface = SDL::Surface->new(SDL_SWSURFACE, $imgbin{menu_logo}->w * 1.1,  $imgbin{menu_logo}->h * 1.05,  32, 0xFF000000, 0xFF0000, 0xFF00, 0xFF);
-			SDL::Video::set_alpha($imgbin{menu_logo}, 0, 0); #- for RGBA->RGBA blits, SDL_SRCALPHA must be removed or destination alpha is preserved
+                        SDL::Video::set_alpha($imgbin{menu_logo}, 0, 0); #- for RGBA->RGBA blits, SDL_SRCALPHA must be removed or destination alpha is preserved
             SDL::Video::blit_surface($imgbin{menu_logo}, SDL::Rect->new(0,0,$imgbin{menu_logo}->w,$imgbin{menu_logo}->h), $newlogosurface, SDL::Rect->new( $imgbin{menu_logo}->w * 0.05, $imgbin{menu_logo}->h * 0.025, $imgbin{menu_logo}->w, $imgbin{menu_logo}->h));
             $logox -= $imgbin{menu_logo}->w * 0.05;
             $logoy -= $imgbin{menu_logo}->h * 0.025;
@@ -5512,7 +5512,7 @@ sub menu {
         if ($logo_candy_method == 8) {
             #- snow needs to extend top, and a little more wideness
             my $newlogosurface = SDL::Surface->new( SDL_SWSURFACE, $imgbin{menu_logo}->w * 1.1,  $imgbin{menu_logo}->h + $logoy, 32, 0xFF000000, 0xFF0000, 0xFF00, 0xFF);
-			SDL::Video::set_alpha( $imgbin{menu_logo}, 0, 0); #- for RGBA->RGBA blits, SDL_SRCALPHA must be removed or destination alpha is preserved
+                        SDL::Video::set_alpha( $imgbin{menu_logo}, 0, 0); #- for RGBA->RGBA blits, SDL_SRCALPHA must be removed or destination alpha is preserved
             SDL::Video::blit_surface( $imgbin{menu_logo}, SDL::Rect->new(0,0,$imgbin{menu_logo}->w,$imgbin{menu_logo}->h), $newlogosurface, SDL::Rect->new($imgbin{menu_logo}->w * 0.05, $logoy, $imgbin{menu_logo}->w, $imgbin{menu_logo}->h));
             $logox -= $imgbin{menu_logo}->w * 0.05;
             $logoy = 0;
@@ -5523,34 +5523,34 @@ sub menu {
         $candy = SDL::Surface->new(SDL_SWSURFACE, $imgbin{menu_logo}->w,  $imgbin{menu_logo}->h, 32, 0xFF000000, 0xFF0000, 0xFF00, 0xFF);
     };
     defined($candy) or $candy_init->(); 
-	my $draw_logo = sub {
-		my ($no_update) = @_;
-		erase_image_from($imgbin{menu_logo}, $logox, $logoy, $back_start);
+        my $draw_logo = sub {
+                my ($no_update) = @_;
+                erase_image_from($imgbin{menu_logo}, $logox, $logoy, $back_start);
 
-		if ($graphics_level < 3 || !$speed_ok) {
-			# logo is blittet as it is, without animations
-			put_image($imgbin{menu_logo}, $logox, $logoy);
-		}
-		else { # logo animation
-			# logo effects (snow, water, ...)
-			Games::FrozenBubble::CStuff::rotate_bilinear($candy, $imgbin{menu_logo}, sin($logo_candy_index/40)/20) if $logo_candy_method == 0;
-			Games::FrozenBubble::CStuff::flipflop($candy, $imgbin{menu_logo}, $logo_candy_index)                   if $logo_candy_method == 1;
-			Games::FrozenBubble::CStuff::enlighten($candy, $imgbin{menu_logo}, $logo_candy_index)                  if $logo_candy_method == 2;
-			Games::FrozenBubble::CStuff::stretch($candy, $imgbin{menu_logo}, $logo_candy_index)                    if $logo_candy_method == 3.1;
-			Games::FrozenBubble::CStuff::tilt($candy, $imgbin{menu_logo}, $logo_candy_index)                       if $logo_candy_method == 4.1;
-			Games::FrozenBubble::CStuff::points($candy, $imgbin{menu_logo}, $imgbin{menu_logo_mask})               if $logo_candy_method == 5;
-			Games::FrozenBubble::CStuff::waterize($candy, $imgbin{menu_logo}, $logo_candy_index)                   if $logo_candy_method == 6;
-			Games::FrozenBubble::CStuff::brokentv($candy, $imgbin{menu_logo}, $logo_candy_index)                   if $logo_candy_method == 7;
-			Games::FrozenBubble::CStuff::snow($candy, $imgbin{menu_logo})                                          if $logo_candy_method == 8.1;
+                if ($graphics_level < 3 || !$speed_ok) {
+                        # logo is blittet as it is, without animations
+                        put_image($imgbin{menu_logo}, $logox, $logoy);
+                }
+                else { # logo animation
+                        # logo effects (snow, water, ...)
+                        Games::FrozenBubble::CStuff::rotate_bilinear($candy, $imgbin{menu_logo}, sin($logo_candy_index/40)/20) if $logo_candy_method == 0;
+                        Games::FrozenBubble::CStuff::flipflop($candy, $imgbin{menu_logo}, $logo_candy_index)                   if $logo_candy_method == 1;
+                        Games::FrozenBubble::CStuff::enlighten($candy, $imgbin{menu_logo}, $logo_candy_index)                  if $logo_candy_method == 2;
+                        Games::FrozenBubble::CStuff::stretch($candy, $imgbin{menu_logo}, $logo_candy_index)                    if $logo_candy_method == 3.1;
+                        Games::FrozenBubble::CStuff::tilt($candy, $imgbin{menu_logo}, $logo_candy_index)                       if $logo_candy_method == 4.1;
+                        Games::FrozenBubble::CStuff::points($candy, $imgbin{menu_logo}, $imgbin{menu_logo_mask})               if $logo_candy_method == 5;
+                        Games::FrozenBubble::CStuff::waterize($candy, $imgbin{menu_logo}, $logo_candy_index)                   if $logo_candy_method == 6;
+                        Games::FrozenBubble::CStuff::brokentv($candy, $imgbin{menu_logo}, $logo_candy_index)                   if $logo_candy_method == 7;
+                        Games::FrozenBubble::CStuff::snow($candy, $imgbin{menu_logo})                                          if $logo_candy_method == 8.1;
 
-			SDL::Video::blit_surface($candy, SDL::Rect->new(0,0,$candy->w,$candy->h), $app, SDL::Rect->new($logox, $logoy, $candy->w, $candy->h));
+                        SDL::Video::blit_surface($candy, SDL::Rect->new(0,0,$candy->w,$candy->h), $app, SDL::Rect->new($logox, $logoy, $candy->w, $candy->h));
 
-			# next step for the animation
-			$logo_candy_index++;
-		}
+                        # next step for the animation
+                        $logo_candy_index++;
+                }
 
         if (!$no_update) {
-			SDL::Video::update_rects($app, @update_rects);
+                        SDL::Video::update_rects($app, @update_rects);
             @update_rects = ();
         }
     };
@@ -5558,70 +5558,70 @@ sub menu {
     $imgbin{menu_cursor}{graphics}          = $imgbin{menu_cursor}{"graphics$graphics_level"};
     $imgbin{menu_cursor}{graphicsalpha}     = $imgbin{menu_cursor}{"graphics${graphics_level}alpha"};
     my ($MENU_XPOS, $MENU_FIRSTY, $SPACING) = (89, 14, 56);
-	# screen y-position of main menu elements
+        # screen y-position of main menu elements
     my %menu_ypos = (
-		'1pgame'     => $MENU_FIRSTY,
-		'2pgame'     => $MENU_FIRSTY +     $SPACING,
-		'langame'    => $MENU_FIRSTY + 2 * $SPACING,
-		'netgame'    => $MENU_FIRSTY + 3 * $SPACING,
-		'editor'     => $MENU_FIRSTY + 4 * $SPACING,
-		'graphics'   => $MENU_FIRSTY + 5 * $SPACING,
-		'keys'       => $MENU_FIRSTY + 6 * $SPACING,
-		'highscores' => $MENU_FIRSTY + 7 * $SPACING,
-	);
+                '1pgame'     => $MENU_FIRSTY,
+                '2pgame'     => $MENU_FIRSTY +     $SPACING,
+                'langame'    => $MENU_FIRSTY + 2 * $SPACING,
+                'netgame'    => $MENU_FIRSTY + 3 * $SPACING,
+                'editor'     => $MENU_FIRSTY + 4 * $SPACING,
+                'graphics'   => $MENU_FIRSTY + 5 * $SPACING,
+                'keys'       => $MENU_FIRSTY + 6 * $SPACING,
+                'highscores' => $MENU_FIRSTY + 7 * $SPACING,
+        );
 
-	# menu indexes, and functions that are called before the function behind 'type' is called
-	my %menu_entries = (
-		'1pgame' => {
-			pos  => 1,
-			type => 'rungame',
-			run  => sub { @PLAYERS = ('p1'); $levels{current} = 1; $time_1pgame = SDL::get_ticks() }
-		},
-		'2pgame' => {
-			pos  => 2,
-			type => 'rungame',
-			run  => sub { @PLAYERS = qw(p1 p2); $levels{current} = undef; }
-		},
-		'langame'=> {
-			pos  => 3,
-			type => 'rungame',
-			run  => sub { @PLAYERS = qw(p1 rp1); $pdata{gametype} = 'lan'; $levels{current} = undef; }
-		},
-		'netgame'=> {
-			pos  => 4,
-			type => 'rungame',
-			run  => sub { @PLAYERS = qw(p1 rp1); $pdata{gametype} = 'net'; $levels{current} = undef; }
-		},
-		'editor' => {
-			pos => 5,
-			type => 'run',
-			run => sub { $launch_editor->(); }
-		},
-		'graphics' => {
-			pos      => 6,
-			type     => 'range',
-			valuemin => 1,
-			valuemax => 3,
-			change   => sub {
-				$graphics_level = $_[0];
-				if ($graphics_level < 3) { $draw_logo->() } else { $speed_ok = 4; }
-				$imgbin{menu_cursor}{graphics}      = $imgbin{menu_cursor}{"graphics$graphics_level"};
-				$imgbin{menu_cursor}{graphicsalpha} = $imgbin{menu_cursor}{"graphics${graphics_level}alpha"};
-				$pdata{cursor_img}{graphics}        = 0 if $pdata{cursor_img}{graphics} >= @{$imgbin{menu_cursor}{graphics}};
-			},
-			value => $graphics_level
-		},
-		'keys' => {
-			pos  => 7,
-			type => 'run',
-			run  => sub { $change_keys->() }
-		},
-		'highscores' => {
-			pos  => 8,
-			type => 'run',
-			run  => sub { $menu_display_highscores->() }
-		},
-	);
+        # menu indexes, and functions that are called before the function behind 'type' is called
+        my %menu_entries = (
+                '1pgame' => {
+                        pos  => 1,
+                        type => 'rungame',
+                        run  => sub { @PLAYERS = ('p1'); $levels{current} = 1; $time_1pgame = SDL::get_ticks() }
+                },
+                '2pgame' => {
+                        pos  => 2,
+                        type => 'rungame',
+                        run  => sub { @PLAYERS = qw(p1 p2); $levels{current} = undef; }
+                },
+                'langame'=> {
+                        pos  => 3,
+                        type => 'rungame',
+                        run  => sub { @PLAYERS = qw(p1 rp1); $pdata{gametype} = 'lan'; $levels{current} = undef; }
+                },
+                'netgame'=> {
+                        pos  => 4,
+                        type => 'rungame',
+                        run  => sub { @PLAYERS = qw(p1 rp1); $pdata{gametype} = 'net'; $levels{current} = undef; }
+                },
+                'editor' => {
+                        pos => 5,
+                        type => 'run',
+                        run => sub { $launch_editor->(); }
+                },
+                'graphics' => {
+                        pos      => 6,
+                        type     => 'range',
+                        valuemin => 1,
+                        valuemax => 3,
+                        change   => sub {
+                                $graphics_level = $_[0];
+                                if ($graphics_level < 3) { $draw_logo->() } else { $speed_ok = 4; }
+                                $imgbin{menu_cursor}{graphics}      = $imgbin{menu_cursor}{"graphics$graphics_level"};
+                                $imgbin{menu_cursor}{graphicsalpha} = $imgbin{menu_cursor}{"graphics${graphics_level}alpha"};
+                                $pdata{cursor_img}{graphics}        = 0 if $pdata{cursor_img}{graphics} >= @{$imgbin{menu_cursor}{graphics}};
+                        },
+                        value => $graphics_level
+                },
+                'keys' => {
+                        pos  => 7,
+                        type => 'run',
+                        run  => sub { $change_keys->() }
+                },
+                'highscores' => {
+                        pos  => 8,
+                        type => 'run',
+                        run  => sub { $menu_display_highscores->() }
+                },
+        );
     my $current_pos   = 1;  # selected menu entry (1..8)
     my @menu_invalids = (); # list of menu item's positions
     $invalidate_all   = sub { push @menu_invalids, $menu_entries{$_}->{pos} foreach keys %menu_entries };
@@ -5633,45 +5633,45 @@ sub menu {
                                          $imgbin{menu_cursor}{$m}[$pdata{cursor_img}{$m}]->h);
         if (!defined($cursor_save_bg{$m})) {
             $cursor_save_bg{$m} = SDL::Surface->new(SDL_SWSURFACE, $imgbin{menu_cursor}{$m}[0]->w, $imgbin{menu_cursor}{$m}[0]->h, 32, 0,0,0,0);
-			SDL::Video::blit_surface($app, $cursor_rect, $cursor_save_bg{$m}, SDL::Rect->new( 0,  0,  $imgbin{menu_cursor}{$m}[0]->w, $imgbin{menu_cursor}{$m}[0]->h));
+                        SDL::Video::blit_surface($app, $cursor_rect, $cursor_save_bg{$m}, SDL::Rect->new( 0,  0,  $imgbin{menu_cursor}{$m}[0]->w, $imgbin{menu_cursor}{$m}[0]->h));
         }
-		SDL::Video::blit_surface($cursor_save_bg{$m}, SDL::Rect->new(0,0,$cursor_save_bg{$m}->w,$cursor_save_bg{$m}->h), $app, $cursor_rect);
+                SDL::Video::blit_surface($cursor_save_bg{$m}, SDL::Rect->new(0,0,$cursor_save_bg{$m}->w,$cursor_save_bg{$m}->h), $app, $cursor_rect);
         if ($alpha) {
             if ($pixelize) {
-				if (!defined($cursor_tmp)) {
-					$cursor_tmp = SDL::Surface->new( SDL_SWSURFACE, $imgbin{menu_cursor}{$m}[0]->w,  $imgbin{menu_cursor}{$m}[0]->h, 32, 0xFF000000,0xFF0000,0xFF00,0xFF);
-				}
-				# this effect appears randomly on not selected (animated) menu elements
+                                if (!defined($cursor_tmp)) {
+                                        $cursor_tmp = SDL::Surface->new( SDL_SWSURFACE, $imgbin{menu_cursor}{$m}[0]->w,  $imgbin{menu_cursor}{$m}[0]->h, 32, 0xFF000000,0xFF0000,0xFF00,0xFF);
+                                }
+                                # this effect appears randomly on not selected (animated) menu elements
                 Games::FrozenBubble::CStuff::pixelize($cursor_tmp, $imgbin{menu_cursor}{"${m}alpha"}[$pdata{cursor_img}{$m}]);
-				SDL::Video::blit_surface( $cursor_tmp, SDL::Rect->new(0,0,$cursor_tmp->w,$cursor_tmp->h), $app, $cursor_rect);
+                                SDL::Video::blit_surface( $cursor_tmp, SDL::Rect->new(0,0,$cursor_tmp->w,$cursor_tmp->h), $app, $cursor_rect);
             }
-			else {
-				# not animated menu item
-              	SDL::Video::blit_surface( $imgbin{menu_cursor}{"${m}alpha"}[$pdata{cursor_img}{$m}], SDL::Rect->new(0,0,$imgbin{menu_cursor}{"${m}alpha"}[$pdata{cursor_img}{$m}]->w,$imgbin{menu_cursor}{"${m}alpha"}[$pdata{cursor_img}{$m}]->h), $app, $cursor_rect);
+                        else {
+                                # not animated menu item
+                SDL::Video::blit_surface( $imgbin{menu_cursor}{"${m}alpha"}[$pdata{cursor_img}{$m}], SDL::Rect->new(0,0,$imgbin{menu_cursor}{"${m}alpha"}[$pdata{cursor_img}{$m}]->w,$imgbin{menu_cursor}{"${m}alpha"}[$pdata{cursor_img}{$m}]->h), $app, $cursor_rect);
             }
         }
-		else {
-			# blits the animated icon for the selected menu item
-			SDL::Video::blit_surface( $imgbin{menu_cursor}{$m}[$pdata{cursor_img}{$m}], SDL::Rect->new(0,0,$imgbin{menu_cursor}{$m}[$pdata{cursor_img}{$m}]->w,$imgbin{menu_cursor}{$m}[$pdata{cursor_img}{$m}]->h), $app, $cursor_rect);
+                else {
+                        # blits the animated icon for the selected menu item
+                        SDL::Video::blit_surface( $imgbin{menu_cursor}{$m}[$pdata{cursor_img}{$m}], SDL::Rect->new(0,0,$imgbin{menu_cursor}{$m}[$pdata{cursor_img}{$m}]->w,$imgbin{menu_cursor}{$m}[$pdata{cursor_img}{$m}]->h), $app, $cursor_rect);
         }
         return $cursor_rect;
     };
 
     my $menu_update = sub {
-		@update_rects = ();
-		foreach my $m (keys %menu_entries) {
-			member($menu_entries{$m}->{pos}, @menu_invalids) or next;
-			my $txt = "txt_$m";
-			$txt .= $menu_entries{$m}->{pos} == $current_pos ? '_over' : '_off';
-			erase_image_from($imgbin{$txt}, $MENU_XPOS, $menu_ypos{$m}, $back_start);
-			put_image($imgbin{$txt}, $MENU_XPOS, $menu_ypos{$m});
-			$cursor_save_bg{$m} = undef;
-			$display_cursor->($m, $menu_entries{$m}->{pos} != $current_pos);
-		}
-		@menu_invalids = ();
-		$draw_logo->('no-update');
-		SDL::Video::update_rects($app, @update_rects);
-		@update_rects = ();
+                @update_rects = ();
+                foreach my $m (keys %menu_entries) {
+                        member($menu_entries{$m}->{pos}, @menu_invalids) or next;
+                        my $txt = "txt_$m";
+                        $txt .= $menu_entries{$m}->{pos} == $current_pos ? '_over' : '_off';
+                        erase_image_from($imgbin{$txt}, $MENU_XPOS, $menu_ypos{$m}, $back_start);
+                        put_image($imgbin{$txt}, $MENU_XPOS, $menu_ypos{$m});
+                        $cursor_save_bg{$m} = undef;
+                        $display_cursor->($m, $menu_entries{$m}->{pos} != $current_pos);
+                }
+                @menu_invalids = ();
+                $draw_logo->('no-update');
+                SDL::Video::update_rects($app, @update_rects);
+                @update_rects = ();
     };
 
     $invalidate_all->();
@@ -5682,10 +5682,10 @@ sub menu {
     my $start_game = 0;
     my ($BANNER_START, $BANNER_SPACING) = (1000, 80);
     my %banners = (artwork => $BANNER_START,
-		   soundtrack => $BANNER_START + $imgbin{banner_artwork}->w + $BANNER_SPACING,
-		   cpucontrol => $BANNER_START + $imgbin{banner_artwork}->w + $BANNER_SPACING
-		                 + $imgbin{banner_soundtrack}->w + $BANNER_SPACING,
-		   leveleditor => $BANNER_START + $imgbin{banner_artwork}->w + $BANNER_SPACING
+                   soundtrack => $BANNER_START + $imgbin{banner_artwork}->w + $BANNER_SPACING,
+                   cpucontrol => $BANNER_START + $imgbin{banner_artwork}->w + $BANNER_SPACING
+                                 + $imgbin{banner_soundtrack}->w + $BANNER_SPACING,
+                   leveleditor => $BANNER_START + $imgbin{banner_artwork}->w + $BANNER_SPACING
                                  + $imgbin{banner_soundtrack}->w + $BANNER_SPACING
                                  + $imgbin{banner_cpucontrol}->w + $BANNER_SPACING);
     my ($BANNER_MINX, $BANNER_MAXX, $BANNER_Y) = (304, 596, 243);
@@ -5694,17 +5694,17 @@ sub menu {
     my $time_counter;
 
     while (!$start_game) {
-	my $synchro_ticks = SDL::get_ticks();
+        my $synchro_ticks = SDL::get_ticks();
 
-	$graphics_level > 1 and SDL::Video::blit_surface($back_start, $banner_rect, $app, $banner_rect);
+        $graphics_level > 1 and SDL::Video::blit_surface($back_start, $banner_rect, $app, $banner_rect);
 
-	SDL::Events::pump_events();
-	while (SDL::Events::poll_event($event)) {
+        SDL::Events::pump_events();
+        while (SDL::Events::poll_event($event)) {
             my $keypressed = extended_keypress($event);
             if ($keypressed) {
                 if ($keypressed eq SDLK_PAUSE) {
                     my $time_pause = SDL::get_ticks();
-		    SDL::Events::pump_events() while SDL::Events::poll_event($event);
+                    SDL::Events::pump_events() while SDL::Events::poll_event($event);
                   pause_menu:
                     while (1) {
                         SDL::Events::wait_event($event);
@@ -5718,13 +5718,13 @@ sub menu {
                         }
                     }
                 }
-				my $keys_ref = SDL::Events::get_key_state();
+                                my $keys_ref = SDL::Events::get_key_state();
                 if ($keys_ref->[SDLK_LCTRL] == SDL_PRESSED
                     && $keypressed == SDLK_n) {
                     $logo_candy_method = (int($logo_candy_method) + 1) % 9;
                     $candy_init->();
                 }
-		if (member($keypressed, (SDLK_DOWN, SDLK_RIGHT))) {
+                if (member($keypressed, (SDLK_DOWN, SDLK_RIGHT))) {
                     push @menu_invalids, $current_pos;
                     if ($current_pos < max(map { $menu_entries{$_}->{pos} } keys %menu_entries)) {
                         $current_pos++;
@@ -5734,80 +5734,80 @@ sub menu {
                     push @menu_invalids, $current_pos;
                     play_sound('menu_change');
                     $menu_update->();
-		}
-		if (member($keypressed, (SDLK_UP, SDLK_LEFT))) {
+                }
+                if (member($keypressed, (SDLK_UP, SDLK_LEFT))) {
                     push @menu_invalids, $current_pos;
                     if ($current_pos > 1) {
                         $current_pos--;
                     } else {
                         $current_pos = max(map { $menu_entries{$_}->{pos} } keys %menu_entries);
                     }
-		    push @menu_invalids, $current_pos;
-		    play_sound('menu_change');
+                    push @menu_invalids, $current_pos;
+                    play_sound('menu_change');
                     $menu_update->();
-		}
-		if (member($keypressed, (SDLK_RETURN, SDLK_SPACE, SDLK_KP_ENTER))) {
-		    play_sound('menu_selected');
-		    push @menu_invalids, $current_pos;
-		    foreach my $m (keys %menu_entries) {
-				if ($menu_entries{$m}->{pos} == $current_pos) {
-					if ($menu_entries{$m}->{type} =~ /^run/) {
-						$menu_entries{$m}->{run}->();
-						$menu_entries{$m}->{type} eq 'rungame' and $start_game = 1;
-					}
-					if ($menu_entries{$m}->{type} eq 'range') {
-						$menu_entries{$m}->{value}++;
-						$menu_entries{$m}->{value} = $menu_entries{$m}->{valuemin} if $menu_entries{$m}->{value} > $menu_entries{$m}->{valuemax};
-						$menu_entries{$m}->{change}->($menu_entries{$m}->{value});
-					}
-				}
-		    }
+                }
+                if (member($keypressed, (SDLK_RETURN, SDLK_SPACE, SDLK_KP_ENTER))) {
+                    play_sound('menu_selected');
+                    push @menu_invalids, $current_pos;
+                    foreach my $m (keys %menu_entries) {
+                                if ($menu_entries{$m}->{pos} == $current_pos) {
+                                        if ($menu_entries{$m}->{type} =~ /^run/) {
+                                                $menu_entries{$m}->{run}->();
+                                                $menu_entries{$m}->{type} eq 'rungame' and $start_game = 1;
+                                        }
+                                        if ($menu_entries{$m}->{type} eq 'range') {
+                                                $menu_entries{$m}->{value}++;
+                                                $menu_entries{$m}->{value} = $menu_entries{$m}->{valuemin} if $menu_entries{$m}->{value} > $menu_entries{$m}->{valuemax};
+                                                $menu_entries{$m}->{change}->($menu_entries{$m}->{value});
+                                        }
+                                }
+                    }
                     $menu_update->();
-		}
+                }
                 handle_whenever_events($keypressed);
 
                 if ($keypressed eq SDLK_ESCAPE) {
                     cleanup_and_exit();
-		}
+                }
                 $synchro_ticks = SDL::get_ticks();  #- avoid stopping candy
                 $time_counter = 0;  #- reset counter for demos
-	    }
+            }
             if ($event->type == SDL_QUIT) {
                 cleanup_and_exit();
             }
-	}
+        }
 
-	if ($graphics_level > 1) {
-	    my $banner_pos if 0;
-	    $banner_pos ||= 670;
-	    foreach my $b (keys %banners) {
-		my $xpos = $banners{$b} - $banner_pos;
-		my $image = $imgbin{"banner_$b"};
+        if ($graphics_level > 1) {
+            my $banner_pos if 0;
+            $banner_pos ||= 670;
+            foreach my $b (keys %banners) {
+                my $xpos = $banners{$b} - $banner_pos;
+                my $image = $imgbin{"banner_$b"};
 
-		$xpos > $banners_max/2 and $xpos = $banners{$b} - ($banner_pos + $banners_max);
+                $xpos > $banners_max/2 and $xpos = $banners{$b} - ($banner_pos + $banners_max);
 
-		if ($xpos < $BANNER_MAXX && $xpos + $image->w >= 0) {
-		    my $irect = SDL::Rect->new(-$xpos, 0,  min($image->w+$xpos, $BANNER_MAXX-$BANNER_MINX),
+                if ($xpos < $BANNER_MAXX && $xpos + $image->w >= 0) {
+                    my $irect = SDL::Rect->new(-$xpos, 0,  min($image->w+$xpos, $BANNER_MAXX-$BANNER_MINX),
                                                 $image->h);
-					SDL::Video::blit_surface( $image, $irect, $app, SDL::Rect->new( $BANNER_MINX,  $BANNER_Y, $image->w, $image->h) );
-		}
-	    }
-	    $banner_pos++;
-	    $banner_pos >= $banners_max and $banner_pos = 1;
-	    SDL::Video::update_rects($app, $banner_rect);
+                                        SDL::Video::blit_surface( $image, $irect, $app, SDL::Rect->new( $BANNER_MINX,  $BANNER_Y, $image->w, $image->h) );
+                }
+            }
+            $banner_pos++;
+            $banner_pos >= $banners_max and $banner_pos = 1;
+            SDL::Video::update_rects($app, $banner_rect);
 
             #- animate and break cursor
             foreach my $m (keys %menu_entries) {
                 if ($menu_entries{$m}->{pos} == $current_pos) {
                     $pdata{cursor_img}{$m}++;
                     $pdata{cursor_img}{$m} >= @{$imgbin{menu_cursor}{$m}} and $pdata{cursor_img}{$m} = 0;
-		    SDL::Video::update_rects($app, $display_cursor->($m, 0));
+                    SDL::Video::update_rects($app, $display_cursor->($m, 0));
 
                 } else {
                     if ($broken_cursors{$m}) {
                         $broken_cursors{$m}--;
                         if ($broken_cursors{$m}) {
-				SDL::Video::update_rects($app, $display_cursor->($m, 1, 1));
+                                SDL::Video::update_rects($app, $display_cursor->($m, 1, 1));
                         } else {
                            SDL::Video::update_rects($app, $display_cursor->($m, 1));
                         }
@@ -5833,9 +5833,9 @@ sub menu {
             if ($blink_green > 0) {
                 $blink_green--;
                 if (!$blink_green) {
-			SDL::Video::blit_surface ( $back_start, $green_left, $app, $green_left);
-          		SDL::Video::blit_surface ( $back_start, $green_right, $app, $green_right);
-			SDL::Video::update_rects ($app, $green_left, $green_right);
+                        SDL::Video::blit_surface ( $back_start, $green_left, $app, $green_left);
+                        SDL::Video::blit_surface ( $back_start, $green_right, $app, $green_right);
+                        SDL::Video::update_rects ($app, $green_left, $green_right);
                     if (rand(3) <= 1) {  #- reblink
                         $blink_green = -5;
                     }
@@ -5844,9 +5844,9 @@ sub menu {
                 $blink_green++;
                 if (!$blink_green) {
                     $blink_green = 3;
-                    	SDL::Video::blit_surface ( $imgbin{menu_closedeye_green_left}, SDL::Rect->new(0,0,$imgbin{menu_closedeye_green_left}->w,$imgbin{menu_closedeye_green_left}->h), $app, $green_left);
-                    	SDL::Video::blit_surface ( $imgbin{menu_closedeye_green_right}, SDL::Rect->new(0,0,$imgbin{menu_closedeye_green_right}->w,$imgbin{menu_closedeye_green_right}->h), $app, $green_right);
-		    SDL::Video::update_rects( $app, $green_left, $green_right);
+                        SDL::Video::blit_surface ( $imgbin{menu_closedeye_green_left}, SDL::Rect->new(0,0,$imgbin{menu_closedeye_green_left}->w,$imgbin{menu_closedeye_green_left}->h), $app, $green_left);
+                        SDL::Video::blit_surface ( $imgbin{menu_closedeye_green_right}, SDL::Rect->new(0,0,$imgbin{menu_closedeye_green_right}->w,$imgbin{menu_closedeye_green_right}->h), $app, $green_right);
+                    SDL::Video::update_rects( $app, $green_left, $green_right);
                 }
             } else {
                 if (rand(200) <= 1) {
@@ -5883,15 +5883,15 @@ sub menu {
                 }
             }
 
-	}
+        }
 
-	if ($graphics_level > 2 && $speed_ok) {
+        if ($graphics_level > 2 && $speed_ok) {
             $draw_logo->();
         }
 
-	my $to_wait = $TARGET_ANIM_SPEED - (SDL::get_ticks() - $synchro_ticks);
+        my $to_wait = $TARGET_ANIM_SPEED - (SDL::get_ticks() - $synchro_ticks);
 #        print "$to_wait\n";
-	if ($to_wait > 0) {
+        if ($to_wait > 0) {
             Games::FrozenBubble::CStuff::fbdelay($to_wait);
             $speed_ok and $speed_ok = 4;
         } else {
@@ -5959,9 +5959,9 @@ sub choose_levelset() {
 
     } else {
 
-	if (@levelsets <= 1 && !$choose_level) {
-	    load_levelset($levelsets[0]);
-	} else {
+        if (@levelsets <= 1 && !$choose_level) {
+            load_levelset($levelsets[0]);
+        } else {
             #if they are choosing the start level, we need to ensure the default
             #levelset is in $FBLEVELS or the dialog won't display properly
             if ($choose_level) {
@@ -5970,15 +5970,15 @@ sub choose_levelset() {
                 -f "$FBLEVELS/default-levelset" or cp_af("$FPATH/data/levels", "$FBLEVELS/default-levelset");
             }
 
-	    Games::FrozenBubble::LevelEditor::init_app('embedded', $app);
+            Games::FrozenBubble::LevelEditor::init_app('embedded', $app);
             Games::FrozenBubble::LevelEditor::create_play_levelset_dialog($choose_level, $levels{current});
-	    SDL::Mouse::show_cursor(1);
+            SDL::Mouse::show_cursor(1);
             my @game_info = Games::FrozenBubble::LevelEditor::handle_events();
             @game_info or return;
             load_levelset("$FBLEVELS/$game_info[0]");
             $levels{current} = $game_info[1];
-	    SDL::Mouse::show_cursor(0);
-	}
+            SDL::Mouse::show_cursor(0);
+        }
     }
 
     return 1;
@@ -5998,38 +5998,38 @@ sub replay {
             $fh->close;
             local *F;
             local $/ = undef;
-       			return unless -e $filename;
-			if( eval {require Compress::Bzip2} ) {
-				my $bz      = Compress::Bzip2::bzopen($filename, 'r');
-				$replayfile = '';
-				my $line    = '';
-				while($bz->bzreadline($line) > 0){ $replayfile .= $line; }
-				
-				$bz->bzclose();
+                        return unless -e $filename;
+                        if( eval {require Compress::Bzip2} ) {
+                                my $bz      = Compress::Bzip2::bzopen($filename, 'r');
+                                $replayfile = '';
+                                my $line    = '';
+                                while($bz->bzreadline($line) > 0){ $replayfile .= $line; }
+                                
+                                $bz->bzclose();
 
-			}
-			else {
-				$replayfile or print("Module Compress::Bzip2 is missing, not displaying playback.\n"), return;
-			}
-			unlink ($filename);
+                        }
+                        else {
+                                $replayfile or print("Module Compress::Bzip2 is missing, not displaying playback.\n"), return;
+                        }
+                        unlink ($filename);
          }
     } else {
         if ($replayfile =~ /\.bz2$/) {
             local *F;
             local $/ = undef;
             my $filename = $replayfile;
-			return unless -e $filename;
-			if( eval('use Compress::Bzip2; 1') ) {
-				my $bz      = Compress::Bzip2::bzopen($filename, 'r');
-				$replayfile = '';
-				my $line    = '';
-				while($bz->bzreadline($line) > 0){ $replayfile .= $line; }
-				
-				$bz->bzclose();
-			}
-			else {
-				$replayfile or print("Module Compress::Bzip2 is missing, not displaying playback.\n"), return;
-			}
+                        return unless -e $filename;
+                        if( eval('use Compress::Bzip2; 1') ) {
+                                my $bz      = Compress::Bzip2::bzopen($filename, 'r');
+                                $replayfile = '';
+                                my $line    = '';
+                                while($bz->bzreadline($line) > 0){ $replayfile .= $line; }
+                                
+                                $bz->bzclose();
+                        }
+                        else {
+                                $replayfile or print("Module Compress::Bzip2 is missing, not displaying playback.\n"), return;
+                        }
         } else {
             $replayfile = cat_($replayfile);
         }
@@ -6152,10 +6152,10 @@ while (1) {
             $start_time = 0;
         }
 
-	if ($died =~ /^new_game/) {
+        if ($died =~ /^new_game/) {
             new_game() or goto go_to_menu;
 
-	} elsif ($died =~ /^quit/) {
+        } elsif ($died =~ /^quit/) {
             if (is_mp_game()) {
                 if ($pdata{gametype} eq 'lan') {
                     Games::FrozenBubble::Net::disconnect();
@@ -6175,7 +6175,7 @@ while (1) {
                 new_game();
             }
 
-	} else {
+        } else {
             if (!$recorded) {
                 print "\n******************************************************************************\n"
                     . "* Unexpected abort in process! Forcing record: please send the record file to FB authors so that they fix the bug if possible!\n"
@@ -6187,8 +6187,8 @@ while (1) {
                     . "* Unexpected abort in process! Please send the record file to FB authors so that they fix the bug if possible!\n"
                     . "******************************************************************************\n\n";
             }
-	    die $died;
-	}
+            die $died;
+        }
     }
 }
 

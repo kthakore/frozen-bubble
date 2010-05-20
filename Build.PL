@@ -63,7 +63,7 @@ My::Builder->new(
         'parent'                    => 0,
         'Alien::SDL'                => '1.404',
         'SDL'                       => '2.405',
-	'ExtUtils::CBuilder'	    => 0,
+        'ExtUtils::CBuilder'        => 0,
         'Time::HiRes'               => 0,
         'Locale::Maketext::Simple'  => 0,
         'Module::Build'             => '0.36', # for share_dir

@@ -28,10 +28,10 @@ use vars qw(@ISA @EXPORT $FPATH $FLPATH $FBHOME $FBLEVELS $colourblind %POS_1P %
                     scores => { x => 74, 'y' => 103 },
                     progress => { x => 447, 'y' => 28},
                   },
-	    centerpanel => { x => 149, 'y' => 190 },
-	    pause_clip => { x => 263, 'y' => 212 },
+            centerpanel => { x => 149, 'y' => 190 },
+            pause_clip => { x => 263, 'y' => 212 },
             compressor_xpos => 318,
-	  );
+          );
 
 %POS_2P = ( p2 => { left_limit => 30, right_limit => 286, top_limit => 40, 'initial_bubble_y' => 390,
                     canon => { x => 108, 'y' => 356 },
@@ -46,7 +46,7 @@ use vars qw(@ISA @EXPORT $FPATH $FLPATH $FBHOME $FBLEVELS $colourblind %POS_1P %
                     left => { x => 30, 'y' => 40 },
                     progress => { x => 287, 'y' => 28 },
                   },
-	    p1 => { left_limit => 354, right_limit => 610, top_limit => 40, 'initial_bubble_y' => 390,
+            p1 => { left_limit => 354, right_limit => 610, top_limit => 40, 'initial_bubble_y' => 390,
                     canon => { x => 432, 'y' => 356 },
                     simpleshooter => { x => 481, 'y' => 405, diameter => 60 },
                     pinguin => { x => 210,  'y' => 420 },
@@ -58,8 +58,8 @@ use vars qw(@ISA @EXPORT $FPATH $FLPATH $FBHOME $FBLEVELS $colourblind %POS_1P %
                     chatting => { x => 390, 'y' => 442 },
                     progress => { x => 345, 'y' => 28 },
                   },
-	    centerpanel => { x => 153, 'y' => 190 },
-	  );
+            centerpanel => { x => 153, 'y' => 190 },
+          );
 $POS_2P{rp1} = $POS_2P{p2};  #- in net/lan 2p mode, use bigger graphics and positions
 
 %POS_MP = ( p1 => { left_limit => 190, right_limit => 446, top_limit => 44, 'initial_bubble_y' => 390,
@@ -131,8 +131,8 @@ $POS_2P{rp1} = $POS_2P{p2};  #- in net/lan 2p mode, use bigger graphics and posi
                      attack => { x => 496, 'y' => 442 },
                      progress => { x => 483, 'y' => 258 },
                    },
-	    centerpanel => { x => 149, 'y' => 190 },
-	  );
+            centerpanel => { x => 149, 'y' => 190 },
+          );
 
 $FBHOME   = "$ENV{HOME}/.frozen-bubble";
 $FBLEVELS = "$FBHOME/levels";
@@ -191,31 +191,31 @@ sub fold_left(&@) {
     $::a
 }
 sub output {
-	my $f = shift;
-	local *F;
-	chmod(0666, $f) if -e $f;
-	open(F, ">$f") or die "output in file $f failed: $!\n";
-	print F foreach @_;
-	close(F);
-	chmod(0666, $f);
+        my $f = shift;
+        local *F;
+        chmod(0666, $f) if -e $f;
+        open(F, ">$f") or die "output in file $f failed: $!\n";
+        print F foreach @_;
+        close(F);
+        chmod(0666, $f);
 }
 sub append_to_file {
-	my $f = shift;
-	local *F;
-	chmod(0666, $f) if -e $f;
-	open(F, ">>$f") or die "output in file $f failed: $!\n";
-	print F foreach @_;
-	close(F);
-	chmod(0666, $f);
-	1
+        my $f = shift;
+        local *F;
+        chmod(0666, $f) if -e $f;
+        open(F, ">>$f") or die "output in file $f failed: $!\n";
+        print F foreach @_;
+        close(F);
+        chmod(0666, $f);
+        1
 }
 sub min { my $n = shift; $_ < $n and $n = $_ foreach @_; $n }
 sub max { my $n = shift; $_ > $n and $n = $_ foreach @_; $n }
 sub backtrace {
     my $s;
     for (my $i = 1; caller($i); $i++) {
-	my ($package, $file, $line, $func) = caller($i);
-	$s .= "$func() called from $file:$line\n";
+        my ($package, $file, $line, $func) = caller($i);
+        $s .= "$func() called from $file:$line\n";
     }
     $s;
 }
@@ -227,24 +227,24 @@ sub cp_af {
     @_ == 1 || -d $dest or die "cp: copying multiple files, but last argument ($dest) is not a directory\n";
 
     foreach my $src (@_) {
-	my $dest = $dest;
-	-d $dest and $dest .= '/' . basename($src);
+        my $dest = $dest;
+        -d $dest and $dest .= '/' . basename($src);
 
-	unlink $dest;
+        unlink $dest;
 
-	if (-d $src) {
-	    -d $dest or mkdir $dest, (stat($src))[2] or die "mkdir: can't create directory $dest: $!\n";
-	    cp_af(glob_($src), $dest);
-	} elsif (-l $src) {
-	    unless (symlink((readlink($src) || die "readlink failed: $!"), $dest)) {
-		warn "symlink: can't create symlink $dest: $!\n";
-	    }
-	} else {
-	    local *F; open F, $src or die "can't open $src for reading: $!\n";
-	    local *G; open G, "> $dest";
-	    local $_; while (<F>) { print G $_ }
-	    chmod((stat($src))[2], $dest);
-	}
+        if (-d $src) {
+            -d $dest or mkdir $dest, (stat($src))[2] or die "mkdir: can't create directory $dest: $!\n";
+            cp_af(glob_($src), $dest);
+        } elsif (-l $src) {
+            unless (symlink((readlink($src) || die "readlink failed: $!"), $dest)) {
+                warn "symlink: can't create symlink $dest: $!\n";
+            }
+        } else {
+            local *F; open F, $src or die "can't open $src for reading: $!\n";
+            local *G; open G, "> $dest";
+            local $_; while (<F>) { print G $_ }
+            chmod((stat($src))[2], $dest);
+        }
     }
     1;
 }
@@ -262,7 +262,7 @@ sub partition(&@) {
     my $f = shift;
     my (@a, @b);
     foreach (@_) {
-	$f->($_) ? push(@a, $_) : push(@b, $_);
+        $f->($_) ? push(@a, $_) : push(@b, $_);
     }
     \@a, \@b;
 }
@@ -293,13 +293,13 @@ sub add_f4before_leaving {
 
     $Games::FrozenBubble::Stuff::before_leaving::_list->{$b}{$name} = $f;
     if (!$Games::FrozenBubble::Stuff::before_leaving::_added{$name}) {
-	$Games::FrozenBubble::Stuff::before_leaving::_added{$name} = 1;
-	no strict 'refs';
-	*{"Games::FrozenBubble::Stuff::before_leaving::$name"} = sub {
-	    my $f = $Games::FrozenBubble::Stuff::before_leaving::_list->{$_[0]}{$name} or die '';
-	    $name eq 'DESTROY' and delete $Games::FrozenBubble::Stuff::before_leaving::_list->{$_[0]};
-	    &$f;
-	};
+        $Games::FrozenBubble::Stuff::before_leaving::_added{$name} = 1;
+        no strict 'refs';
+        *{"Games::FrozenBubble::Stuff::before_leaving::$name"} = sub {
+            my $f = $Games::FrozenBubble::Stuff::before_leaving::_list->{$_[0]}{$name} or die '';
+            $name eq 'DESTROY' and delete $Games::FrozenBubble::Stuff::before_leaving::_list->{$_[0]};
+            &$f;
+        };
     }
 }
 #- ! the functions are not called in the order wanted, in case of multiple before_leaving :(
@@ -345,12 +345,12 @@ sub dbgnet {
 sub migrate_resource_files {
     mkdir $FBHOME;
     my %files = (
-	"$ENV{HOME}/.fbhighlevelshistory" => "highlevelshistory",
-	"$ENV{HOME}/.fb_records" => "records",
-	"$ENV{HOME}/.fblevels" => "levels",
-	"$ENV{HOME}/.fbhighscores" => "highscores",
-	"$ENV{HOME}/.fbhighscores-mptrain" => "highscores-mptrain",
-	"$ENV{HOME}/.fbrc" => "rc"
+        "$ENV{HOME}/.fbhighlevelshistory" => "highlevelshistory",
+        "$ENV{HOME}/.fb_records" => "records",
+        "$ENV{HOME}/.fblevels" => "levels",
+        "$ENV{HOME}/.fbhighscores" => "highscores",
+        "$ENV{HOME}/.fbhighscores-mptrain" => "highscores-mptrain",
+        "$ENV{HOME}/.fbrc" => "rc"
     );
     foreach my $file (keys %files) {
         -r $file or next;

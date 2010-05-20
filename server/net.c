@@ -118,7 +118,7 @@ static ssize_t send_line(int fd, char* msg)
         int size;
         if (current_command)
                 size = snprintf(buf, sizeof(buf), "FB/%d.%d %s: %s\n", proto_major, proto_minor, current_command, msg);
-        else 
+        else
                 size = snprintf(buf, sizeof(buf), "FB/%d.%d ???: %s\n", proto_major, proto_minor, msg);
         if (size > sizeof(buf)-1) {
                 size = sizeof(buf)-1;
@@ -289,11 +289,11 @@ static void handle_incoming_data_generic(gpointer data, gpointer user_data, int 
                                                 conn_terminated(fd, "process_msg said to shutdown this connection");
                                                 return;
                                         }
-                                        
+
                                         // process_msg > talk (flooding) > conn_terminated
                                         if (interrupt_loop_processing)
                                             return;
-                                        
+
                                         if (eol + 1 - ptr < len) {
                                                 ssize_t remaining = len - (eol + 1 - ptr);
                                                 l2(OUTPUT_TYPE_DEBUG, "multiple non-prio messages for %d, buffering (%zd bytes)", fd, remaining);
@@ -345,7 +345,7 @@ static void handle_udp_request(void)
         struct sockaddr_in client_addr;
         socklen_t client_len = sizeof(client_addr);
         char * answer;
-        
+
         if (!ok_input_beginning)   // C sux
                 ok_input_beginning = asprintf_(ok_input_beginning_base, proto_major);
         if (!ok_answer)
@@ -359,7 +359,7 @@ static void handle_udp_request(void)
                 l1(OUTPUT_TYPE_ERROR, "recvfrom: %s", strerror(errno));
                 return;
         }
-        
+
         l2(OUTPUT_TYPE_DEBUG, "UDP server receives %d bytes from %s.", n, inet_ntoa(client_addr.sin_addr));
         if (strncmp(msg, ok_input_beginning, strlen(ok_input_beginning)) || !strstr(msg, ok_input_end) || (lan_game_mode && g_list_length(conns_prio) > 0)) {
                 answer = fl_unrecognized;
@@ -368,7 +368,7 @@ static void handle_udp_request(void)
                 answer = ok_answer;
                 l0(OUTPUT_TYPE_DEBUG, "Valid FB server probe, answering.");
         }
-        
+
         if (sendto(udp_server_socket, answer, strlen(answer), 0, (struct sockaddr *) &client_addr, sizeof(client_addr)) != strlen(answer)) {
                 l1(OUTPUT_TYPE_ERROR, "sendto: %s", strerror(errno));
         }
@@ -425,7 +425,7 @@ void connections_manager(void)
                                 FD_SET(tcp_server_socket, &conns_set);
                         if (udp_server_socket != -1)
                                 FD_SET(udp_server_socket, &conns_set);
-               
+
                         tv.tv_sec = 30;
                         tv.tv_usec = 0;
 
@@ -840,7 +840,7 @@ void create_server(int argc, char **argv)
                 int c = getopt(argc, argv, "a:A:c:df:g:hH:i:lLm:n:o:p:P:qt:u:z");
                 if (c == -1)
                         break;
-                
+
                 if (c == 'c') {
                         FILE* f;
                         printf("-c: reading configuration file %s\n", optarg);
@@ -933,152 +933,152 @@ void create_server(int argc, char **argv)
 
 static int mygethostbyname(char * name, struct in_addr * addr)
 {
-	struct hostent * h;
+        struct hostent * h;
 
         h = gethostbyname(name);
-	if (!h) {
+        if (!h) {
                 l1(OUTPUT_TYPE_DEBUG, "Unknown host %s", name);
                 return -1;
 
-	} else if (h->h_addr_list && (h->h_addr_list)[0]) {
-		memcpy(addr, (h->h_addr_list)[0], sizeof(*addr));
+        } else if (h->h_addr_list && (h->h_addr_list)[0]) {
+                memcpy(addr, (h->h_addr_list)[0], sizeof(*addr));
                 l2(OUTPUT_TYPE_DEBUG, "%s is at %s", name, inet_ntoa(*addr));
-		return 0;
-	}
-	return -1;
+                return 0;
+        }
+        return -1;
 }
 
 static char * http_get(char * host, int port, char * path)
 {
-	char * buf, * ptr, * user_agent;
-	char headers[4096];
-	char * nextChar = headers;
-	int checkedCode;
-	struct in_addr serverAddress;
-	struct pollfd polls;
-	int sock;
+        char * buf, * ptr, * user_agent;
+        char headers[4096];
+        char * nextChar = headers;
+        int checkedCode;
+        struct in_addr serverAddress;
+        struct pollfd polls;
+        int sock;
         int size, bufsize, dlsize;
-	int rc;
+        int rc;
         ssize_t bytes;
-	struct sockaddr_in destPort;
-	char * header_content_length = "Content-Length: ";
+        struct sockaddr_in destPort;
+        char * header_content_length = "Content-Length: ";
         struct utsname uname_;
 
         l3(OUTPUT_TYPE_DEBUG, "HTTP_GET: retrieving http://%s:%d%s", host, port, path);
 
-	if ((rc = mygethostbyname(host, &serverAddress))) {
+        if ((rc = mygethostbyname(host, &serverAddress))) {
                 l1(OUTPUT_TYPE_ERROR, "HTTP_GET: cannot resolve %s", host);
                 return NULL;
         }
 
-	sock = socket(AF_INET, SOCK_STREAM, IPPROTO_IP);
-	if (sock < 0) {
+        sock = socket(AF_INET, SOCK_STREAM, IPPROTO_IP);
+        if (sock < 0) {
                 l2(OUTPUT_TYPE_ERROR, "HTTP_GET: cannot create socket for connection to %s:%d", host, port);
-		return NULL;
-	}
+                return NULL;
+        }
 
-	destPort.sin_family = AF_INET;
-	destPort.sin_port = htons(port);
-	destPort.sin_addr = serverAddress;
+        destPort.sin_family = AF_INET;
+        destPort.sin_port = htons(port);
+        destPort.sin_addr = serverAddress;
 
-	if (connect(sock, (struct sockaddr *) &destPort, sizeof(destPort))) {
-		close(sock);
+        if (connect(sock, (struct sockaddr *) &destPort, sizeof(destPort))) {
+                close(sock);
                 l2(OUTPUT_TYPE_ERROR, "HTTP_GET: cannot connect to %s:%d", host, port);
-		return NULL;
-	}
+                return NULL;
+        }
 
         uname(&uname_);
         user_agent = asprintf_("Frozen-Bubble server version 0.001_1 (protocol version %d.%d) on %s/%s\n", proto_major, proto_minor, uname_.sysname, uname_.machine);
         buf = asprintf_("GET %s HTTP/0.9\r\nHost: %s\r\nUser-Agent: %s\r\n\r\n", path, host, user_agent);
         free(user_agent);
-	if (write(sock, buf, strlen(buf)) != strlen(buf)) {
+        if (write(sock, buf, strlen(buf)) != strlen(buf)) {
                 close(sock);
                 free(buf);
                 l2(OUTPUT_TYPE_ERROR, "HTTP_GET: cannot write to socket for connection to %s:%d", host, port);
-		return NULL;
+                return NULL;
         }
         free(buf);
 
-	/* This is fun (well, fun for ewt); read the response a character at a time until we:
+        /* This is fun (well, fun for ewt); read the response a character at a time until we:
 
-	   1) Get our first \r\n; which lets us check the return code
-	   2) Get a \r\n\r\n, which means we're done */
+           1) Get our first \r\n; which lets us check the return code
+           2) Get a \r\n\r\n, which means we're done */
 
-	*nextChar = '\0';
-	checkedCode = 0;
-	while (!strstr(headers, "\r\n\r\n")) {
-		polls.fd = sock;
-		polls.events = POLLIN;
-		rc = poll(&polls, 1, 20*1000);
+        *nextChar = '\0';
+        checkedCode = 0;
+        while (!strstr(headers, "\r\n\r\n")) {
+                polls.fd = sock;
+                polls.events = POLLIN;
+                rc = poll(&polls, 1, 20*1000);
 
-		if (rc == 0) {
-			close(sock);
+                if (rc == 0) {
+                        close(sock);
                         l3(OUTPUT_TYPE_ERROR, "HTTP_GET: timeout retrieving http://%s:%d%s", host, port, path);
-			return NULL;
-		} else if (rc < 0) {
-			close(sock);
+                        return NULL;
+                } else if (rc < 0) {
+                        close(sock);
                         l3(OUTPUT_TYPE_ERROR, "HTTP_GET: I/O error retrieving http://%s:%d%s", host, port, path);
-			return NULL;
-		}
+                        return NULL;
+                }
 
-		if (read(sock, nextChar, 1) != 1) {
-			close(sock);
+                if (read(sock, nextChar, 1) != 1) {
+                        close(sock);
                         l3(OUTPUT_TYPE_ERROR, "HTTP_GET: I/O error retrieving http://%s:%d%s", host, port, path);
-			return NULL;
-		}
+                        return NULL;
+                }
 
-		nextChar++;
-		*nextChar = '\0';
+                nextChar++;
+                *nextChar = '\0';
 
-		if (nextChar + 1 - headers == sizeof(headers)) {
-			close(sock);
+                if (nextChar + 1 - headers == sizeof(headers)) {
+                        close(sock);
                         l3(OUTPUT_TYPE_ERROR, "HTTP_GET: I/O error retrieving http://%s:%d%s", host, port, path);
-			return NULL;
-		}
+                        return NULL;
+                }
 
-		if (!checkedCode && strstr(headers, "\r\n")) {
-			char * start, * end;
+                if (!checkedCode && strstr(headers, "\r\n")) {
+                        char * start, * end;
 
-			checkedCode = 1;
-			start = headers;
-			while (!isspace(*start) && *start)
+                        checkedCode = 1;
+                        start = headers;
+                        while (!isspace(*start) && *start)
                                 start++;
-			if (!*start) {
-				close(sock);
+                        if (!*start) {
+                                close(sock);
                                 l3(OUTPUT_TYPE_ERROR, "HTTP_GET: I/O error retrieving http://%s:%d%s", host, port, path);
                                 return NULL;
-			}
-			start++;
+                        }
+                        start++;
 
-			end = start;
-			while (!isspace(*end) && *end)
+                        end = start;
+                        while (!isspace(*end) && *end)
                                 end++;
-			if (!*end) {
-				close(sock);
+                        if (!*end) {
+                                close(sock);
                                 l3(OUTPUT_TYPE_ERROR, "HTTP_GET: I/O error retrieving http://%s:%d%s", host, port, path);
                                 return NULL;
-			}
+                        }
 
-			*end = '\0';
+                        *end = '\0';
                         l1(OUTPUT_TYPE_DEBUG, "HTTP_GET: server response '%s'", start);
-			if (strcmp(start, "200")) {
-				close(sock);
+                        if (strcmp(start, "200")) {
+                                close(sock);
                                 l4(OUTPUT_TYPE_ERROR, "HTTP_GET: bad server response %s retrieving http://%s:%d%s", start, host, port, path);
                                 return NULL;
-			}
+                        }
 
-			*end = ' ';
-		}
-	}
+                        *end = ' ';
+                }
+        }
 
-	if ((buf = strstr(headers, header_content_length))) {
-		size = charstar_to_int(buf + strlen(header_content_length));
+        if ((buf = strstr(headers, header_content_length))) {
+                size = charstar_to_int(buf + strlen(header_content_length));
                 bufsize = size + 1;
         } else {
                 size = -1;
                 bufsize = 4096;
         }
-        
+
         dlsize = 0;
         buf = ptr = malloc_(bufsize);
         while (1) {
