@@ -4,7 +4,7 @@
 
 README - Frozen-Bubble
 
-Copyright © 2000-2008 The Frozen-Bubble Team.
+Copyright © 2000-2010 The Frozen-Bubble Team.
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -14,8 +14,7 @@ Check the AUTHORS file for the full story of who did what.
 
 L<http://www.frozen-bubble.org/>
 
-Notice: the following is an historic explanation of Frozen-Bubble
-written in 2002 which is kept here for information:
+The following is an historic explanation of Frozen-Bubble, written in 2002:
 
 This game began when I, as a packager for Mandrakesoft L<http://mandrakesoft.com/> and
 amateur of the Perl language (which I discovered reading the
