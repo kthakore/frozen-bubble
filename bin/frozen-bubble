@@ -4682,7 +4682,7 @@ sub smg_choose_game() {
                         } else {
                             #- for RTL language, force beginning on the right, but non RTL content will appear wrongly so at least don't do for pure ASCII
                             if ($is_rtl && !is_only_ascii($text)) {
-                                $text = "?<$mynick> $text";
+                                $text = "\x{202b}<$mynick> $text";
                             } else {
                                 $text = "<$mynick> $text";
                             }
