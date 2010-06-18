@@ -3540,11 +3540,11 @@ sub choose_1p_game_mode() {
     while (1) {
                 my $synchro_ticks = SDL::get_ticks();
 # commented out because otherwise we see only a white box instead of highlighted background image
-#        if ($graphics_level > 1) {
-#            $draw_overlook->();
-#            SDL::Video::update_rects($app, @update_rects);
-#            @update_rects = ();
-#        }
+        if ($graphics_level > 1) {
+            $draw_overlook->();
+            SDL::Video::update_rects($app, @update_rects);
+            @update_rects = ();
+        }
         SDL::Events::pump_events();
         while (SDL::Events::poll_event($event) != 0) {
             if ($event->type == SDL_KEYDOWN) {
