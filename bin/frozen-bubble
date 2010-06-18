@@ -4082,9 +4082,9 @@ sub smg_choose_game() {
     my $free_players;
     my $ingame = 0;
     my $players_in_game = '';
-    my $label_outer_color = SDL::Color->new( 0x7b,  0x2f,  0x03);
-    my $label_background_color = SDL::Color->new( 0x5b,  0x1f,  0x09);
-    my $label_line_color = SDL::Color->new( 0x9b,  0x3f,  0x03);
+    my $label_outer_color = SDL::Video::map_RGB( $app->format, 0x7b,  0x2f,  0x03); #Map the color to app format
+    my $label_background_color = SDL::Video::map_RGB( $app->format,  0x5b,  0x1f,  0x09); #Map the color to app format
+    my $label_line_color = SDL::Color->new( 0x9b,  0x3f,  0x03); #this is sent to line color in CStuff.xs SDL::Color expected
     my $redraw = sub {
         $erase->();
 
