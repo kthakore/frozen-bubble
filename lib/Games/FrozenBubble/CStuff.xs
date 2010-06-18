@@ -1385,9 +1385,10 @@ void overlook_init_(SDL_Surface * surf)
 void overlook_(SDL_Surface * dest, SDL_Surface * orig, int step, int pivot)
 {
         int Bpp = dest->format->BytesPerPixel;
-        Uint8 *ptr;
+      
+        Uint8 Ar, Ag, Ab, Aa, Br, Bg, Bb, Ba, Cr, Cg, Cb, Ca, Dr, Dg, Db, Da;
         int x_, y_;
-        int a;
+        Uint8 r, g, b, a;
         double shading = 1 - CLAMP((double)step / 70, 0, 1);
         double x_factor = 1 - (double)step / 700;
         static double fade = 0.9;
@@ -1406,27 +1407,31 @@ void overlook_(SDL_Surface * dest, SDL_Surface * orig, int step, int pivot)
                 double y_factor = 1 - ((double)step) / 150 * MIN(pivot, abs(x - pivot) + pivot/3) / pivot;
                 double x__ = pivot + (x - pivot) * x_factor;
                 x_ = floor(x__);
-                ptr = dest->pixels + x*Bpp;
+                
                 for (y = 0; y < dest->h; y++) {
                         double y__ = dest->h/2 + (y - dest->h/2) * y_factor;
                         Uint32 *A, *B, *C, *D;
                         y_ = floor(y__);
-
+                        get_pixel(dest, x_, y_, &r, &g, &b, &a);
                         if (x_ < 0 || x_ > orig->w - 2 || y_ < 0 || y_ > orig->h - 2) {
                                 // out of band
-                                * ( ptr + Adec ) = * (ptr + Adec ) * fade;
-
+                                 get_pixel(dest, x_, y_, &r, &g, &b, &a);
+                                set_pixel(dest, x_, y_, r, g, b, (a *fade));
                         } else {
                                 dx = x__ - x_;
                                 dy = y__ - y_;
-                                A = orig->pixels + x_*Bpp     + y_*orig->pitch;
-                                B = orig->pixels + (x_+1)*Bpp + y_*orig->pitch;
-                                C = orig->pixels + x_*Bpp     + (y_+1)*orig->pitch;
-                                D = orig->pixels + (x_+1)*Bpp + (y_+1)*orig->pitch;
-                                a = (geta(A) * ( 1 - dx ) + geta(B) * dx) * ( 1 - dy ) + (geta(C) * ( 1 - dx ) + geta(D) * dx) * dy;
-                                * ( ptr + Adec ) = MAX(a * shading, * (ptr + Adec ) * fade);
+                                
+                                get_pixel(orig, x_, y_, &Ar, &Ag, &Ab, &Aa);
+                                get_pixel(orig, (x_ + 1), y_, &Br, &Bg, &Bb, &Ba);
+                                get_pixel(orig, x_ ,  (y_ + 1), &Cr, &Cg, &Cb, &Ca);
+                                get_pixel(orig, (x_ + 1) , (y_ + 1), &Dr, &Dg, &Db, &Da);
+                                
+                                Uint8 aa = ( (Aa * ( 1 - dx ) + Ba) * dx) * ( 1 - dy ) + (Ca * ( 1 - dx ) + Da * dx) * dy;
+                                a = MAX(aa * shading, a * fade);
                         }
-                        ptr += dest->pitch;
+                        
+                        get_pixel(dest, x, y, &r, &g, &b, &Aa);
+                        set_pixel(dest, x, y, r, g, b, a);
                 }
         }
         myUnlockSurface(orig);
