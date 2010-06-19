@@ -1,0 +1,209 @@
+=encoding UTF-8
+
+=head1 NAME
+
+Changes - Revision history for Games-FrozenBubble
+
+=head2 2.202	2010-05-07
+
+=over
+
+=item Clean up of most visual effects (FROGGS, kthakore)
+
+=item Game and net play working in windows (FROGGS,kthakore)
+
+=back 
+
+
+=head2 2.201	2010-05-02
+
+=over
+
+=item Migrated to new SDL bindings (kthakore, FROGGS)
+
+=item Made Makefile and Build system cpan friendly (daxim++, kmx++)
+
+=item Fixed bugs due to change in typemap (FROGGS++)
+
+=back
+
+
+=head2 2.2.0  2008-12-06
+
+=over
+
+=item more options (L<http://www.frozen-bubble.org/data/fb2.2-more-options.png>)
+in LAN/NET games (continue game when players leave; disable player targetting)
+
+=item fixed abort during a multiplayer game with a player in lowest graphics mode
+
+=item much faster Internet servers listing (parallel discovery)
+
+=item add ability to record and replay games; also add ability to save frames
+from records, so as to create high quality videos of games (on youtube
+L<http://www.youtube.com/watch?v=4AxSIkM77Ow>, video file
+L<http://www.frozen-bubble.org/data/odie-gc-chain-reactions-craze.avi>)
+
+=item geolocalized nicks in server lounge
+(L<http://www.frozen-bubble.org/data/fb2.2-geolocalized-nicks.png>)
+
+=back
+
+
+=head2 2.1.0  2006-11-23
+
+=over
+
+=item most aborts during a multiplayer game fixed (there are some infrequent
+remaining ones, unfortunately)
+
+=item 1-player multiplayer training: ability to activate chain reaction
+(L<http://www.frozen-bubble.org/data/fb2.1-1p-mptraining-cr.png>)
+
+=item world map: you can view the amount of playing players
+(L<http://www.frozen-bubble.org/data/fb2.1-playingplayers.png>), which helps
+choosing a server
+
+=item world map: you see playing players as green dots
+(L<http://www.frozen-bubble.org/data/fb2.1-playingdots.png>)
+
+=item network game lounge: you can toggle fullscreen
+(L<http://www.frozen-bubble.org/data/fb2.1-fs.png>)
+
+=item network game lounge: the game creator can activate chain-reaction and set
+a victories limit through options
+(L<http://www.frozen-bubble.org/data/fb2.1-options.png>)
+
+=item network game lounge: you can request server info
+(L<http://www.frozen-bubble.org/data/fb2.1-serverinfo.png>)
+
+=item network game lounge: chat is timestamped
+(L<http://www.frozen-bubble.org/data/fb2.1-timedchat.png>)
+
+=item multiplayer: you can view who's attacking you
+(L<http://www.frozen-bubble.org/data/fb2.1-attackmaterialized.png>)
+
+=back
+
+
+=head2 2.0.0  2006-10-27
+
+=over
+
+=item
+
+new 1-player game mode: multiplayer training; uses
+identical game rules as multiplayer, generated malus
+bubbles are counted as points - what score will you
+be able to reach in the 2 minutes time frame?
+
+=item
+
+network (Internet) game: up to 5 players in a game (net
+game system has logic able to transparently handle
+players behind a NAT)
+
+=item
+
+LAN game: similar to network game except that no
+connection to Internet is made, substituted by polling
+the local network
+
+=item
+
+fully revamped graphics, including now 3d-based smooth
+penguin eyecandy
+
+=item
+
+revamped intro and 1p music into fully digital productions
+
+=item
+
+full joystick support: just move your joystick(s) or
+push buttons in the "change keys" dialog (analog
+joysticks handled as digital for fair play)
+
+when trying to used your joystick in Frozen-Bubble, if
+nothing comes up, most probably your joystick isn't
+configured correctly (or supported in Linux), use -ji
+commandline switch to verify your joystick is detected
+properly; if it is not, try to load the proper kernel modules
+etc - for example, "joydev" is needed, but it is sometimes
+not automatically loaded when plugging in a joystick (even in
+modern distros and with USB joysticks)
+
+=item
+
+recording and playback of all games with non-predefined
+levels (1-player in random and multiplayer training,
+local 2-player, and network/LAN game with 2 to 5
+players) - trigger a record by hitting the Print Screen
+key during a game, or record all games by starting with
+--auto-record
+
+=item
+
+realtime graphical effects in the menu screen (if your
+computer is fast enough)
+
+=item
+
+anti-aliased+shaded+localized messages
+
+=back
+
+
+=head2 1.0.0  2003-02-17
+
+=over
+
+=item added: level editor, contributed by Kim and David Joham
+
+=item added: 50 more levels, to make them 100 now
+
+=item changed: graphics have been re-designed
+
+=item added: chain-reaction mechanism in 2p-mode
+
+=item added: manpages (first contributed by Debian)
+
+=back
+
+
+=head2 0.9.3  2002-05-22
+
+=over
+
+=item remove SDL_mixer_patched hackery, since SDL_mixer >= 1.2.2 is now available
+
+=item adapt to new perl-SDL (which now has a working Surface::display_format)
+
+=item fixed: sound releasing
+
+=item added: possibility to disable sound or music independently
+
+=item added: playlist support
+
+=item added: on-the-fly fullscreen toggling (thx Dagfinn Ilmari Mannsåker)
+
+=item fixed: absence of highscore when you finish all levels
+
+=item added: (long awaited) special bubbles for colourblind people (-cb option)
+
+=back
+
+
+=head2 0.9.2  2002-02-08
+
+=over
+
+=item fix relocation error:
+C</usr/lib/perl5/auto/fb_c_stuff/fb_c_stuff.so: undefined symbol: Mix_FadeInMusicPos>
+
+=item more flexible makefile system, which should make easy ports on other
+sites/arch's
+
+=item better run-time error message when data are incorrectly installed
+
+=back

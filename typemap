@@ -1,0 +1,125 @@
+TYPEMAP
+const Uint16 *          T_PTR
+const Sint16 *          T_PTR
+Uint8                   T_U_CHAR
+Uint8 *                 T_PTR
+const Uint8*            T_PTR
+Uint8 **                T_PTR
+Uint16                  T_UV
+Uint16 *                T_PTR
+Uint32                  T_UV
+Uint32 *                T_PTR
+SDLKey                  T_UV
+SDLKey *                T_PTR
+SDLMod                  T_UV
+SDLMod *                T_PTR
+Sint16                  T_IV
+Sint16 *                T_PTR
+Sint32                  T_IV
+Sint32 *                T_PTR
+SDL_Event *             O_OBJECT
+SDL_ActiveEvent *       O_OBJECT
+SDL_KeyboardEvent *     O_OBJECT
+SDL_TextInputEvent *    O_OBJECT
+SDL_MouseMotionEvent *  O_OBJECT
+SDL_MouseButtonEvent *  O_OBJECT
+SDL_JoyAxisEvent *      O_OBJECT
+SDL_JoyHatEvent *       O_OBJECT
+SDL_JoyButtonEvent *    O_OBJECT
+SDL_JoyBallEvent *      O_OBJECT
+SDL_ResizeEvent *       O_OBJECT
+SDL_ExposeEvent *       O_OBJECT
+SDL_SysWMEvent *        O_OBJECT
+SDL_UserEvent *         O_OBJECT
+SDL_QuitEvent *         O_OBJECT
+SDL_keysym *            O_OBJECT
+SDL_Surface *           O_OBJECT
+SDL_SysWMmsg *          T_PTR
+SDL_CD *                O_OBJECT
+SDL_CDtrack *           O_OBJECT
+SDL_TimerCallback       T_PTR
+SDL_Rect *              O_OBJECT
+SDL_Color *             O_OBJECT
+SDL_Palette *           O_OBJECT
+SDL_PixelFormat *       O_OBJECT
+SDL_VideoInfo *         O_OBJECT
+SDL_version *           O_OBJECT
+const SDL_version *             O_OBJECT
+SDL_SysWMInfo *         O_OBJECT
+SDL_Cursor *            O_OBJECT
+SDL_AudioSpec *         O_OBJECT
+SDL_AudioCVT *          O_OBJECT
+Mix_Fading              T_UV
+Mix_Chunk *             O_OBJECT
+Mix_Music *             O_OBJECT
+SDL_GLattr              T_IV
+SDLPango_Context *      O_OBJECT
+int *                   T_PTR
+int **                  T_PTR
+void *                  T_PTR
+SDL_TimerID             T_PTR
+SDL_NewTimerCallback    T_PTR
+SDL_Joystick *          O_OBJECT
+FPSmanager *    O_OBJECT
+SDLNet_SocketSet        T_PTR
+TCPsocket               T_PTR
+UDPsocket               T_PTR
+UDPpacket *             T_PTR
+UDPpacket **            T_PTR
+IPaddress*              O_OBJECT
+SDLNet_GenericSocket    T_PTR
+TTF_Font *              O_OBJECT
+SDL_Overlay *           O_OBJECT
+SMPEG_Info *            T_PTR
+SMPEG *                 T_PTR
+SMPEGstatus             T_IV
+SDL_mutex *             T_PTR
+GLbitfield              T_IV
+GLenum                  T_IV
+ConsoleInformation *    T_PTR
+GLboolean               T_U_CHAR
+GLUquadric *            T_PTR
+GLdouble                T_NV
+GLUnurbsObj *           T_PTR
+GLUtesselator *         T_PTR
+GLuint                  T_UV
+GLuint*                 T_PTR
+GLint                   T_IV
+GLint*                  T_PTR
+float *                 T_PTR
+float                   T_NV
+GLfloat                 T_NV
+Sound_DecoderInfo *     T_PTR
+const Sound_DecoderInfo *       T_PTR
+Sound_Sample *          T_PTR
+Sound_AudioInfo *       T_PTR
+SDL_RWops*              O_OBJECT
+SDL_svg_context*        T_PTR
+int                     T_IV
+intArray                T_ARRAY
+
+OUTPUT
+
+# The Perl object is blessed into 'CLASS', which should be a
+# char* having the name of the package for the blessing.
+O_OBJECT
+        if ($var) {
+          void** pointers = malloc(2 * sizeof(void*));
+          pointers[0] = (void*)$var;
+          pointers[1] = (void*)PERL_GET_CONTEXT;
+          sv_setref_pv( $arg, CLASS, (void*)pointers );
+        } else {
+          XSRETURN_UNDEF;
+        }
+
+INPUT
+
+O_OBJECT
+        if( sv_isobject($arg) && (SvTYPE(SvRV($arg)) == SVt_PVMG) ) {
+           void** pointers = (void**)(SvIV((SV*)SvRV( $arg )));
+           $var = ($type)(pointers[0]);
+        } else if ($arg == 0) {
+           XSRETURN(0);
+        } else {
+           XSRETURN_UNDEF;
+        }
