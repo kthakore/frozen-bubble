@@ -3623,9 +3623,9 @@ sub smg_printstatus {
     while ($i < $smg_max_messages + $smg_status_message_offsetpage && @smg_status_messages >= $i) {
         if ($smg_status_messages[-$i]) {
             my $kind = $smg_status_messages[-$i] =~ /^\*\*\*/ ? 'netdialogs_servermsg' : 'netdialogs';
-            if ($smg_status_messages[-$i] =~ /^?/) {
+            if ($smg_status_messages[-$i] =~ /^\p{BidiClass:R}/) { #see bi directional regex in perlunicode works from 5.8.8 and above
                 #- if text begins with unicode RTL direction, we also need to tell pango to align on the right
-                #- (is there another unicode special character which does both?)
+                #- (is there another unicode special character which does both?) Yes there is! But we can leave that for later
                 print_($kind, $app, $smg_statusx, $y, $smg_status_messages[-$i], 620, 'right');
             } else {
                 print_($kind, $app, $smg_statusx, $y, $smg_status_messages[-$i], 620, 'left');
@@ -4682,7 +4682,7 @@ sub smg_choose_game() {
                         } else {
                             #- for RTL language, force beginning on the right, but non RTL content will appear wrongly so at least don't do for pure ASCII
                             if ($is_rtl && !is_only_ascii($text)) {
-                                $text = "?<$mynick> $text";
+                                $text = "\x{202b}<$mynick> $text";
                             } else {
                                 $text = "<$mynick> $text";
                             }
