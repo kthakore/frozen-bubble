@@ -2809,12 +2809,12 @@ sub init_game() {
     $imgbin{menu_cursor}{highscores} = [ map { add_image("menu/anims/highscore_00$_.png") } ('01'..'89') ];
     foreach my $cursortype (keys %{$imgbin{menu_cursor}}) {
         foreach my $img (@{$imgbin{menu_cursor}{$cursortype}}) {
-            #my $alpha = SDL::Surface->new( SDL_SWSURFACE,  $img->w,  $img->h,  32, 0,0,0,0);
-            #SDL::Video::set_alpha($img, 0, SDL_ALPHA_OPAQUE);  #- for RGBA->RGBA blits, SDL_SRCALPHA must be removed or destination alpha is preserved
-            #SDL::Video::blit_surface($img, SDL::Rect->new(0,0,$img->w,$img->h), $alpha, SDL::Rect->new(0,0,$img->w,$img->h));
-            #Games::FrozenBubble::CStuff::alphaize($alpha);
+            my $alpha = SDL::Surface->new( SDL_SWSURFACE,  $img->w,  $img->h,  32, 0,0,0,0);
+            SDL::Video::set_alpha($img, 0, SDL_ALPHA_OPAQUE);  #- for RGBA->RGBA blits, SDL_SRCALPHA must be removed or destination alpha is preserved
+            SDL::Video::blit_surface($img, SDL::Rect->new(0,0,$img->w,$img->h), $alpha, SDL::Rect->new(0,0,$img->w,$img->h));
+            Games::FrozenBubble::CStuff::alphaize($alpha);
             push @{$imgbin{menu_cursor}{"${cursortype}alpha"}}, $img; #$alpha;
-            #SDL::Video::set_alpha($img, SDL_SRCALPHA, SDL_ALPHA_OPAQUE);
+            SDL::Video::set_alpha($img, SDL_SRCALPHA, SDL_ALPHA_OPAQUE);
         }
     }
     $imgbin{left_rp1}         = add_image('left-rp1.png');
@@ -2900,11 +2900,11 @@ sub init_game() {
     }
 
     #- the RGBA effects algorithms assume little endian RGBA surfaces
-    #my $replace = SDL::Surface->new( SDL_SWSURFACE, $imgbin{menu_logo}->w,  $imgbin{menu_logo}->h, 32, 0, 0, 0, 0);
-    #SDL::Video::set_alpha($imgbin{menu_logo}, 0, SDL_ALPHA_OPAQUE);  #- for RGBA->RGBA blits, SDL_SRCALPHA must be removed or destination alpha is preserved
-    #SDL::Video::blit_surface($imgbin{menu_logo}, SDL::Rect->new(0,0,$imgbin{menu_logo}->w,$imgbin{menu_logo}->h), $replace, SDL::Rect->new(0,0,$imgbin{menu_logo}->w,$imgbin{menu_logo}->h));
-    #$imgbin{menu_logo} = $imgbin{menu_logo}; #$replace;
-    #add_default_rect($replace);
+    my $replace = SDL::Surface->new( SDL_SWSURFACE, $imgbin{menu_logo}->w,  $imgbin{menu_logo}->h, 32, 0, 0, 0, 0);
+    SDL::Video::set_alpha($imgbin{menu_logo}, 0, SDL_ALPHA_OPAQUE);  #- for RGBA->RGBA blits, SDL_SRCALPHA must be removed or destination alpha is preserved
+    SDL::Video::blit_surface($imgbin{menu_logo}, SDL::Rect->new(0,0,$imgbin{menu_logo}->w,$imgbin{menu_logo}->h), $replace, SDL::Rect->new(0,0,$imgbin{menu_logo}->w,$imgbin{menu_logo}->h));
+    $imgbin{menu_logo} = $imgbin{menu_logo}; #$replace;
+    add_default_rect($replace);
 
     $lev_number = 0;
     load_levelset("$FPATH/data/levels");
@@ -4225,7 +4225,7 @@ sub smg_choose_game() {
         if ($mylatitude && !$private) {
             $index_selfspot >= 0 and print_spot($mylatitude, $mylongitude, 'free', $imgbin{netspot_self}[$index_selfspot], \$back_selfspot);
             $index_selfspot++;
-            if ($back_selfspot and $index_selfspot == @{$imgbin{netspot_self}}) {
+            if ($back_selfspot && $index_selfspot == @{$imgbin{netspot_self}}) {
                 my ($x, $y) = get_spot_location($mylatitude, $mylongitude);
                 put_image($back_selfspot, $x - 10, $y - 10);
                 $index_selfspot = -15;
