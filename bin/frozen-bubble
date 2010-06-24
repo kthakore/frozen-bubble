@@ -4037,7 +4037,7 @@ sub print_spot {
     $x -= $surface->w/2;
     $y -= $surface->h/2;
     if ($back and ref $back ne 'SCALAR') {
-        put_image($back, $x, $y);
+        put_image($$back, $x, $y);
         pop @update_rects;
     }
     put_image($surface, $x, $y);
