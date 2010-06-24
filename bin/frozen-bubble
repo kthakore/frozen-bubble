@@ -5622,7 +5622,7 @@ sub menu {
                         run  => sub { $menu_display_highscores->() }
                 },
         );
-    my $current_pos   = 1;  # selected menu entry (1..8)
+    my $current_pos   if 0; $current_pos = 1;  # selected menu entry (1..8) # THIS IS DEPRECEATED
     my @menu_invalids = (); # list of menu item's positions
     $invalidate_all   = sub { push @menu_invalids, $menu_entries{$_}->{pos} foreach keys %menu_entries };
 
