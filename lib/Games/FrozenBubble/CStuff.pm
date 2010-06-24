@@ -32,8 +32,18 @@ sub sdlpango_createcontext{
         my $color     = shift || '';
         my $font_desc = shift;
         my $context   = SDL::Pango::Context->new($font_desc);
-        SDL::Pango::set_default_color($context, $color eq "white" ? 0xFFFFFFFF : 0x000000FF, 0x00000000);
-
+       
+       
+        #context, fr, fg, fb, fa, br, bg, bb, ba
+        if ($color eq "white")  
+        { 
+                SDL::Pango::set_default_color($context, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x00) 
+        }
+        else 
+        {
+                SDL::Pango::set_default_color($context, 0x00, 0x00, 0x00, 0xFF, 0x00, 0x00, 0x00, 0x00)
+        }
+       
         return $context;
 }
 
