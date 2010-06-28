@@ -1852,6 +1852,8 @@ sub is_ok_select_start_value {
 # this subroutine is taken from frozen-bubble code
 sub keysym_to_char($) {
     my ($key) = @_;
+    my $name = SDL::Events::get_key_name($key);
+    return uc($name) if $name;
     eval "$key eq SDLK_$_" and return uc($_) foreach @Games::FrozenBubble::Symbols::syms;
 }
 
