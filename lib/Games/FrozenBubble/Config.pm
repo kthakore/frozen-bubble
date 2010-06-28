@@ -1,7 +1,6 @@
 package Games::FrozenBubble::Config;
 use Config;
 use File::ShareDir qw(dist_dir);
-use Games::FrozenBubble::ConfigData;
 use File::Which;
 use vars qw(@ISA @EXPORT $FPATH $FLPATH);
 @ISA = qw(Exporter);
