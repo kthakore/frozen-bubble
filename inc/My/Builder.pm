@@ -88,9 +88,9 @@ sub ACTION_messages {
 }
 
 sub ACTION_server {
-    if($^O =~ /(w|W)in/ && $^O !~ /darwin/)
+    if($^O =~ /(w|W)in/ or $^O =~ /darwin/)
     {
-        print STDERR "###Cannot build fb-server on windows \n";
+        print STDERR "###Cannot build fb-server on windows or darwin need glib\n";
 
         return;
     }
