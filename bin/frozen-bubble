@@ -3107,6 +3107,9 @@ sub display_highscores {
 
 sub keysym_to_char($) {
     my ($key) = @_;
+    my $name = SDL::Events::get_key_name($key);
+    return uc($name) if $name; 
+    # we will remove the below and @fbsyms::syms after testing
     eval("$key eq SDLK_$_()") and return uc($_) foreach @fbsyms::syms;
     if ($key >= 160 && $key <= 255) {
         return 'WORLD_' . ($key - 160);  #- "world" keys are not exported
