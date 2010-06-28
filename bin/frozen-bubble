@@ -1496,7 +1496,7 @@ sub handle_whenever_events {
         } else {
             if ($mixer_enabled && $mixer && SDL::Mixer::Music::playing_music) {
                 SDL::delay(10) while $mixer->fading_music;   #- mikmod will deadlock if we try to fade_out while still fading in
-                SDL::Mixer::Music::playing_music and $mixer->halt_music;
+                SDL::Mixer::Music::playing_music and SDL::Mixer::Music::halt_music;
                 SDL::delay(10) while SDL::Mixer::Music::playing_music;  #- mikmod will segfault if we try to load a music while old one is still fading out
             }
             $mixer_enabled = 0;
@@ -1508,11 +1508,11 @@ sub handle_whenever_events {
             play_music($current_theoretical_music);
         } else {
             $music_disabled = 1;
-            $mixer->halt_music;
+	    SDL::Mixer::Music::halt_music;
         }
     }
     if ($mixer_enabled && $mixer && @playlist && $keypressed eq $KEYS->{misc}{next_playlist_elem}) {
-        $mixer->halt_music;
+	    SDL::Mixer::Music::halt_music;
         play_music('dummy');
     }
     if ($mixer_enabled && $mixer && $keypressed eq $KEYS->{misc}{raise_volume}) {
