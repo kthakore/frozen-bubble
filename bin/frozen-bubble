@@ -4200,7 +4200,7 @@ sub smg_choose_game() {
         }
 
         #- selfspot will need to properly erase selection overlay
-        if ($mylatitude && !$private && $back_selfspot) {
+        if ($mylatitude && !$private) {
             save_back_spot($mylatitude, $mylongitude, $imgbin{netspot_self}[0], \$back_selfspot);
             if ($index_selfspot >= 0) {
                 print_spot($mylatitude, $mylongitude, 'free', $imgbin{netspot_self}[$index_selfspot], \$back_selfspot);
