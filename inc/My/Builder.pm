@@ -97,7 +97,7 @@ sub ACTION_server {
     my ($self) = @_;
     my $server_directory = 'server';
     my $otarget          = 'fb-server';
-
+	return if (-e 'bin/'.$otarget );
     # CBuilder doesn't take shell quoting into consideration,
     # so the -DVERSION macro does not work like in the former Makefile.
     # Instead, I'll just preprocess the two files with perl.
