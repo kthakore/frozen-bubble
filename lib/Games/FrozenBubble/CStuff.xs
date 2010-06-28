@@ -1857,7 +1857,7 @@ void
 fbdelay(ms)
         int ms
         CODE:
-                     /* Beuh, SDL::App::delay is bugged, sometimes it doesn't sleep, must be related to signals
+                     /* Beuh, SDLx::App::delay is bugged, sometimes it doesn't sleep, must be related to signals
                         or something... but doing the do/while in Perl seems to slow down the game too much on
                         some machines, so I'll do it from here */
                      int then;

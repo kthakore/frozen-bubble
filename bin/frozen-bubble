@@ -56,7 +56,6 @@ use IO::File;
 use Time::HiRes qw(gettimeofday);
 
 use SDL;
-use SDL::App;
 use SDL::Surface;
 use SDL::Video;
 use SDL::Event;

@@ -2,7 +2,7 @@ package Games::FrozenBubble::LevelEditor;
 
 use POSIX(qw(floor ceil));
 use SDL;
-use SDL::App;
+use SDLx::App;
 use SDL::Video;
 use SDL::Surface;
 use SDL::Image;
@@ -1179,8 +1179,8 @@ sub modify_selected_level {
 
 #- from gentoo patch IIRC
 sub SDL_TEXTWIDTH {
-    if (defined(&SDL::App::SDL_TEXTWIDTH)) {
-        SDL::App::SDL_TEXTWIDTH(@_);   # perl-sdl-1.x
+    if (defined(&SDLx::App::SDL_TEXTWIDTH)) {
+        SDLx::App::SDL_TEXTWIDTH(@_);   # perl-sdl-1.x
     } else {
         SDLx::TTF::SDL_TEXTWIDTH(@_); # perl-sdl-2.x
     }
