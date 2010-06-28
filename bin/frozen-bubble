@@ -71,7 +71,6 @@ use SDL::Mixer::MixMusic;
 use SDL::Joystick;
 use SDL::Mouse;
 use SDL::Image;
-use File::ShareDir qw(dist_dir);
 use Games::FrozenBubble::Config;
 use Games::FrozenBubble::Stuff;
 use Games::FrozenBubble::Net;
@@ -82,7 +81,9 @@ use Games::FrozenBubble::LevelEditor;
 
 $| = 1;
 
-$FPATH = dist_dir('Games-FrozenBubble');
+$FPATH = $Games::FrozenBubble::Config::FPATH;
+$FLPATH = $Games::FrozenBubble::Config::FLPATH;
+
 Locale::Maketext::Simple->import(Path => "$FPATH/locale", Style => 'gettext', Export => 'gettext');
 
 $TARGET_ANIM_SPEED = 20;        # number of milliseconds that should last between two animation frames
