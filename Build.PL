@@ -116,5 +116,6 @@ My::Builder->new(
         'Locale::Maketext::Simple'  => 0,
         'File::Glob'                => 0,
         'SDLx::TTF'                 => 0,
+	'File::Which'		    => 0,
     },
 )->create_build_script;
