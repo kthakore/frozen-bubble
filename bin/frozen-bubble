@@ -3677,7 +3677,7 @@ sub smg_servers() {
         } else {
             my @servers = @{$ret->{servers}};
             if (!@servers) {
-                my $fb_server = "$FLPATH/fb-server";
+                my $fb_server = "$FLPATH";
                 if (!-x $fb_server) {
                     print STDERR "$fb_server is missing or not executable!\n";
                     smg_add_status_msg(loc("*** No server found, and could not start server"),
