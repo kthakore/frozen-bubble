@@ -10,15 +10,14 @@ use My::Builder;
 use ExtUtils::CBuilder qw();
 
 my $prefix = Alien::SDL->config('prefix');
-my $cflags = Alien::SDL->config('cflags');
-$cflags = '-I'
+my $cflags = '-I'
   . File::Spec->catfile( $prefix, 'include' )
   ;
 $cflags .= ' -fnested-functions' if $^O =~ /darwin/;
 ###!!! this looks strange, you perhaps meant "$cflags .= ..."
 ###!!! I intended Alien::SDL to add -I$prefix/include automatically, please tell me when it does not work (kmx)
 my $devnull = File::Spec->devnull();
-
+my @cflags =  ExtUtils::CBuilder->new->split_like_shell( $cflags );
 my @linkers = ( ExtUtils::CBuilder->new->split_like_shell( Alien::SDL->config('libs', '-lSDL_mixer', '-lSDL_Pango') ) );
 push @linkers, '-liconv'
   if $^O =~ /win/i;    ###!!! really only Win needs this? ; BEWARE this matches also 'darwin', 'cygwin'!!!!
@@ -41,7 +40,7 @@ My::Builder->new(
     ],
     dist_abstract  => 'Puzzle with Bubbles', # taken from openSUSE rpm spec file
     dynamic_config => 1,
-    extra_compiler_flags => [ $cflags ],
+    extra_compiler_flags => \@cflags ,
     extra_linker_flags   => \@linkers,
     license              => 'gpl2',
     meta_merge           => {
