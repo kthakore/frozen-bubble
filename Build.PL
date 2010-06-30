@@ -84,7 +84,7 @@ My::Builder->new(
         'Math::Trig'                => 0,
         'parent'                    => 0,
         'Alien::SDL'                => '1.403',
-        'SDL'                       => '2.405',
+        'SDL'                       => '2.500_1',
         'Time::HiRes'               => 0,
         'Locale::Maketext::Simple'  => 0,
         'Module::Build'             => '0.36', # for share_dir
@@ -111,7 +111,7 @@ My::Builder->new(
         'Math::Trig'                => 0,
         'parent'                    => 0,
         'Alien::SDL'                => '1.403',
-        'SDL'                       => '2.405',
+        'SDL'                       => '2.500_1',
         'Time::HiRes'               => 0,
         'Locale::Maketext::Simple'  => 0,
         'File::Glob'                => 0,

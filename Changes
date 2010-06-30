@@ -4,13 +4,17 @@
 
 Changes - Revision history for Games-FrozenBubble
 
-=head2 2.202	2010-05-07
+=head2 2.202	2010-06-30
 
 =over
 
 =item Clean up of most visual effects (FROGGS, kthakore)
 
 =item Game and net play working in windows (FROGGS,kthakore)
+
+=item Fixed Build for MacOSX
+
+=item Cleaned up adherence to old version 
 
 =back 
 
