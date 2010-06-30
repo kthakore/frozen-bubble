@@ -2809,11 +2809,11 @@ sub init_game() {
     $imgbin{menu_cursor}{highscores} = [ map { add_image("menu/anims/highscore_00$_.png") } ('01'..'89') ];
     foreach my $cursortype (keys %{$imgbin{menu_cursor}}) {
         foreach my $img (@{$imgbin{menu_cursor}{$cursortype}}) {
-            my $alpha = SDL::Surface->new( SDL_SWSURFACE,  $img->w,  $img->h,  32, 0,0,0,0);
+            my $alpha = SDL::Surface->new( SDL_SWSURFACE,  $img->w,  $img->h,  32, 0xFF000000,0xFF0000,0xFF00,0xFF);
             SDL::Video::set_alpha($img, 0, SDL_ALPHA_OPAQUE);  #- for RGBA->RGBA blits, SDL_SRCALPHA must be removed or destination alpha is preserved
             SDL::Video::blit_surface($img, SDL::Rect->new(0,0,$img->w,$img->h), $alpha, SDL::Rect->new(0,0,$img->w,$img->h));
             Games::FrozenBubble::CStuff::alphaize($alpha);
-            push @{$imgbin{menu_cursor}{"${cursortype}alpha"}}, $img; #$alpha;
+            push @{$imgbin{menu_cursor}{"${cursortype}alpha"}}, $alpha;
             SDL::Video::set_alpha($img, SDL_SRCALPHA, SDL_ALPHA_OPAQUE);
         }
     }
@@ -4200,7 +4200,7 @@ sub smg_choose_game() {
         }
 
         #- selfspot will need to properly erase selection overlay
-        if ($mylatitude && !$private && $back_selfspot) {
+        if ($mylatitude && !$private) {
             save_back_spot($mylatitude, $mylongitude, $imgbin{netspot_self}[0], \$back_selfspot);
             if ($index_selfspot >= 0) {
                 print_spot($mylatitude, $mylongitude, 'free', $imgbin{netspot_self}[$index_selfspot], \$back_selfspot);
