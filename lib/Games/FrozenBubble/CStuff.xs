@@ -1370,13 +1370,8 @@ void overlook_init_(SDL_Surface * surf)
         }
         myLockSurface(surf);
         for (x = 0; x < surf->w; x++) {
-                Uint8 *ptr = surf->pixels + x*Bpp;
                 for (y = 0; y < surf->h; y++) {
-                        * ( ptr + Rdec ) = 255;
-                        * ( ptr + Gdec ) = 255;
-                        * ( ptr + Bdec ) = 255;
-                        * ( ptr + Adec ) = 0;
-                        ptr += surf->pitch;
+                        set_pixel(surf, x, y, 255, 255, 255, 0);
                 }
         }
         myUnlockSurface(surf);
@@ -1390,7 +1385,9 @@ void overlook_(SDL_Surface * dest, SDL_Surface * orig, int step, int pivot)
         double shading = 1 - CLAMP((double)step / 70, 0, 1);
         double x_factor = 1 - (double)step / 700;
         static double fade = 0.9;
-        Uint8 or, og, ob, oa, dr, dg, db, da;
+        double dx, dy;
+        Uint8 Ar, Ag, Ab, Aa, Br, Bg, Bb, Ba, Cr, Cg, Cb, Ca, Dr, Dg, Db, Da;
+        Uint8 dr, dg, db, da;
         if (orig->format->BytesPerPixel != 4) {
                 fprintf(stderr, "overlook: orig surface must be 32bpp\n");
                 abort();
@@ -1413,15 +1410,22 @@ void overlook_(SDL_Surface * dest, SDL_Surface * orig, int step, int pivot)
                         double y__ = dest->h/2 + (y - dest->h/2) * y_factor;
                        
                         y_ = floor(y__);
-                        get_pixel(orig, x_, y_, &or, &og, &ob, &oa);
-                        get_pixel(dest, x_, y_, &dr, &dg, &db, &da);
-                        /* a better way to do this dst = (orig * A) + (dst * (1-A)) */ 
 
-                        
-                        Uint8 aa = (oa * fade) + (da * (1-fade)); 
-                        if( aa > 0 )
-                        {
-                        set_pixel(dest, x_, y_, dr, dg, db, 0);
+                        get_pixel(dest, x, y, &dr, &dg, &db, &da);
+
+                        if (x_ < 0 || x_ > orig->w - 2 || y_ < 0 || y_ > orig->h - 2) {
+                                // out of band
+                                set_pixel(dest, x, y, dr, dg, db, CLAMP(0, da * fade, 255));
+                        } else {
+                                dx = x__ - x_;
+                                dy = y__ - y_;
+                                get_pixel(orig, x_,     y_,     &Ar, &Ag, &Ab, &Aa);
+                                get_pixel(orig, x_ + 1, y_,     &Br, &Bg, &Bb, &Ba);
+                                get_pixel(orig, x_,     y_ + 1, &Cr, &Cg, &Cb, &Ca);
+                                get_pixel(orig, x_ + 1, y_ + 1, &Dr, &Dg, &Db, &Da);
+                                int a = (Aa * ( 1 - dx ) + Ba * dx) * ( 1 - dy ) + (Ca * ( 1 - dx ) + Da * dx) * dy;
+
+                                set_pixel(dest, x, y, dr, dg, db, CLAMP(0, MAX(a * shading, da * fade), 255));
                         }
                 }
         }
