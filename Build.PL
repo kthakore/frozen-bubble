@@ -114,6 +114,7 @@ My::Builder->new(
         'SDL'                       => '2.500_1',
         'Time::HiRes'               => 0,
         'Locale::Maketext::Simple'  => 0,
+	'Locale::Maketext::Extract'  => 0,
         'File::Glob'                => 0,
         'SDLx::TTF'                 => 0,
 	'File::Which'		    => 0,
