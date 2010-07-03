@@ -84,6 +84,7 @@ $| = 1;
 $FPATH = $Games::FrozenBubble::Config::FPATH;
 $FLPATH = $Games::FrozenBubble::Config::FLPATH;
 
+
 Locale::Maketext::Simple->import(Path => "$FPATH/locale", Style => 'gettext', Export => 'gettext');
 
 $TARGET_ANIM_SPEED = 20;        # number of milliseconds that should last between two animation frames
