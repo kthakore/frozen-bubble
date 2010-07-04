@@ -19,6 +19,7 @@
 
 #include <stdlib.h>
 #include <stdarg.h>
+#include <string.h>
 
 #include <glib.h>
 
@@ -36,9 +37,6 @@ typedef gpointer (*GFoldFunc) (gpointer data, gpointer partial, gpointer user_da
 gpointer g_list_fold_left(GList * list, gpointer first, GFoldFunc func, gpointer user_data);
 typedef gboolean (*GTruthFunc) (gconstpointer data, gconstpointer user_data);
 gboolean g_list_any(GList * list, GTruthFunc func, gpointer user_data);
-
-void daemonize();
-void reregister_server_if_needed();
 
 #define str_begins_static_str(pointer, static_str) \
         (!strncmp(pointer, static_str, sizeof(static_str) - 1))

@@ -88,12 +88,6 @@ sub ACTION_messages {
 }
 
 sub ACTION_server {
-    if($^O =~ /(w|W)in/ or $^O =~ /darwin/)
-    {
-        print STDERR "###Cannot build fb-server on windows or darwin need glib\n";
-
-        return;
-    }
     my ($self) = @_;
     my $server_directory = 'server';
     my $otarget          = 'fb-server';

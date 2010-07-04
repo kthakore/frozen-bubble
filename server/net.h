@@ -18,14 +18,15 @@
  ******************************************************************************/
 
 #include <sys/types.h>
-#include <sys/socket.h>
-#include <stdlib.h>
-#include <unistd.h>
 
 #include <glib.h>
 
 #ifndef MSG_NOSIGNAL
 #define MSG_NOSIGNAL 0
+#endif
+
+#ifndef MSG_DONTWAIT
+#define MSG_DONTWAIT 0
 #endif
 
 extern const int proto_major;

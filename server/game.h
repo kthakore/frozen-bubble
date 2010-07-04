@@ -17,8 +17,7 @@
  *
  ******************************************************************************/
 
-#include <stdlib.h>
-#include <stdarg.h>
+#include <sys/types.h>
 
 void player_connects(int fd);
 void player_disconnects(int fd);

@@ -22,13 +22,8 @@
  * it should be as far away as possible from network operations
  */
 
-#include <stdlib.h>
-#include <unistd.h>
 #include <stdio.h>
-#include <stdarg.h>
-#include <string.h>
-#include <ctype.h>
-#include <sys/socket.h>
+#include <winsock2.h>
 #include <regex.h>
 
 #include <glib.h>
@@ -822,7 +817,7 @@ void process_msg_prio_(int fd, char* msg, ssize_t len, struct game* g)
                                 retval = send(g->players_conn[i], synchro4self, sizeof(synchro4self) - 1, MSG_NOSIGNAL|MSG_DONTWAIT);
                                 if (retval != sizeof(synchro4self) - 1) {
                                         if (retval != -1) {
-                                                l4(OUTPUT_TYPE_INFO, "[%d] short send of %zd instead of %zd bytes from %d - destination is not reading data "
+                                                l4(OUTPUT_TYPE_INFO, "[%d] short send of %Id instead of %Id bytes from %d - destination is not reading data "
                                                                      "(illegal FB client) or our upload bandwidth is saturated - sorry, cannot continue serving "
                                                                      "this client in this situation, closing connection",
                                                                      g->players_conn[i], retval, sizeof(synchro4self) - 1, fd);
@@ -832,11 +827,11 @@ void process_msg_prio_(int fd, char* msg, ssize_t len, struct game* g)
 
                         } else if (g->players_conn[i] != fd) {
                                 ssize_t retval;
-                                l3(OUTPUT_TYPE_DEBUG, "[%d] sending %zd bytes to %d", fd, len, g->players_conn[i]);
+                                l3(OUTPUT_TYPE_DEBUG, "[%d] sending %Id bytes to %d", fd, len, g->players_conn[i]);
                                 retval = send(g->players_conn[i], msg, len, MSG_NOSIGNAL|MSG_DONTWAIT);
                                 if (retval != len) {
                                         if (retval != -1) {
-                                                l4(OUTPUT_TYPE_INFO, "[%d] short send of %zd instead of %zd bytes from %d - destination is not reading data "
+                                                l4(OUTPUT_TYPE_INFO, "[%d] short send of %Id instead of %Id bytes from %d - destination is not reading data "
                                                                      "(illegal FB client) or our upload bandwidth is saturated - sorry, cannot continue serving "
                                                                      "this client in this situation, closing connection",
                                                                      g->players_conn[i], retval, len, fd);
