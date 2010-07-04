@@ -572,7 +572,9 @@ static void help(void)
         printf("     -a lang                   set the preferred language of the server (it is just an indication used by players when choosing a server, so that they can chat using their native language - you can choose none with -z)\n");
         printf("     -A alert_words_file       set the file containing alert words (one POSIX regexp by line) - this file is reread when receiving the ADMIN_REREAD command from 127.0.0.1\n");
         printf("     -c conffile               specify the path of the configuration file\n");
+#ifndef WINDOWS
         printf("     -d                        debug mode: do not daemonize, and log on STDERR rather than through syslog (implies -q)\n");
+#endif
         printf("     -f pidfile                set the file in which the pid of the daemon must be written\n");
         printf("     -g gracetime              set the gracetime after which a client with no network activity is terminated (in seconds, defaults to %d)\n", DEFAULT_GRACETIME);
         printf("     -h                        display this help then exits\n");
@@ -587,7 +589,9 @@ static void help(void)
         printf("     -P port                   set the server port as seen from outside (defaults to the port specified with -p)\n");
         printf("     -q                        \"quiet\" mode: don't automatically register the server to www.frozen-bubble.org\n");
         printf("     -t max_transmission_rate  set the maximum transmission rate, in bytes per second (defaults to %d)\n", DEFAULT_MAX_TRANSMISSION_RATE);
+#ifndef WINDOWS
         printf("     -u user                   switch daemon to specified user\n");
+#endif
         printf("     -z                        set that there is no preferred language for the server (see -a)\n");
 }
 
