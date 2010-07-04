@@ -5,6 +5,9 @@ use warnings FATAL => 'all';
 use ExtUtils::CBuilder qw();
 use File::Basename qw(fileparse);
 use File::Copy qw(move);
+use File::Fetch;
+use Archive::Extract;
+use Digest::SHA qw(sha1_hex);
 use File::Slurp qw(read_file write_file);
 use File::Spec::Functions qw(catdir catfile rootdir);
 use IO::File qw();
@@ -88,16 +91,15 @@ sub ACTION_messages {
 }
 
 sub ACTION_server {
-    if($^O =~ /(w|W)in/ or $^O =~ /darwin/)
-    {
-        print STDERR "###Cannot build fb-server on windows or darwin need glib\n";
-	windows_build(@_); #TODO: Uncomment this
-        return;
-    }
     my ($self) = @_;
     my $server_directory = 'server';
     my $otarget          = 'fb-server';
 	return if (-e 'bin/'.$otarget );
+    if($^O =~ /(w|W)in/ or $^O =~ /darwin/)
+    {
+        windows_build($self, $server_directory, $otarget);
+        return;
+    }
     # CBuilder doesn't take shell quoting into consideration,
     # so the -DVERSION macro does not work like in the former Makefile.
     # Instead, I'll just preprocess the two files with perl.
@@ -143,10 +145,22 @@ sub ACTION_server {
 sub windows_build
 {
 
-    my ($self) = @_;
-    my $server_directory = 'server';
-    my $otarget          = 'fb-server';
-	return if (-e 'bin/'.$otarget );
+    my ($self, $server_directory, $otarget) = @_;
+
+    $otarget .= '.exe';
+
+    $self->fetch_file("http://ftp.gnome.org/pub/gnome/binaries/win32/glib/2.24/glib-dev_2.24.0-2_win32.zip",
+                      "glib-dev_2.24.0-2_win32.zip",
+                      'b41715b4c1379a0172c47a8b54b3208ece20f14e', 'download');
+    $self->fetch_file("http://ftp.gnome.org/pub/gnome/binaries/win32/glib/2.24/glib_2.24.0-2_win32.zip",
+                      "glib_2.24.0-2_win32.zip",
+                      '0efd5f86f526bc3ec63eebe1b31709918708f0d6', 'download');
+    
+    die "###ERROR###: Cannot extract archive " unless
+        Archive::Extract->new( archive => 'download/glib-dev_2.24.0-2_win32.zip' )->extract(to => 'download');
+    die "###ERROR###: Cannot extract archive " unless
+        Archive::Extract->new( archive => 'download/glib_2.24.0-2_win32.zip' )->extract(to => 'download');
+
     # CBuilder doesn't take shell quoting into consideration,
     # so the -DVERSION macro does not work like in the former Makefile.
     # Instead, I'll just preprocess the two files with perl.
@@ -161,35 +175,67 @@ sub windows_build
             write_file($cfile, $csource);
         }
     }
-
     {
-        my $cbuilder = ExtUtils::CBuilder->new;
+        my $extra_compiler_flags = '-g -Wall -Werror -pipe -DWINDOWS';
+           $extra_compiler_flags .= ' -I' . $server_directory; # does not seem to be necessary
+           $extra_compiler_flags .= ' -Idownload/include/glib-2.0 -Idownload/lib/glib-2.0/include';
+           $extra_compiler_flags .= ' -Ldownload/lib';
         my @ofiles;
         for my $cfile (qw(fb-server.c log.c tools.c game.c net.c)) {
-		my $ofile = $cfile;
-		$ofile =~ s/c$/o/;
-	    push @ofiles, $ofile;
                my $source = catfile($server_directory, $cfile);
-	       my $extra_compiler_flags = '-g -Wall -Werror -pipe'; # verbatim from Makefile
-                  $extra_compiler_flags .= ' -I' . $server_directory, # does not seem to be necessary
-		  #        $cbuilder->split_like_shell(`pkg-config glib-2.0 --cflags`), YOU NEED TO ADD GLIB FLAGS FOR WINDOWS HERE
-		  #  $cbuilder->split_like_shell(`pkg-config glib-2.0 --libs`),
-                  `gcc -o $ofile $source $extra_compiles_flags`;
+               my $ofile = $source;
+               $ofile =~ s/c$/o/;
+               push @ofiles, $ofile;
+               `gcc -c -o $ofile $source $extra_compiler_flags`;
             
         }
 
-	my $exe_file = catfile($server_directory, $otarget);
-	my $link_flags = `pkg-config glib-2.0 --libs` # WE NEED GLIB libs config
+        my $exe_file = catfile($server_directory, $otarget);
+        my $link_flags = ' -lws2_32 -lglib-2.0 -lregex';
         my $objects  = join ' ', @ofiles;
 
-	    `gcc -o $exe_file $link_flags $objects`;
+        `gcc -o $exe_file $objects $extra_compiler_flags $link_flags`;
       }
 
     move(catfile($server_directory, $otarget), 'bin');
+}
+
+# Subs from Alien::SDL
+sub check_sha1sum {
+  my( $self, $file, $sha1sum ) = @_;
+  my $sha1 = Digest::SHA->new;
+  my $fh;
+  open($fh, $file) or die "###ERROR## Cannot check checksum for '$file'\n";
+  binmode($fh);
+  $sha1->addfile($fh);
+  close($fh);
+  return ($sha1->hexdigest eq $sha1sum) ? 1 : 0
+}
 
 
+sub fetch_file {
+  my ($self, $url, $file, $sha1sum, $download) = @_;
+  die "###ERROR### _fetch_file undefined url\n"     unless $file;
+  die "###ERROR### _fetch_file undefined sha1sum\n" unless $sha1sum;
+  my $fn = catfile($download, $file);
+  if (-e $fn) {
+    print "Checking checksum for already existing '$fn'...\n";
+    return 1 if $self->check_sha1sum($fn, $sha1sum);
+    unlink $fn; #exists but wrong checksum
+  }
 
-
+  my $fullpath;
+  die "###ERROR### _fetch_file undefined url\n" unless $url;
+  print "Fetching 'url'...\n";
+  my $ff = File::Fetch->new(uri => $url);
+  $fullpath = $ff->fetch(to => $download);
+  die "###ERROR### Unable to fetch '$ff->file'" unless $fullpath;
+  if (-e $fn) {
+    print "Checking checksum for '$fn'...\n";
+    return 1 if $self->check_sha1sum($fn, $sha1sum);
+    die "###ERROR### Checksum failed '$fn'";
+  }
+  die "###ERROR### _fetch_file failed '$fn'";
 }
 
 1;
