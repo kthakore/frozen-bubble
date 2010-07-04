@@ -34,6 +34,7 @@
 #endif
 
 #include "log.h"
+#include "net.h"
 #include "tools.h"
 
 // converts a char* to the number it represents, with:
