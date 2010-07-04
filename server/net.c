@@ -29,6 +29,12 @@
 #include <ctype.h>
 #ifdef WINDOWS
 #include <winsock2.h>
+
+#define close(sock) closesocket(sock)
+#define EAGAIN WSAEWOULDBLOCK
+#undef errno
+#define errno WSAGetLastError()
+typedef int socklen_t;
 #else
 #include <stdlib.h>
 #include <errno.h>
@@ -1007,7 +1013,7 @@ static char * http_get(char * host, int port, char * path)
 #endif
         buf = asprintf_("GET %s HTTP/0.9\r\nHost: %s\r\nUser-Agent: %s\r\n\r\n", path, host, user_agent);
         free(user_agent);
-        if (write(sock, buf, strlen(buf)) != strlen(buf)) {
+        if (send(sock, buf, strlen(buf), 0) != strlen(buf)) {
                 close(sock);
                 free(buf);
                 l2(OUTPUT_TYPE_ERROR, "HTTP_GET: cannot write to socket for connection to %s:%d", host, port);
@@ -1043,7 +1049,7 @@ static char * http_get(char * host, int port, char * path)
                         return NULL;
                 }
 
-                if (read(sock, nextChar, 1) != 1) {
+                if (recv(sock, nextChar, 1, 0) != 1) {
                         close(sock);
                         l3(OUTPUT_TYPE_ERROR, "HTTP_GET: I/O error retrieving http://%s:%d%s", host, port, path);
                         return NULL;
@@ -1104,7 +1110,7 @@ static char * http_get(char * host, int port, char * path)
         dlsize = 0;
         buf = ptr = malloc_(bufsize);
         while (1) {
-                bytes = read(sock, ptr, bufsize - (ptr - buf) - 1);
+                bytes = recv(sock, ptr, bufsize - (ptr - buf) - 1, 0);
                 if (bytes == -1) {
                         l1(OUTPUT_TYPE_ERROR, "HTTP_GET: read: %s", strerror(errno));
                         close(sock);
