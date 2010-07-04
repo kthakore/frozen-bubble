@@ -1022,6 +1022,7 @@ static char * http_get(char * host, int port, char * path)
 #ifdef WINDOWS
         user_agent = asprintf_("Frozen-Bubble server version 0.001_1 (protocol version %d.%d) on Windows\n", proto_major, proto_minor);
 #else
+        struct utsname uname_;
         uname(&uname_);
         user_agent = asprintf_("Frozen-Bubble server version 0.001_1 (protocol version %d.%d) on %s/%s\n", proto_major, proto_minor, uname_.sysname, uname_.machine);
 #endif
