@@ -853,6 +853,16 @@ void sigterm_catcher(int signum) {
 
 void create_server(int argc, char **argv)
 {
+#ifdef WINDOWS
+        WSADATA wsaData;
+        // Initialize Winsock
+        int iResult = WSAStartup(MAKEWORD(2,2), &wsaData);
+        if (iResult != 0) {
+                printf("WSAStartup failed: %d\n", iResult);
+                exit(EXIT_FAILURE);
+        }
+#endif
+
         struct sockaddr_in client_addr;
 
         while (1) {
