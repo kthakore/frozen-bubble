@@ -42,4 +42,6 @@ void l_(int wanted_output_type, char* file, long line, const char* func, char* f
 #define l3(wanted_output_type, f, a1, a2, a3)     l_(wanted_output_type, __FILE__, (long) __LINE__, __func__, f, a1, a2, a3)
 #define l4(wanted_output_type, f, a1, a2, a3, a4) l_(wanted_output_type, __FILE__, (long) __LINE__, __func__, f, a1, a2, a3, a4)
 
+#define ZD "%Id"
+
 #endif

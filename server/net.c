@@ -172,7 +172,7 @@ void conn_terminated(int fd, char* reason)
 {
         if (g_list_find(new_conns, GINT_TO_POINTER(fd))) {  // we can be recursively called if two players disconnect at the exact same time
                 l2(OUTPUT_TYPE_CONNECT, "[%d] Closing connection: %s", fd, reason);
-                closesocket(fd);
+                close(fd);
                 free(incoming_data_buffers[fd]);
                 if (nick[fd] != NULL) {
                         free(nick[fd]);
@@ -209,7 +209,7 @@ static void handle_incoming_data_generic(gpointer data, gpointer user_data, int 
                 incoming_data_buffers_count[fd] = 0;
                 memcpy(buf, incoming_data_buffers[fd], offset);
                 len = recv(fd, buf + offset, INCOMING_DATA_BUFSIZE - 1 - offset, MSG_DONTWAIT);
-                if (len == -1 && WSAGetLastError() != WSAEWOULDBLOCK) {
+                if (len == -1 && errno != EAGAIN) {
                         l2(OUTPUT_TYPE_DEBUG, "[%d] System error on recv: %s", fd, strerror(errno));
                         conn_terminated(fd, "system error on recv");
                         return;
@@ -242,7 +242,7 @@ static void handle_incoming_data_generic(gpointer data, gpointer user_data, int 
                                         conn_terminated(fd, "too much data without LF");
                                         return;
                                 }
-                                l2(OUTPUT_TYPE_DEBUG, "[%d] buffering %Id bytes (this is normal)", fd, len);
+                                l2(OUTPUT_TYPE_DEBUG, "[%d] buffering " ZD " bytes (this is normal)", fd, len);
                                 memcpy(incoming_data_buffers[fd], buf, len);
                                 incoming_data_buffers_count[fd] = len;
                                 return;
@@ -284,7 +284,7 @@ static void handle_incoming_data_generic(gpointer data, gpointer user_data, int 
 
                                         if (eol + 1 - ptr < len) {
                                                 ssize_t remaining = len - (eol + 1 - ptr);
-                                                l2(OUTPUT_TYPE_DEBUG, "multiple non-prio messages for %d, buffering (%Id bytes)", fd, remaining);
+                                                l2(OUTPUT_TYPE_DEBUG, "multiple non-prio messages for %d, buffering (" ZD " bytes)", fd, remaining);
                                                 memcpy(incoming_data_buffers[fd], eol + 1, remaining);
                                                 incoming_data_buffers_count[fd] = remaining;
                                                 need_another_run = 1;
@@ -331,7 +331,7 @@ static void handle_udp_request(void)
         int n;
         char msg[128];
         struct sockaddr_in client_addr;
-        int client_len = sizeof(client_addr);
+        socklen_t client_len = sizeof(client_addr);
         char * answer;
 
         if (!ok_input_beginning)   // C sux
@@ -444,7 +444,7 @@ void connections_manager(void)
                 conns = new_conns;
 
                 if (tcp_server_socket != -1 && FD_ISSET(tcp_server_socket, &conns_set)) {
-                        if ((fd = accept(tcp_server_socket, (struct sockaddr *) &client_addr, (int*) &len)) == -1) {
+                        if ((fd = accept(tcp_server_socket, (struct sockaddr *) &client_addr, (socklen_t *) &len)) == -1) {
                                 l1(OUTPUT_TYPE_ERROR, "accept: %s", strerror(errno));
                                 continue;
                         }
@@ -456,7 +456,7 @@ void connections_manager(void)
                                         send_line_log_push(fd, fl_server_full);
                                 }
                                 l1(OUTPUT_TYPE_INFO, "[%d] Closing connection (server full)", fd);
-                                closesocket(fd);
+                                close(fd);
                                 continue;
                         }
 
@@ -465,7 +465,7 @@ void connections_manager(void)
                                 if (strstr(blacklisted_IPs, blacklist_search) != NULL) {
                                         send_line_log_push(fd, fl_client_blacklisted);
                                         l2(OUTPUT_TYPE_INFO, "[%d] Blacklisted client (%s)", fd, inet_ntoa(client_addr.sin_addr));
-                                        closesocket(fd);
+                                        close(fd);
                                         free(blacklist_search);
                                         continue;
                                 }
@@ -484,7 +484,7 @@ void connections_manager(void)
                         if (rate > max_transmission_rate) {
                                 send_line_log_push(fd, fl_server_overloaded);
                                 l1(OUTPUT_TYPE_INFO, "[%d] Closing connection (maximum transmission rate reached)", fd);
-                                closesocket(fd);
+                                close(fd);
                                 continue;
                         }
 
@@ -523,18 +523,18 @@ void add_prio(int fd)
         new_conns = g_list_remove(new_conns, GINT_TO_POINTER(fd));
         prio[fd] = 1;
         if (lan_game_mode && g_list_length(conns_prio) > 0 && udp_server_socket != -1) {
-                closesocket(tcp_server_socket);
-                closesocket(udp_server_socket);
+                close(tcp_server_socket);
+                close(udp_server_socket);
                 tcp_server_socket = udp_server_socket = -1;
         }
 }
 
 void close_server() {
         if (tcp_server_socket != -1) {
-                closesocket(tcp_server_socket);
+                close(tcp_server_socket);
         }
         if (udp_server_socket != -1) {
-                closesocket(udp_server_socket);
+                close(udp_server_socket);
         }
         tcp_server_socket = udp_server_socket = -1;
 }
@@ -953,7 +953,7 @@ static char * http_get(char * host, int port, char * path)
         destPort.sin_addr = serverAddress;
 
         if (connect(sock, (struct sockaddr *) &destPort, sizeof(destPort))) {
-                closesocket(sock);
+                close(sock);
                 l2(OUTPUT_TYPE_ERROR, "HTTP_GET: cannot connect to %s:%d", host, port);
                 return NULL;
         }
@@ -962,7 +962,7 @@ static char * http_get(char * host, int port, char * path)
         buf = asprintf_("GET %s HTTP/0.9\r\nHost: %s\r\nUser-Agent: %s\r\n\r\n", path, host, user_agent);
         free(user_agent);
         if (write(sock, buf, strlen(buf)) != strlen(buf)) {
-                closesocket(sock);
+                close(sock);
                 free(buf);
                 l2(OUTPUT_TYPE_ERROR, "HTTP_GET: cannot write to socket for connection to %s:%d", host, port);
                 return NULL;
@@ -988,17 +988,17 @@ static char * http_get(char * host, int port, char * path)
                 rc = select(sock+1, &rfds, NULL, NULL, &tv);
 
                 if (rc == 0) {
-                        closesocket(sock);
+                        close(sock);
                         l3(OUTPUT_TYPE_ERROR, "HTTP_GET: timeout retrieving http://%s:%d%s", host, port, path);
                         return NULL;
                 } else if (rc < 0) {
-                        closesocket(sock);
+                        close(sock);
                         l3(OUTPUT_TYPE_ERROR, "HTTP_GET: I/O error retrieving http://%s:%d%s", host, port, path);
                         return NULL;
                 }
 
                 if (read(sock, nextChar, 1) != 1) {
-                        closesocket(sock);
+                        close(sock);
                         l3(OUTPUT_TYPE_ERROR, "HTTP_GET: I/O error retrieving http://%s:%d%s", host, port, path);
                         return NULL;
                 }
@@ -1007,7 +1007,7 @@ static char * http_get(char * host, int port, char * path)
                 *nextChar = '\0';
 
                 if (nextChar + 1 - headers == sizeof(headers)) {
-                        closesocket(sock);
+                        close(sock);
                         l3(OUTPUT_TYPE_ERROR, "HTTP_GET: I/O error retrieving http://%s:%d%s", host, port, path);
                         return NULL;
                 }
@@ -1020,7 +1020,7 @@ static char * http_get(char * host, int port, char * path)
                         while (!isspace(*start) && *start)
                                 start++;
                         if (!*start) {
-                                closesocket(sock);
+                                close(sock);
                                 l3(OUTPUT_TYPE_ERROR, "HTTP_GET: I/O error retrieving http://%s:%d%s", host, port, path);
                                 return NULL;
                         }
@@ -1030,7 +1030,7 @@ static char * http_get(char * host, int port, char * path)
                         while (!isspace(*end) && *end)
                                 end++;
                         if (!*end) {
-                                closesocket(sock);
+                                close(sock);
                                 l3(OUTPUT_TYPE_ERROR, "HTTP_GET: I/O error retrieving http://%s:%d%s", host, port, path);
                                 return NULL;
                         }
@@ -1038,7 +1038,7 @@ static char * http_get(char * host, int port, char * path)
                         *end = '\0';
                         l1(OUTPUT_TYPE_DEBUG, "HTTP_GET: server response '%s'", start);
                         if (strcmp(start, "200")) {
-                                closesocket(sock);
+                                close(sock);
                                 l4(OUTPUT_TYPE_ERROR, "HTTP_GET: bad server response %s retrieving http://%s:%d%s", start, host, port, path);
                                 return NULL;
                         }
@@ -1061,23 +1061,23 @@ static char * http_get(char * host, int port, char * path)
                 bytes = read(sock, ptr, bufsize - (ptr - buf) - 1);
                 if (bytes == -1) {
                         l1(OUTPUT_TYPE_ERROR, "HTTP_GET: read: %s", strerror(errno));
-                        closesocket(sock);
+                        close(sock);
                         free(buf);
                         return NULL;
                 } else if (bytes == 0) {
                         // 0 == EOF
                         ptr[0] = '\0';
                         buf = realloc_(buf, dlsize + 1);
-                        closesocket(sock);
+                        close(sock);
                         return buf;
                 } else {
-                        l1(OUTPUT_TYPE_DEBUG, "HTTP_GET: read %Id bytes", bytes);
+                        l1(OUTPUT_TYPE_DEBUG, "HTTP_GET: read " ZD " bytes", bytes);
                         dlsize += bytes;
                         ptr = buf + dlsize;
                         if (size > -1 && dlsize == size) {
                                 ptr[0] = '\0';
                                 buf = realloc_(buf, dlsize + 1);
-                                closesocket(sock);
+                                close(sock);
                                 return buf;
                         }
                         if (bufsize - (ptr - buf) - 1 < 2048) {
@@ -1086,7 +1086,7 @@ static char * http_get(char * host, int port, char * path)
                                         l0(OUTPUT_TYPE_ERROR, "HTTP_GET: maximum download size of 1024*1024*1024 reached");
                                         ptr[0] = '\0';
                                         buf = realloc_(buf, dlsize + 1);
-                                        closesocket(sock);
+                                        close(sock);
                                         return buf;
                                 }
                                 buf = realloc_(buf, bufsize);

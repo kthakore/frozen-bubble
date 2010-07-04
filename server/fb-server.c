@@ -20,6 +20,8 @@
 #include <stdio.h>
 #include "net.h"
 #include "game.h"
+#include "tools.h"
+
 int main(int argc, char **argv)
 {
         printf("Frozen-Bubble server version 0.001_1 (protocol version %d.%d)\n", proto_major, proto_minor);
