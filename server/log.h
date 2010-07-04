@@ -27,6 +27,9 @@ extern char current_date[50];
 char* get_current_date(void);
 
 enum output_types { OUTPUT_TYPE_DEBUG, OUTPUT_TYPE_CONNECT, OUTPUT_TYPE_INFO, OUTPUT_TYPE_ERROR };
+#ifndef WINDOWS
+extern int debug_mode;
+#endif
 extern int output_type;
 
 #ifndef __GNUC__
@@ -42,6 +45,10 @@ void l_(int wanted_output_type, char* file, long line, const char* func, char* f
 #define l3(wanted_output_type, f, a1, a2, a3)     l_(wanted_output_type, __FILE__, (long) __LINE__, __func__, f, a1, a2, a3)
 #define l4(wanted_output_type, f, a1, a2, a3, a4) l_(wanted_output_type, __FILE__, (long) __LINE__, __func__, f, a1, a2, a3, a4)
 
+#ifdef WINDOWS
 #define ZD "%Id"
+#else
+#define ZD "%zd"
+#endif
 
 #endif

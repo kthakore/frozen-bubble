@@ -18,6 +18,11 @@
  ******************************************************************************/
 
 #include <sys/types.h>
+#ifndef WINDOWS
+#include <sys/socket.h>
+#include <stdlib.h>
+#include <unistd.h>
+#endif
 
 #include <glib.h>
 

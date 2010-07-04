@@ -27,7 +27,23 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <ctype.h>
+#ifdef WINDOWS
 #include <winsock2.h>
+#else
+#include <stdlib.h>
+#include <errno.h>
+#include <stdarg.h>
+#include <string.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <netdb.h>
+#include <poll.h>
+#include <sys/utsname.h>
+#include <sys/time.h>
+#include <pwd.h>
+#include <signal.h>
+#endif
 #include <regex.h>
 
 #include <glib.h>
@@ -399,6 +415,10 @@ void connections_manager(void)
                 int retval;
                 fd_set conns_set;
 
+#ifndef WINDOWS
+                reregister_server_if_needed();
+#endif
+
                 if (recalculate_list_games)
                         calculate_list_games();
                 recalculate_list_games = 0;
@@ -677,6 +697,13 @@ static void handle_parameter(char command, char * param) {
                         alert_words_file = strdup(param);
                 }
                 break;
+#ifndef WINDOWS
+        case 'd':
+                printf("-d: debug mode on: will not daemonize and will display log messages on STDERR\n");
+                debug_mode = TRUE;
+                quiet = TRUE;
+                break;
+#endif
         case 'f':
                 printf("-f: will store pid of daemon into file '%s'\n", param);
                 pidfile = strdup(param);
@@ -788,6 +815,16 @@ static void handle_parameter(char command, char * param) {
                         max_transmission_rate = DEFAULT_MAX_TRANSMISSION_RATE;
                 }
                 break;
+#ifndef WINDOWS
+        case 'u':
+                if (getpwnam(param) != NULL) {
+                        printf("-u: will switch user of daemon to '%s'\n", param);
+                        user_to_switch = strdup(param);
+                } else {
+                        fprintf(stderr, "-u: '%s' is not a valid user, ignoring\n", param);
+                }
+                break;
+#endif
         case 'z':
                 printf("-z: no preferred language for users of the server\n");
                 serverlanguage = "zz";
@@ -881,7 +918,11 @@ void create_server(int argc, char **argv)
         }
 
         int valone = 1;
+#ifdef WINDOWS
         setsockopt(tcp_server_socket, SOL_SOCKET, SO_REUSEADDR, (char*)&valone, sizeof(valone));
+#else
+        setsockopt(tcp_server_socket, SOL_SOCKET, SO_REUSEADDR, &valone, sizeof(valone));
+#endif
 
         client_addr.sin_family = AF_INET;
         client_addr.sin_addr.s_addr = htonl(INADDR_ANY);
@@ -958,7 +999,12 @@ static char * http_get(char * host, int port, char * path)
                 return NULL;
         }
 
+#ifdef WINDOWS
         user_agent = asprintf_("Frozen-Bubble server version 0.001_1 (protocol version %d.%d) on Windows\n", proto_major, proto_minor);
+#else
+        uname(&uname_);
+        user_agent = asprintf_("Frozen-Bubble server version 0.001_1 (protocol version %d.%d) on %s/%s\n", proto_major, proto_minor, uname_.sysname, uname_.machine);
+#endif
         buf = asprintf_("GET %s HTTP/0.9\r\nHost: %s\r\nUser-Agent: %s\r\n\r\n", path, host, user_agent);
         free(user_agent);
         if (write(sock, buf, strlen(buf)) != strlen(buf)) {

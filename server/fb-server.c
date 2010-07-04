@@ -32,6 +32,9 @@ int main(int argc, char **argv)
         printf("\n");
 
         create_server(argc, argv);
+#ifndef WINDOWS
+        daemonize();
+#endif
         connections_manager();
 
         return 0;

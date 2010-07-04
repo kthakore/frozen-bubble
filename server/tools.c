@@ -22,6 +22,16 @@
 #include <stdarg.h>
 #include <ctype.h>
 #include <glib.h>
+#ifndef WINDOWS
+#include <unistd.h>
+#include <string.h>
+#include <errno.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <pwd.h>
+#endif
 
 #include "log.h"
 #include "tools.h"
@@ -155,3 +165,137 @@ gboolean g_list_any(GList * list, GTruthFunc func, gpointer user_data)
         else
                 return TRUE;
 }
+#ifndef WINDOWS
+
+static void close_fds(gpointer data, gpointer user_data)
+{
+        close(GPOINTER_TO_INT(data));
+}
+
+static time_t last_server_register = -1;
+
+void reregister_server_if_needed() {
+        time_t current_time;
+
+        if (last_server_register == -1 || interval_reregister == 0)
+                // feature disabled
+                return;
+
+        // don't stack zombies, do minimal housework
+        waitpid(-1, NULL, WNOHANG);
+
+        current_time = get_current_time();
+        if ((current_time - last_server_register)/60 >= interval_reregister) {
+                l0(OUTPUT_TYPE_INFO, "Reregistering to master server");
+                last_server_register = current_time;
+                int pid = fork();
+                if (pid < 0) {
+                        l1(OUTPUT_TYPE_ERROR, "Cannot fork: %s", strerror(errno));
+                        return;
+                }
+                if (pid == 0) {
+                        // Need to register from a separate process because master server will test us
+                        register_server(1);
+                        _exit(EXIT_SUCCESS);
+                }
+        }
+}
+
+void daemonize() {
+        pid_t pid, sid;
+        GList * retained_fds = NULL;
+        int fd;
+
+        // Using the file descriptor number 10 is not possible because newlines are checked
+        // for message termination. Retain it.
+        while (1) {
+                fd = open("/dev/null", 0);
+                if (fd == -1) {
+                        l1(OUTPUT_TYPE_ERROR, "opening /dev/null: %s", strerror(errno));
+                        exit(EXIT_FAILURE);
+                }
+                if (fd < 10) {
+                        retained_fds = g_list_append(retained_fds, GINT_TO_POINTER(fd));
+                } else if (fd == 10) {
+                        break;
+                } else {
+                        // Past 10, so close this one and break
+                        close(fd);
+                        break;
+                }
+        }
+        if (retained_fds) {
+                g_list_foreach(retained_fds, close_fds, NULL);
+                g_list_free(retained_fds);
+        }
+
+        if (debug_mode)
+                return;
+
+        last_server_register = get_current_time();
+
+        pid = fork();
+        if (pid < 0) {
+                l1(OUTPUT_TYPE_ERROR, "Cannot fork: %s", strerror(errno));
+                exit(EXIT_FAILURE);
+        }
+        if (pid > 0) {
+                // Save pid if needed
+                if (pidfile != NULL) {
+                        FILE* f = fopen(pidfile, "w");
+                        if (f == NULL) {
+                                l2(OUTPUT_TYPE_ERROR, "Cannot open pidfile '%s' for writing: %s", pidfile, strerror(errno));
+                        } else {
+                                char* pid_s = asprintf_("%d\n", pid);
+                                if (fwrite(pid_s, 1, strlen(pid_s), f) < strlen(pid_s))
+                                        l1(OUTPUT_TYPE_ERROR, "Error writing pidfile to '%s'", pidfile);
+                                fclose(f);
+                                free(pid_s);
+                        }
+                }
+                // Need to register from a separate process because master server will test us
+                l0(OUTPUT_TYPE_INFO, "registering server");
+                register_server(0);
+                exit(EXIT_SUCCESS);
+        }
+
+        // Switch to specified used if needed
+        if (user_to_switch != NULL) {
+                struct passwd* user = getpwnam(user_to_switch);
+                if (user) {
+                        setgid(user->pw_gid);
+                        setuid(user->pw_uid);
+                } else {
+                        l2(OUTPUT_TYPE_ERROR, "Cannot switch user to %s: %s", user_to_switch, strerror(errno));
+                }
+        }
+
+        // Don't stay orphan
+        sid = setsid();
+        if (sid < 0) {
+                l1(OUTPUT_TYPE_ERROR, "Cannot setsid: %s", strerror(errno));
+                exit(EXIT_FAILURE);
+        }
+
+        // Don't lock a directory
+        if (chdir("/") < 0) {
+                l1(OUTPUT_TYPE_ERROR, "Cannot chdir: %s", strerror(errno));
+                exit(EXIT_FAILURE);
+        }
+        printf("Entering daemon mode.\n");
+
+        close(STDIN_FILENO);
+        close(STDOUT_FILENO);
+        close(STDERR_FILENO);
+
+        // Using the file descriptor number 0 is not possible due to the string-oriented protocol when
+        // negociating the game (since C strings cannot contain the NULL char). Retain one file descriptor.
+        fd = open("/dev/null", 0);
+        if (fd == -1) {
+                l1(OUTPUT_TYPE_ERROR, "opening /dev/null: %s", strerror(errno));
+                exit(EXIT_FAILURE);
+        }
+
+        l0(OUTPUT_TYPE_INFO, "Entered daemon mode.");
+}
+#endif

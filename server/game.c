@@ -23,7 +23,16 @@
  */
 
 #include <stdio.h>
+#ifdef WINDOWS
 #include <winsock2.h>
+#else
+#include <stdlib.h>
+#include <unistd.h>
+#include <stdarg.h>
+#include <string.h>
+#include <ctype.h>
+#include <sys/socket.h>
+#endif
 #include <regex.h>
 
 #include <glib.h>

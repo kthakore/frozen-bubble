@@ -38,6 +38,11 @@ gpointer g_list_fold_left(GList * list, gpointer first, GFoldFunc func, gpointer
 typedef gboolean (*GTruthFunc) (gconstpointer data, gconstpointer user_data);
 gboolean g_list_any(GList * list, GTruthFunc func, gpointer user_data);
 
+#ifndef WINDOWS
+void daemonize();
+void reregister_server_if_needed();
+#endif
+
 #define str_begins_static_str(pointer, static_str) \
         (!strncmp(pointer, static_str, sizeof(static_str) - 1))
 #define streq(a, b) (!strcmp(a, b))

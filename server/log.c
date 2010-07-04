@@ -20,11 +20,24 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <sys/time.h>
+#ifndef WINDOWS
+#include <stdlib.h>
+#include <unistd.h>
+#include <string.h>
+#include <sys/types.h>
+#include <time.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <syslog.h>
+#endif
 
 #include "tools.h"
 #include "log.h"
 
 int output_type = OUTPUT_TYPE_INFO;
+#ifndef WINDOWS
+int debug_mode = FALSE;
+#endif
 
 time_t get_current_time(void) 
 {
@@ -56,7 +69,11 @@ char* get_current_date(void)
 }
 
 void logging_init(int portnum) {
+#ifdef WINDOWS
         l1(OUTPUT_TYPE_INFO, "fb-server[TCP%d]", portnum);
+#else
+        openlog(asprintf_("fb-server[TCP%d]", portnum), LOG_PID, LOG_DAEMON);
+#endif
         if (output_type == OUTPUT_TYPE_DEBUG) {
                 l0(OUTPUT_TYPE_INFO, "Starting log. Messages displayed: DEBUG, CONNECT, INFO, ERROR.");
         } else if (output_type == OUTPUT_TYPE_CONNECT) {
@@ -79,10 +96,33 @@ void l_(int wanted_output_type, char* file, long line, const char* func, char* f
     char *msg;
     va_list args;
     if (output_type <= wanted_output_type) {
+#ifndef WINDOWS
+            int level = 0;
+#endif
             va_start(args, fmt);
             msg = vasprintf_(fmt, args); // segfault later if no more memory :)
             va_end(args);
-            fprintf(stderr, "[%s] %s %s:%ld(%s): %s\n", get_current_date(), get_wanted_type(wanted_output_type), file, line, func, msg);
+#ifndef WINDOWS
+            if (wanted_output_type == OUTPUT_TYPE_DEBUG) {
+                    level = LOG_DEBUG;
+            } else if (wanted_output_type == OUTPUT_TYPE_CONNECT) {
+                    level = LOG_NOTICE;
+            } else if (wanted_output_type == OUTPUT_TYPE_INFO) {
+                    level = LOG_INFO;
+            } else if (wanted_output_type == OUTPUT_TYPE_ERROR) {
+                    level = LOG_ERR;
+            }
+            if (debug_mode)
+#endif
+                    fprintf(stderr, "[%s] %s %s:%ld(%s): %s\n", get_current_date(), get_wanted_type(wanted_output_type), file, line, func, msg);
+#ifndef WINDOWS
+            else {
+                    if (output_type == OUTPUT_TYPE_DEBUG)
+                            syslog(level, "[%s] %s %s:%ld(%s): %s", get_current_date(), get_wanted_type(wanted_output_type), file, line, func, msg);
+                    else
+                            syslog(level, "%s %s", get_wanted_type(wanted_output_type), msg);
+            }
+#endif
             free(msg);
     }
 }
