@@ -2,12 +2,10 @@ package My::Builder;
 use 5.008;
 use strict;
 use warnings FATAL => 'all';
+use Alien::SDL;
 use ExtUtils::CBuilder qw();
 use File::Basename qw(fileparse);
 use File::Copy qw(move);
-use File::Fetch;
-use Archive::Extract;
-use Digest::SHA qw(sha1_hex);
 use File::Slurp qw(read_file write_file);
 use File::Spec::Functions qw(catdir catfile rootdir);
 use IO::File qw();
@@ -149,18 +147,6 @@ sub windows_build
 
     $otarget .= '.exe';
 
-    $self->fetch_file("http://ftp.gnome.org/pub/gnome/binaries/win32/glib/2.24/glib-dev_2.24.0-2_win32.zip",
-                      "glib-dev_2.24.0-2_win32.zip",
-                      'b41715b4c1379a0172c47a8b54b3208ece20f14e', 'download');
-    $self->fetch_file("http://ftp.gnome.org/pub/gnome/binaries/win32/glib/2.24/glib_2.24.0-2_win32.zip",
-                      "glib_2.24.0-2_win32.zip",
-                      '0efd5f86f526bc3ec63eebe1b31709918708f0d6', 'download');
-    
-    die "###ERROR###: Cannot extract archive " unless
-        Archive::Extract->new( archive => 'download/glib-dev_2.24.0-2_win32.zip' )->extract(to => 'download');
-    die "###ERROR###: Cannot extract archive " unless
-        Archive::Extract->new( archive => 'download/glib_2.24.0-2_win32.zip' )->extract(to => 'download');
-
     # CBuilder doesn't take shell quoting into consideration,
     # so the -DVERSION macro does not work like in the former Makefile.
     # Instead, I'll just preprocess the two files with perl.
@@ -178,8 +164,8 @@ sub windows_build
     {
         my $extra_compiler_flags = '-g -Wall -Werror -pipe -DWINDOWS';
            $extra_compiler_flags .= ' -I' . $server_directory; # does not seem to be necessary
-           $extra_compiler_flags .= ' -Idownload/include/glib-2.0 -Idownload/lib/glib-2.0/include';
-           $extra_compiler_flags .= ' -Ldownload/lib';
+           $extra_compiler_flags .= ' -I' . Alien::SDL->config('prefix') . '/include/glib-2.0';
+           $extra_compiler_flags .= ' -L' . Alien::SDL->config('prefix') . '/lib';
         my @ofiles;
         for my $cfile (qw(fb-server.c log.c tools.c game.c net.c)) {
                my $source = catfile($server_directory, $cfile);
