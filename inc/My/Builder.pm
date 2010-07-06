@@ -91,7 +91,6 @@ sub ACTION_server {
     if($^O =~ /(w|W)in/ or $^O =~ /darwin/)
     {
         print STDERR "###Cannot build fb-server on windows or darwin need glib\n";
-	windows_build(@_); #TODO: Uncomment this
         return;
     }
     my ($self) = @_;
@@ -138,58 +137,6 @@ sub ACTION_server {
 
     move(catfile($server_directory, $otarget), 'bin');
     return;
-}
-
-sub windows_build
-{
-
-    my ($self) = @_;
-    my $server_directory = 'server';
-    my $otarget          = 'fb-server';
-	return if (-e 'bin/'.$otarget );
-    # CBuilder doesn't take shell quoting into consideration,
-    # so the -DVERSION macro does not work like in the former Makefile.
-    # Instead, I'll just preprocess the two files with perl.
-    {
-        my $version = $self->dist_version;
-        # perl -pie again has problems with shell quoting for the -e'' part.
-        for my $cfile (
-            map {catfile($server_directory, $_)} qw(fb-server.c net.c)
-        ) {
-            my $csource = read_file($cfile);
-            $csource =~ s{" VERSION "}{$version};
-            write_file($cfile, $csource);
-        }
-    }
-
-    {
-        my $cbuilder = ExtUtils::CBuilder->new;
-        my @ofiles;
-        for my $cfile (qw(fb-server.c log.c tools.c game.c net.c)) {
-		my $ofile = $cfile;
-		$ofile =~ s/c$/o/;
-	    push @ofiles, $ofile;
-               my $source = catfile($server_directory, $cfile);
-	       my $extra_compiler_flags = '-g -Wall -Werror -pipe'; # verbatim from Makefile
-                  $extra_compiler_flags .= ' -I' . $server_directory, # does not seem to be necessary
-		  #        $cbuilder->split_like_shell(`pkg-config glib-2.0 --cflags`), YOU NEED TO ADD GLIB FLAGS FOR WINDOWS HERE
-		  #  $cbuilder->split_like_shell(`pkg-config glib-2.0 --libs`),
-                  `gcc -o $ofile $source $extra_compiles_flags`;
-            
-        }
-
-	my $exe_file = catfile($server_directory, $otarget);
-	my $link_flags = `pkg-config glib-2.0 --libs` # WE NEED GLIB libs config
-        my $objects  = join ' ', @ofiles;
-
-	    `gcc -o $exe_file $link_flags $objects`;
-      }
-
-    move(catfile($server_directory, $otarget), 'bin');
-
-
-
-
 }
 
 1;
