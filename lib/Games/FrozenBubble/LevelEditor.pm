@@ -1380,6 +1380,7 @@ sub rect {
     return $surfstyle eq 'hashref' ? $rect->{-rect} : $$rect;
 }
 
+my $s_save; 
 # display a scrrenshot (1/4 size) of the first level in a levelset on the current dialog
 sub display_levelset_screenshot {
         my @levelsets     = get_levelset_list();
@@ -1405,7 +1406,6 @@ sub display_levelset_screenshot {
                 SDL::Video::update_rects($app,$rect{middle});
 
         #- sorta "read ahead": will compute next 10 levels screenshots as well
-        my $s_save if 0;
                 $s_save = SDL::Image::load( "$FPATH/gfx/level_editor.png") unless $s_save;
         #- don't read-ahead if $start_level is void because it
         #- indicates we're just selecting a levelset in the editor

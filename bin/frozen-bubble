@@ -278,6 +278,8 @@ sub play_sound($) {
 }
 
 our $current_theoretical_music;
+my $mus;                                 #- I need to keep a reference on the music or it will be collected at the end of this function, thus I manually collect previous music
+
 sub play_music($) {
     my ($name) = @_;
     $current_theoretical_music = $name;
@@ -288,7 +290,6 @@ sub play_music($) {
     SDL::delay(400);
     SDL::delay(10) while SDL::Mixer::Music::playing_music;  #- mikmod will segfault if we try to load a music while old one is still fading out
     my %musics = (intro => '/snd/introzik.ogg', main1p => '/snd/frozen-mainzik-1p.ogg', main2p => '/snd/frozen-mainzik-2p.ogg');
-    my $mus if 0;                                 #- I need to keep a reference on the music or it will be collected at the end of this function, thus I manually collect previous music
     if (@playlist) {
         my $tryanother = sub {
             my $elem = chomp_(shift @playlist);
@@ -3477,6 +3478,9 @@ sub new_game() {
     return 1;
 }
 
+
+my $save;
+
 sub choose_1p_game_mode() {
 
     my @ordered_names = qw(play_all_levels pick_start_level play_random_levels mp_train);
@@ -3503,7 +3507,6 @@ sub choose_1p_game_mode() {
         };
 
         my $img = $imgbin{'1p_panel'};
-        my $save if 0;
         my $drect = SDL::Rect->new($MENUPOS{xpos_panel}, $MENUPOS{ypos_panel}, $img->w, $img->h);
         if ($save) {
             SDL::Video::blit_surface($save, $rects{img}, $app, $drect);
@@ -5416,7 +5419,8 @@ sub save_config {
     $dump =~ s/'SDLK_(\w+)'/SDLK_$1/g;
     output($rcfile, $dump);
 }
-
+my $banner_pos; 
+my $current_pos;   
 sub menu {
     my ($firsttime) = @_;
 
@@ -5628,7 +5632,7 @@ sub menu {
                         run  => sub { $menu_display_highscores->() }
                 },
         );
-    my $current_pos   if 0; $current_pos = 1;  # selected menu entry (1..8) # THIS IS DEPRECEATED
+    $current_pos = 1;  # selected menu entry (1..8) # THIS IS DEPRECEATED
     my @menu_invalids = (); # list of menu item's positions
     $invalidate_all   = sub { push @menu_invalids, $menu_entries{$_}->{pos} foreach keys %menu_entries };
 
@@ -5784,7 +5788,7 @@ sub menu {
         }
 
         if ($graphics_level > 1) {
-            my $banner_pos if 0;
+            
             $banner_pos ||= 670;
             foreach my $b (keys %banners) {
                 my $xpos = $banners{$b} - $banner_pos;
