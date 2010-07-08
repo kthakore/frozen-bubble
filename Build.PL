@@ -96,6 +96,7 @@ My::Builder->new(
         'ExtUtils::CBuilder'        => 0,
         'File::Copy'                => 0,
         'File::Slurp'               => 0,
+        'Compress::Bzip2'           => 0,
     },
     requires    => {
         'perl'                      => '5.008',
