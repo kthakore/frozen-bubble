@@ -1615,7 +1615,7 @@ sub handle_game_events() {
                 if ($keypressed eq SDLK_PAUSE && !is_mp_game()) {
                     my $time_pause = SDL::get_ticks();
                     play_sound('pause');
-                    $mixer_enabled && $mixer and $mixer->pause_music;
+                    $mixer_enabled && $mixer and SDL::Mixer::Music::pause_music;
                     my $back_saved = switch_image_on_background($imgbin{back_paused}, 0, 0, 1);
                     my $index;
                   pause_label:
@@ -1647,7 +1647,7 @@ sub handle_game_events() {
                     }
                     switch_image_on_background($back_saved, 0, 0);
                     iter_local_players { $actions{$::p}{left} = 0; $actions{$::p}{right} = 0; };
-                    $mixer_enabled && $mixer and $mixer->resume_music;
+                    $mixer_enabled && $mixer and SDL::Mixer::Music::resume_music;
                     SDL::Events::pump_events() while SDL::Events::poll_event($event) != 0;
                     SDL::Video::update_rect($app, 0, 0, 0, 0);
                     $start_time += SDL::get_ticks() - $time_pause;
