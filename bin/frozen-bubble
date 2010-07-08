@@ -54,6 +54,7 @@ use POSIX();
 use Math::Trig;
 use IO::File;
 use Time::HiRes qw(gettimeofday);
+use Compress::Bzip2;
 
 use SDL;
 use SDL::Surface;
@@ -1802,10 +1803,15 @@ sub save_record_if_needed {
                 }
             }
         }
-        output($filename, $data);
-        if (system("bzip2 '$filename' >/dev/null 2>/dev/null") == 0) {
+        my $bz = Compress::Bzip2::bzopen($filename . ".bz2", 'w');
+        if($bz->bzwrite($data)) {
             $filename .= ".bz2";
         }
+        else {
+            output($filename, $data);
+        }
+        $bz->bzclose() if $bz;
+
         print "Record saved in '$filename'. Start Frozen-Bubble with '--replay $filename' to replay the game.\n";
         return 1;
     }
@@ -6008,38 +6014,31 @@ sub replay {
             $fh->close;
             local *F;
             local $/ = undef;
-                        return unless -e $filename;
-                        if( eval {require Compress::Bzip2} ) {
-                                my $bz      = Compress::Bzip2::bzopen($filename, 'r');
-                                $replayfile = '';
-                                my $line    = '';
-                                while($bz->bzreadline($line) > 0){ $replayfile .= $line; }
-                                
-                                $bz->bzclose();
 
-                        }
-                        else {
-                                $replayfile or print("Module Compress::Bzip2 is missing, not displaying playback.\n"), return;
-                        }
-                        unlink ($filename);
+            return unless -e $filename;
+
+            my $bz      = Compress::Bzip2::bzopen($filename, 'r');
+            $replayfile = '';
+            my $line    = '';
+            while($bz->bzreadline($line) > 0){ $replayfile .= $line; }
+            
+            $bz->bzclose();
+            unlink ($filename);
          }
     } else {
         if ($replayfile =~ /\.bz2$/) {
             local *F;
             local $/ = undef;
             my $filename = $replayfile;
-                        return unless -e $filename;
-                        if(  eval {require Compress::Bzip2}) {
-                                my $bz      = Compress::Bzip2::bzopen($filename, 'r');
-                                $replayfile = '';
-                                my $line    = '';
-                                while($bz->bzreadline($line) > 0){ $replayfile .= $line; }
-                                
-                                $bz->bzclose();
-                        }
-                        else {
-                                $replayfile or print("Module Compress::Bzip2 is missing, not displaying playback.\n"), return;
-                        }
+
+            return unless -e $filename;
+
+            my $bz      = Compress::Bzip2::bzopen($filename, 'r');
+            $replayfile = '';
+            my $line    = '';
+            while($bz->bzreadline($line) > 0){ $replayfile .= $line; }
+            
+            $bz->bzclose();
         } else {
             $replayfile = cat_($replayfile);
         }

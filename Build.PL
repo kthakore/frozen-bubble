@@ -117,5 +117,6 @@ My::Builder->new(
 	'Locale::Maketext::Extract'  => 0,
         'File::Glob'                => 0,
 	'File::Which'		    => 0,
+        'Compress::Bzip2'           => 0,
     },
 )->create_build_script;
