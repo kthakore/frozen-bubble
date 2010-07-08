@@ -4035,7 +4035,7 @@ sub save_back_spot {
     my ($x, $y) = get_spot_location($latitude, $longitude);
     $x -= $surface->w/2;
     $y -= $surface->h/2;
-    $$back_ref = SDL::Surface->new(20, 20, 32, 0, 0, 0, 0);
+    $$back_ref = SDL::Surface->new(20, 20, 32);
     SDL::Video::blit_surface($app, SDL::Rect->new($x, $y, 20, 20), $$back_ref, SDL::Rect->new(0,0,$$back_ref->w,$$back_ref->h));
     add_default_rect($$back_ref);
 }
