@@ -1,6 +1,6 @@
 package Games::FrozenBubble;
 
-our $VERSION = '2.2.1_02';
+our $VERSION = '2.2.1';
 
 1;
 
