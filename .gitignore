@@ -9,6 +9,7 @@ _darcs
 Descrip.MMS
 DESCRIP.MMS
 descrip.mms
+download
 MANIFEST
 MANIFEST.bak
 Makefile
@@ -41,3 +42,5 @@ Games-FrozenBubble*
 lib/Games/FrozenBubble/CStuff.c
 lib/Games/FrozenBubble/CStuff.o
 bin/fb-server
+
+/bin/fb-server.exe

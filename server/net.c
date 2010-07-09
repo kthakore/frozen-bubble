@@ -49,6 +49,10 @@ typedef int socklen_t;
 #include <sys/time.h>
 #include <pwd.h>
 #include <signal.h>
+
+#define INVALID_SOCKET (-1)
+#define SOCKET_ERROR   (-1)
+typedef int SOCKET;
 #endif
 #include <regex.h>
 
@@ -95,8 +99,8 @@ static int gracetime = DEFAULT_GRACETIME;
 
 static int lan_game_mode = 0;
 
-static int tcp_server_socket;
-static int udp_server_socket = -1;
+static SOCKET tcp_server_socket;
+static SOCKET udp_server_socket = INVALID_SOCKET;
 
 static int quiet = 0;
 
@@ -208,7 +212,7 @@ void conn_terminated(int fd, char* reason)
                 player_disconnects(fd);
                 recalculate_list_games = 1;
                 interrupt_loop_processing = 1;
-                if (lan_game_mode && g_list_length(new_conns) == 0 && udp_server_socket == -1) {
+                if (lan_game_mode && g_list_length(new_conns) == 0 && udp_server_socket == INVALID_SOCKET) {
                         l0(OUTPUT_TYPE_INFO, "LAN game mode server exiting on last client exit.");
                         exit(EXIT_SUCCESS);
                 }
@@ -433,9 +437,9 @@ void connections_manager(void)
                         FD_ZERO(&conns_set);
                         g_list_foreach(conns, fill_conns_set, &conns_set);
                         g_list_foreach(conns_prio, fill_conns_set, &conns_set);
-                        if (tcp_server_socket != -1)
+                        if (tcp_server_socket != INVALID_SOCKET)
                                 FD_SET(tcp_server_socket, &conns_set);
-                        if (udp_server_socket != -1)
+                        if (udp_server_socket != INVALID_SOCKET)
                                 FD_SET(udp_server_socket, &conns_set);
 
                         tv.tv_sec = 30;
@@ -469,7 +473,7 @@ void connections_manager(void)
                 g_list_free(conns);
                 conns = new_conns;
 
-                if (tcp_server_socket != -1 && FD_ISSET(tcp_server_socket, &conns_set)) {
+                if (tcp_server_socket != INVALID_SOCKET && FD_ISSET(tcp_server_socket, &conns_set)) {
                         if ((fd = accept(tcp_server_socket, (struct sockaddr *) &client_addr, (socklen_t *) &len)) == -1) {
                                 l1(OUTPUT_TYPE_ERROR, "accept: %s", strerror(errno));
                                 continue;
@@ -532,7 +536,7 @@ void connections_manager(void)
                         recalculate_list_games = 1;
                 }
 
-                if (udp_server_socket != -1 && FD_ISSET(udp_server_socket, &conns_set))
+                if (udp_server_socket != INVALID_SOCKET && FD_ISSET(udp_server_socket, &conns_set))
                         handle_udp_request();
         }
 }
@@ -548,21 +552,21 @@ void add_prio(int fd)
         conns_prio = g_list_append(conns_prio, GINT_TO_POINTER(fd));
         new_conns = g_list_remove(new_conns, GINT_TO_POINTER(fd));
         prio[fd] = 1;
-        if (lan_game_mode && g_list_length(conns_prio) > 0 && udp_server_socket != -1) {
+        if (lan_game_mode && g_list_length(conns_prio) > 0 && udp_server_socket != INVALID_SOCKET) {
                 close(tcp_server_socket);
                 close(udp_server_socket);
-                tcp_server_socket = udp_server_socket = -1;
+                tcp_server_socket = udp_server_socket = INVALID_SOCKET;
         }
 }
 
 void close_server() {
-        if (tcp_server_socket != -1) {
+        if (tcp_server_socket != INVALID_SOCKET) {
                 close(tcp_server_socket);
         }
-        if (udp_server_socket != -1) {
+        if (udp_server_socket != INVALID_SOCKET) {
                 close(udp_server_socket);
         }
-        tcp_server_socket = udp_server_socket = -1;
+        tcp_server_socket = udp_server_socket = INVALID_SOCKET;
 }
 
 static void help(void)
@@ -602,7 +606,7 @@ static void create_udp_server(void)
         printf("-l: creating UDP server for answering broadcast server discover, on default port %d\n", DEFAULT_PORT);
 
         udp_server_socket = socket(AF_INET, SOCK_DGRAM, 0);
-        if (udp_server_socket < 0) {
+        if (udp_server_socket == INVALID_SOCKET) {
                 perror("socket");
                 exit(EXIT_FAILURE);
         }
@@ -610,7 +614,7 @@ static void create_udp_server(void)
         server_addr.sin_family = AF_INET;
         server_addr.sin_addr.s_addr = htonl(INADDR_ANY);
         server_addr.sin_port = htons(DEFAULT_PORT);
-        if (bind(udp_server_socket, (struct sockaddr *) &server_addr, sizeof(server_addr)) < 0) {
+        if (bind(udp_server_socket, (struct sockaddr *) &server_addr, sizeof(server_addr)) == SOCKET_ERROR) {
                 perror("bind UDP 1511");
                 exit(EXIT_FAILURE);
         }
@@ -853,6 +857,16 @@ void sigterm_catcher(int signum) {
 
 void create_server(int argc, char **argv)
 {
+#ifdef WINDOWS
+        WSADATA wsaData;
+        // Initialize Winsock
+        int iResult = WSAStartup(MAKEWORD(2,2), &wsaData);
+        if (iResult != 0) {
+                printf("WSAStartup failed: %d\n", iResult);
+                exit(EXIT_FAILURE);
+        }
+#endif
+
         struct sockaddr_in client_addr;
 
         while (1) {
@@ -922,7 +936,7 @@ void create_server(int argc, char **argv)
         }
 
         tcp_server_socket = socket(AF_INET, SOCK_STREAM, 0);
-        if (tcp_server_socket < 0) {
+        if (tcp_server_socket == INVALID_SOCKET) {
                 fprintf(stderr, "creating socket: %s\n", strerror(errno));
                 exit(EXIT_FAILURE);
         }
@@ -937,12 +951,12 @@ void create_server(int argc, char **argv)
         client_addr.sin_family = AF_INET;
         client_addr.sin_addr.s_addr = htonl(INADDR_ANY);
         client_addr.sin_port = htons(port);
-        if (bind(tcp_server_socket, (struct sockaddr *) &client_addr, sizeof(client_addr))) {
+        if (bind(tcp_server_socket, (struct sockaddr *) &client_addr, sizeof(client_addr)) == SOCKET_ERROR) {
                 fprintf(stderr, "binding port %d: %s\n", port, strerror(errno));
                 exit(EXIT_FAILURE);
         }
 
-        if (listen(tcp_server_socket, 1000) < 0) {
+        if (listen(tcp_server_socket, 1000) == SOCKET_ERROR) {
                 fprintf(stderr, "listen: %s\n", strerror(errno));
                 exit(EXIT_FAILURE);
         }
@@ -979,7 +993,7 @@ static char * http_get(char * host, int port, char * path)
         char * nextChar = headers;
         int checkedCode;
         struct in_addr serverAddress;
-        int sock;
+        SOCKET sock;
         int size, bufsize, dlsize;
         int rc;
         ssize_t bytes;
@@ -994,7 +1008,7 @@ static char * http_get(char * host, int port, char * path)
         }
 
         sock = socket(AF_INET, SOCK_STREAM, IPPROTO_IP);
-        if (sock < 0) {
+        if (sock == INVALID_SOCKET) {
                 l2(OUTPUT_TYPE_ERROR, "HTTP_GET: cannot create socket for connection to %s:%d", host, port);
                 return NULL;
         }
@@ -1003,7 +1017,7 @@ static char * http_get(char * host, int port, char * path)
         destPort.sin_port = htons(port);
         destPort.sin_addr = serverAddress;
 
-        if (connect(sock, (struct sockaddr *) &destPort, sizeof(destPort))) {
+        if (connect(sock, (struct sockaddr *) &destPort, sizeof(destPort)) == SOCKET_ERROR) {
                 close(sock);
                 l2(OUTPUT_TYPE_ERROR, "HTTP_GET: cannot connect to %s:%d", host, port);
                 return NULL;
@@ -1012,6 +1026,7 @@ static char * http_get(char * host, int port, char * path)
 #ifdef WINDOWS
         user_agent = asprintf_("Frozen-Bubble server version 0.001_1 (protocol version %d.%d) on Windows\n", proto_major, proto_minor);
 #else
+        struct utsname uname_;
         uname(&uname_);
         user_agent = asprintf_("Frozen-Bubble server version 0.001_1 (protocol version %d.%d) on %s/%s\n", proto_major, proto_minor, uname_.sysname, uname_.machine);
 #endif
