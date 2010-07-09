@@ -54,6 +54,7 @@ use POSIX();
 use Math::Trig;
 use IO::File;
 use Time::HiRes qw(gettimeofday);
+use Compress::Bzip2;
 
 use SDL;
 use SDL::Surface;
@@ -278,6 +279,8 @@ sub play_sound($) {
 }
 
 our $current_theoretical_music;
+my $mus;                                 #- I need to keep a reference on the music or it will be collected at the end of this function, thus I manually collect previous music
+
 sub play_music($) {
     my ($name) = @_;
     $current_theoretical_music = $name;
@@ -288,7 +291,6 @@ sub play_music($) {
     SDL::delay(400);
     SDL::delay(10) while SDL::Mixer::Music::playing_music;  #- mikmod will segfault if we try to load a music while old one is still fading out
     my %musics = (intro => '/snd/introzik.ogg', main1p => '/snd/frozen-mainzik-1p.ogg', main2p => '/snd/frozen-mainzik-2p.ogg');
-    my $mus if 0;                                 #- I need to keep a reference on the music or it will be collected at the end of this function, thus I manually collect previous music
     if (@playlist) {
         my $tryanother = sub {
             my $elem = chomp_(shift @playlist);
@@ -1496,7 +1498,7 @@ sub handle_whenever_events {
             }
         } else {
             if ($mixer_enabled && $mixer && SDL::Mixer::Music::playing_music) {
-                SDL::delay(10) while $mixer->fading_music;   #- mikmod will deadlock if we try to fade_out while still fading in
+                SDL::delay(10) while SDL::Mixer::Music::fading_music;   #- mikmod will deadlock if we try to fade_out while still fading in
                 SDL::Mixer::Music::playing_music and SDL::Mixer::Music::halt_music;
                 SDL::delay(10) while SDL::Mixer::Music::playing_music;  #- mikmod will segfault if we try to load a music while old one is still fading out
             }
@@ -1517,14 +1519,14 @@ sub handle_whenever_events {
         play_music('dummy');
     }
     if ($mixer_enabled && $mixer && $keypressed eq $KEYS->{misc}{raise_volume}) {
-        my $to = int(min($mixer->music_volume(-1) + SDL::Mixer::MIX_MAX_VOLUME()/10, SDL::Mixer::MIX_MAX_VOLUME()));
-        $mixer->music_volume($to);
-        $mixer->channel_volume(-1, $to);
+        my $to = int(min(SDL::Mixer::Music::volume_music(-1) + SDL::Mixer::MIX_MAX_VOLUME()/10, SDL::Mixer::MIX_MAX_VOLUME()));
+        SDL::Mixer::Music::volume_music($to);
+        SDL::Mixer::Channels::volume(-1, $to);
     }
     if ($mixer_enabled && $mixer && $keypressed eq $KEYS->{misc}{lower_volume}) {
-        my $to = int(max($mixer->music_volume(-1) - SDL::Mixer::MIX_MAX_VOLUME()/10, 0));
-        $mixer->music_volume($to);
-        $mixer->channel_volume(-1, $to);
+        my $to = int(max(SDL::Mixer::Music::volume_music(-1) - SDL::Mixer::MIX_MAX_VOLUME()/10, 0));
+        SDL::Mixer::Music::volume_music($to);
+        SDL::Mixer::Channels::volume(-1, $to);
     }
 }
 
@@ -1613,7 +1615,7 @@ sub handle_game_events() {
                 if ($keypressed eq SDLK_PAUSE && !is_mp_game()) {
                     my $time_pause = SDL::get_ticks();
                     play_sound('pause');
-                    $mixer_enabled && $mixer and $mixer->pause_music;
+                    $mixer_enabled && $mixer and SDL::Mixer::Music::pause_music;
                     my $back_saved = switch_image_on_background($imgbin{back_paused}, 0, 0, 1);
                     my $index;
                   pause_label:
@@ -1645,7 +1647,7 @@ sub handle_game_events() {
                     }
                     switch_image_on_background($back_saved, 0, 0);
                     iter_local_players { $actions{$::p}{left} = 0; $actions{$::p}{right} = 0; };
-                    $mixer_enabled && $mixer and $mixer->resume_music;
+                    $mixer_enabled && $mixer and SDL::Mixer::Music::resume_music;
                     SDL::Events::pump_events() while SDL::Events::poll_event($event) != 0;
                     SDL::Video::update_rect($app, 0, 0, 0, 0);
                     $start_time += SDL::get_ticks() - $time_pause;
@@ -1801,10 +1803,15 @@ sub save_record_if_needed {
                 }
             }
         }
-        output($filename, $data);
-        if (system("bzip2 '$filename' >/dev/null 2>/dev/null") == 0) {
+        my $bz = Compress::Bzip2::bzopen($filename . ".bz2", 'w');
+        if($bz->bzwrite($data)) {
             $filename .= ".bz2";
         }
+        else {
+            output($filename, $data);
+        }
+        $bz->bzclose() if $bz;
+
         print "Record saved in '$filename'. Start Frozen-Bubble with '--replay $filename' to replay the game.\n";
         return 1;
     }
@@ -2656,6 +2663,14 @@ sub init_game() {
 
         SDL::init(SDL_INIT_EVERYTHING);
         $app = SDL::Video::set_video_mode(640, 480, 24, $sdl_flags | ($fullscreen ? SDL_FULLSCREEN : 0));
+	unless ($app)
+	{
+	
+		warn "Couldn't make app ".SDL::get_error(). "\n Try software fallback";
+	        $app = SDL::Video::set_video_mode(640, 480, 24, SDL_SWSURFACE | ($fullscreen ? SDL_FULLSCREEN : 0));
+		die "Couldn't make app ".SDL::get_error() unless $app;
+
+	}
         SDL::Video::wm_set_icon(SDL::Video::load_BMP("$FPATH/gfx/pinguins/window_icon_penguin.png"));
         SDL::Video::wm_set_caption('Frozen-Bubble 2', 'Frozen-Bubble 2');
 
@@ -3477,6 +3492,9 @@ sub new_game() {
     return 1;
 }
 
+
+my $save;
+
 sub choose_1p_game_mode() {
 
     my @ordered_names = qw(play_all_levels pick_start_level play_random_levels mp_train);
@@ -3503,7 +3521,6 @@ sub choose_1p_game_mode() {
         };
 
         my $img = $imgbin{'1p_panel'};
-        my $save if 0;
         my $drect = SDL::Rect->new($MENUPOS{xpos_panel}, $MENUPOS{ypos_panel}, $img->w, $img->h);
         if ($save) {
             SDL::Video::blit_surface($save, $rects{img}, $app, $drect);
@@ -4032,7 +4049,7 @@ sub save_back_spot {
     my ($x, $y) = get_spot_location($latitude, $longitude);
     $x -= $surface->w/2;
     $y -= $surface->h/2;
-    $$back_ref = SDL::Surface->new(20, 20, 32, 0, 0, 0, 0);
+    $$back_ref = SDL::Surface->new(20, 20, 32);
     SDL::Video::blit_surface($app, SDL::Rect->new($x, $y, 20, 20), $$back_ref, SDL::Rect->new(0,0,$$back_ref->w,$$back_ref->h));
     add_default_rect($$back_ref);
 }
@@ -4042,7 +4059,7 @@ sub print_spot {
     my ($x, $y) = get_spot_location($latitude, $longitude);
     $x -= $surface->w/2;
     $y -= $surface->h/2;
-    if ($back and ref $back ne 'SCALAR') {
+    if ($back) {
         put_image($$back, $x, $y);
         pop @update_rects;
     }
@@ -4110,7 +4127,7 @@ sub smg_choose_game() {
         foreach (@free_geolocs) {
             @$_ or next;
             my ($x, $y) = get_spot_location($_->[0], $_->[1]);
-            print_spot($_->[0], $_->[1], $ingame ? 'insamegame' : 'free');
+	     print_spot($_->[0], $_->[1], $ingame ? 'insamegame' : 'free');
             push @rectangles, SDL::Rect->new($x - $imgbin{"netspot_free"}->w/2,
                                              $y - $imgbin{"netspot_free"}->h/2,
                                              $imgbin{"netspot_free"}->w,
@@ -4231,7 +4248,7 @@ sub smg_choose_game() {
         if ($mylatitude && !$private) {
             $index_selfspot >= 0 and print_spot($mylatitude, $mylongitude, 'free', $imgbin{netspot_self}[$index_selfspot], \$back_selfspot);
             $index_selfspot++;
-            if ($back_selfspot && $index_selfspot == @{$imgbin{netspot_self}}) {
+            if ($index_selfspot == @{$imgbin{netspot_self}}) {
                 my ($x, $y) = get_spot_location($mylatitude, $mylongitude);
                 put_image($back_selfspot, $x - 10, $y - 10);
                 $index_selfspot = -15;
@@ -5416,7 +5433,8 @@ sub save_config {
     $dump =~ s/'SDLK_(\w+)'/SDLK_$1/g;
     output($rcfile, $dump);
 }
-
+my $banner_pos; 
+my $current_pos;   
 sub menu {
     my ($firsttime) = @_;
 
@@ -5628,7 +5646,7 @@ sub menu {
                         run  => sub { $menu_display_highscores->() }
                 },
         );
-    my $current_pos   if 0; $current_pos = 1;  # selected menu entry (1..8) # THIS IS DEPRECEATED
+    $current_pos = 1;  # selected menu entry (1..8) # THIS IS DEPRECEATED
     my @menu_invalids = (); # list of menu item's positions
     $invalidate_all   = sub { push @menu_invalids, $menu_entries{$_}->{pos} foreach keys %menu_entries };
 
@@ -5784,7 +5802,7 @@ sub menu {
         }
 
         if ($graphics_level > 1) {
-            my $banner_pos if 0;
+            
             $banner_pos ||= 670;
             foreach my $b (keys %banners) {
                 my $xpos = $banners{$b} - $banner_pos;
@@ -6004,38 +6022,31 @@ sub replay {
             $fh->close;
             local *F;
             local $/ = undef;
-                        return unless -e $filename;
-                        if( eval {require Compress::Bzip2} ) {
-                                my $bz      = Compress::Bzip2::bzopen($filename, 'r');
-                                $replayfile = '';
-                                my $line    = '';
-                                while($bz->bzreadline($line) > 0){ $replayfile .= $line; }
-                                
-                                $bz->bzclose();
 
-                        }
-                        else {
-                                $replayfile or print("Module Compress::Bzip2 is missing, not displaying playback.\n"), return;
-                        }
-                        unlink ($filename);
+            return unless -e $filename;
+
+            my $bz      = Compress::Bzip2::bzopen($filename, 'r');
+            $replayfile = '';
+            my $line    = '';
+            while($bz->bzreadline($line) > 0){ $replayfile .= $line; }
+            
+            $bz->bzclose();
+            unlink ($filename);
          }
     } else {
         if ($replayfile =~ /\.bz2$/) {
             local *F;
             local $/ = undef;
             my $filename = $replayfile;
-                        return unless -e $filename;
-                        if( eval('use Compress::Bzip2; 1') ) {
-                                my $bz      = Compress::Bzip2::bzopen($filename, 'r');
-                                $replayfile = '';
-                                my $line    = '';
-                                while($bz->bzreadline($line) > 0){ $replayfile .= $line; }
-                                
-                                $bz->bzclose();
-                        }
-                        else {
-                                $replayfile or print("Module Compress::Bzip2 is missing, not displaying playback.\n"), return;
-                        }
+
+            return unless -e $filename;
+
+            my $bz      = Compress::Bzip2::bzopen($filename, 'r');
+            $replayfile = '';
+            my $line    = '';
+            while($bz->bzreadline($line) > 0){ $replayfile .= $line; }
+            
+            $bz->bzclose();
         } else {
             $replayfile = cat_($replayfile);
         }

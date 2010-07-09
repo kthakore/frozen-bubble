@@ -60,8 +60,8 @@ My::Builder->new(
         'IO::Socket'                => '1.24', # part od IO distribution
         'Math::Trig'                => 0,
         'parent'                    => 0,
-        'Alien::SDL'                => '1.404',
-        'SDL'                       => '2.405',
+        'Alien::SDL'                => '1.409',
+        'SDL'                       => '2.500',
         'ExtUtils::CBuilder'        => 0,
         'Time::HiRes'               => 0,
         'Locale::Maketext::Simple'  => 0,
@@ -83,8 +83,8 @@ My::Builder->new(
         'IO::Socket'                => '1.24', # part od IO distribution
         'Math::Trig'                => 0,
         'parent'                    => 0,
-        'Alien::SDL'                => '1.403',
-        'SDL'                       => '2.500_1',
+        'Alien::SDL'                => '1.409',
+        'SDL'                       => '2.500',
         'Time::HiRes'               => 0,
         'Locale::Maketext::Simple'  => 0,
         'Module::Build'             => '0.36', # for share_dir
@@ -96,6 +96,7 @@ My::Builder->new(
         'ExtUtils::CBuilder'        => 0,
         'File::Copy'                => 0,
         'File::Slurp'               => 0,
+        'Compress::Bzip2'           => 0,
     },
     requires    => {
         'perl'                      => '5.008',
@@ -110,13 +111,13 @@ My::Builder->new(
         'IO::Socket'                => '1.24', # part of IO distribution
         'Math::Trig'                => 0,
         'parent'                    => 0,
-        'Alien::SDL'                => '1.403',
-        'SDL'                       => '2.500_1',
+        'Alien::SDL'                => '1.409',
+        'SDL'                       => '2.500',
         'Time::HiRes'               => 0,
         'Locale::Maketext::Simple'  => 0,
 	'Locale::Maketext::Extract'  => 0,
         'File::Glob'                => 0,
-        'SDLx::TTF'                 => 0,
 	'File::Which'		    => 0,
+        'Compress::Bzip2'           => 0,
     },
 )->create_build_script;
