@@ -2663,6 +2663,7 @@ sub init_game() {
 
         SDL::init(SDL_INIT_EVERYTHING);
         $app = SDL::Video::set_video_mode(640, 480, 24, $sdl_flags | ($fullscreen ? SDL_FULLSCREEN : 0));
+	die "Couldn't make app ".SDL::get_error() unless $app;
         SDL::Video::wm_set_icon(SDL::Video::load_BMP("$FPATH/gfx/pinguins/window_icon_penguin.png"));
         SDL::Video::wm_set_caption('Frozen-Bubble 2', 'Frozen-Bubble 2');
 
