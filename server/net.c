@@ -139,7 +139,11 @@ static ssize_t send_line(int fd, char* msg)
                 buf[sizeof(buf)-2] = '\n';
         }
         if (size > 0) {
+#ifdef WINDOWS
+                return send(fd, buf, size, 0);
+#else
                 return send(fd, buf, size, MSG_NOSIGNAL);
+#endif
         } else {
                 l2(OUTPUT_TYPE_ERROR, "[%d] Format failure, impossible to send message '%s'", fd, msg);
                 return 0;
@@ -445,7 +449,7 @@ void connections_manager(void)
                         tv.tv_sec = 30;
                         tv.tv_usec = 0;
 
-                        if ((retval = select(FD_SETSIZE, &conns_set, NULL, NULL, &tv)) == -1) {
+                        if ((retval = select(FD_SETSIZE, &conns_set, NULL, NULL, &tv)) == SOCKET_ERROR) {
                                 l1(OUTPUT_TYPE_ERROR, "select: %s", strerror(errno));
                                 exit(EXIT_FAILURE);
                         }
@@ -480,11 +484,8 @@ void connections_manager(void)
                         }
 
                         l2(OUTPUT_TYPE_CONNECT, "Accepted connection from %s: fd %d", inet_ntoa(client_addr.sin_addr), fd);
-                        if (fd > 255 || conns_nb() >= max_users || (lan_game_mode && g_list_length(conns_prio) > 0)) {
-                                // don't overrun prio in send_line_log_push
-                                if (fd <= 255) {
-                                        send_line_log_push(fd, fl_server_full);
-                                }
+                        if (conns_nb() >= max_users || (lan_game_mode && g_list_length(conns_prio) > 0)) {
+                                send_line_log_push(fd, fl_server_full);
                                 l1(OUTPUT_TYPE_INFO, "[%d] Closing connection (server full)", fd);
                                 close(fd);
                                 continue;
@@ -1062,7 +1063,7 @@ static char * http_get(char * host, int port, char * path)
                         close(sock);
                         l3(OUTPUT_TYPE_ERROR, "HTTP_GET: timeout retrieving http://%s:%d%s", host, port, path);
                         return NULL;
-                } else if (rc < 0) {
+                } else if (rc == SOCKET_ERROR) {
                         close(sock);
                         l3(OUTPUT_TYPE_ERROR, "HTTP_GET: I/O error retrieving http://%s:%d%s", host, port, path);
                         return NULL;
@@ -1130,7 +1131,7 @@ static char * http_get(char * host, int port, char * path)
         buf = ptr = malloc_(bufsize);
         while (1) {
                 bytes = recv(sock, ptr, bufsize - (ptr - buf) - 1, 0);
-                if (bytes == -1) {
+                if (bytes == SOCKET_ERROR) {
                         l1(OUTPUT_TYPE_ERROR, "HTTP_GET: read: %s", strerror(errno));
                         close(sock);
                         free(buf);
