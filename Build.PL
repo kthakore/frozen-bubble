@@ -61,7 +61,7 @@ My::Builder->new(
         'Math::Trig'                => 0,
         'parent'                    => 0,
         'Alien::SDL'                => '1.404',
-        'SDL'                       => '2.405',
+        'SDL'                       => '2.500',
         'ExtUtils::CBuilder'        => 0,
         'Time::HiRes'               => 0,
         'Locale::Maketext::Simple'  => 0,
@@ -83,8 +83,8 @@ My::Builder->new(
         'IO::Socket'                => '1.24', # part od IO distribution
         'Math::Trig'                => 0,
         'parent'                    => 0,
-        'Alien::SDL'                => '1.403',
-        'SDL'                       => '2.500_1',
+        'Alien::SDL'                => '1.408',
+        'SDL'                       => '2.500',
         'Time::HiRes'               => 0,
         'Locale::Maketext::Simple'  => 0,
         'Module::Build'             => '0.36', # for share_dir
@@ -111,8 +111,8 @@ My::Builder->new(
         'IO::Socket'                => '1.24', # part of IO distribution
         'Math::Trig'                => 0,
         'parent'                    => 0,
-        'Alien::SDL'                => '1.403',
-        'SDL'                       => '2.500_1',
+        'Alien::SDL'                => '1.408',
+        'SDL'                       => '2.500',
         'Time::HiRes'               => 0,
         'Locale::Maketext::Simple'  => 0,
 	'Locale::Maketext::Extract'  => 0,
