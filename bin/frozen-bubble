@@ -57,6 +57,7 @@ use Time::HiRes qw(gettimeofday);
 use Compress::Bzip2;
 
 use SDL;
+use SDL::Rect;
 use SDL::Surface;
 use SDL::Video;
 use SDL::Event;
