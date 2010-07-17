@@ -57,6 +57,7 @@ use Time::HiRes qw(gettimeofday);
 use Compress::Bzip2;
 
 use SDL;
+use SDL::Rect;
 use SDL::Surface;
 use SDL::Video;
 use SDL::Event;
@@ -134,7 +135,7 @@ our $is_rtl = $ENV{LANGUAGE} =~ /^fa/;
 print "        [[ Frozen-Bubble-$Games::FrozenBubble::VERSION ]]\n\n";
 print '  http://www.frozen-bubble.org/
 
-  Copyright (c) 2000-2008 The Frozen-Bubble Team.
+  Copyright (c) 2000-2010 The Frozen-Bubble Team.
 
     Artwork: Alexis Younes
              Amaury Amblard-Ladurantie
@@ -2663,6 +2664,14 @@ sub init_game() {
 
         SDL::init(SDL_INIT_EVERYTHING);
         $app = SDL::Video::set_video_mode(640, 480, 24, $sdl_flags | ($fullscreen ? SDL_FULLSCREEN : 0));
+	unless ($app)
+	{
+	
+		warn "Couldn't make app ".SDL::get_error(). "\n Try software fallback";
+	        $app = SDL::Video::set_video_mode(640, 480, 24, SDL_SWSURFACE | ($fullscreen ? SDL_FULLSCREEN : 0));
+		die "Couldn't make app ".SDL::get_error() unless $app;
+
+	}
         SDL::Video::wm_set_icon(SDL::Video::load_BMP("$FPATH/gfx/pinguins/window_icon_penguin.png"));
         SDL::Video::wm_set_caption('Frozen-Bubble 2', 'Frozen-Bubble 2');
 
@@ -6424,7 +6433,7 @@ frozen-bubble-editor
 
 =head1 COPYRIGHT
 
-Copyright © 2000-2008 The Frozen-Bubble Team.
+Copyright © 2000-2010 The Frozen-Bubble Team.
 
 This is Free Software; this software is licensed under the GPL version 2, as published by the Free Software Foundation.
 There is NO warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.

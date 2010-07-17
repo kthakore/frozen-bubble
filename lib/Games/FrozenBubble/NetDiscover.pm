@@ -212,7 +212,7 @@ __END__
 
 =head1 Frozen-Bubble
 
-Copyright © 2008 The Frozen-Bubble Team
+Copyright © 2010 The Frozen-Bubble Team
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License version 2, as

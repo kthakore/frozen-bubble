@@ -60,4 +60,8 @@
 lib/Games/FrozenBubble/CStuff.c
 lib/Games/FrozenBubble/CStuff.o
 
+bin/fb-server
+
+server/(fb-server|game|log|net|tools).o
+
 

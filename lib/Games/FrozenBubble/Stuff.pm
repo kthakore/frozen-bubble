@@ -366,7 +366,7 @@ __END__
 
 =head1 Frozen-Bubble
 
-Copyright © 2000 - 2008 The Frozen-Bubble Team
+Copyright © 2000 - 2010 The Frozen-Bubble Team
 
 Originally sponsored by Mandriva <http://www.mandriva.com/>
 

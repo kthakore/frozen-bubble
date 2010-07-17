@@ -1,6 +1,6 @@
 /*******************************************************************************
  *
- * Copyright (c) 2004-2008 Guillaume Cottenceau
+ * Copyright (c) 2004-2010 Guillaume Cottenceau
  *
  * Portions from Mandriva's stage1.
  *
