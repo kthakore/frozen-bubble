@@ -51,11 +51,11 @@ $FBLE::levelset_name = /-ls\s*(\S+)/ || /-levelset\s*(\S+)/ ? $1 : 'default-leve
 $FBLE::curr_level = /-l\s*(\d+)/ || /-level\s*(\d+)/ ? $1 : 1;
 $FBLE::command_line_fullscreen = to_bool(/-fs/ || /-fullscreen/);
 
-my $app = SDLx::App->new(-icon => "$FPATH/gfx/pinguins/window_icon_penguin.png",
-                        -title => 'frozen-bubble level editor',
-                        -width => 640, -height => 480);
+my $app = SDLx::App->new(icon => "$FPATH/gfx/pinguins/window_icon_penguin.png",
+                        title => 'frozen-bubble level editor',
+                        width => 640, height => 480);
 
-Games::FrozenBubble::LevelEditor::init_setup('stand-alone', $app);
+Games::FrozenBubble::LevelEditor::init_setup('stand-alone', $app->surface());
 Games::FrozenBubble::LevelEditor::handle_events();
 
 __END__
