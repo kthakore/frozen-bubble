@@ -9,6 +9,9 @@ use Config qw(%Config);
 use My::Builder;
 use ExtUtils::CBuilder qw();
 
+use lib 'lib';
+use Games::FrozenBubble;
+
 my $prefix = Alien::SDL->config('prefix');
 my $cflags = '-I'
   . File::Spec->catfile( $prefix, 'include' )
@@ -50,6 +53,7 @@ My::Builder->new(
         },
     },
     module_name => 'Games::FrozenBubble',
+    dist_version => $Games::FrozenBubble::RELEASE_VERSION,
     share_dir => 'share',
     no_index  => { directory => [ 'server' ] }, # tell PAUSE to not index 'server' subdirectory
     configure_requires => { #need to have for running: perl Buil.PL

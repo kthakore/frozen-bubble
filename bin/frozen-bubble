@@ -132,7 +132,7 @@ my ($lang) = split(':', $ENV{LANGUAGE});
 gettext_lang($lang);
 our $is_rtl = $ENV{LANGUAGE} =~ /^fa/;
 
-print "        [[ Frozen-Bubble-$Games::FrozenBubble::VERSION ]]\n\n";
+print "        [[ Frozen-Bubble-$Games::FrozenBubble::RELEASE_VERSION ]]\n\n";
 print '  http://www.frozen-bubble.org/
 
   Copyright (c) 2000-2010 The Frozen-Bubble Team.

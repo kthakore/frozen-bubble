@@ -25,7 +25,7 @@ if($shlib_map) {
   }
 }
 
-bootstrap Games::FrozenBubble::CStuff $Games::FrozenBubble::VERSION;
+bootstrap Games::FrozenBubble::CStuff $Games::FrozenBubble::RELEASE_VERSION;
 
 sub sdlpango_init{ SDL::Pango::init(); }
 sub sdlpango_createcontext{

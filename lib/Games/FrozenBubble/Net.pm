@@ -379,7 +379,7 @@ sub http_download($) {
     my $bytes = syswrite($sock, join("\r\n",
                                      "GET $path HTTP/1.0",
                                      "Host: $host:$port",
-                                     "User-Agent: Frozen-Bubble client version $Games::FrozenBubble::VERSION (protocol version $proto_major.$proto_minor) on $sysname/$machine",
+                                     "User-Agent: Frozen-Bubble client version $Games::FrozenBubble::RELEASE_VERSION (protocol version $proto_major.$proto_minor) on $sysname/$machine",
                                      "", ""));
     if (!$bytes) {
         close $sock;
