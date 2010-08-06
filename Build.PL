@@ -53,7 +53,7 @@ My::Builder->new(
         },
     },
     module_name => 'Games::FrozenBubble',
-    dist_version => $Games::FrozenBubble::RELEASE_VERSION,
+    dist_version => $Games::FrozenBubble::VERSION,
     share_dir => 'share',
     no_index  => { directory => [ 'server' ] }, # tell PAUSE to not index 'server' subdirectory
     configure_requires => { #need to have for running: perl Buil.PL
