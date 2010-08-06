@@ -97,29 +97,22 @@ sub ACTION_server {
     my $server_directory = 'server';
     my $otarget          = 'fb-server';
 	return if (-e 'bin/'.$otarget );
-    # CBuilder doesn't take shell quoting into consideration,
-    # so the -DVERSION macro does not work like in the former Makefile.
-    # Instead, I'll just preprocess the two files with perl.
-    {
-        my $version = $self->dist_version;
-        # perl -pie again has problems with shell quoting for the -e'' part.
-        for my $cfile (
-            map {catfile($server_directory, $_)} qw(fb-server.c net.c)
-        ) {
-            my $csource = read_file($cfile);
-            $csource =~ s{" VERSION "}{$version};
-            write_file($cfile, $csource);
-        }
-    }
+
+	require Games::FrozenBubble;
+
+	my $version = ' -DVERSION="'.$Games::FrozenBubble::RELEASE_VERSION.'" ';
 
     {
         my $cbuilder = ExtUtils::CBuilder->new;
+	my $cpp = $cbuilder->{config}->{'cppflags'};
+	$cpp = $version. $cpp;
+	$cbuilder->{config}->{'cppflags'} = $cpp;
         my @ofiles;
         for my $cfile (qw(fb-server.c log.c tools.c game.c net.c)) {
             push @ofiles, $cbuilder->compile(
                 source               => catfile($server_directory, $cfile),
                 extra_compiler_flags => [
-                    qw(-g -Wall -Werror -pipe), # verbatim from Makefile
+                    qw(-g -Wall -Werror -pipe ), # verbatim from Makefile
                     '-I' . $server_directory, # does not seem to be necessary
                     $cbuilder->split_like_shell(`pkg-config glib-2.0 --cflags`),
                     $cbuilder->split_like_shell(`pkg-config glib-2.0 --libs`),
