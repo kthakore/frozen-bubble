@@ -34,6 +34,8 @@ My::Builder->new(
     add_to_cleanup => [
         'lib/Games/FrozenBubble/CStuff.c',
         'lib/Games/FrozenBubble/CStuff.o',
+        'server/fb-server.c',  #preprocessed by perl from $cfile_tmp
+        'server/net.c',
         'server/fb-server.o',
         'server/game.o',
         'server/log.o',
