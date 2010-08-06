@@ -4,6 +4,7 @@ use strict;
 use warnings FATAL => 'all';
 use lib 'inc';
 use Alien::SDL qw();
+use SDL::Config;
 use File::Spec;
 use Config qw(%Config);
 use My::Builder;
@@ -25,10 +26,20 @@ my @linkers = ( ExtUtils::CBuilder->new->split_like_shell( Alien::SDL->config('l
 push @linkers, '-liconv'
   if $^O =~ /win/i;    ###!!! really only Win needs this? ; BEWARE this matches also 'darwin', 'cygwin'!!!!
 
-die "Cannot find 'iconv.h'"     unless Alien::SDL->check_header('iconv.h');
-die "Cannot find 'math.h'"      unless Alien::SDL->check_header('math.h');
-die "Cannot find 'SDL.h'"       unless Alien::SDL->check_header('SDL.h');
-die "Cannot find 'SDL_mixer.h'" unless Alien::SDL->check_header('SDL_mixer.h');
+  my $CPAN_test_NA;
+
+$CPAN_test_NA =  "Cannot find 'iconv.h'"     unless Alien::SDL->check_header('iconv.h');
+$CPAN_test_NA =  "Cannot find 'math.h'"      unless Alien::SDL->check_header('math.h');
+$CPAN_test_NA =  "Cannot find 'SDL.h'"       unless Alien::SDL->check_header('SDL.h');
+$CPAN_test_NA =  "Cannot find 'SDL_mixer.h'" unless Alien::SDL->check_header('SDL_mixer.h');
+
+$CPAN_test_NA =  "SDL_perl need to be built with SDL_image (png) support" unless SDL::Config->has('SDL_image');
+$CPAN_test_NA =  "SDL_perl need to be built with SDL_mixer (ogg) support" unless SDL::Config->has('SDL_mixer');
+$CPAN_test_NA =  "SDL_perl need to be built with SDL_Pango support" unless SDL::Config->has('SDL_Pango');
+$CPAN_test_NA =  "SDL_perl need to be built with SDL_ttf   support" unless SDL::Config->has('SDL_ttf');
+
+if( $CPAN_test_NA ){ warn $CPAN_test_NA; exit(0) }
+
 
 My::Builder->new(
     add_to_cleanup => [
@@ -67,7 +78,7 @@ My::Builder->new(
         'Math::Trig'                => 0,
         'parent'                    => 0,
         'Alien::SDL'                => '1.412',
-        'SDL'                       => '2.510',
+        'SDL'                       => '2.511',
         'ExtUtils::CBuilder'        => 0,
         'Time::HiRes'               => 0,
         'Locale::Maketext::Simple'  => 0,
@@ -80,6 +91,7 @@ My::Builder->new(
         'ExtUtils::CBuilder'        => 0,
         'File::Copy'                => 0,
         'File::Slurp'               => 0,
+        'IPC::System::Simple'       => 0,
     },
     build_requires => { #need to have for running: ./Build (install|test), basically should be a superset of 'requires' as we run testsuite
         'perl'                      => '5.008',
@@ -89,8 +101,8 @@ My::Builder->new(
         'IO::Socket'                => '1.24', # part od IO distribution
         'Math::Trig'                => 0,
         'parent'                    => 0,
-        'Alien::SDL'                => '1.412',
-        'SDL'                       => '2.510',
+        'Alien::SDL'                => '1.413',
+        'SDL'                       => '2.511',
         'Time::HiRes'               => 0,
         'Locale::Maketext::Simple'  => 0,
         'Module::Build'             => '0.36', # for share_dir
@@ -103,6 +115,8 @@ My::Builder->new(
         'File::Copy'                => 0,
         'File::Slurp'               => 0,
         'Compress::Bzip2'           => 0,
+        'IPC::System::Simple'       => 0,
+
     },
     requires    => {
         'perl'                      => '5.008',
@@ -117,13 +131,15 @@ My::Builder->new(
         'IO::Socket'                => '1.24', # part of IO distribution
         'Math::Trig'                => 0,
         'parent'                    => 0,
-        'Alien::SDL'                => '1.409',
-        'SDL'                       => '2.500',
+        'Alien::SDL'                => '1.413',
+        'SDL'                       => '2.511',
         'Time::HiRes'               => 0,
         'Locale::Maketext::Simple'  => 0,
 	'Locale::Maketext::Extract'  => 0,
         'File::Glob'                => 0,
 	'File::Which'		    => 0,
         'Compress::Bzip2'           => 0,
+        'IPC::System::Simple'       => 0,
+
     },
 )->create_build_script;

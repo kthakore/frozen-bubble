@@ -4,6 +4,18 @@
 
 Changes - Revision history for Games-FrozenBubble
 
+=head2 2.212 (2.2.1beta1) 2010-08-06
+
+=over
+
+=item Fixed VERSION/RELEASE_VERSION (kthakore) 
+
+=item Added deps for IPC::System::Simple
+
+=item Check SDL::Config for missing C deps
+
+=back
+
 =head2 2.21	2010-07-09
 
 =over
