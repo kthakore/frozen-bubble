@@ -41,3 +41,5 @@ Games-FrozenBubble*
 lib/Games/FrozenBubble/CStuff.c
 lib/Games/FrozenBubble/CStuff.o
 bin/fb-server
+server/fb_server.c
+server/net.c

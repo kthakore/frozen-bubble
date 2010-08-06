@@ -13,6 +13,9 @@ use autodie qw(:all move read_file write_file);
 use parent 'Module::Build';
 use Locale::Maketext::Extract;
 
+use lib 'lib';
+use Games::FrozenBubble;
+
 sub ACTION_run {
     my ($self) = @_;
     $self->depends_on('code');
@@ -101,13 +104,14 @@ sub ACTION_server {
     # so the -DVERSION macro does not work like in the former Makefile.
     # Instead, I'll just preprocess the two files with perl.
     {
-        my $version = $self->dist_version;
+        my $version = $Games::FrozenBubble::RELEASE_VERSION;
         # perl -pie again has problems with shell quoting for the -e'' part.
         for my $cfile (
-            map {catfile($server_directory, $_)} qw(fb-server.c net.c)
+            map {catfile($server_directory, $_)} qw(fb-server.c_tmp net.c_tmp)
         ) {
             my $csource = read_file($cfile);
             $csource =~ s{" VERSION "}{$version};
+            $cfile =~ s/_tmp//;
             write_file($cfile, $csource);
         }
     }
