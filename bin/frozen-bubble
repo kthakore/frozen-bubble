@@ -2913,22 +2913,16 @@ sub init_game() {
     if ($mixer eq 'SOUND_DISABLED') {
         $mixer_enabled = 0;
         $mixer = undef;
+
     } elsif (!defined($mixer_enabled) || $mixer_enabled) {
-	
-     my $init_flags = SDL::Mixer::init(  MIX_INIT_OGG );
-
-     unless ($init_flags & MIX_INIT_OGG)
-     {
-	     warn "OGG support needed to be compiled in SDL::Mixer  SDL module. Disabling Sound.";
-		$mixer_enabled = 0;
-		$mixer = undef;
-		
-     }
-     else
-     {
-        $mixer_enabled = init_sound();
-     }
-
+        my $init_flags = SDL::Mixer::init(MIX_INIT_OGG);
+        if (!($init_flags & MIX_INIT_OGG)) {
+            warn "OGG support needed to be compiled in SDL::Mixer SDL module. Disabling sound.";
+            $mixer_enabled = 0;
+            $mixer = undef;
+        } else {
+            $mixer_enabled = init_sound();
+        }
     }
 
     #- the RGBA effects algorithms assume little endian RGBA surfaces
