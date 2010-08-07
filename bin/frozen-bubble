@@ -329,7 +329,6 @@ sub init_sound() {
         print STDERR "\nWarning: can't initialize sound (reason: $@).\n";
         return 0;
     }
-
     $mixer = 1;
     print "[Sound Init] ";
     my @sounds = qw(stick destroy_group newroot newroot_solo lose hurry pause menu_change menu_selected rebound launch malus noh snore cancel typewriter applause chatted);
@@ -2915,7 +2914,21 @@ sub init_game() {
         $mixer_enabled = 0;
         $mixer = undef;
     } elsif (!defined($mixer_enabled) || $mixer_enabled) {
+	
+     my $init_flags = SDL::Mixer::init(  MIX_INIT_OGG );
+
+     unless ($init_flags & MIX_INIT_OGG)
+     {
+	     warn "OGG support needed to be compiled in SDL::Mixer  SDL module. Disabling Sound.";
+		$mixer_enabled = 0;
+		$mixer = undef;
+		
+     }
+     else
+     {
         $mixer_enabled = init_sound();
+     }
+
     }
 
     #- the RGBA effects algorithms assume little endian RGBA surfaces
