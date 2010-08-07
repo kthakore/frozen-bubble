@@ -322,7 +322,8 @@ sub play_music($) {
 
 sub init_sound() {
     eval {
-             SDL::Mixer::open_audio( 22050, AUDIO_S16SYS, 2,1024);
+             my $audio = SDL::Mixer::open_audio( 22050, AUDIO_S16SYS, 2,1024);
+	     die SDL::get_error if $audio == -1;
                  };
     if ($@) {
         $@ =~ s| at \S+ line.*\n||;
@@ -2671,7 +2672,7 @@ sub init_game() {
 		die "Couldn't make app ".SDL::get_error() unless $app;
 
 	}
-        SDL::Video::wm_set_icon(SDL::Video::load_BMP("$FPATH/gfx/pinguins/window_icon_penguin.png"));
+        SDL::Video::wm_set_icon(SDL::Video::load_BMP("$FPATH/gfx/pinguins/window_icon_penguin.bmp"));
         SDL::Video::wm_set_caption('Frozen-Bubble 2', 'Frozen-Bubble 2');
 
     my $joys = SDL::Joystick::num_joysticks();
@@ -2910,6 +2911,9 @@ sub init_game() {
 
     print_step('] ');
 
+    my $video_errors = SDL::get_error();
+    print STDERR "\n$video_errors";
+
     if ($mixer eq 'SOUND_DISABLED') {
         $mixer_enabled = 0;
         $mixer = undef;
@@ -2917,7 +2921,7 @@ sub init_game() {
     } elsif (!defined($mixer_enabled) || $mixer_enabled) {
         my $init_flags = SDL::Mixer::init(MIX_INIT_OGG);
         if (!($init_flags & MIX_INIT_OGG)) {
-            warn "OGG support needed to be compiled in SDL::Mixer SDL module. Disabling sound.";
+            print STDERR "\nOGG support needed to be compiled in SDL::Mixer SDL module. Disabling sound.";
             $mixer_enabled = 0;
             $mixer = undef;
         } else {
