@@ -321,10 +321,14 @@ sub play_music($) {
 }
 
 sub init_sound() {
-    eval {
-             my $audio = SDL::Mixer::open_audio( 22050, AUDIO_S16SYS, 2,1024);
-	     die SDL::get_error if $audio == -1;
-                 };
+	eval {
+		my $audio = SDL::Mixer::open_audio( 22050, AUDIO_S16SYS, 2,1024);
+		die SDL::get_error if $audio == -1;
+		my $init_flags = SDL::Mixer::init(MIX_INIT_OGG);
+		if (!($init_flags & MIX_INIT_OGG)) {
+			die "OGG support needed to be compiled in SDL::Mixer SDL module. Disabling sound.";
+		}
+	};
     if ($@) {
         $@ =~ s| at \S+ line.*\n||;
         print STDERR "\nWarning: can't initialize sound (reason: $@).\n";
@@ -2919,14 +2923,7 @@ sub init_game() {
         $mixer = undef;
 
     } elsif (!defined($mixer_enabled) || $mixer_enabled) {
-        my $init_flags = SDL::Mixer::init(MIX_INIT_OGG);
-        if (!($init_flags & MIX_INIT_OGG)) {
-            print STDERR "\nOGG support needed to be compiled in SDL::Mixer SDL module. Disabling sound.";
-            $mixer_enabled = 0;
-            $mixer = undef;
-        } else {
             $mixer_enabled = init_sound();
-        }
     }
 
     #- the RGBA effects algorithms assume little endian RGBA surfaces
