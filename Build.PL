@@ -33,10 +33,10 @@ $CPAN_test_NA =  "Cannot find 'math.h'"      unless Alien::SDL->check_header('ma
 $CPAN_test_NA =  "Cannot find 'SDL.h'"       unless Alien::SDL->check_header('SDL.h');
 $CPAN_test_NA =  "Cannot find 'SDL_mixer.h'" unless Alien::SDL->check_header('SDL_mixer.h');
 
-$CPAN_test_NA =  "SDL_perl need to be built with SDL_image (png) support" unless SDL::Config->has('SDL_image');
-$CPAN_test_NA =  "SDL_perl need to be built with SDL_mixer (ogg) support" unless SDL::Config->has('SDL_mixer');
-$CPAN_test_NA =  "SDL_perl need to be built with SDL_Pango support" unless SDL::Config->has('SDL_Pango');
-$CPAN_test_NA =  "SDL_perl need to be built with SDL_ttf   support" unless SDL::Config->has('SDL_ttf');
+$CPAN_test_NA =  "SDL_perl needs to be built with SDL_image (png) support" unless SDL::Config->has('SDL_image');
+$CPAN_test_NA =  "SDL_perl needs to be built with SDL_mixer (ogg) support" unless SDL::Config->has('SDL_mixer');
+$CPAN_test_NA =  "SDL_perl needs to be built with SDL_Pango support" unless SDL::Config->has('SDL_Pango');
+$CPAN_test_NA =  "SDL_perl needs to be built with SDL_ttf   support" unless SDL::Config->has('SDL_ttf');
 
 if( $CPAN_test_NA ){ warn $CPAN_test_NA; exit(0) }
 
