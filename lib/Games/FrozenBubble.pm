@@ -150,8 +150,8 @@ FB1. Either downgrade or apply this patch. L<http://www.frozen-bubble.org/perl-S
 
 =back
 
-If you have more to add, you may want to contact us: C<contact2 ＠ frozen-bubble.org>,
-L<http://sdlperl.ath.cx/projects/SDLPerl/query?component=FrozenBubble>
+If you have more to add, you may want to contact us: C<contact2 @ frozen-bubble.org>,
+L<http://github.com/kthakore/frozen-bubble/issues>
 
 
 =head1 FREQUENTLY ASKED QUESTIONS
@@ -218,8 +218,8 @@ request back an evenly distribution. Notice that when using at least
 version 2.1.0, you can see who's attacking you at any time by looking
 at at pinguins left to your igloo (L<http://www.frozen-bubble.org/data/fb2.1-attackmaterialized.png>).
 
-The keys F11 and F12 are also useful (version 2.1.0 minimum): F11 allows to
-toggle the music, and F12 allows to toggle the sound (music plus sound effects).
+The keys F11 and F12 are also useful (version 2.1.0 minimum): F11 allows one to
+toggle the music, and F12 allows one to toggle the sound (music plus sound effects).
 Additionally, keypad's minus and plus keys allow to alter sound volume.
 
 =head2 It is a shame, I cannot toggle sound in the game!
