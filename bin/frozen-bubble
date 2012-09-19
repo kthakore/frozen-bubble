@@ -41,7 +41,7 @@ use vars qw($TARGET_ANIM_SPEED $BUBBLE_SIZE $ROW_SIZE $LAUNCHER_SPEED $BUBBLE_SP
             $background $background_orig @bubbles_images $gcwashere %bubbles_anim %launched_bubble %tobe_launched %next_bubble $recorddir %recorddata $playdata
             $shooter_lowgfx $sdl_flags $mixer $mixer_enabled $music_disabled $sfx_disabled $no_echo @playlist %sound %music %pinguin %canon
             $graphics_level @update_rects $CANON_ROTATIONS_NB %malus_bubble %falling_bubble %exploding_bubble %malus_gfx %pangocontext $private $no_time_limit
-            %sticking_bubble $time %imgbin $TIME_HURRY_WARN $TIME_HURRY_MAX $TIMEOUT_PINGUIN_SLEEP $FREE_FALL_CONSTANT @joysticks $joysticksinfo
+            %sticking_bubble $time %imgbin $TIME_HURRY_WARN $TIME_HURRY_MAX $TIMEOUT_PINGUIN_SLEEP $FREE_FALL_CONSTANT @joysticks $joysticksinfo $nojoysticks
             $direct @PLAYERS @ALL_PLAYERS %levels $display_on_app_disabled $addicted_time $start_time $time_1pgame $time_netgame $fullscreen $rcfile %hiscorefiles
             $HISCORES $HISCORES_MPTRAIN $HISCORES_MPTRAIN_CHAINREACTION
             $total_launched_bubbles
@@ -176,6 +176,7 @@ GetOptions("fullscreen|fs!" => \$fullscreen,
            "my-nick=s" => \$mynick,
            "private" => \$private,
            "joysticks-info" => \$joysticksinfo,
+           "no-joysticks" => \$nojoysticks,
            "record=s" => sub { if (!-d $_[1]) { die("$_[1] does not exist.\n") } else { $recorddir = $_[1] } },
            "auto-record" => \$autorecord,
            "replay=s" => \$replayparam,
@@ -187,6 +188,7 @@ GetOptions("fullscreen|fs!" => \$fullscreen,
  --no-sound             don't try to start any sound stuff
  --no-music             disable music (only)
  --no-sfx               disable sound effects (only)
+ --no-joysticks         don't try to detect joysticks
  --playlist <file>      use all files listed in the given file as music files and play them
  --playlist <directory> use all files inside the given directory as music files and play them
  --slow-machine         enable slow machine mode (disable a few animations)
@@ -2684,7 +2686,7 @@ sub init_game() {
         $app = SDL::Video::set_video_mode(640, 480, 24, $sdl_flags | ($fullscreen ? SDL_FULLSCREEN : 0));
 	unless ($app)
 	{
-	
+
 		warn "Couldn't make app ".SDL::get_error(). "\n Try software fallback";
 	        $app = SDL::Video::set_video_mode(640, 480, 24, SDL_SWSURFACE | ($fullscreen ? SDL_FULLSCREEN : 0));
 		die "Couldn't make app ".SDL::get_error() unless $app;
@@ -2693,11 +2695,13 @@ sub init_game() {
         SDL::Video::wm_set_icon(SDL::Video::load_BMP("$FPATH/gfx/pinguins/window_icon_penguin.bmp"));
         SDL::Video::wm_set_caption('Frozen-Bubble 2', 'Frozen-Bubble 2');
 
-    my $joys = SDL::Joystick::num_joysticks();
-    $joysticksinfo and print "\nfound $joys joystick(s)\n";
-    for (my $i = 0; $i < $joys; $i++) {
-        push @joysticks, SDL::Joystick->new($i);
-        $joysticksinfo and print "\t" . ($i + 1) . ': ' . (SDL::Joystick::name(SDL::Joystick::index($joysticks[$i])) || 'unknown joystick') . "\n";
+    if(!$nojoysticks) {
+        my $joys = SDL::Joystick::num_joysticks();
+        $joysticksinfo and print "\nfound $joys joystick(s)\n";
+        for (my $i = 0; $i < $joys; $i++) {
+            push @joysticks, SDL::Joystick->new($i);
+            $joysticksinfo and print "\t" . ($i + 1) . ': ' . (SDL::Joystick::name(SDL::Joystick::index($joysticks[$i])) || 'unknown joystick') . "\n";
+        }
     }
     $frame = 0;
 
@@ -3195,6 +3199,7 @@ sub ask_from($) {
                         if ($entry->{f} ne 'SPACE') {
                                 if ($entry->{f} eq 'ONE_CHAR' || $entry->{f} eq 'ONE_CHAR_DISPLAY') {
                                         print_('menu', $app, $x_echo, $ypos, "(".keysym_to_char(${$entry->{a}}).")", 100, $is_rtl ? 'right' : 'left');
+                                        SDL::Video::update_rect($app, 0, 0, 0, 0);
                                         my $k;
                                         while (!defined($k)) {
                                                 $k = grab_key();
