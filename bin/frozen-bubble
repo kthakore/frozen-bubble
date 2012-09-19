@@ -380,6 +380,18 @@ sub put_image($$$) {
     push @update_rects, $drect;
 }
 
+sub put_image_area {
+    my ($image, $x, $y, $ofsx, $ofsy, $w, $h) = @_;
+    $image = translate_mini_image($image);
+    $rects{$image} or die "please don't call me with no rects\n".backtrace();
+    $w = $image->w-$ofsx if !$w;
+    $h = $image->h-$ofsy if !$h;
+    my $drect = SDL::Rect->new($x+$ofsx, $y+$ofsy, $w, $h);
+    my $srect = SDL::Rect->new($ofsx, $ofsy, $w, $h);
+    SDL::Video::blit_surface($image, $srect, $app, $drect);
+    push @update_rects, $drect;
+}
+
 sub erase_image_from($$$$) {
     my ($image, $x, $y, $img) = @_;
     $image = translate_mini_image($image);
@@ -3181,7 +3193,8 @@ sub ask_from($) {
                         my $x_echo = $xpos{echo};
                 my $txt;
                         if ($entry->{f} ne 'SPACE') {
-                                if ($entry->{f} eq 'ONE_CHAR') {
+                                if ($entry->{f} eq 'ONE_CHAR' || $entry->{f} eq 'ONE_CHAR_DISPLAY') {
+                                        print_('menu', $app, $x_echo, $ypos, "(".keysym_to_char(${$entry->{a}}).")", 100, $is_rtl ? 'right' : 'left');
                                         my $k;
                                         while (!defined($k)) {
                                                 $k = grab_key();
@@ -3202,6 +3215,7 @@ sub ask_from($) {
                                         } else {
                                                 $k = keysym_to_char($k);
                                         }
+                                        put_image_area($imgbin{void_panel}, $MENUPOS{xpos_panel}, $MENUPOS{ypos_panel}, $x_echo-$MENUPOS{xpos_panel}, $ypos-$MENUPOS{ypos_panel});
                                         print_('menu', $app, $x_echo, $ypos, $k, 100, $is_rtl ? 'right' : 'left');  #- always in ASCII so need to tell it to go right in RTL
                                 } else {
                                         callback_entry('reset');
@@ -5481,18 +5495,18 @@ sub menu {
                 ask_from({
                         intro => [ loc("Please enter new keys:") ],
                         entries => [
-                                { 'q' => loc("Player 1; turn left?"),  'a' => \$KEYS->{p1}{left},   f => 'ONE_CHAR' },
-                                { 'q' => loc("Player 1; turn right?"), 'a' => \$KEYS->{p1}{right},  f => 'ONE_CHAR' },
-                                { 'q' => loc("Player 1; fire?"),       'a' => \$KEYS->{p1}{fire},   f => 'ONE_CHAR' },
-                                { 'q' => loc("Player 1; center?"),     'a' => \$KEYS->{p1}{center}, f => 'ONE_CHAR' },
+                                { 'q' => loc("Player 1; turn left?"),  'a' => \$KEYS->{p1}{left},   f => 'ONE_CHAR_DISPLAY' },
+                                { 'q' => loc("Player 1; turn right?"), 'a' => \$KEYS->{p1}{right},  f => 'ONE_CHAR_DISPLAY' },
+                                { 'q' => loc("Player 1; fire?"),       'a' => \$KEYS->{p1}{fire},   f => 'ONE_CHAR_DISPLAY' },
+                                { 'q' => loc("Player 1; center?"),     'a' => \$KEYS->{p1}{center}, f => 'ONE_CHAR_DISPLAY' },
                                 { f => 'SPACE' },
-                                { 'q' => loc("Player 2; turn left?"),  'a' => \$KEYS->{p2}{left},   f => 'ONE_CHAR' },
-                                { 'q' => loc("Player 2; turn right?"), 'a' => \$KEYS->{p2}{right},  f => 'ONE_CHAR' },
-                                { 'q' => loc("Player 2; fire?"),       'a' => \$KEYS->{p2}{fire},   f => 'ONE_CHAR' },
-                                { 'q' => loc("Player 2; center?"),     'a' => \$KEYS->{p2}{center}, f => 'ONE_CHAR' },
+                                { 'q' => loc("Player 2; turn left?"),  'a' => \$KEYS->{p2}{left},   f => 'ONE_CHAR_DISPLAY' },
+                                { 'q' => loc("Player 2; turn right?"), 'a' => \$KEYS->{p2}{right},  f => 'ONE_CHAR_DISPLAY' },
+                                { 'q' => loc("Player 2; fire?"),       'a' => \$KEYS->{p2}{fire},   f => 'ONE_CHAR_DISPLAY' },
+                                { 'q' => loc("Player 2; center?"),     'a' => \$KEYS->{p2}{center}, f => 'ONE_CHAR_DISPLAY' },
                                 { f => 'SPACE' },
-                                { 'q' => loc("Toggle fullscreen?"),    'a' => \$KEYS->{misc}{fs},   f => 'ONE_CHAR' },
-                                { 'q' => loc("Chat (net/lan game)?"),  'a' => \$KEYS->{misc}{chat}, f => 'ONE_CHAR' },
+                                { 'q' => loc("Toggle fullscreen?"),    'a' => \$KEYS->{misc}{fs},   f => 'ONE_CHAR_DISPLAY' },
+                                { 'q' => loc("Chat (net/lan game)?"),  'a' => \$KEYS->{misc}{chat}, f => 'ONE_CHAR_DISPLAY' },
                         ],
                         outro => loc("Thanks!"),
                         erase_background => $back_start
