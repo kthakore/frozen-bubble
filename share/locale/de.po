@@ -81,7 +81,7 @@ msgstr "%ss"
 #: ../frozen-bubble:932 ../frozen-bubble:2990
 #, perl-format
 msgid "%s'%s\""
-msgstr "%s:%s\""
+msgstr "%s:%s"
 
 #: ../frozen-bubble:1059
 msgid "Your score after two minutes:"
@@ -354,7 +354,7 @@ msgstr "aktiviert"
 
 #: ../frozen-bubble:4327 ../frozen-bubble:5031
 msgid "none (unlimited)"
-msgstr "keines (unendlich)"
+msgstr "keins (unbegrenzt)"
 
 #: ../frozen-bubble:4350 ../frozen-bubble:4362 ../frozen-bubble:4370
 #: ../frozen-bubble:4382 ../frozen-bubble:4396 ../frozen-bubble:4712
@@ -421,7 +421,7 @@ msgstr "*** Ungültiger Spitzname"
 #: ../frozen-bubble:4562
 #, perl-format
 msgid "*** You're connected to server '%s'"
-msgstr "*** Verbunden mit Server '%s'"
+msgstr "*** Verbunden mit Server »%s«"
 
 #: ../frozen-bubble:4573 ../frozen-bubble:4600 ../frozen-bubble:4849
 #, perl-format
@@ -497,7 +497,7 @@ msgstr "*** Dem Spiel kann nicht beigetreten werden, weil es gerade begonnen o. 
 #: ../frozen-bubble:4665 ../frozen-bubble:4973
 #, perl-format
 msgid "*** Failure: '%s'"
-msgstr "*** Fehler: '%s'"
+msgstr "*** Fehler: »%s«"
 
 #: ../frozen-bubble:4671
 msgid "*** Game created - now you need to wait for players to join"
