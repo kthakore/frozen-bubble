@@ -44,6 +44,7 @@ use vars qw($TARGET_ANIM_SPEED $BUBBLE_SIZE $ROW_SIZE $LAUNCHER_SPEED $BUBBLE_SP
             %sticking_bubble $time %imgbin $TIME_HURRY_WARN $TIME_HURRY_MAX $TIMEOUT_PINGUIN_SLEEP $FREE_FALL_CONSTANT @joysticks $joysticksinfo
             $direct @PLAYERS @ALL_PLAYERS %levels $display_on_app_disabled $addicted_time $start_time $time_1pgame $time_netgame $fullscreen $rcfile %hiscorefiles
             $HISCORES $HISCORES_MPTRAIN $HISCORES_MPTRAIN_CHAINREACTION
+            $total_launched_bubbles
             $lev_number $playermalus $mptrainingdiff $loaded_levelset $direct_levelset $chainreaction %chains %img_mini $frame $sock $gameserver $mynick
             $continuegamewhenplayersleave $singleplayertargetting $mylatitude $mylongitude %autokick $replayparam $autorecord $comment $saveframes $saveframesbase $saveframescounter);
 
@@ -268,7 +269,7 @@ sub format_addiction {
 
 END {
     if ($app && $addicted_time) {
-        print "\nAddicted for ", format_addiction($addicted_time/1000, 0), "\n";
+        print loc("\nAddicted for %s, %d bubbles were launched.\n", format_addiction($addicted_time/1000, 0), $total_launched_bubbles);
     }
 }
 
@@ -2127,6 +2128,7 @@ sub update_game() {
                         && !(any { exists $_->{chaindestx} } @{$falling_bubble{$::p}})
                         && !@{$malus_bubble{$::p}})) {
                     play_sound('launch');
+                    $total_launched_bubbles++;
                     $launched_bubble{$::p} = $tobe_launched{$::p};
                     $launched_bubble{$::p}->{direction} = $angle{$::p};
                     $tobe_launched{$::p} = undef;
@@ -2938,6 +2940,7 @@ sub init_game() {
 
     Games::FrozenBubble::CStuff::init_effects($FPATH);
     $addicted_time = 0;
+    $total_launched_bubbles = 0;
 
     $start_time = 0;
     print "Ready.\n";
