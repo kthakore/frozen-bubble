@@ -3198,8 +3198,11 @@ sub ask_from($) {
                 my $txt;
                         if ($entry->{f} ne 'SPACE') {
                                 if ($entry->{f} eq 'ONE_CHAR' || $entry->{f} eq 'ONE_CHAR_DISPLAY') {
-                                        print_('menu', $app, $x_echo, $ypos, "(".keysym_to_char(${$entry->{a}}).")", 100, $is_rtl ? 'right' : 'left');
-                                        SDL::Video::update_rect($app, 0, 0, 0, 0);
+                                        if($entry->{f} eq 'ONE_CHAR_DISPLAY')
+                                        {
+                                                print_('menu', $app, $x_echo, $ypos, "(".keysym_to_char(${$entry->{a}}).")", 100, $is_rtl ? 'right' : 'left');
+                                                SDL::Video::update_rect($app, 0, 0, 0, 0);
+                                        }
                                         my $k;
                                         while (!defined($k)) {
                                                 $k = grab_key();
@@ -3220,7 +3223,10 @@ sub ask_from($) {
                                         } else {
                                                 $k = keysym_to_char($k);
                                         }
-                                        put_image_area($imgbin{void_panel}, $MENUPOS{xpos_panel}, $MENUPOS{ypos_panel}, $x_echo-$MENUPOS{xpos_panel}, $ypos-$MENUPOS{ypos_panel});
+                                        if($entry->{f} eq 'ONE_CHAR_DISPLAY')
+                                        {
+                                                put_image_area($imgbin{void_panel}, $MENUPOS{xpos_panel}, $MENUPOS{ypos_panel}, $x_echo-$MENUPOS{xpos_panel}, $ypos-$MENUPOS{ypos_panel});
+                                        }
                                         print_('menu', $app, $x_echo, $ypos, $k, 100, $is_rtl ? 'right' : 'left');  #- always in ASCII so need to tell it to go right in RTL
                                 } else {
                                         callback_entry('reset');
