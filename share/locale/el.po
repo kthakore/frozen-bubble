@@ -2,253 +2,261 @@ msgid ""
 msgstr ""
 "Project-Id-Version: frozen-bubble 2.1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2008-11-03 15:00+0100\n"
+"POT-Creation-Date: 2012-09-20 00:16+0200\n"
 "PO-Revision-Date: 2007-01-05 19:38+0200\n"
 "Last-Translator: Gerasimos Vaiou <gvaiou@csd.auth.gr>\n"
 "Language-Team: Greek\n"
+"Language: \n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: ../frozen-bubble:202
+#: ../frozen-bubble:229
 msgid "0"
 msgstr "0"
 
-#: ../frozen-bubble:203
+#: ../frozen-bubble:230
 msgid "1"
 msgstr "1"
 
-#: ../frozen-bubble:204
+#: ../frozen-bubble:231
 msgid "2"
 msgstr "2"
 
-#: ../frozen-bubble:205
+#: ../frozen-bubble:232
 msgid "3"
 msgstr "3"
 
-#: ../frozen-bubble:206
+#: ../frozen-bubble:233
 msgid "4"
 msgstr "4"
 
-#: ../frozen-bubble:207
+#: ../frozen-bubble:234
 msgid "5"
 msgstr "5"
 
-#: ../frozen-bubble:208
+#: ../frozen-bubble:235
 msgid "6"
 msgstr "6"
 
-#: ../frozen-bubble:209
+#: ../frozen-bubble:236
 msgid "7"
 msgstr "7"
 
-#: ../frozen-bubble:210
+#: ../frozen-bubble:237
 msgid "8"
 msgstr "8"
 
-#: ../frozen-bubble:211
+#: ../frozen-bubble:238
 msgid "9"
 msgstr "9"
 
-#: ../frozen-bubble:212
+#: ../frozen-bubble:239
 msgid "."
 msgstr "."
 
-#: ../frozen-bubble:236
+#: ../frozen-bubble:263
 #, perl-format
 msgid "%sh %sm %ss"
 msgstr "%sh %sm %ss"
 
-#: ../frozen-bubble:238
+#: ../frozen-bubble:265
 #, perl-format
 msgid "%sm %ss"
 msgstr "%sm %ss"
 
-#: ../frozen-bubble:240
+#: ../frozen-bubble:267
 #, perl-format
 msgid "%ss"
 msgstr "%ss"
 
-#: ../frozen-bubble:932 ../frozen-bubble:2990
+#: ../frozen-bubble:274
+#, perl-format
+msgid ""
+"\n"
+"Addicted for %s, %d bubbles were launched.\n"
+msgstr ""
+
+#: ../frozen-bubble:1014 ../frozen-bubble:3092
 #, perl-format
 msgid "%s'%s\""
 msgstr "%s'%s\""
 
-#: ../frozen-bubble:1059
+#: ../frozen-bubble:1140
 msgid "Your score after two minutes:"
 msgstr "Οι βαθμοί σας, μετά από δυο λεπτά:"
 
-#: ../frozen-bubble:1059
+#: ../frozen-bubble:1140
 msgid "Press any key."
 msgstr "Πατήστε κάποιο πλήκτρο."
 
-#: ../frozen-bubble:1227 ../frozen-bubble:1229
+#: ../frozen-bubble:1306 ../frozen-bubble:1308
 msgid "Lost connection to server!"
 msgstr "Χάθηκε η σύνδεση με τον εξυπηρετητή!"
 
-#: ../frozen-bubble:1227
+#: ../frozen-bubble:1306
 msgid "Hoster aborted the game."
 msgstr "Ο οικοδεσπότης εγκατέλειψε το παιχνίδι."
 
-#: ../frozen-bubble:1229
+#: ../frozen-bubble:1308
 msgid "Your lag is probably too high."
 msgstr "Έχετε μεγάλη καθυστέρηση δικτύου"
 
-#: ../frozen-bubble:1774 ../frozen-bubble:3502
+#: ../frozen-bubble:1862 ../frozen-bubble:3615
 msgid "Random level"
 msgstr "Τυχαίο επίπεδο"
 
-#: ../frozen-bubble:1775
+#: ../frozen-bubble:1863
 #, perl-format
 msgid "Score: %s"
 msgstr "Βαθμοί: %s"
 
-#: ../frozen-bubble:1776
+#: ../frozen-bubble:1864
 #, perl-format
 msgid "Level %s"
 msgstr "Επίπεδο %s"
 
-#: ../frozen-bubble:1956
+#: ../frozen-bubble:2044
 msgid "Draw game!"
 msgstr "Ισοπαλία!"
 
-#: ../frozen-bubble:2273 ../frozen-bubble:2340
+#: ../frozen-bubble:2363 ../frozen-bubble:2430
 #, fuzzy, perl-format
 msgid "Lost synchronization %s!"
 msgstr "Απώλεια συγχρονισμού!"
 
-#: ../frozen-bubble:2987
+#: ../frozen-bubble:3089
 msgid "won!"
 msgstr "Νικητής!"
 
-#: ../frozen-bubble:2987
+#: ../frozen-bubble:3089
 #, perl-format
 msgid "level %s"
 msgstr "Επίπεδο %s"
 
-#: ../frozen-bubble:3007
+#: ../frozen-bubble:3109
 msgid "Regular"
 msgstr "Κανονικό"
 
-#: ../frozen-bubble:3025
+#: ../frozen-bubble:3127
 msgid "Chain-reaction enabled"
 msgstr "Με αλυσιδωτή αντίδραση"
 
-#: ../frozen-bubble:3111
+#: ../frozen-bubble:3215
 msgid "left"
 msgstr "αριστερά"
 
-#: ../frozen-bubble:3111
+#: ../frozen-bubble:3215
 msgid "right"
 msgstr "δεξιά"
 
-#: ../frozen-bubble:3111
+#: ../frozen-bubble:3215
 msgid "up"
 msgstr "πάνω"
 
-#: ../frozen-bubble:3111
+#: ../frozen-bubble:3215
 msgid "down"
 msgstr "κάτω"
 
-#: ../frozen-bubble:3115
+#: ../frozen-bubble:3219
 msgid "button"
 msgstr "πλήκτρο"
 
-#: ../frozen-bubble:3451
+#: ../frozen-bubble:3565
 msgid "Start 1-player game menu"
 msgstr "Μενού παιχνιδιού ενός παίχτη"
 
-#: ../frozen-bubble:3502 ../frozen-bubble:3509 ../frozen-bubble:5117
+#: ../frozen-bubble:3615 ../frozen-bubble:3622 ../frozen-bubble:5234
 msgid "Enable chain-reaction?"
 msgstr "Με αλυσιδωτή αντίδραση;"
 
-#: ../frozen-bubble:3503 ../frozen-bubble:3510 ../frozen-bubble:5118
+#: ../frozen-bubble:3616 ../frozen-bubble:3623 ../frozen-bubble:5235
 #, perl-format
 msgid "%s or %s?"
 msgstr "%s ή %s;"
 
-#: ../frozen-bubble:3504 ../frozen-bubble:3511 ../frozen-bubble:5119
+#: ../frozen-bubble:3617 ../frozen-bubble:3624 ../frozen-bubble:5236
 msgid "Enjoy the game!"
 msgstr "Καλό παιχνίδι!"
 
-#: ../frozen-bubble:3509
+#: ../frozen-bubble:3622
 msgid "Multiplayer training"
 msgstr "Εξάσκηση δικτυακού"
 
-#: ../frozen-bubble:3607
+#: ../frozen-bubble:3720
 msgid "*** Please wait, probing for available servers on local network..."
 msgstr ""
 "*** Παρακαλούμε περιμένετε, αναζήτηση εξυπηρετητών στο τοπικό δίκτυο..."
 
-#: ../frozen-bubble:3610
+#: ../frozen-bubble:3723
 msgid "*** Unable to probe for available servers on local network!"
 msgstr "*** Δε βρέθηκαν διαθέσιμοι εξυπηρετητές στο τοπικό δίκτυο!"
 
-#: ../frozen-bubble:3612
+#: ../frozen-bubble:3725
 msgid "*** Verify your network setup"
 msgstr "*** Ελέγξτε τις ρυθμίσεις δικτύου"
 
-#: ../frozen-bubble:3621
+#: ../frozen-bubble:3734
 msgid "*** No server found, and could not start server"
 msgstr "*** Δε βρέθηκε εξυπηρετητής και δεν εκκινήθηκε εξυπηρετητής"
 
-#: ../frozen-bubble:3622
+#: ../frozen-bubble:3735
 msgid "*** Verify your installation or contact your vendor"
 msgstr "*** Ελέγξτε την εγκατάσταση ή επικοινωνήστε με τον προμηθευτή"
 
-#: ../frozen-bubble:3629
+#: ../frozen-bubble:3742
 msgid "*** No server found, created server for local network game"
 msgstr ""
 "*** Δε βρέθηκε εξυπηρετητής, δημιουργήθηκε εξυπηρετητής για τοπικό δικτυακό "
 "παιχνίδι"
 
-#: ../frozen-bubble:3645
+#: ../frozen-bubble:3758
 msgid "*** Contacting master server..."
 msgstr "*** Επικοινωνία με κεντρικό εξυπηρετητή..."
 
-#: ../frozen-bubble:3656
+#: ../frozen-bubble:3769
 msgid "*** Server list received properly"
 msgstr "*** Λίστα εξυπηρετητών ελήφθη σωστά"
 
-#: ../frozen-bubble:3658
+#: ../frozen-bubble:3771
 msgid "*** Unable to download server list from master server!"
 msgstr "*** Λίστα εξυπηρετητών δεν ελήφθη από τον κεντρικό εξυπηρετητή"
 
-#: ../frozen-bubble:3659
+#: ../frozen-bubble:3772
 msgid "*** Verify your network setup or retry later"
 msgstr "*** Ελέγξτε τις ρυθμίσεις δικτύου ή δοκιμάστε αργότερα"
 
-#: ../frozen-bubble:3705
+#: ../frozen-bubble:3818
 #, perl-format
 msgid "Available players: %s (playing: %s) Ping: %sms"
 msgstr "Διαθέσιμοι παίχτες: %s (παίζουν: %s) Ping: %sms"
 
-#: ../frozen-bubble:3737 ../frozen-bubble:3744
+#: ../frozen-bubble:3850 ../frozen-bubble:3857
 msgid "*** Please choose a server"
 msgstr "*** Παρακαλούμε επιλέξτε έναν εξυπηρετητή"
 
-#: ../frozen-bubble:3805
+#: ../frozen-bubble:3918
 msgid "*** No available game server"
 msgstr "*** Δεν υπάρχει διαθέσιμος εξυπηρετητής"
 
-#: ../frozen-bubble:3806
+#: ../frozen-bubble:3919
 msgid "*** Please retry later or try a local network game (lan game)"
 msgstr ""
 "*** Παρακαλούμε ξαναδοκιμάστε αργότερα ή δοκιμάστε ένα τοπικό δικτυακό "
 "παιχνίδι"
 
-#: ../frozen-bubble:3816
+#: ../frozen-bubble:3929
 msgid ""
 "*** Impossible to connect to specified server, going back to server list"
 msgstr ""
 "*** Αδύνατη σύνδεση με τον εξυπηρετητή, επιστροφή στη λίστα εξυπηρετητών"
 
-#: ../frozen-bubble:3820
+#: ../frozen-bubble:3933
 #, perl-format
 msgid "*** Connected to server '%s'"
 msgstr "*** Σύνδεση με τον εξυπηρετητή '%s'"
 
-#: ../frozen-bubble:3844
+#: ../frozen-bubble:3957
 msgid ""
 "*** Sorry, your computer or the network is too slow, giving up - press any "
 "key"
@@ -256,61 +264,61 @@ msgstr ""
 "*** Λυπούμαστε, ο υπολογιστής ή το δίκτυο σας είναι πολύ αργό, ακύρωση "
 "σύνδεσης - πατήστε ένα πλήκτρο"
 
-#: ../frozen-bubble:3996 ../frozen-bubble:5018
+#: ../frozen-bubble:4109 ../frozen-bubble:5133
 msgid "Chat"
 msgstr "Συζήτηση"
 
-#: ../frozen-bubble:3997
+#: ../frozen-bubble:4110
 msgid "Create new game"
 msgstr "Νέο παιχνίδι"
 
-#: ../frozen-bubble:4151
+#: ../frozen-bubble:4264
 msgid "Say: "
 msgstr "Πες: "
 
-#: ../frozen-bubble:4157
+#: ../frozen-bubble:4270
 #, perl-format
 msgid "Players in game: %s"
 msgstr "Παίχτες στο παιχνίδι: %s"
 
-#: ../frozen-bubble:4159
+#: ../frozen-bubble:4272
 #, perl-format
 msgid "Available Players: %s"
 msgstr "Διαθέσιμοι παίχτες: %s"
 
-#: ../frozen-bubble:4208
+#: ../frozen-bubble:4321
 #, perl-format
 msgid "*** %s has left the chat room"
 msgstr "*** Ο/Η %s έφυγε από το δωμάτιο συζήτησης"
 
-#: ../frozen-bubble:4210
+#: ../frozen-bubble:4323
 msgid "*** Several players left this chat room: "
 msgstr "*** Αρκετοί παίχτες έφυγαν από το δωμάτιο συζήτησης: "
 
-#: ../frozen-bubble:4222
+#: ../frozen-bubble:4335
 #, perl-format
 msgid "*** %s has joined the chat room"
 msgstr "*** Ο/Η %s συνδέθηκε στο δωμάτιο συζήτησης"
 
-#: ../frozen-bubble:4224
+#: ../frozen-bubble:4337
 msgid "*** Several players joined this chat room: "
 msgstr "*** Αρκετοί παίχτες συνδέθηκαν στο δωμάτιο συζήτησης: "
 
-#: ../frozen-bubble:4242
+#: ../frozen-bubble:4355
 #, perl-format
 msgid "Join game: %s"
 msgstr "Συμμετοχή στο παιχνίδι: %s"
 
-#: ../frozen-bubble:4262
+#: ../frozen-bubble:4375
 msgid "*** Players listening: "
 msgstr "*** Παίχτες που ακούνε:"
 
-#: ../frozen-bubble:4273 ../frozen-bubble:4633
+#: ../frozen-bubble:4386 ../frozen-bubble:4746
 #, fuzzy
 msgid "*** Notice: no one's listening here"
 msgstr "*** Δεν είναι κανείς εδώ"
 
-#: ../frozen-bubble:4280
+#: ../frozen-bubble:4393
 msgid ""
 "*** Please wait, retrieving your geographical location from http://hostip."
 "info/..."
@@ -318,17 +326,17 @@ msgstr ""
 "*** Παρακαλούμε περιμένετε, βρίσκουμε την γεωγραφική σας τοποθεσία από το "
 "http://hostip.info/..."
 
-#: ../frozen-bubble:4288
+#: ../frozen-bubble:4401
 msgid "*** Done, you are positioned as the flashing red dot!"
 msgstr ""
 
-#: ../frozen-bubble:4290
+#: ../frozen-bubble:4403
 msgid ""
 "*** hostip.info doesn't know the geographical location of your IP address"
 msgstr ""
 "*** Το hostip.info δε γνωρίζει την γεωγραφική τοποθεσία της διεύθυνσης IP σας"
 
-#: ../frozen-bubble:4291
+#: ../frozen-bubble:4404
 msgid ""
 "*** If you want that your location appears on the map, fix your entry at "
 "http://hostip.info/"
@@ -336,46 +344,46 @@ msgstr ""
 "*** Αν θέλετε η τοποθεσία σας να εμφανίζεται στο χάρτη, ενημερώστε το http://"
 "hostip.info/"
 
-#: ../frozen-bubble:4292
+#: ../frozen-bubble:4405
 msgid "*** Then type /geolocate to see yourself on the map"
 msgstr ""
 
-#: ../frozen-bubble:4299
+#: ../frozen-bubble:4412
 msgid "*** hostip.info didn't reply within 5 seconds, giving up"
 msgstr "*** Το hostip.info δεν απάντησε σε 5 δευτερόλεπτα, παραιτούμαι"
 
-#: ../frozen-bubble:4317
+#: ../frozen-bubble:4430
 #, fuzzy
 msgid "*** You may now create or join a game"
 msgstr ""
 "*** Τέλος.-.τώρα μπορείτε να δημιουργήσετε ή να συμμετάσχετε σε ένα παιχνίδι"
 
-#: ../frozen-bubble:4323 ../frozen-bubble:4324 ../frozen-bubble:4325
-#: ../frozen-bubble:4339 ../frozen-bubble:4342 ../frozen-bubble:4343
-#: ../frozen-bubble:4344 ../frozen-bubble:4356 ../frozen-bubble:4376
-#: ../frozen-bubble:4390 ../frozen-bubble:4402 ../frozen-bubble:4709
-#: ../frozen-bubble:4711 ../frozen-bubble:4716 ../frozen-bubble:4728
-#: ../frozen-bubble:4735 ../frozen-bubble:4854 ../frozen-bubble:4856
-#: ../frozen-bubble:4860 ../frozen-bubble:4870 ../frozen-bubble:5028
-#: ../frozen-bubble:5029 ../frozen-bubble:5030
+#: ../frozen-bubble:4436 ../frozen-bubble:4437 ../frozen-bubble:4438
+#: ../frozen-bubble:4452 ../frozen-bubble:4455 ../frozen-bubble:4456
+#: ../frozen-bubble:4457 ../frozen-bubble:4469 ../frozen-bubble:4489
+#: ../frozen-bubble:4503 ../frozen-bubble:4515 ../frozen-bubble:4822
+#: ../frozen-bubble:4824 ../frozen-bubble:4829 ../frozen-bubble:4841
+#: ../frozen-bubble:4848 ../frozen-bubble:4969 ../frozen-bubble:4971
+#: ../frozen-bubble:4975 ../frozen-bubble:4985 ../frozen-bubble:5143
+#: ../frozen-bubble:5144 ../frozen-bubble:5145
 msgid "enabled"
 msgstr "ενεργοποιημένο"
 
-#: ../frozen-bubble:4327 ../frozen-bubble:5031
+#: ../frozen-bubble:4440 ../frozen-bubble:5146
 msgid "none (unlimited)"
 msgstr "κενό (απεριόριστος)"
 
-#: ../frozen-bubble:4350 ../frozen-bubble:4362 ../frozen-bubble:4370
-#: ../frozen-bubble:4382 ../frozen-bubble:4396 ../frozen-bubble:4712
-#: ../frozen-bubble:4718 ../frozen-bubble:4730 ../frozen-bubble:4733
-#: ../frozen-bubble:4857 ../frozen-bubble:4862 ../frozen-bubble:4872
-#: ../frozen-bubble:4874 ../frozen-bubble:4876 ../frozen-bubble:5028
-#: ../frozen-bubble:5029 ../frozen-bubble:5030
+#: ../frozen-bubble:4463 ../frozen-bubble:4475 ../frozen-bubble:4483
+#: ../frozen-bubble:4495 ../frozen-bubble:4509 ../frozen-bubble:4825
+#: ../frozen-bubble:4831 ../frozen-bubble:4843 ../frozen-bubble:4846
+#: ../frozen-bubble:4972 ../frozen-bubble:4977 ../frozen-bubble:4987
+#: ../frozen-bubble:4989 ../frozen-bubble:4991 ../frozen-bubble:5143
+#: ../frozen-bubble:5144 ../frozen-bubble:5145
 msgid "disabled"
 msgstr "απενεργοποιημένο"
 
-#: ../frozen-bubble:4353 ../frozen-bubble:4373 ../frozen-bubble:4393
-#: ../frozen-bubble:4413
+#: ../frozen-bubble:4466 ../frozen-bubble:4486 ../frozen-bubble:4506
+#: ../frozen-bubble:4526
 #, fuzzy
 msgid ""
 "*** Cannot modify this option, as a player is using a too old version of "
@@ -384,119 +392,114 @@ msgstr ""
 "*** Δε μπορείτε να ενεργοποιήσετε την αλυσιδωτή αντίδραση, επειδή κάποιος "
 "παίχτης έχει παλιά έκδοση του Frozen-Bubble"
 
-#: ../frozen-bubble:4357 ../frozen-bubble:4363 ../frozen-bubble:5021
-#: ../frozen-bubble:5028
+#: ../frozen-bubble:4470 ../frozen-bubble:4476 ../frozen-bubble:5136
+#: ../frozen-bubble:5143
 #, perl-format
 msgid "Chain-reaction: %s"
 msgstr "Αλυσιδωτή αντίδραση: %s"
 
-#: ../frozen-bubble:4377 ../frozen-bubble:4383 ../frozen-bubble:5022
-#: ../frozen-bubble:5029
+#: ../frozen-bubble:4490 ../frozen-bubble:4496 ../frozen-bubble:5137
+#: ../frozen-bubble:5144
 #, perl-format
 msgid "Continue game when players leave: %s"
 msgstr ""
 
-#: ../frozen-bubble:4397 ../frozen-bubble:4403 ../frozen-bubble:5023
-#: ../frozen-bubble:5030
+#: ../frozen-bubble:4510 ../frozen-bubble:4516 ../frozen-bubble:5138
+#: ../frozen-bubble:5145
 #, perl-format
 msgid "Single player targetting: %s"
 msgstr ""
 
-#: ../frozen-bubble:4430 ../frozen-bubble:5024 ../frozen-bubble:5031
+#: ../frozen-bubble:4543 ../frozen-bubble:5139 ../frozen-bubble:5146
 #, perl-format
 msgid "Victories limit: %s"
 msgstr "Όριο νικών: %s"
 
-#: ../frozen-bubble:4440
+#: ../frozen-bubble:4553
 #, perl-format
 msgid "*** Can't kick %s: no such player in game"
 msgstr "*** Δε μπορείτε να διώξετε τον/την %s: δεν υπάρχει τέτοιος παίχτης"
 
-#: ../frozen-bubble:4442
+#: ../frozen-bubble:4555
 #, perl-format
 msgid "*** Can't kick %s: '%s'"
 msgstr "*** Δε μπορείτε να διώξετε τον/την %s: '%s'"
 
-#: ../frozen-bubble:4474
+#: ../frozen-bubble:4587
 msgid "*** Leaving game..."
 msgstr "*** Έξοδος από το παιχνίδι..."
 
-#: ../frozen-bubble:4548
+#: ../frozen-bubble:4661
 #, perl-format
 msgid "*** You are now known as %s"
 msgstr "*** Τώρα είστε γνωστός ως %s"
 
-#: ../frozen-bubble:4552
+#: ../frozen-bubble:4665
 msgid "*** Erroneous nickname"
 msgstr "*** Λανθασμένο ψευδώνυμο"
 
-#: ../frozen-bubble:4562
+#: ../frozen-bubble:4675
 #, perl-format
 msgid "*** You're connected to server '%s'"
 msgstr "*** Συνδεθήκατε στον εξυπηρετητή '%s'"
 
-#: ../frozen-bubble:4573 ../frozen-bubble:4600 ../frozen-bubble:4849
-#, perl-format
-msgid "Kicking %s: %s"
-msgstr ""
-
-#: ../frozen-bubble:4576 ../frozen-bubble:4588
+#: ../frozen-bubble:4689 ../frozen-bubble:4701
 msgid "*** Sado-masochist, hmm?"
 msgstr "*** Σαδομαζοχιστής, ε;"
 
-#: ../frozen-bubble:4577 ../frozen-bubble:4589
+#: ../frozen-bubble:4690 ../frozen-bubble:4702
 msgid "*** You like when it hurts, don't you?"
 msgstr "*** Σου αρέσει να πονάς, ε;"
 
-#: ../frozen-bubble:4578 ../frozen-bubble:4590
+#: ../frozen-bubble:4691 ../frozen-bubble:4703
 msgid "*** Your butt already hurts enough! Stop that!"
 msgstr "*** Ο πισινός σου ήδη πονάει αρκετά! Σταμάτα!"
 
-#: ../frozen-bubble:4595
+#: ../frozen-bubble:4708
 #, perl-format
 msgid "*** Removing %s from autokick list."
 msgstr ""
 
-#: ../frozen-bubble:4597
+#: ../frozen-bubble:4710
 #, perl-format
 msgid "*** Adding %s to autokick list."
 msgstr ""
 
-#: ../frozen-bubble:4608
+#: ../frozen-bubble:4721
 msgid "*** Nobody in autokick list."
 msgstr ""
 
-#: ../frozen-bubble:4610
+#: ../frozen-bubble:4723
 #, perl-format
 msgid "*** Autokick list members: %s"
 msgstr ""
 
-#: ../frozen-bubble:4614
+#: ../frozen-bubble:4727
 #, perl-format
 msgid "*** Available commands: %s"
 msgstr "*** Διαθέσιμες εντολές: %s"
 
-#: ../frozen-bubble:4615
+#: ../frozen-bubble:4728
 #, perl-format
 msgid "%s <action>"
 msgstr "%s <ενέργεια>"
 
-#: ../frozen-bubble:4615 ../frozen-bubble:4618
+#: ../frozen-bubble:4728 ../frozen-bubble:4731
 #, fuzzy, perl-format
 msgid "%s <nick> [<text>]"
 msgstr "%s <ψευδώνυμο>"
 
-#: ../frozen-bubble:4617
+#: ../frozen-bubble:4730
 #, perl-format
 msgid "%s <new_nick>"
 msgstr "%s <νέο_ψευδώνυμο>"
 
-#: ../frozen-bubble:4621
+#: ../frozen-bubble:4734
 #, perl-format
 msgid "*** Unknown command. Try %s for help."
 msgstr "*** Άγνωστη εντολή. Δοκιμάστε %s για βοήθεια."
 
-#: ../frozen-bubble:4658
+#: ../frozen-bubble:4771
 msgid ""
 "*** Open games already full. Join an existing game, or select a different "
 "server."
@@ -504,30 +507,30 @@ msgstr ""
 "*** Τα ενεργά παιχνίδια είναι γεμάτα. Δοκιμάστε σε ένα από τα υπάρχοντα, "
 "ήδιαλέξτε κάποιον άλλο εξυπηρετητή."
 
-#: ../frozen-bubble:4661
+#: ../frozen-bubble:4774
 msgid "*** Cannot join game, game was just started or aborted"
 msgstr ""
 "*** Δε μπορείτε να συμμετέχετε στο παιχνίδι, μόλις ξεκίνησε ή ακυρώθηκε"
 
-#: ../frozen-bubble:4665 ../frozen-bubble:4973
+#: ../frozen-bubble:4778 ../frozen-bubble:5088
 #, perl-format
 msgid "*** Failure: '%s'"
 msgstr "Αποτυχία: '%s'"
 
-#: ../frozen-bubble:4671
+#: ../frozen-bubble:4784
 msgid "*** Game created - now you need to wait for players to join"
 msgstr "*** Το παιχνίδι δημιουργήθηκε - περιμένετε να συνδεθούν παίχτες"
 
-#: ../frozen-bubble:4674
+#: ../frozen-bubble:4787
 msgid "*** Joined game"
 msgstr "***Συμμετοχή στο παιχνίδι"
 
-#: ../frozen-bubble:4704 ../frozen-bubble:4742 ../frozen-bubble:4748
+#: ../frozen-bubble:4817 ../frozen-bubble:4855 ../frozen-bubble:4861
 #, perl-format
 msgid "*** Can't start game: '%s'"
 msgstr "*** Δε μπορώ να ξεκινήσω το παιχνίδι: '%s'"
 
-#: ../frozen-bubble:4717
+#: ../frozen-bubble:4830
 msgid ""
 "*** Must disable chain-reaction, as a player is using a too old version of "
 "Frozen-Bubble"
@@ -535,7 +538,7 @@ msgstr ""
 "*** Πρέπει να απενεργοποιήσετε την αλυσιδωτή αντίδραση, κάποιος έχει παλιά "
 "έκδοση του Frozen-Bubble"
 
-#: ../frozen-bubble:4722
+#: ../frozen-bubble:4835
 msgid ""
 "*** Must reset victories limit as a player is using a too old version of "
 "Frozen-Bubble"
@@ -543,7 +546,7 @@ msgstr ""
 "*** Απενεργοποίηση του αριθμού νικών, κάποιος έχει παλιά έκδοση του Frozen-"
 "Bubble"
 
-#: ../frozen-bubble:4729
+#: ../frozen-bubble:4842
 #, fuzzy
 msgid ""
 "*** Cannot enable continue game when players leave, as a player is using an "
@@ -552,7 +555,7 @@ msgstr ""
 "*** Δε μπορείτε να ενεργοποιήσετε την αλυσιδωτή αντίδραση, επειδή κάποιος "
 "παίχτης έχει παλιά έκδοση του Frozen-Bubble"
 
-#: ../frozen-bubble:4734
+#: ../frozen-bubble:4847
 #, fuzzy
 msgid ""
 "*** Cannot disable single player targetting, as a player is using an old "
@@ -561,12 +564,12 @@ msgstr ""
 "*** Δε μπορείτε να ενεργοποιήσετε την αλυσιδωτή αντίδραση, επειδή κάποιος "
 "παίχτης έχει παλιά έκδοση του Frozen-Bubble"
 
-#: ../frozen-bubble:4847
+#: ../frozen-bubble:4961
 #, perl-format
 msgid "*** %s joined the game!"
 msgstr "*** Ο/Η %s μπήκε στο παιχνίδι!"
 
-#: ../frozen-bubble:4861
+#: ../frozen-bubble:4976
 #, perl-format
 msgid ""
 "*** Chain-reaction disabled, %s is using a too old version of Frozen-Bubble"
@@ -574,7 +577,7 @@ msgstr ""
 "*** Η αλυσιδωτή αντίδραση απενεργοποιήθηκε, ο/η %s έχει παλιά έκδοση του "
 "Frozen-Bubble"
 
-#: ../frozen-bubble:4865
+#: ../frozen-bubble:4980
 #, perl-format
 msgid ""
 "*** Victories limit reset, %s is using a too old version of Frozen-Bubble"
@@ -582,81 +585,88 @@ msgstr ""
 "*** Απενεργοποίηση του αριθμού νικών, ο/η %s έχει παλιά έκδοση του Frozen-"
 "Bubble"
 
-#: ../frozen-bubble:4871
+#: ../frozen-bubble:4986
 #, fuzzy, perl-format
 msgid "*** Continue game when players leave disabled, %s has a too old version"
 msgstr ""
 "*** Η αλυσιδωτή αντίδραση απενεργοποιήθηκε, ο/η %s έχει παλιά έκδοση του "
 "Frozen-Bubble"
 
-#: ../frozen-bubble:4875
+#: ../frozen-bubble:4990
 #, fuzzy, perl-format
 msgid "*** Single player targetting enabled, %s has a too old version"
 msgstr ""
 "*** Η αλυσιδωτή αντίδραση απενεργοποιήθηκε, ο/η %s έχει παλιά έκδοση του "
 "Frozen-Bubble"
 
-#: ../frozen-bubble:4884
+#: ../frozen-bubble:4999
 msgid "*** Game creator left the game..."
 msgstr "*** Έφυγε αυτός που ξεκίνησε το παιχνίδι..."
 
-#: ../frozen-bubble:4889
+#: ../frozen-bubble:5004
 #, perl-format
 msgid "*** %s left the game..."
 msgstr "*** Ο/Η %s έφυγε από το παιχνίδι"
 
-#: ../frozen-bubble:4894
+#: ../frozen-bubble:5009
 #, perl-format
 msgid "*** %s was kicked out of the game..."
 msgstr "*** Ο/Η %s έφυγε κλωτσηδόν από το παιχνίδι..."
 
-#: ../frozen-bubble:4899
+#: ../frozen-bubble:5014
 msgid "*** You were kicked out of the game..."
 msgstr "*** Σε κλώτσησαν έξω από το παιχνίδι..."
 
-#: ../frozen-bubble:4904
+#: ../frozen-bubble:5019
 msgid "*** You were disconnected because of too long inactivity"
 msgstr "*** Αποσυνδεθήκατε λόγω μεγάλης διάρκειας αδράνειας"
 
-#: ../frozen-bubble:4991
+#: ../frozen-bubble:5106
 msgid "*** Lost connection to server, abandoning - press any key"
 msgstr ""
 "*** Χάθηκε η σύνδεση με τον εξυπηρετητή, παραιτούμαι - πατήστε ένα πλήκτρο"
 
-#: ../frozen-bubble:5025
+#: ../frozen-bubble:5140
 msgid "Start game!"
 msgstr "Ξεκίνα το παιχνίδι!"
 
-#: ../frozen-bubble:5046
+#: ../frozen-bubble:5161
+#, fuzzy
+msgid ""
+"*** Game finished, because an inconsistency in game state was detected - "
+"sorry!"
+msgstr "*** Το παιχνίδι τελείωσε, διότι φτάσαμε το όριο των %s νικών "
+
+#: ../frozen-bubble:5163
 #, perl-format
 msgid "*** Game finished, because victories limit of %s was reached."
 msgstr "*** Το παιχνίδι τελείωσε, διότι φτάσαμε το όριο των %s νικών "
 
-#: ../frozen-bubble:5049
+#: ../frozen-bubble:5166
 #, perl-format
 msgid "*** Game finished, because the following player(s) left: %s"
 msgstr "*** Το παιχνίδι τελείωσε, διότι έφυγε ο παίχτης: %s"
 
-#: ../frozen-bubble:5052
+#: ../frozen-bubble:5169
 #, perl-format
 msgid "*** Addicted for: %s"
 msgstr "*** Εθισμένος για: %s"
 
-#: ../frozen-bubble:5055
+#: ../frozen-bubble:5172
 #, perl-format
 msgid "*** Winner: %s"
 msgstr "*** Νικητής: %s"
 
-#: ../frozen-bubble:5057
+#: ../frozen-bubble:5174
 msgid "*** Draw game!"
 msgstr "*** Ισοπαλία!"
 
-#: ../frozen-bubble:5059
+#: ../frozen-bubble:5176
 #, perl-format
 msgid "*** Scores: %s"
 msgstr "*** Βαθμολογίες: %s"
 
-#: ../frozen-bubble:5077
+#: ../frozen-bubble:5194
 msgid ""
 "*** Cannot connect to specified gameserver, fallbacking to contacting master "
 "server"
@@ -664,71 +674,71 @@ msgstr ""
 "*** Η σύνδεση με το συγκεκριμένο εξυπηρετητή είναι αδύνατη, σύνδεση με τον "
 "κεντρικό εξυπηρετητή"
 
-#: ../frozen-bubble:5117
+#: ../frozen-bubble:5234
 msgid "2-player game"
 msgstr "Παιχνίδι 2 ατόμων"
 
-#: ../frozen-bubble:5166 ../frozen-bubble:5199
+#: ../frozen-bubble:5283 ../frozen-bubble:5316
 msgid "Congratulations!"
 msgstr "Συγχαρητήρια!"
 
-#: ../frozen-bubble:5166 ../frozen-bubble:5199
+#: ../frozen-bubble:5283 ../frozen-bubble:5316
 msgid "You have a highscore!"
 msgstr "Έκανες καινούριο ρεκόρ!"
 
-#: ../frozen-bubble:5167 ../frozen-bubble:5200
+#: ../frozen-bubble:5284 ../frozen-bubble:5317
 msgid "Your name?"
 msgstr "Όνομα;"
 
-#: ../frozen-bubble:5168 ../frozen-bubble:5201
+#: ../frozen-bubble:5285 ../frozen-bubble:5318
 msgid "Great game!"
 msgstr "Ωραίο παιχνίδι!"
 
-#: ../frozen-bubble:5377
+#: ../frozen-bubble:5501
 msgid "Please enter new keys:"
 msgstr "Παρακαλούμε εισάγετε νέα πλήκτρα:"
 
-#: ../frozen-bubble:5379
+#: ../frozen-bubble:5503
 msgid "Player 1; turn left?"
 msgstr "Παίχτης 1: αριστερά;"
 
-#: ../frozen-bubble:5380
+#: ../frozen-bubble:5504
 msgid "Player 1; turn right?"
 msgstr "Παίχτης 1: δεξιά;"
 
-#: ../frozen-bubble:5381
+#: ../frozen-bubble:5505
 msgid "Player 1; fire?"
 msgstr "Παίχτης 1: πυρ;"
 
-#: ../frozen-bubble:5382
+#: ../frozen-bubble:5506
 msgid "Player 1; center?"
 msgstr "Παίχτης 1: κέντρο;"
 
-#: ../frozen-bubble:5384
+#: ../frozen-bubble:5508
 msgid "Player 2; turn left?"
 msgstr "Παίχτης 2: αριστερά;"
 
-#: ../frozen-bubble:5385
+#: ../frozen-bubble:5509
 msgid "Player 2; turn right?"
 msgstr "Παίχτης 2: δεξιά;"
 
-#: ../frozen-bubble:5386
+#: ../frozen-bubble:5510
 msgid "Player 2; fire?"
 msgstr "Παίχτης 2: πυρ;"
 
-#: ../frozen-bubble:5387
+#: ../frozen-bubble:5511
 msgid "Player 2; center?"
 msgstr "Παίχτης 2: κέντρο;"
 
-#: ../frozen-bubble:5389
+#: ../frozen-bubble:5513
 msgid "Toggle fullscreen?"
 msgstr "Πλήρης οθόνη;"
 
-#: ../frozen-bubble:5390
+#: ../frozen-bubble:5514
 msgid "Chat (net/lan game)?"
 msgstr "Συζήτηση (στο δίκτυο);"
 
-#: ../frozen-bubble:5392
+#: ../frozen-bubble:5516
 msgid "Thanks!"
 msgstr "Ευχαριστούμε!"
 

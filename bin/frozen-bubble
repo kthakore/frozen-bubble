@@ -41,9 +41,10 @@ use vars qw($TARGET_ANIM_SPEED $BUBBLE_SIZE $ROW_SIZE $LAUNCHER_SPEED $BUBBLE_SP
             $background $background_orig @bubbles_images $gcwashere %bubbles_anim %launched_bubble %tobe_launched %next_bubble $recorddir %recorddata $playdata
             $shooter_lowgfx $sdl_flags $mixer $mixer_enabled $music_disabled $sfx_disabled $no_echo @playlist %sound %music %pinguin %canon
             $graphics_level @update_rects $CANON_ROTATIONS_NB %malus_bubble %falling_bubble %exploding_bubble %malus_gfx %pangocontext $private $no_time_limit
-            %sticking_bubble $time %imgbin $TIME_HURRY_WARN $TIME_HURRY_MAX $TIMEOUT_PINGUIN_SLEEP $FREE_FALL_CONSTANT @joysticks $joysticksinfo
+            %sticking_bubble $time %imgbin $TIME_HURRY_WARN $TIME_HURRY_MAX $TIMEOUT_PINGUIN_SLEEP $FREE_FALL_CONSTANT @joysticks $joysticksinfo $nojoysticks
             $direct @PLAYERS @ALL_PLAYERS %levels $display_on_app_disabled $addicted_time $start_time $time_1pgame $time_netgame $fullscreen $rcfile %hiscorefiles
             $HISCORES $HISCORES_MPTRAIN $HISCORES_MPTRAIN_CHAINREACTION
+            $total_launched_bubbles
             $lev_number $playermalus $mptrainingdiff $loaded_levelset $direct_levelset $chainreaction %chains %img_mini $frame $sock $gameserver $mynick
             $continuegamewhenplayersleave $singleplayertargetting $mylatitude $mylongitude %autokick $replayparam $autorecord $comment $saveframes $saveframesbase $saveframescounter);
 
@@ -175,6 +176,7 @@ GetOptions("fullscreen|fs!" => \$fullscreen,
            "my-nick=s" => \$mynick,
            "private" => \$private,
            "joysticks-info" => \$joysticksinfo,
+           "no-joysticks" => \$nojoysticks,
            "record=s" => sub { if (!-d $_[1]) { die("$_[1] does not exist.\n") } else { $recorddir = $_[1] } },
            "auto-record" => \$autorecord,
            "replay=s" => \$replayparam,
@@ -186,6 +188,7 @@ GetOptions("fullscreen|fs!" => \$fullscreen,
  --no-sound             don't try to start any sound stuff
  --no-music             disable music (only)
  --no-sfx               disable sound effects (only)
+ --no-joysticks         don't try to detect joysticks
  --playlist <file>      use all files listed in the given file as music files and play them
  --playlist <directory> use all files inside the given directory as music files and play them
  --slow-machine         enable slow machine mode (disable a few animations)
@@ -268,7 +271,7 @@ sub format_addiction {
 
 END {
     if ($app && $addicted_time) {
-        print "\nAddicted for ", format_addiction($addicted_time/1000, 0), "\n";
+        print loc("\nAddicted for %s, %d bubbles were launched.\n", format_addiction($addicted_time/1000, 0), $total_launched_bubbles);
     }
 }
 
@@ -376,6 +379,18 @@ sub put_image($$$) {
     $rects{$image} or die "please don't call me with no rects\n".backtrace();
     my $drect = SDL::Rect->new($x, $y, $image->w, $image->h);
     SDL::Video::blit_surface($image, $rects{$image}, $app, $drect);
+    push @update_rects, $drect;
+}
+
+sub put_image_area {
+    my ($image, $x, $y, $ofsx, $ofsy, $w, $h) = @_;
+    $image = translate_mini_image($image);
+    $rects{$image} or die "please don't call me with no rects\n".backtrace();
+    $w = $image->w-$ofsx if !$w;
+    $h = $image->h-$ofsy if !$h;
+    my $drect = SDL::Rect->new($x+$ofsx, $y+$ofsy, $w, $h);
+    my $srect = SDL::Rect->new($ofsx, $ofsy, $w, $h);
+    SDL::Video::blit_surface($image, $srect, $app, $drect);
     push @update_rects, $drect;
 }
 
@@ -2127,6 +2142,7 @@ sub update_game() {
                         && !(any { exists $_->{chaindestx} } @{$falling_bubble{$::p}})
                         && !@{$malus_bubble{$::p}})) {
                     play_sound('launch');
+                    $total_launched_bubbles++;
                     $launched_bubble{$::p} = $tobe_launched{$::p};
                     $launched_bubble{$::p}->{direction} = $angle{$::p};
                     $tobe_launched{$::p} = undef;
@@ -2670,7 +2686,7 @@ sub init_game() {
         $app = SDL::Video::set_video_mode(640, 480, 24, $sdl_flags | ($fullscreen ? SDL_FULLSCREEN : 0));
 	unless ($app)
 	{
-	
+
 		warn "Couldn't make app ".SDL::get_error(). "\n Try software fallback";
 	        $app = SDL::Video::set_video_mode(640, 480, 24, SDL_SWSURFACE | ($fullscreen ? SDL_FULLSCREEN : 0));
 		die "Couldn't make app ".SDL::get_error() unless $app;
@@ -2679,11 +2695,13 @@ sub init_game() {
         SDL::Video::wm_set_icon(SDL::Video::load_BMP("$FPATH/gfx/pinguins/window_icon_penguin.bmp"));
         SDL::Video::wm_set_caption('Frozen-Bubble 2', 'Frozen-Bubble 2');
 
-    my $joys = SDL::Joystick::num_joysticks();
-    $joysticksinfo and print "\nfound $joys joystick(s)\n";
-    for (my $i = 0; $i < $joys; $i++) {
-        push @joysticks, SDL::Joystick->new($i);
-        $joysticksinfo and print "\t" . ($i + 1) . ': ' . (SDL::Joystick::name(SDL::Joystick::index($joysticks[$i])) || 'unknown joystick') . "\n";
+    if(!$nojoysticks) {
+        my $joys = SDL::Joystick::num_joysticks();
+        $joysticksinfo and print "\nfound $joys joystick(s)\n";
+        for (my $i = 0; $i < $joys; $i++) {
+            push @joysticks, SDL::Joystick->new($i);
+            $joysticksinfo and print "\t" . ($i + 1) . ': ' . (SDL::Joystick::name(SDL::Joystick::index($joysticks[$i])) || 'unknown joystick') . "\n";
+        }
     }
     $frame = 0;
 
@@ -2938,6 +2956,7 @@ sub init_game() {
 
     Games::FrozenBubble::CStuff::init_effects($FPATH);
     $addicted_time = 0;
+    $total_launched_bubbles = 0;
 
     $start_time = 0;
     print "Ready.\n";
@@ -3178,7 +3197,12 @@ sub ask_from($) {
                         my $x_echo = $xpos{echo};
                 my $txt;
                         if ($entry->{f} ne 'SPACE') {
-                                if ($entry->{f} eq 'ONE_CHAR') {
+                                if ($entry->{f} eq 'ONE_CHAR' || $entry->{f} eq 'ONE_CHAR_DISPLAY') {
+                                        if($entry->{f} eq 'ONE_CHAR_DISPLAY')
+                                        {
+                                                print_('menu', $app, $x_echo, $ypos, "(".keysym_to_char(${$entry->{a}}).")", 100, $is_rtl ? 'right' : 'left');
+                                                SDL::Video::update_rect($app, 0, 0, 0, 0);
+                                        }
                                         my $k;
                                         while (!defined($k)) {
                                                 $k = grab_key();
@@ -3198,6 +3222,10 @@ sub ask_from($) {
                                                 $k = 'joy' . i18n_number($num) . '-' . loc("button") . i18n_number($2);
                                         } else {
                                                 $k = keysym_to_char($k);
+                                        }
+                                        if($entry->{f} eq 'ONE_CHAR_DISPLAY')
+                                        {
+                                                put_image_area($imgbin{void_panel}, $MENUPOS{xpos_panel}, $MENUPOS{ypos_panel}, $x_echo-$MENUPOS{xpos_panel}, $ypos-$MENUPOS{ypos_panel});
                                         }
                                         print_('menu', $app, $x_echo, $ypos, $k, 100, $is_rtl ? 'right' : 'left');  #- always in ASCII so need to tell it to go right in RTL
                                 } else {
@@ -5478,18 +5506,18 @@ sub menu {
                 ask_from({
                         intro => [ loc("Please enter new keys:") ],
                         entries => [
-                                { 'q' => loc("Player 1; turn left?"),  'a' => \$KEYS->{p1}{left},   f => 'ONE_CHAR' },
-                                { 'q' => loc("Player 1; turn right?"), 'a' => \$KEYS->{p1}{right},  f => 'ONE_CHAR' },
-                                { 'q' => loc("Player 1; fire?"),       'a' => \$KEYS->{p1}{fire},   f => 'ONE_CHAR' },
-                                { 'q' => loc("Player 1; center?"),     'a' => \$KEYS->{p1}{center}, f => 'ONE_CHAR' },
+                                { 'q' => loc("Player 1; turn left?"),  'a' => \$KEYS->{p1}{left},   f => 'ONE_CHAR_DISPLAY' },
+                                { 'q' => loc("Player 1; turn right?"), 'a' => \$KEYS->{p1}{right},  f => 'ONE_CHAR_DISPLAY' },
+                                { 'q' => loc("Player 1; fire?"),       'a' => \$KEYS->{p1}{fire},   f => 'ONE_CHAR_DISPLAY' },
+                                { 'q' => loc("Player 1; center?"),     'a' => \$KEYS->{p1}{center}, f => 'ONE_CHAR_DISPLAY' },
                                 { f => 'SPACE' },
-                                { 'q' => loc("Player 2; turn left?"),  'a' => \$KEYS->{p2}{left},   f => 'ONE_CHAR' },
-                                { 'q' => loc("Player 2; turn right?"), 'a' => \$KEYS->{p2}{right},  f => 'ONE_CHAR' },
-                                { 'q' => loc("Player 2; fire?"),       'a' => \$KEYS->{p2}{fire},   f => 'ONE_CHAR' },
-                                { 'q' => loc("Player 2; center?"),     'a' => \$KEYS->{p2}{center}, f => 'ONE_CHAR' },
+                                { 'q' => loc("Player 2; turn left?"),  'a' => \$KEYS->{p2}{left},   f => 'ONE_CHAR_DISPLAY' },
+                                { 'q' => loc("Player 2; turn right?"), 'a' => \$KEYS->{p2}{right},  f => 'ONE_CHAR_DISPLAY' },
+                                { 'q' => loc("Player 2; fire?"),       'a' => \$KEYS->{p2}{fire},   f => 'ONE_CHAR_DISPLAY' },
+                                { 'q' => loc("Player 2; center?"),     'a' => \$KEYS->{p2}{center}, f => 'ONE_CHAR_DISPLAY' },
                                 { f => 'SPACE' },
-                                { 'q' => loc("Toggle fullscreen?"),    'a' => \$KEYS->{misc}{fs},   f => 'ONE_CHAR' },
-                                { 'q' => loc("Chat (net/lan game)?"),  'a' => \$KEYS->{misc}{chat}, f => 'ONE_CHAR' },
+                                { 'q' => loc("Toggle fullscreen?"),    'a' => \$KEYS->{misc}{fs},   f => 'ONE_CHAR_DISPLAY' },
+                                { 'q' => loc("Chat (net/lan game)?"),  'a' => \$KEYS->{misc}{chat}, f => 'ONE_CHAR_DISPLAY' },
                         ],
                         outro => loc("Thanks!"),
                         erase_background => $back_start

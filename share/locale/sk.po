@@ -7,738 +7,743 @@ msgid ""
 msgstr ""
 "Project-Id-Version: frozen-bubble\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2008-11-04 15:23+0100\n"
+"POT-Creation-Date: 2012-09-20 00:16+0200\n"
 "PO-Revision-Date: 2008-11-10 17:27+0100\n"
 "Last-Translator: Ivan Masár <helix84@centrum.sk>\n"
 "Language-Team: Slovak <sk-i18n@lists.linux.sk>\n"
+"Language: sk\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: ../frozen-bubble:202
+#: ../frozen-bubble:229
 msgid "0"
 msgstr "0"
 
-#: ../frozen-bubble:203
+#: ../frozen-bubble:230
 msgid "1"
 msgstr "1"
 
-#: ../frozen-bubble:204
+#: ../frozen-bubble:231
 msgid "2"
 msgstr "2"
 
-#: ../frozen-bubble:205
+#: ../frozen-bubble:232
 msgid "3"
 msgstr "3"
 
-#: ../frozen-bubble:206
+#: ../frozen-bubble:233
 msgid "4"
 msgstr "4"
 
-#: ../frozen-bubble:207
+#: ../frozen-bubble:234
 msgid "5"
 msgstr "5"
 
-#: ../frozen-bubble:208
+#: ../frozen-bubble:235
 msgid "6"
 msgstr "6"
 
-#: ../frozen-bubble:209
+#: ../frozen-bubble:236
 msgid "7"
 msgstr "7"
 
-#: ../frozen-bubble:210
+#: ../frozen-bubble:237
 msgid "8"
 msgstr "8"
 
-#: ../frozen-bubble:211
+#: ../frozen-bubble:238
 msgid "9"
 msgstr "9"
 
-#: ../frozen-bubble:212
+#: ../frozen-bubble:239
 msgid "."
 msgstr ","
 
-#: ../frozen-bubble:236
+#: ../frozen-bubble:263
 #, perl-format
 msgid "%sh %sm %ss"
 msgstr "%s hod %s min %s s"
 
-#: ../frozen-bubble:238
+#: ../frozen-bubble:265
 #, perl-format
 msgid "%sm %ss"
 msgstr "%s min %s s"
 
-#: ../frozen-bubble:240
+#: ../frozen-bubble:267
 #, perl-format
 msgid "%ss"
 msgstr "%s s"
 
-#: ../frozen-bubble:932
-#: ../frozen-bubble:2994
+#: ../frozen-bubble:274
+#, perl-format
+msgid ""
+"\n"
+"Addicted for %s, %d bubbles were launched.\n"
+msgstr ""
+
+#: ../frozen-bubble:1014 ../frozen-bubble:3092
 #, perl-format
 msgid "%s'%s\""
 msgstr "%s:%s"
 
-#: ../frozen-bubble:1059
+#: ../frozen-bubble:1140
 msgid "Your score after two minutes:"
 msgstr "Vaše skóre za dve minúty:"
 
-#: ../frozen-bubble:1059
+#: ../frozen-bubble:1140
 msgid "Press any key."
 msgstr "Stlačte ľubovoľný kláves."
 
-#: ../frozen-bubble:1227
-#: ../frozen-bubble:1229
+#: ../frozen-bubble:1306 ../frozen-bubble:1308
 msgid "Lost connection to server!"
 msgstr "Prerušené spojenie so serverom!"
 
-#: ../frozen-bubble:1227
+#: ../frozen-bubble:1306
 msgid "Hoster aborted the game."
 msgstr "Hostiteľ prerušil hru."
 
-#: ../frozen-bubble:1229
+#: ../frozen-bubble:1308
 msgid "Your lag is probably too high."
 msgstr "Vaše oneskorenie je zrejme príliš veľké."
 
-#: ../frozen-bubble:1778
-#: ../frozen-bubble:3506
+#: ../frozen-bubble:1862 ../frozen-bubble:3615
 msgid "Random level"
 msgstr "Náhodná úroveň"
 
-#: ../frozen-bubble:1779
+#: ../frozen-bubble:1863
 #, perl-format
 msgid "Score: %s"
 msgstr "Skóre: %s"
 
-#: ../frozen-bubble:1780
+#: ../frozen-bubble:1864
 #, perl-format
 msgid "Level %s"
 msgstr "Úroveň %s"
 
-#: ../frozen-bubble:1960
+#: ../frozen-bubble:2044
 msgid "Draw game!"
 msgstr "Remíza!"
 
-#: ../frozen-bubble:2277
-#: ../frozen-bubble:2344
+#: ../frozen-bubble:2363 ../frozen-bubble:2430
 #, perl-format
 msgid "Lost synchronization %s!"
 msgstr "Stratená synchronizácia %s!"
 
-#: ../frozen-bubble:2991
+#: ../frozen-bubble:3089
 msgid "won!"
 msgstr "víťazstvo!"
 
-#: ../frozen-bubble:2991
+#: ../frozen-bubble:3089
 #, perl-format
 msgid "level %s"
 msgstr "úroveň %s"
 
-#: ../frozen-bubble:3011
+#: ../frozen-bubble:3109
 msgid "Regular"
 msgstr "Bežná"
 
-#: ../frozen-bubble:3029
+#: ../frozen-bubble:3127
 msgid "Chain-reaction enabled"
 msgstr "Reťazová reakcia zapnutí"
 
-#: ../frozen-bubble:3115
+#: ../frozen-bubble:3215
 msgid "left"
 msgstr "doľava"
 
-#: ../frozen-bubble:3115
+#: ../frozen-bubble:3215
 msgid "right"
 msgstr "doprava"
 
-#: ../frozen-bubble:3115
+#: ../frozen-bubble:3215
 msgid "up"
 msgstr "hore"
 
-#: ../frozen-bubble:3115
+#: ../frozen-bubble:3215
 msgid "down"
 msgstr "dole"
 
-#: ../frozen-bubble:3119
+#: ../frozen-bubble:3219
 msgid "button"
 msgstr "tlačidlo"
 
-#: ../frozen-bubble:3455
+#: ../frozen-bubble:3565
 msgid "Start 1-player game menu"
 msgstr "Hra 1 hráča"
 
-#: ../frozen-bubble:3506
-#: ../frozen-bubble:3513
-#: ../frozen-bubble:5123
+#: ../frozen-bubble:3615 ../frozen-bubble:3622 ../frozen-bubble:5234
 msgid "Enable chain-reaction?"
 msgstr "Povoliť reťazovú reakciu?"
 
-#: ../frozen-bubble:3507
-#: ../frozen-bubble:3514
-#: ../frozen-bubble:5124
+#: ../frozen-bubble:3616 ../frozen-bubble:3623 ../frozen-bubble:5235
 #, perl-format
 msgid "%s or %s?"
 msgstr "%s alebo %s?"
 
-#: ../frozen-bubble:3508
-#: ../frozen-bubble:3515
-#: ../frozen-bubble:5125
+#: ../frozen-bubble:3617 ../frozen-bubble:3624 ../frozen-bubble:5236
 msgid "Enjoy the game!"
 msgstr "Užijte si hru!"
 
-#: ../frozen-bubble:3513
+#: ../frozen-bubble:3622
 msgid "Multiplayer training"
 msgstr "Tréning pre viac hráčov"
 
-#: ../frozen-bubble:3611
+#: ../frozen-bubble:3720
 msgid "*** Please wait, probing for available servers on local network..."
 msgstr "*** Počkajte prosím, hľadajú sa dostupné servery na lokálnej sieti..."
 
-#: ../frozen-bubble:3614
+#: ../frozen-bubble:3723
 msgid "*** Unable to probe for available servers on local network!"
 msgstr "*** Na lokálnej sieti sa nedajú nájsť dostupné servery!"
 
-#: ../frozen-bubble:3616
+#: ../frozen-bubble:3725
 msgid "*** Verify your network setup"
 msgstr "*** Skontrolujte nastavenie siete"
 
-#: ../frozen-bubble:3625
+#: ../frozen-bubble:3734
 msgid "*** No server found, and could not start server"
 msgstr "*** Nenašiel sa žiaden server, ani sa nedal spustiť vlastný server"
 
-#: ../frozen-bubble:3626
+#: ../frozen-bubble:3735
 msgid "*** Verify your installation or contact your vendor"
 msgstr "*** Skontrolujte vašu inštaláciu alebo kontaktujte vášho dodávateľa"
 
-#: ../frozen-bubble:3633
+#: ../frozen-bubble:3742
 msgid "*** No server found, created server for local network game"
-msgstr "*** Nenašiel sa žiaden server, vytvoril sa server pre lokálnu sieťovú hru"
+msgstr ""
+"*** Nenašiel sa žiaden server, vytvoril sa server pre lokálnu sieťovú hru"
 
-#: ../frozen-bubble:3649
+#: ../frozen-bubble:3758
 msgid "*** Contacting master server..."
 msgstr "*** Prebieha pripojenie na hlavný server..."
 
-#: ../frozen-bubble:3660
+#: ../frozen-bubble:3769
 msgid "*** Server list received properly"
 msgstr "*** Zoznam serverov sa stiahol správne"
 
-#: ../frozen-bubble:3662
+#: ../frozen-bubble:3771
 msgid "*** Unable to download server list from master server!"
 msgstr "*** Z hlavného servera sa nedá stiahnuť zoznam serverov!"
 
-#: ../frozen-bubble:3663
+#: ../frozen-bubble:3772
 msgid "*** Verify your network setup or retry later"
 msgstr "*** Skontrolujte nastavenie siete alebo to skúste neskôr"
 
-#: ../frozen-bubble:3709
+#: ../frozen-bubble:3818
 #, perl-format
 msgid "Available players: %s (playing: %s) Ping: %sms"
 msgstr "Dostupní hráči:%s  (hrajú: %s) Ping:%s ms"
 
-#: ../frozen-bubble:3741
-#: ../frozen-bubble:3748
+#: ../frozen-bubble:3850 ../frozen-bubble:3857
 msgid "*** Please choose a server"
 msgstr "*** Zvoľte si server"
 
-#: ../frozen-bubble:3809
+#: ../frozen-bubble:3918
 msgid "*** No available game server"
 msgstr "*** Nie je dostupný žiadny herný server"
 
-#: ../frozen-bubble:3810
+#: ../frozen-bubble:3919
 msgid "*** Please retry later or try a local network game (lan game)"
 msgstr "*** Zopakujte to neskôr alebo skúste lokálnu sieťovú hru"
 
-#: ../frozen-bubble:3820
-msgid "*** Impossible to connect to specified server, going back to server list"
-msgstr "*** Nedá sa pripojiť k danému serveru, znova sa načítava zoznam serverov"
+#: ../frozen-bubble:3929
+msgid ""
+"*** Impossible to connect to specified server, going back to server list"
+msgstr ""
+"*** Nedá sa pripojiť k danému serveru, znova sa načítava zoznam serverov"
 
-#: ../frozen-bubble:3824
+#: ../frozen-bubble:3933
 #, perl-format
 msgid "*** Connected to server '%s'"
 msgstr "*** Pripojený k serveru „%s“"
 
-#: ../frozen-bubble:3848
-msgid "*** Sorry, your computer or the network is too slow, giving up - press any key"
-msgstr "Prepáčte, váš počítač alebo sieť sú príliš pomalé, operácia sa ruší - stlačte ľubovoľný kláves"
+#: ../frozen-bubble:3957
+msgid ""
+"*** Sorry, your computer or the network is too slow, giving up - press any "
+"key"
+msgstr ""
+"Prepáčte, váš počítač alebo sieť sú príliš pomalé, operácia sa ruší - "
+"stlačte ľubovoľný kláves"
 
-#: ../frozen-bubble:4000
-#: ../frozen-bubble:5024
+#: ../frozen-bubble:4109 ../frozen-bubble:5133
 msgid "Chat"
 msgstr "Konverzácia"
 
-#: ../frozen-bubble:4001
+#: ../frozen-bubble:4110
 msgid "Create new game"
 msgstr "Vytvoriť novú hru"
 
-#: ../frozen-bubble:4155
+#: ../frozen-bubble:4264
 msgid "Say: "
 msgstr "Povedať:"
 
-#: ../frozen-bubble:4161
+#: ../frozen-bubble:4270
 #, perl-format
 msgid "Players in game: %s"
 msgstr "Hráči v hre: %s"
 
-#: ../frozen-bubble:4163
+#: ../frozen-bubble:4272
 #, perl-format
 msgid "Available Players: %s"
 msgstr "Dostupní hráči: %s"
 
-#: ../frozen-bubble:4212
+#: ../frozen-bubble:4321
 #, perl-format
 msgid "*** %s has left the chat room"
 msgstr "*** %s opustil hernú miestnosť"
 
-#: ../frozen-bubble:4214
+#: ../frozen-bubble:4323
 msgid "*** Several players left this chat room: "
 msgstr "*** Niekoľko hráčov sa opustilo túto hernú miestnosť: "
 
-#: ../frozen-bubble:4226
+#: ../frozen-bubble:4335
 #, perl-format
 msgid "*** %s has joined the chat room"
 msgstr "*** %s sa pripojil do hernej miestnosti"
 
-#: ../frozen-bubble:4228
+#: ../frozen-bubble:4337
 msgid "*** Several players joined this chat room: "
 msgstr "*** Niekoľko hráčov sa pripojilo do tejto hernej miestnosti: "
 
-#: ../frozen-bubble:4246
+#: ../frozen-bubble:4355
 #, perl-format
 msgid "Join game: %s"
 msgstr "Pripojiť hru: %s"
 
-#: ../frozen-bubble:4266
+#: ../frozen-bubble:4375
 msgid "*** Players listening: "
 msgstr "*** Prítomní hráči: "
 
-#: ../frozen-bubble:4277
-#: ../frozen-bubble:4637
+#: ../frozen-bubble:4386 ../frozen-bubble:4746
 msgid "*** Notice: no one's listening here"
 msgstr "*** Pozn.: Tu nikto nepočúva"
 
-#: ../frozen-bubble:4284
-msgid "*** Please wait, retrieving your geographical location from http://hostip.info/..."
-msgstr "*** Čakajte prosím, z http://hostip.info/ sa získava vaša geografická poloha ..."
+#: ../frozen-bubble:4393
+msgid ""
+"*** Please wait, retrieving your geographical location from http://hostip."
+"info/..."
+msgstr ""
+"*** Čakajte prosím, z http://hostip.info/ sa získava vaša geografická "
+"poloha ..."
 
-#: ../frozen-bubble:4292
+#: ../frozen-bubble:4401
 msgid "*** Done, you are positioned as the flashing red dot!"
 msgstr "*** Hotovo, nachádzate sa na pozícii blikajúcej červenej bodky!"
 
-#: ../frozen-bubble:4294
-msgid "*** hostip.info doesn't know the geographical location of your IP address"
+#: ../frozen-bubble:4403
+msgid ""
+"*** hostip.info doesn't know the geographical location of your IP address"
 msgstr "*** hostip.info nepozná geografickú polohu vašej IP adresy"
 
-#: ../frozen-bubble:4295
-msgid "*** If you want that your location appears on the map, fix your entry at http://hostip.info/"
-msgstr "*** Ak chcete zobraziť vašu polohu na mape, opravte vaše záznamy na http://hostip.info/"
+#: ../frozen-bubble:4404
+msgid ""
+"*** If you want that your location appears on the map, fix your entry at "
+"http://hostip.info/"
+msgstr ""
+"*** Ak chcete zobraziť vašu polohu na mape, opravte vaše záznamy na http://"
+"hostip.info/"
 
-#: ../frozen-bubble:4296
+#: ../frozen-bubble:4405
 msgid "*** Then type /geolocate to see yourself on the map"
 msgstr "*** Potom napíšte /geolocate, čím uvidíte svoju polohu na mape"
 
-#: ../frozen-bubble:4303
+#: ../frozen-bubble:4412
 msgid "*** hostip.info didn't reply within 5 seconds, giving up"
 msgstr "*** hostip.info neodpovedal do 5 sekúnd, ukončuje sa"
 
-#: ../frozen-bubble:4321
+#: ../frozen-bubble:4430
 msgid "*** You may now create or join a game"
 msgstr "*** Môžete sa pridať ku hre alebo vytvoriť vlastnú hru"
 
-#: ../frozen-bubble:4327
-#: ../frozen-bubble:4328
-#: ../frozen-bubble:4329
-#: ../frozen-bubble:4343
-#: ../frozen-bubble:4346
-#: ../frozen-bubble:4347
-#: ../frozen-bubble:4348
-#: ../frozen-bubble:4360
-#: ../frozen-bubble:4380
-#: ../frozen-bubble:4394
-#: ../frozen-bubble:4406
-#: ../frozen-bubble:4713
-#: ../frozen-bubble:4715
-#: ../frozen-bubble:4720
-#: ../frozen-bubble:4732
-#: ../frozen-bubble:4739
-#: ../frozen-bubble:4860
-#: ../frozen-bubble:4862
-#: ../frozen-bubble:4866
-#: ../frozen-bubble:4876
-#: ../frozen-bubble:5034
-#: ../frozen-bubble:5035
-#: ../frozen-bubble:5036
+#: ../frozen-bubble:4436 ../frozen-bubble:4437 ../frozen-bubble:4438
+#: ../frozen-bubble:4452 ../frozen-bubble:4455 ../frozen-bubble:4456
+#: ../frozen-bubble:4457 ../frozen-bubble:4469 ../frozen-bubble:4489
+#: ../frozen-bubble:4503 ../frozen-bubble:4515 ../frozen-bubble:4822
+#: ../frozen-bubble:4824 ../frozen-bubble:4829 ../frozen-bubble:4841
+#: ../frozen-bubble:4848 ../frozen-bubble:4969 ../frozen-bubble:4971
+#: ../frozen-bubble:4975 ../frozen-bubble:4985 ../frozen-bubble:5143
+#: ../frozen-bubble:5144 ../frozen-bubble:5145
 msgid "enabled"
 msgstr "zapnuté"
 
-#: ../frozen-bubble:4331
-#: ../frozen-bubble:5037
+#: ../frozen-bubble:4440 ../frozen-bubble:5146
 msgid "none (unlimited)"
 msgstr "žiadne (neobmedzené)"
 
-#: ../frozen-bubble:4354
-#: ../frozen-bubble:4366
-#: ../frozen-bubble:4374
-#: ../frozen-bubble:4386
-#: ../frozen-bubble:4400
-#: ../frozen-bubble:4716
-#: ../frozen-bubble:4722
-#: ../frozen-bubble:4734
-#: ../frozen-bubble:4737
-#: ../frozen-bubble:4863
-#: ../frozen-bubble:4868
-#: ../frozen-bubble:4878
-#: ../frozen-bubble:4880
-#: ../frozen-bubble:4882
-#: ../frozen-bubble:5034
-#: ../frozen-bubble:5035
-#: ../frozen-bubble:5036
+#: ../frozen-bubble:4463 ../frozen-bubble:4475 ../frozen-bubble:4483
+#: ../frozen-bubble:4495 ../frozen-bubble:4509 ../frozen-bubble:4825
+#: ../frozen-bubble:4831 ../frozen-bubble:4843 ../frozen-bubble:4846
+#: ../frozen-bubble:4972 ../frozen-bubble:4977 ../frozen-bubble:4987
+#: ../frozen-bubble:4989 ../frozen-bubble:4991 ../frozen-bubble:5143
+#: ../frozen-bubble:5144 ../frozen-bubble:5145
 msgid "disabled"
 msgstr "vypnuté"
 
-#: ../frozen-bubble:4357
-#: ../frozen-bubble:4377
-#: ../frozen-bubble:4397
-#: ../frozen-bubble:4417
-msgid "*** Cannot modify this option, as a player is using a too old version of Frozen-Bubble"
-msgstr "*** Nemožno zmeniť túto voľbu, lebo hráč používa príliš starú verziu Frozen-Bubble"
+#: ../frozen-bubble:4466 ../frozen-bubble:4486 ../frozen-bubble:4506
+#: ../frozen-bubble:4526
+msgid ""
+"*** Cannot modify this option, as a player is using a too old version of "
+"Frozen-Bubble"
+msgstr ""
+"*** Nemožno zmeniť túto voľbu, lebo hráč používa príliš starú verziu Frozen-"
+"Bubble"
 
-#: ../frozen-bubble:4361
-#: ../frozen-bubble:4367
-#: ../frozen-bubble:5027
-#: ../frozen-bubble:5034
+#: ../frozen-bubble:4470 ../frozen-bubble:4476 ../frozen-bubble:5136
+#: ../frozen-bubble:5143
 #, perl-format
 msgid "Chain-reaction: %s"
 msgstr "Reťazová reakcia: %s"
 
-#: ../frozen-bubble:4381
-#: ../frozen-bubble:4387
-#: ../frozen-bubble:5028
-#: ../frozen-bubble:5035
+#: ../frozen-bubble:4490 ../frozen-bubble:4496 ../frozen-bubble:5137
+#: ../frozen-bubble:5144
 #, perl-format
 msgid "Continue game when players leave: %s"
 msgstr "Pokračovať v hre, keď hráči odídu: %s"
 
-#: ../frozen-bubble:4401
-#: ../frozen-bubble:4407
-#: ../frozen-bubble:5029
-#: ../frozen-bubble:5036
+#: ../frozen-bubble:4510 ../frozen-bubble:4516 ../frozen-bubble:5138
+#: ../frozen-bubble:5145
 #, perl-format
 msgid "Single player targetting: %s"
 msgstr "Reťazová reakcia: %s"
 
-#: ../frozen-bubble:4434
-#: ../frozen-bubble:5030
-#: ../frozen-bubble:5037
+#: ../frozen-bubble:4543 ../frozen-bubble:5139 ../frozen-bubble:5146
 #, perl-format
 msgid "Victories limit: %s"
 msgstr "Požadovaný počet víťazstiev: %s"
 
-#: ../frozen-bubble:4444
+#: ../frozen-bubble:4553
 #, perl-format
 msgid "*** Can't kick %s: no such player in game"
 msgstr "*** %s sa nedá vyhodiť - taký hráč nie je prítomný"
 
-#: ../frozen-bubble:4446
+#: ../frozen-bubble:4555
 #, perl-format
 msgid "*** Can't kick %s: '%s'"
 msgstr "*** %s sa nedá sa vyhodiť: „%s“"
 
-#: ../frozen-bubble:4478
+#: ../frozen-bubble:4587
 msgid "*** Leaving game..."
 msgstr "*** Hra sa opúšťa..."
 
-#: ../frozen-bubble:4552
+#: ../frozen-bubble:4661
 #, perl-format
 msgid "*** You are now known as %s"
 msgstr "*** Teraz ste známy ako %s"
 
-#: ../frozen-bubble:4556
+#: ../frozen-bubble:4665
 msgid "*** Erroneous nickname"
 msgstr "*** Chybná prezývka"
 
-#: ../frozen-bubble:4566
+#: ../frozen-bubble:4675
 #, perl-format
 msgid "*** You're connected to server '%s'"
 msgstr "*** Ste sripojený k serveru „%s“"
 
-#: ../frozen-bubble:4577
-#: ../frozen-bubble:4604
-#: ../frozen-bubble:4854
-#, perl-format
-msgid "Kicking %s: %s"
-msgstr "Vykopnutý %s: %s"
-
-#: ../frozen-bubble:4580
-#: ../frozen-bubble:4592
+#: ../frozen-bubble:4689 ../frozen-bubble:4701
 msgid "*** Sado-masochist, hmm?"
 msgstr "*** Sado-masochista, hmm?"
 
-#: ../frozen-bubble:4581
-#: ../frozen-bubble:4593
+#: ../frozen-bubble:4690 ../frozen-bubble:4702
 msgid "*** You like when it hurts, don't you?"
 msgstr "*** Asi máte radosť, keď to ubližuje, čo?"
 
-#: ../frozen-bubble:4582
-#: ../frozen-bubble:4594
+#: ../frozen-bubble:4691 ../frozen-bubble:4703
 msgid "*** Your butt already hurts enough! Stop that!"
 msgstr "*** Zadok vás už bolí dosť! Prestaňte!"
 
-#: ../frozen-bubble:4599
+#: ../frozen-bubble:4708
 #, perl-format
 msgid "*** Removing %s from autokick list."
 msgstr "*** Odstraňuje sa %s zo zoznamu automaticky vykopávaných."
 
-#: ../frozen-bubble:4601
+#: ../frozen-bubble:4710
 #, perl-format
 msgid "*** Adding %s to autokick list."
 msgstr "*** Pridáva sa %s do zoznamu automaticky vykopávaných."
 
-#: ../frozen-bubble:4612
+#: ../frozen-bubble:4721
 msgid "*** Nobody in autokick list."
 msgstr "***  Nikto sa nenachádza v zozname automaticky vykopávaných."
 
-#: ../frozen-bubble:4614
+#: ../frozen-bubble:4723
 #, perl-format
 msgid "*** Autokick list members: %s"
 msgstr "***  V zozname automaticky vykopávaných sa nachádza: %s"
 
-#: ../frozen-bubble:4618
+#: ../frozen-bubble:4727
 #, perl-format
 msgid "*** Available commands: %s"
 msgstr "*** Dostupné príkazy: %s"
 
-#: ../frozen-bubble:4619
+#: ../frozen-bubble:4728
 #, perl-format
 msgid "%s <action>"
 msgstr "%s <akcia>"
 
-#: ../frozen-bubble:4619
-#: ../frozen-bubble:4622
+#: ../frozen-bubble:4728 ../frozen-bubble:4731
 #, perl-format
 msgid "%s <nick> [<text>]"
 msgstr "%s <prezývka> [<text>]"
 
-#: ../frozen-bubble:4621
+#: ../frozen-bubble:4730
 #, perl-format
 msgid "%s <new_nick>"
 msgstr "%s <nová_prezývka>"
 
-#: ../frozen-bubble:4625
+#: ../frozen-bubble:4734
 #, perl-format
 msgid "*** Unknown command. Try %s for help."
 msgstr "*** Neznámy príkaz. Skúste %s na zobrazenie pomocníka."
 
-#: ../frozen-bubble:4662
-msgid "*** Open games already full. Join an existing game, or select a different server."
-msgstr "*** Počet otvorených hier presiahol maximum. Pripojte sa k existujúcej hre alebo si zvoľte iný server."
+#: ../frozen-bubble:4771
+msgid ""
+"*** Open games already full. Join an existing game, or select a different "
+"server."
+msgstr ""
+"*** Počet otvorených hier presiahol maximum. Pripojte sa k existujúcej hre "
+"alebo si zvoľte iný server."
 
-#: ../frozen-bubble:4665
+#: ../frozen-bubble:4774
 msgid "*** Cannot join game, game was just started or aborted"
-msgstr "*** Nie je možné pripojiť sa k hre, hra sa práve začala alebo bola zrušená"
+msgstr ""
+"*** Nie je možné pripojiť sa k hre, hra sa práve začala alebo bola zrušená"
 
-#: ../frozen-bubble:4669
-#: ../frozen-bubble:4979
+#: ../frozen-bubble:4778 ../frozen-bubble:5088
 #, perl-format
 msgid "*** Failure: '%s'"
 msgstr "*** Chyba: „%s“"
 
-#: ../frozen-bubble:4675
+#: ../frozen-bubble:4784
 msgid "*** Game created - now you need to wait for players to join"
-msgstr "*** Hra je vytvorená - teraz musíte počkať na pripojenie ďalších hráčov"
+msgstr ""
+"*** Hra je vytvorená - teraz musíte počkať na pripojenie ďalších hráčov"
 
-#: ../frozen-bubble:4678
+#: ../frozen-bubble:4787
 msgid "*** Joined game"
 msgstr "*** Pripojená hra"
 
-#: ../frozen-bubble:4708
-#: ../frozen-bubble:4746
-#: ../frozen-bubble:4752
+#: ../frozen-bubble:4817 ../frozen-bubble:4855 ../frozen-bubble:4861
 #, perl-format
 msgid "*** Can't start game: '%s'"
 msgstr "*** Nedá sa spustiť hra: „%s“"
 
-#: ../frozen-bubble:4721
-msgid "*** Must disable chain-reaction, as a player is using a too old version of Frozen-Bubble"
-msgstr "*** Musí sa vypnúť reťazová reakcia, lebo hráč používa príliš starú verziu Frozen-Bubble"
+#: ../frozen-bubble:4830
+msgid ""
+"*** Must disable chain-reaction, as a player is using a too old version of "
+"Frozen-Bubble"
+msgstr ""
+"*** Musí sa vypnúť reťazová reakcia, lebo hráč používa príliš starú verziu "
+"Frozen-Bubble"
 
-#: ../frozen-bubble:4726
-msgid "*** Must reset victories limit as a player is using a too old version of Frozen-Bubble"
-msgstr "*** Musí sa obnoviť požadovaný počet víťazstiev, lebo hráč používa príliš starú verziu Frozen-Bubble"
+#: ../frozen-bubble:4835
+msgid ""
+"*** Must reset victories limit as a player is using a too old version of "
+"Frozen-Bubble"
+msgstr ""
+"*** Musí sa obnoviť požadovaný počet víťazstiev, lebo hráč používa príliš "
+"starú verziu Frozen-Bubble"
 
-#: ../frozen-bubble:4733
-msgid "*** Cannot enable continue game when players leave, as a player is using an old version"
-msgstr "*** Nemôžem zapnúť Pokračovať v hre, keď hráči odídu, lebo hráč používa príliš starú verziu Frozen-Bubble"
+#: ../frozen-bubble:4842
+msgid ""
+"*** Cannot enable continue game when players leave, as a player is using an "
+"old version"
+msgstr ""
+"*** Nemôžem zapnúť Pokračovať v hre, keď hráči odídu, lebo hráč používa "
+"príliš starú verziu Frozen-Bubble"
 
-#: ../frozen-bubble:4738
-msgid "*** Cannot disable single player targetting, as a player is using an old version"
-msgstr "*** Nemôžem vypnúť reťazovú reakciu, lebo hráč používa príliš starú verziu Frozen-Bubble"
+#: ../frozen-bubble:4847
+msgid ""
+"*** Cannot disable single player targetting, as a player is using an old "
+"version"
+msgstr ""
+"*** Nemôžem vypnúť reťazovú reakciu, lebo hráč používa príliš starú verziu "
+"Frozen-Bubble"
 
-#: ../frozen-bubble:4852
+#: ../frozen-bubble:4961
 #, perl-format
 msgid "*** %s joined the game!"
 msgstr "*** %s sa pripojil do hry!"
 
-#: ../frozen-bubble:4867
+#: ../frozen-bubble:4976
 #, perl-format
-msgid "*** Chain-reaction disabled, %s is using a too old version of Frozen-Bubble"
-msgstr "*** Reťazová reakcia vypnutá, %s používa príliš starú verziu Frozen-Bubble"
+msgid ""
+"*** Chain-reaction disabled, %s is using a too old version of Frozen-Bubble"
+msgstr ""
+"*** Reťazová reakcia vypnutá, %s používa príliš starú verziu Frozen-Bubble"
 
-#: ../frozen-bubble:4871
+#: ../frozen-bubble:4980
 #, perl-format
-msgid "*** Victories limit reset, %s is using a too old version of Frozen-Bubble"
-msgstr "*** Počet víťazstiev bol obnovený, %s používa príliš starú verziu Frozen-Bubble"
+msgid ""
+"*** Victories limit reset, %s is using a too old version of Frozen-Bubble"
+msgstr ""
+"*** Počet víťazstiev bol obnovený, %s používa príliš starú verziu Frozen-"
+"Bubble"
 
-#: ../frozen-bubble:4877
+#: ../frozen-bubble:4986
 #, perl-format
 msgid "*** Continue game when players leave disabled, %s has a too old version"
-msgstr "*** Pokračovať v hre, keď hráči odídu je vypnuté, %s má príliš starú verziu"
+msgstr ""
+"*** Pokračovať v hre, keď hráči odídu je vypnuté, %s má príliš starú verziu"
 
-#: ../frozen-bubble:4881
+#: ../frozen-bubble:4990
 #, perl-format
 msgid "*** Single player targetting enabled, %s has a too old version"
 msgstr "*** Reťazová reakcia zapnutá, %s má príliš starú verziu"
 
-#: ../frozen-bubble:4890
+#: ../frozen-bubble:4999
 msgid "*** Game creator left the game..."
 msgstr "*** Hru opustil zakladateľ hry..."
 
-#: ../frozen-bubble:4895
+#: ../frozen-bubble:5004
 #, perl-format
 msgid "*** %s left the game..."
 msgstr "*** Hru opustil %s..."
 
-#: ../frozen-bubble:4900
+#: ../frozen-bubble:5009
 #, perl-format
 msgid "*** %s was kicked out of the game..."
 msgstr "*** Z hry bol vyhodený %s..."
 
-#: ../frozen-bubble:4905
+#: ../frozen-bubble:5014
 msgid "*** You were kicked out of the game..."
 msgstr "*** Vyhodili vás z hry..."
 
-#: ../frozen-bubble:4910
+#: ../frozen-bubble:5019
 msgid "*** You were disconnected because of too long inactivity"
 msgstr "*** Odpojili vás kvôli dlhej nečinnosti"
 
-#: ../frozen-bubble:4997
+#: ../frozen-bubble:5106
 msgid "*** Lost connection to server, abandoning - press any key"
-msgstr "*** Prerušené spojenie so serverom, ukončuje sa - stlačte ľubovoľný kláves"
+msgstr ""
+"*** Prerušené spojenie so serverom, ukončuje sa - stlačte ľubovoľný kláves"
 
-#: ../frozen-bubble:5031
+#: ../frozen-bubble:5140
 msgid "Start game!"
 msgstr "Začať hru!"
 
-#: ../frozen-bubble:5052
+#: ../frozen-bubble:5161
+#, fuzzy
+msgid ""
+"*** Game finished, because an inconsistency in game state was detected - "
+"sorry!"
+msgstr ""
+"*** Hra skončila, pretože bol dosiahnutý stanovený počet víťazstiev %s."
+
+#: ../frozen-bubble:5163
 #, perl-format
 msgid "*** Game finished, because victories limit of %s was reached."
-msgstr "*** Hra skončila, pretože bol dosiahnutý stanovený počet víťazstiev %s."
+msgstr ""
+"*** Hra skončila, pretože bol dosiahnutý stanovený počet víťazstiev %s."
 
-#: ../frozen-bubble:5055
+#: ../frozen-bubble:5166
 #, perl-format
 msgid "*** Game finished, because the following player(s) left: %s"
 msgstr "*** Hra skončila, pretože nasledujúci hráč(i) ju opustil(i): %s"
 
-#: ../frozen-bubble:5058
+#: ../frozen-bubble:5169
 #, perl-format
 msgid "*** Addicted for: %s"
 msgstr "*** Hre ste sa venovali: %s"
 
-#: ../frozen-bubble:5061
+#: ../frozen-bubble:5172
 #, perl-format
 msgid "*** Winner: %s"
 msgstr "*** Víťaz: %s"
 
-#: ../frozen-bubble:5063
+#: ../frozen-bubble:5174
 msgid "*** Draw game!"
 msgstr "*** Remíza!"
 
-#: ../frozen-bubble:5065
+#: ../frozen-bubble:5176
 #, perl-format
 msgid "*** Scores: %s"
 msgstr "*** Skóre: %s"
 
-#: ../frozen-bubble:5083
-msgid "*** Cannot connect to specified gameserver, fallbacking to contacting master server"
-msgstr "*** Nedá sa pripojiť k danému hernému serveru, znova sa kontaktuje hlavný server"
+#: ../frozen-bubble:5194
+msgid ""
+"*** Cannot connect to specified gameserver, fallbacking to contacting master "
+"server"
+msgstr ""
+"*** Nedá sa pripojiť k danému hernému serveru, znova sa kontaktuje hlavný "
+"server"
 
-#: ../frozen-bubble:5123
+#: ../frozen-bubble:5234
 msgid "2-player game"
 msgstr "Hra pre 2 hráčov"
 
-#: ../frozen-bubble:5172
-#: ../frozen-bubble:5205
+#: ../frozen-bubble:5283 ../frozen-bubble:5316
 msgid "Congratulations!"
 msgstr "Gratulujeme!"
 
-#: ../frozen-bubble:5172
-#: ../frozen-bubble:5205
+#: ../frozen-bubble:5283 ../frozen-bubble:5316
 msgid "You have a highscore!"
 msgstr "Dosiahli ste výborné skóre!"
 
-#: ../frozen-bubble:5173
-#: ../frozen-bubble:5206
+#: ../frozen-bubble:5284 ../frozen-bubble:5317
 msgid "Your name?"
 msgstr "Vaše meno?"
 
-#: ../frozen-bubble:5174
-#: ../frozen-bubble:5207
+#: ../frozen-bubble:5285 ../frozen-bubble:5318
 msgid "Great game!"
 msgstr "Skvelá hra!"
 
-#: ../frozen-bubble:5383
+#: ../frozen-bubble:5501
 msgid "Please enter new keys:"
 msgstr "Zadajte nové klávesy:"
 
-#: ../frozen-bubble:5385
+#: ../frozen-bubble:5503
 msgid "Player 1; turn left?"
 msgstr "Hráč 1; doľava?"
 
-#: ../frozen-bubble:5386
+#: ../frozen-bubble:5504
 msgid "Player 1; turn right?"
 msgstr "Hráč 1; doprava?"
 
-#: ../frozen-bubble:5387
+#: ../frozen-bubble:5505
 msgid "Player 1; fire?"
 msgstr "Hráč 1; strela?"
 
-#: ../frozen-bubble:5388
+#: ../frozen-bubble:5506
 msgid "Player 1; center?"
 msgstr "Hráč 1; stred?"
 
-#: ../frozen-bubble:5390
+#: ../frozen-bubble:5508
 msgid "Player 2; turn left?"
 msgstr "Hráč 2; doľava?"
 
-#: ../frozen-bubble:5391
+#: ../frozen-bubble:5509
 msgid "Player 2; turn right?"
 msgstr "Hráč 2; doprava?"
 
-#: ../frozen-bubble:5392
+#: ../frozen-bubble:5510
 msgid "Player 2; fire?"
 msgstr "Hráč 2; strela?"
 
-#: ../frozen-bubble:5393
+#: ../frozen-bubble:5511
 msgid "Player 2; center?"
 msgstr "Hráč 2; stred?"
 
-#: ../frozen-bubble:5395
+#: ../frozen-bubble:5513
 msgid "Toggle fullscreen?"
 msgstr "Celá obrazovka?"
 
-#: ../frozen-bubble:5396
+#: ../frozen-bubble:5514
 msgid "Chat (net/lan game)?"
 msgstr "Konverzácia (sieťová hra)?"
 
-#: ../frozen-bubble:5398
+#: ../frozen-bubble:5516
 msgid "Thanks!"
 msgstr "Vďaka!"
 
+#~ msgid "Kicking %s: %s"
+#~ msgstr "Vykopnutý %s: %s"
+
 #~ msgid "*** Server's MOTD: %s"
 #~ msgstr "*** Správa dňa od servera: %s"
+
 #~ msgid ""
 #~ "*** Can't set a victories limit, as a player is using a too old version "
 #~ "of Frozen-Bubble"
 #~ msgstr ""
 #~ "*** Nemôžem nastaviť požadovaný počet víťazstiev, lebo hráč používa "
 #~ "príliš starú verziu Frozen-Bubble"
-
