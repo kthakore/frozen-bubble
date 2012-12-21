@@ -3,7 +3,7 @@
 #
 #                          Frozen-Bubble
 #
-# Copyright (c) 2000-2010 The Frozen-Bubble Team
+# Copyright (c) 2000-2012 The Frozen-Bubble Team
 #
 # Originally sponsored by Mandriva <http://www.mandriva.com/>
 #
@@ -133,10 +133,10 @@ my ($lang) = split(':', $ENV{LANGUAGE});
 gettext_lang($lang);
 our $is_rtl = $ENV{LANGUAGE} =~ /^fa/;
 
-print "        [[ Frozen-Bubble-$Games::FrozenBubble::RELEASE_VERSION ]]\n\n";
+print "        [[ Frozen-Bubble-$Games::FrozenBubble::VERSION ]]\n\n";
 print '  http://www.frozen-bubble.org/
 
-  Copyright (c) 2000-2010 The Frozen-Bubble Team.
+  Copyright (c) 2000-2012 The Frozen-Bubble Team.
 
     Artwork: Alexis Younes
              Amaury Amblard-Ladurantie
@@ -6469,7 +6469,7 @@ frozen-bubble-editor
 
 =head1 COPYRIGHT
 
-Copyright © 2000-2010 The Frozen-Bubble Team.
+Copyright © 2000-2012 The Frozen-Bubble Team.
 
 This is Free Software; this software is licensed under the GPL version 2, as published by the Free Software Foundation.
 There is NO warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.

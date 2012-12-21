@@ -104,7 +104,7 @@ sub ACTION_server {
     # so the -DVERSION macro does not work like in the former Makefile.
     # Instead, I'll just preprocess the two files with perl.
     {
-        my $version = $Games::FrozenBubble::RELEASE_VERSION;
+        my $version = $Games::FrozenBubble::VERSION;
         # perl -pie again has problems with shell quoting for the -e'' part.
         for my $cfile (
             map {catfile($server_directory, $_)} qw(fb-server.c_tmp net.c_tmp)

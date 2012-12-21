@@ -1,7 +1,6 @@
 package Games::FrozenBubble;
 
-our $VERSION = '2.212'; #Cpan version
-our $RELEASE_VERSION = '2.2.1beta1'; #Distro version
+our $VERSION = '2.213'; #Cpan version
 
 1;
 
