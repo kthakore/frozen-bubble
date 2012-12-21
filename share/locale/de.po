@@ -85,7 +85,7 @@ msgid ""
 "Addicted for %s, %d bubbles were launched.\n"
 msgstr ""
 "\n"
-"Süchtig seit %s, %d Murmel gestartet.\n"
+"Süchtig seit %s, %d Murmeln gestartet.\n"
 
 # time delimiter
 #: ../frozen-bubble:1014 ../frozen-bubble:3092
