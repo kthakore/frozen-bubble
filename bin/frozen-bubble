@@ -2215,24 +2215,32 @@ sub update_game() {
                                     if (!any { $_->{chaindestx} } @{$falling_bubble{$::p}}) {
                                         my $malusfreezeframes = 20;
                                         @{$pdata{$::p}{malus}} > 0 && $frame > $pdata{$::p}{malus}[0] + $malusfreezeframes and play_sound('malus');
+                                        my @top_of_cx = (0,0,0,0, 0,0,0,0);
+                                        foreach (@{$sticked_bubbles{$::p}}) {
+                                            if ($_->{'cy'} > $top_of_cx[$_->{'cx'}]) {
+                                                $top_of_cx[$_->{'cx'}] = $_->{'cy'};
+                                            }
+                                        }
                                         while (@{$pdata{$::p}{malus}} > 0 && $frame > $pdata{$::p}{malus}[0] + $malusfreezeframes && @{$malus_bubble{$::p}} < 7) {
                                             my $num = int(rand(@bubbles_images));
                                             my $b = create_bubble_given_img_num($num);
                                             $b->{num} = $num;
-                                            do {
-                                                $b->{'cx'} = int(rand(7));
-                                            } while (member($b->{'cx'}, map { $_->{'cx'} } @{$malus_bubble{$::p}}));
-                                            $b->{'cy'} = 12;
-                                            $b->{'stick_y'} = -1;
-                                            foreach (@{$sticked_bubbles{$::p}}) {
-                                                if ($_->{'cy'} > $b->{'stick_y'}) {
-                                                    if ($_->{'cx'} == $b->{'cx'}
-                                                        || odd($_->{'cy'}+$pdata{$::p}{oddswap}) && ($_->{'cx'}+1) == $b->{'cx'}) {
-                                                        $b->{'stick_y'} = $_->{'cy'};
+                                            my @good_cx;
+                                            foreach my $key (keys @top_of_cx) {
+                                                if ($top_of_cx[$key] < 11) {
+                                                    if (! (even($top_of_cx[$key]+$pdata{$::p}{oddswap}) && $key == 7) ) {
+                                                        push @good_cx, $key;
                                                     }
                                                 }
                                             }
-                                            $b->{'stick_y'}++;
+                                            if ($#good_cx >= 0) {
+                                                $b->{'cx'} = $good_cx[rand @good_cx];
+                                            } else {
+                                                $b->{'cx'} = int(rand(7));
+                                            }
+                                            $top_of_cx[$b->{'cx'}] += 1;
+                                            $b->{'cy'} = 12;
+                                            $b->{'stick_y'} = $top_of_cx[$b->{'cx'}];
                                             calc_real_pos($b, $::p);
                                             push @{$malus_bubble{$::p}}, $b;
                                             malus_change(-1, $::p);
