@@ -44,7 +44,7 @@ use vars qw($TARGET_ANIM_SPEED $BUBBLE_SIZE $ROW_SIZE $LAUNCHER_SPEED $BUBBLE_SP
             %sticking_bubble $time %imgbin $TIME_HURRY_WARN $TIME_HURRY_MAX $TIMEOUT_PINGUIN_SLEEP $FREE_FALL_CONSTANT @joysticks $joysticksinfo $nojoysticks
             $direct @PLAYERS @ALL_PLAYERS %levels $display_on_app_disabled $addicted_time $start_time $time_1pgame $time_netgame $fullscreen $rcfile %hiscorefiles
             $HISCORES $HISCORES_MPTRAIN $HISCORES_MPTRAIN_CHAINREACTION
-            $total_launched_bubbles
+            $total_launched_bubbles $noinstantdeath
             $lev_number $playermalus $mptrainingdiff $loaded_levelset $direct_levelset $chainreaction %chains %img_mini $frame $sock $gameserver $mynick
             $continuegamewhenplayersleave $singleplayertargetting $mylatitude $mylongitude %autokick $replayparam $autorecord $comment $saveframes $saveframesbase $saveframescounter);
 
@@ -113,6 +113,7 @@ $graphics_level                 = 3;
 $playermalus                    = 0;
 $mptrainingdiff                 = 30;
 $chainreaction                  = 0;
+$noinstantdeath                 = 0;
 $mynick                         = (($^O eq 'MSWin32') ? getlogin() : ($ENV{USER} ? $ENV{USER} : 'unnamed'));
 $HISCORES                       = [];
 $HISCORES_MPTRAIN               = [];
@@ -164,6 +165,7 @@ GetOptions("fullscreen|fs!" => \$fullscreen,
            "direct" => \$direct,
            "solo" => sub { $direct = 1; @PLAYERS = ('p1') },
            "chain-reaction" => \$chainreaction,
+           "no-instant-death" => \$noinstantdeath,
            "colour-blind|cb" => \$colourblind,
            "player-malus=i" => \$playermalus,
            "mp-training-difficulty=i" => \$mptrainingdiff,
@@ -200,6 +202,7 @@ GetOptions("fullscreen|fs!" => \$fullscreen,
  --levelset<name>       directly start with the specified levelset name
  --no-time-limit        disable time limit for shooting (e.g. kids mode)
  --chain-reaction       enable chain-reaction (when applicable)
+ --no-instant-death     avoid malus bubbles that trigger instant death (when applicable)
  --player-malus <#n>    add a malus of n to the left player (can be negative)
  --mp-training-difficulty <#n> set the average duration between receiving malus bubbles in 1 player multiplayer training (default 30 (= every 30 seconds on average), the lower the harder)
  --colour-blind         use bubbles for colourblind people
@@ -2233,7 +2236,7 @@ sub update_game() {
                                                     }
                                                 }
                                             }
-                                            if ($#good_cx >= 0) {
+                                            if ($noinstantdeath && $#good_cx >= 0) {
                                                 $b->{'cx'} = $good_cx[rand @good_cx];
                                             } else {
                                                 $b->{'cx'} = int(rand(7));
