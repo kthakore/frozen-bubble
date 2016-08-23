@@ -1,0 +1,8 @@
+[Desktop Entry]
+Encoding=UTF-8
+Name=Frozen Bubble
+GenericName=Shooting Bubble Game 
+Exec=frozen-bubble -fs
+Icon=frozen-bubble
+Type=Application
+Categories=Game;ArcadeGame;
