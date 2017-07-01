@@ -51,11 +51,11 @@ use vars qw($TARGET_ANIM_SPEED $BUBBLE_SIZE $ROW_SIZE $LAUNCHER_SPEED $BUBBLE_SP
 use Getopt::Long;
 use Data::Dumper;
 use Locale::Maketext::Simple;
-use POSIX();
 use Math::Trig;
 use IO::File;
 use Time::HiRes qw(gettimeofday);
 use Compress::Bzip2;
+use File::Temp;
 
 use SDL;
 use SDL::Rect;
@@ -3761,8 +3761,7 @@ sub smg_servers() {
                         return [ { host => 'localhost', port => 1511 } ];
                     } else {
                         unless (exec $fb_server, '-L', '-d', '-n', substr("lan-$mynick", 0, 12), '-z') {
-                            print STDERR "Could not create server limited to lan game: $!\n";
-                            POSIX::_exit(1);
+                            die "Could not create server limited to lan game: $!\n";
                         }
                     }
                 }
@@ -6063,9 +6062,8 @@ sub replay {
         $replayfile = Games::FrozenBubble::Net::http_download($replayfile);
         $replayfile or return;
         if ($filename =~ /\.bz2$/) {
-            my $fh;
-            do { $filename = POSIX::tmpnam() }
-              until $fh = IO::File->new($filename, O_WRONLY|O_CREAT|O_EXCL);
+            my $fh = File::Temp->new();
+            $filename = $fh->filename;
             print $fh $replayfile;
             $fh->close;
             local *F;
@@ -6079,7 +6077,6 @@ sub replay {
             while($bz->bzreadline($line) > 0){ $replayfile .= $line; }
             
             $bz->bzclose();
-            unlink ($filename);
          }
     } else {
         if ($replayfile =~ /\.bz2$/) {
