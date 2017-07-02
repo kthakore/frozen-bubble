@@ -261,8 +261,16 @@ void daemonize() {
         if (user_to_switch != NULL) {
                 struct passwd* user = getpwnam(user_to_switch);
                 if (user) {
-                        setgid(user->pw_gid);
-                        setuid(user->pw_uid);
+                        if(setgid(user->pw_gid) == -1)
+                        {
+                                l2(OUTPUT_TYPE_ERROR, "Cannot set the GID to %d: %s", user->pw_gid, strerror(errno));
+                                exit(EXIT_FAILURE);
+                        }
+                        if(setuid(user->pw_uid) == -1)
+                        {
+                                l2(OUTPUT_TYPE_ERROR, "Cannot set the UID to %d: %s", user->pw_uid, strerror(errno));
+                                exit(EXIT_FAILURE);
+                        }
                 } else {
                         l2(OUTPUT_TYPE_ERROR, "Cannot switch user to %s: %s", user_to_switch, strerror(errno));
                 }
