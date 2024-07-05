@@ -8,7 +8,7 @@ use File::Copy qw(move);
 use File::Slurp qw(read_file write_file);
 use File::Spec::Functions qw(catdir catfile rootdir);
 use IO::File qw();
-use Module::Build '0.36' => qw();
+use Module::Build qw();
 use autodie qw(:all move read_file write_file);
 use parent 'Module::Build';
 use Locale::Maketext::Extract;
